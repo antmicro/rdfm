@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/balena-os/librsync-go"
 	"github.com/mendersoftware/mender-artifact/artifact"
 	"github.com/mendersoftware/mender-artifact/handlers"
 	"github.com/antmicro/rdfm/system"
@@ -181,6 +182,7 @@ func (d *dualRootfsDeviceImpl) PrepareStoreUpdate() error {
 }
 
 func (d *dualRootfsDeviceImpl) StoreUpdate(image io.Reader, info os.FileInfo) error {
+	var err error
 
 	inactivePartition, err := d.GetInactive()
 	if err != nil {
@@ -189,13 +191,30 @@ func (d *dualRootfsDeviceImpl) StoreUpdate(image io.Reader, info os.FileInfo) er
 
 	imageSize := info.Size()
 
+	isDelta := strings.HasSuffix(info.Name(), ".delta")
+	if isDelta {
+		// Hacky: the file name for delta signature is some-file-name.1048576.delta,
+		// where 1048576 is the original image size.  Artifact installer needs to know
+		// the original size for some of its checks.
+		deltaSigParts := strings.Split(info.Name(), ".")
+		imageSize, err = strconv.ParseInt(deltaSigParts[len(deltaSigParts)-2], 10, 64)
+		if err != nil {
+			return errors.Wrapf(err, "Unable to infer original image size from delta file name: %s", info.Name())
+		}
+	}
+
 	dev, err := blockdevice.Open(inactivePartition, imageSize)
 	if err != nil {
 		errmsg := "Failed to write the update to the inactive partition: %q"
 		return errors.Wrapf(err, errmsg, inactivePartition)
 	}
 
-	n, err := io.Copy(dev, image)
+	var n int64
+	if isDelta {
+		n, err = d.patchCopy(dev, image, imageSize)
+	} else {
+		n, err = io.Copy(dev, image)
+	}
 	if err != nil {
 		dev.Close()
 		return err
@@ -209,6 +228,23 @@ func (d *dualRootfsDeviceImpl) StoreUpdate(image io.Reader, info os.FileInfo) er
 	log.Infof("Wrote %d/%d bytes to the inactive partition", n, imageSize)
 
 	return err
+}
+
+func (d *dualRootfsDeviceImpl) patchCopy(dev *BlockDevice, image io.Reader, n int64) (int64, error) {
+	activePartition, err := d.GetActive()
+	if err != nil {
+		return 0, err
+	}
+
+	olddev, err := os.OpenFile(activePartition, os.O_RDONLY, 0)
+	if err != nil {
+		errmsg := "Failed to read the active partition: %q"
+		return 0, errors.Wrapf(err, errmsg, activePartition)
+	}
+	defer olddev.Close()
+
+	err = librsync.Patch(olddev, image, dev)
+	return n, err
 }
 
 func (d *dualRootfsDeviceImpl) FinishStoreUpdate() error {
