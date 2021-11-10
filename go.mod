@@ -3,6 +3,7 @@ module github.com/antmicro/rdfm
 go 1.14
 
 require (
+	github.com/balena-os/librsync-go v0.6.1
 	github.com/bmatsuo/lmdb-go v1.6.1-0.20160816100615-69ad631904c9
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/godbus/dbus v4.1.0+incompatible

@@ -1,3 +1,8 @@
+# github.com/balena-os/circbuf v0.0.0-20171122095043-56e73111d0b2
+github.com/balena-os/circbuf
+# github.com/balena-os/librsync-go v0.6.1
+## explicit
+github.com/balena-os/librsync-go
 # github.com/bmatsuo/lmdb-go v1.6.1-0.20160816100615-69ad631904c9
 ## explicit
 github.com/bmatsuo/lmdb-go/internal/lmdbarch
@@ -61,9 +66,12 @@ github.com/ungerik/go-sysfs
 github.com/urfave/cli/v2
 # golang.org/x/crypto v0.0.0-20191117063200-497ca9f6d64f
 ## explicit
+golang.org/x/crypto/blake2b
+golang.org/x/crypto/md4
 golang.org/x/crypto/ssh/terminal
 # golang.org/x/sys v0.0.0-20200116001909-b77594299b42
 ## explicit
+golang.org/x/sys/cpu
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
