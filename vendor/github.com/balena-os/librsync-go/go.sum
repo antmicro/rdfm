@@ -1,5 +1,5 @@
-github.com/balena-os/circbuf v0.0.0-20171122095043-56e73111d0b2 h1:ElIDKSaGfOSwGn98Bo0gVVDaUdnjqj4MC9/mFWqTDos=
-github.com/balena-os/circbuf v0.0.0-20171122095043-56e73111d0b2/go.mod h1:Iy/J8+4PzU1eYB67p/3ebi+oM5//WVL7ohT3JikR3Hs=
+github.com/balena-os/circbuf v0.1.1 h1:qqCVqe1A/mKaqwdIVgBwpj88UKA46tcOoxQZD9BIBWM=
+github.com/balena-os/circbuf v0.1.1/go.mod h1:D8R+zPJf/Sfd43NP++rdNfGAf7KefcKG1b6k2Ww0ZzU=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

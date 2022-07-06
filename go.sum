@@ -1,8 +1,8 @@
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/balena-os/circbuf v0.0.0-20171122095043-56e73111d0b2 h1:ElIDKSaGfOSwGn98Bo0gVVDaUdnjqj4MC9/mFWqTDos=
-github.com/balena-os/circbuf v0.0.0-20171122095043-56e73111d0b2/go.mod h1:Iy/J8+4PzU1eYB67p/3ebi+oM5//WVL7ohT3JikR3Hs=
-github.com/balena-os/librsync-go v0.6.1 h1:pm2TTUrXEAoi50i3A6dpi7AktHjfpOkn1fgnhek5Zzw=
-github.com/balena-os/librsync-go v0.6.1/go.mod h1:cl71jRRtTXRe6WYdkyHBdPXWp5pQtJGJCa+iEm8bQcE=
+github.com/balena-os/circbuf v0.1.1 h1:qqCVqe1A/mKaqwdIVgBwpj88UKA46tcOoxQZD9BIBWM=
+github.com/balena-os/circbuf v0.1.1/go.mod h1:D8R+zPJf/Sfd43NP++rdNfGAf7KefcKG1b6k2Ww0ZzU=
+github.com/balena-os/librsync-go v0.7.0 h1:qfA8EOW89V2icbWB0Mndo35Rd0uqlCXqf5acXitlkH0=
+github.com/balena-os/librsync-go v0.7.0/go.mod h1:k52vcrJkn/UJlhtVD0X+LLj3C9KKIag46ihkAruakwY=
 github.com/bmatsuo/lmdb-go v1.6.1-0.20160816100615-69ad631904c9 h1:MhFw8nXQ3tIrAImv8wfHoAX+OB4BYt+4FSbkY4Krdo4=
 github.com/bmatsuo/lmdb-go v1.6.1-0.20160816100615-69ad631904c9/go.mod h1:wWPZmKdOAZsl4qOqkowQ1aCrFie1HU8gWloHMCeAUdM=
 github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsrgA7czyZG/E6dU=
@@ -53,10 +53,12 @@ github.com/remyoudompheng/go-liblzma v0.0.0-20190506200333-81bf2d431b96/go.mod h
 github.com/russross/blackfriday/v2 v2.0.1/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=
 github.com/sirupsen/logrus v0.0.0-20180315010703-90150a8ed11b/go.mod h1:pMByvHTf9Beacp5x1UXfOR9xyW/9antXMhjMPG0dEzc=
+github.com/sirupsen/logrus v1.3.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/sirupsen/logrus v1.4.3-0.20200306102446-7ea96a3284ed h1:jSvHUjNf0+P98jm6UQWPo4U7a3GnPH7OA3KwiVp8A+A=
 github.com/sirupsen/logrus v1.4.3-0.20200306102446-7ea96a3284ed/go.mod h1:+F7Ogzej0PZc/94MaYx/nvG9jOFMD2osvC3s+Squfpo=
-github.com/stretchr/objx v0.1.0 h1:4G4v2dO3VZwixGIRoQ5Lfboy6nUhCyYzaqnIAPPhYs4=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
+github.com/stretchr/objx v0.1.1 h1:2vfRuCMp5sSVIDSqO8oNnWJq7mPa6KVP3iPIwFBuy8A=
+github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=

@@ -158,6 +158,6 @@ func ReadSignatureFile(path string) (*SignatureType, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	defer f.Close()
 	return ReadSignature(f)
 }
