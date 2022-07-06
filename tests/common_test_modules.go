@@ -283,7 +283,7 @@ func UpdateModulesSetup(t *testing.T, attr *TestModuleAttr, tmpdir string,
 
 	scripts := makeTestArtifactScripts(t, attr, tmpdir, logPath)
 
-	artPath := path.Join(tmpdir, "artifact.mender")
+	artPath := path.Join(tmpdir, "artifact.rdfm")
 	makeImageForUpdateModules(t, artPath, scripts, artOverrides)
 
 	require.NoError(t, os.Mkdir(path.Join(tmpdir, "logs"), 0755))

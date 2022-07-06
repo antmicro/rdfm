@@ -25,8 +25,8 @@ import (
 	"github.com/urfave/cli/v2"
 	"golang.org/x/sys/unix"
 
-	"github.com/mendersoftware/mender/system"
-	"github.com/mendersoftware/mender/utils"
+	"github.com/antmicro/rdfm/system"
+	"github.com/antmicro/rdfm/utils"
 	log "github.com/sirupsen/logrus"
 )
 

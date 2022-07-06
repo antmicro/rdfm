@@ -26,9 +26,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/mendersoftware/mender/app/updatecontrolmap"
-	"github.com/mendersoftware/mender/client"
-	"github.com/mendersoftware/mender/datastore"
+	"github.com/antmicro/rdfm/app/updatecontrolmap"
+	"github.com/antmicro/rdfm/client"
+	"github.com/antmicro/rdfm/datastore"
 	log "github.com/sirupsen/logrus"
 )
 

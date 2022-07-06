@@ -17,9 +17,9 @@ import (
 	"encoding/json"
 	"path"
 
-	"github.com/mendersoftware/mender/conf"
-	"github.com/mendersoftware/mender/system"
-	"github.com/mendersoftware/mender/utils"
+	"github.com/antmicro/rdfm/conf"
+	"github.com/antmicro/rdfm/system"
+	"github.com/antmicro/rdfm/utils"
 	"github.com/pkg/errors"
 )
 

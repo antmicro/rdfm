@@ -1,5 +1,5 @@
 [Unit]
-Description=Mender OTA update service
+Description=RDFM OTA update service
 Wants=network-online.target
 After=systemd-resolved.service network-online.target mender.service
 Conflicts=mender.service
@@ -8,7 +8,7 @@ Conflicts=mender.service
 Type=idle
 User=root
 Group=root
-ExecStart=/usr/bin/mender daemon
+ExecStart=/usr/bin/rdfm daemon
 Restart=on-abort
 
 [Install]

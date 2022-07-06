@@ -22,7 +22,7 @@ import (
 	"github.com/mendersoftware/mender-artifact/areader"
 	"github.com/mendersoftware/mender-artifact/artifact"
 	"github.com/mendersoftware/mender-artifact/handlers"
-	"github.com/mendersoftware/mender/statescript"
+	"github.com/antmicro/rdfm/statescript"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )

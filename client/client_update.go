@@ -26,8 +26,8 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/mendersoftware/mender/app/updatecontrolmap"
-	"github.com/mendersoftware/mender/datastore"
+	"github.com/antmicro/rdfm/app/updatecontrolmap"
+	"github.com/antmicro/rdfm/datastore"
 )
 
 const (

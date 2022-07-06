@@ -27,10 +27,10 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/mendersoftware/mender/app"
-	"github.com/mendersoftware/mender/conf"
-	mender_syslog "github.com/mendersoftware/mender/log/syslog"
-	"github.com/mendersoftware/mender/system"
+	"github.com/antmicro/rdfm/app"
+	"github.com/antmicro/rdfm/conf"
+	mender_syslog "github.com/antmicro/rdfm/log/syslog"
+	"github.com/antmicro/rdfm/system"
 
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"

@@ -27,10 +27,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/mendersoftware/mender/client"
-	"github.com/mendersoftware/mender/conf"
-	"github.com/mendersoftware/mender/device"
-	"github.com/mendersoftware/mender/system"
+	"github.com/antmicro/rdfm/client"
+	"github.com/antmicro/rdfm/conf"
+	"github.com/antmicro/rdfm/device"
+	"github.com/antmicro/rdfm/system"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/pkg/errors"

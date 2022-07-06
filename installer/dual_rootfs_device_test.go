@@ -20,7 +20,7 @@ import (
 	"testing"
 	"time"
 
-	stest "github.com/mendersoftware/mender/system/testing"
+	stest "github.com/antmicro/rdfm/system/testing"
 	log "github.com/sirupsen/logrus"
 	logtest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"

@@ -26,12 +26,12 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/mendersoftware/mender/client"
-	"github.com/mendersoftware/mender/conf"
-	"github.com/mendersoftware/mender/datastore"
-	"github.com/mendersoftware/mender/dbus"
-	"github.com/mendersoftware/mender/device"
-	"github.com/mendersoftware/mender/store"
+	"github.com/antmicro/rdfm/client"
+	"github.com/antmicro/rdfm/conf"
+	"github.com/antmicro/rdfm/datastore"
+	"github.com/antmicro/rdfm/dbus"
+	"github.com/antmicro/rdfm/device"
+	"github.com/antmicro/rdfm/store"
 )
 
 // Constants for auth manager request actions

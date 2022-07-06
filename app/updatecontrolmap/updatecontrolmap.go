@@ -24,7 +24,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/mendersoftware/mender/utils"
+	"github.com/antmicro/rdfm/utils"
 
 	log "github.com/sirupsen/logrus"
 )

@@ -26,7 +26,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mendersoftware/mender/client"
+	"github.com/antmicro/rdfm/client"
 	log "github.com/sirupsen/logrus"
 	logtest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"

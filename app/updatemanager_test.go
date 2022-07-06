@@ -23,11 +23,11 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mendersoftware/mender/app/updatecontrolmap"
-	"github.com/mendersoftware/mender/conf"
-	"github.com/mendersoftware/mender/dbus"
-	"github.com/mendersoftware/mender/dbus/mocks"
-	"github.com/mendersoftware/mender/store"
+	"github.com/antmicro/rdfm/app/updatecontrolmap"
+	"github.com/antmicro/rdfm/conf"
+	"github.com/antmicro/rdfm/dbus"
+	"github.com/antmicro/rdfm/dbus/mocks"
+	"github.com/antmicro/rdfm/store"
 )
 
 const TEST_UUID = "3380e4f2-c913-11eb-9119-c39aba66b261"

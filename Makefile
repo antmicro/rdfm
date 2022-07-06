@@ -31,7 +31,7 @@ TOOLS = \
 VERSION = $(shell git describe --tags --dirty --exact-match 2>/dev/null || git rev-parse --short HEAD)
 
 GO_LDFLAGS = \
-	-ldflags "-X github.com/mendersoftware/mender/conf.Version=$(VERSION)"
+	-ldflags "-X github.com/antmicro/rdfm/conf.Version=$(VERSION)"
 
 ifeq ($(V),1)
 BUILDV = -v
@@ -92,16 +92,16 @@ install: install-bin \
 	install-modules \
 	install-systemd
 
-install-bin: mender
+install-bin: rdfm
 	install -m 755 -d $(prefix)$(bindir)
 	install -m 755 mender $(prefix)$(bindir)/
 
 install-conf:
-	install -m 755 -d $(prefix)$(sysconfdir)/mender
+	install -m 755 -d $(prefix)$(sysconfdir)/rdfm
 	echo "artifact_name=unknown" > $(prefix)$(sysconfdir)/mender/artifact_info
 
 install-datadir:
-	install -m 755 -d $(prefix)$(datadir)/mender
+	install -m 755 -d $(prefix)$(datadir)/rdfm
 
 install-dbus: install-datadir
 	install -m 755 -d $(prefix)$(datadir)/dbus-1/system.d
@@ -148,12 +148,12 @@ uninstall: uninstall-bin \
 	uninstall-examples
 
 uninstall-bin:
-	rm -f $(prefix)$(bindir)/mender
+	rm -f $(prefix)$(bindir)/rdfm
 	-rmdir -p $(prefix)$(bindir)
 
 uninstall-conf:
 	rm -f $(prefix)$(sysconfdir)/mender/artifact_info
-	-rmdir -p $(prefix)$(sysconfdir)/mender
+	-rmdir -p $(prefix)$(sysconfdir)/rdfm
 
 uninstall-dbus:
 	for policy in $(DBUS_POLICY_FILES); do \
@@ -265,7 +265,7 @@ instrument-binary:
 	# Patch the client to make it ready for coverage analysis
 	git apply patches/0001-Instrument-Mender-client-for-coverage-analysis.patch
 	# Then instrument the files with the gobinarycoverage tool
-	gobinarycoverage github.com/mendersoftware/mender
+	gobinarycoverage github.com/antmicro/rdfm
 
 .PHONY: build
 .PHONY: clean

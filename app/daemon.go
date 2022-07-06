@@ -17,11 +17,11 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/mendersoftware/mender/conf"
-	"github.com/mendersoftware/mender/datastore"
-	"github.com/mendersoftware/mender/dbus"
-	"github.com/mendersoftware/mender/store"
-	"github.com/mendersoftware/mender/system"
+	"github.com/antmicro/rdfm/conf"
+	"github.com/antmicro/rdfm/datastore"
+	"github.com/antmicro/rdfm/dbus"
+	"github.com/antmicro/rdfm/store"
+	"github.com/antmicro/rdfm/system"
 )
 
 // Config section

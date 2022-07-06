@@ -21,8 +21,8 @@ index c16a2c1..a2dc924 100644
 +	"os/exec"
 +	"time"
  
- 	"github.com/mendersoftware/mender/app"
- 	"github.com/mendersoftware/mender/cli"
+ 	"github.com/antmicro/rdfm/app"
+ 	"github.com/antmicro/rdfm/cli"
 @@ -35,6 +37,21 @@ func init() {
  	signal.Notify(termSignalChan, syscall.SIGTERM)
  }

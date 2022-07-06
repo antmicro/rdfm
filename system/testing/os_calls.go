@@ -19,7 +19,7 @@ import (
 	"runtime"
 	"strconv"
 
-	"github.com/mendersoftware/mender/system"
+	"github.com/antmicro/rdfm/system"
 )
 
 // The test runner, which simulates output and return code.

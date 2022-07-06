@@ -24,14 +24,14 @@ import (
 	"testing"
 
 	"github.com/mendersoftware/mender-artifact/artifact"
-	"github.com/mendersoftware/mender/client"
-	"github.com/mendersoftware/mender/conf"
-	"github.com/mendersoftware/mender/datastore"
-	dev "github.com/mendersoftware/mender/device"
-	"github.com/mendersoftware/mender/installer"
-	"github.com/mendersoftware/mender/statescript"
-	"github.com/mendersoftware/mender/store"
-	"github.com/mendersoftware/mender/tests"
+	"github.com/antmicro/rdfm/client"
+	"github.com/antmicro/rdfm/conf"
+	"github.com/antmicro/rdfm/datastore"
+	dev "github.com/antmicro/rdfm/device"
+	"github.com/antmicro/rdfm/installer"
+	"github.com/antmicro/rdfm/statescript"
+	"github.com/antmicro/rdfm/store"
+	"github.com/antmicro/rdfm/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -985,7 +985,7 @@ func TestStandaloneModuleInstall(t *testing.T) {
 			defer os.RemoveAll(tmpdir)
 
 			logPath := path.Join(tmpdir, "execution.log")
-			artPath := path.Join(tmpdir, "artifact.mender")
+			artPath := path.Join(tmpdir, "artifact.rdfm")
 
 			device, stateExec := standaloneInstallSetup(t, tmpdir, &c.testModuleAttr,
 				tests.ArtifactAttributeOverrides{})
@@ -1387,7 +1387,7 @@ func TestStandaloneInstallProvides(t *testing.T) {
 			require.NoError(t, err)
 			defer os.RemoveAll(tmpdir)
 
-			artPath := path.Join(tmpdir, "artifact.mender")
+			artPath := path.Join(tmpdir, "artifact.rdfm")
 
 			device, stateExec := standaloneInstallSetup(t, tmpdir, &tests.TestModuleAttr{}, c.overrides)
 

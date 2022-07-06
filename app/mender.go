@@ -24,15 +24,15 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/mendersoftware/mender/client"
-	"github.com/mendersoftware/mender/conf"
-	"github.com/mendersoftware/mender/datastore"
-	dev "github.com/mendersoftware/mender/device"
-	"github.com/mendersoftware/mender/installer"
-	inv "github.com/mendersoftware/mender/inventory"
-	"github.com/mendersoftware/mender/statescript"
-	"github.com/mendersoftware/mender/store"
-	"github.com/mendersoftware/mender/utils"
+	"github.com/antmicro/rdfm/client"
+	"github.com/antmicro/rdfm/conf"
+	"github.com/antmicro/rdfm/datastore"
+	dev "github.com/antmicro/rdfm/device"
+	"github.com/antmicro/rdfm/installer"
+	inv "github.com/antmicro/rdfm/inventory"
+	"github.com/antmicro/rdfm/statescript"
+	"github.com/antmicro/rdfm/store"
+	"github.com/antmicro/rdfm/utils"
 )
 
 type Controller interface {

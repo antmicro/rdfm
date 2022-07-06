@@ -24,15 +24,15 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mendersoftware/mender/client"
-	cltest "github.com/mendersoftware/mender/client/test"
-	"github.com/mendersoftware/mender/conf"
-	"github.com/mendersoftware/mender/datastore"
-	"github.com/mendersoftware/mender/dbus"
-	"github.com/mendersoftware/mender/dbus/mocks"
-	dev "github.com/mendersoftware/mender/device"
-	"github.com/mendersoftware/mender/store"
-	stest "github.com/mendersoftware/mender/system/testing"
+	"github.com/antmicro/rdfm/client"
+	cltest "github.com/antmicro/rdfm/client/test"
+	"github.com/antmicro/rdfm/conf"
+	"github.com/antmicro/rdfm/datastore"
+	"github.com/antmicro/rdfm/dbus"
+	"github.com/antmicro/rdfm/dbus/mocks"
+	dev "github.com/antmicro/rdfm/device"
+	"github.com/antmicro/rdfm/store"
+	stest "github.com/antmicro/rdfm/system/testing"
 )
 
 const (

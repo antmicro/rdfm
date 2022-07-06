@@ -16,7 +16,7 @@ package inventory
 import (
 	"testing"
 
-	"github.com/mendersoftware/mender/client"
+	"github.com/antmicro/rdfm/client"
 	"github.com/stretchr/testify/assert"
 )
 

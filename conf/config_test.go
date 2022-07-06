@@ -21,7 +21,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/mendersoftware/mender/client"
+	"github.com/antmicro/rdfm/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

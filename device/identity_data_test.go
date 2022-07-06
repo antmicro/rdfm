@@ -17,7 +17,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	stest "github.com/mendersoftware/mender/system/testing"
+	stest "github.com/antmicro/rdfm/system/testing"
 	"github.com/stretchr/testify/assert"
 )
 

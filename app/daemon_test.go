@@ -26,11 +26,11 @@ import (
 
 	"github.com/mendersoftware/mender-artifact/artifact"
 	"github.com/mendersoftware/mender-artifact/handlers"
-	"github.com/mendersoftware/mender/client"
-	"github.com/mendersoftware/mender/conf"
-	"github.com/mendersoftware/mender/datastore"
-	"github.com/mendersoftware/mender/installer"
-	"github.com/mendersoftware/mender/store"
+	"github.com/antmicro/rdfm/client"
+	"github.com/antmicro/rdfm/conf"
+	"github.com/antmicro/rdfm/datastore"
+	"github.com/antmicro/rdfm/installer"
+	"github.com/antmicro/rdfm/store"
 )
 
 type FakeDevice struct {

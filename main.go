@@ -19,9 +19,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/mendersoftware/mender/app"
-	"github.com/mendersoftware/mender/cli"
-	"github.com/mendersoftware/mender/installer"
+	"github.com/antmicro/rdfm/app"
+	"github.com/antmicro/rdfm/cli"
+	"github.com/antmicro/rdfm/installer"
 	log "github.com/sirupsen/logrus"
 )
 

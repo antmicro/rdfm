@@ -20,8 +20,8 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/mendersoftware/mender/system"
-	"github.com/mendersoftware/mender/utils"
+	"github.com/antmicro/rdfm/system"
+	"github.com/antmicro/rdfm/utils"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )

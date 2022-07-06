@@ -20,11 +20,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/mendersoftware/mender/conf"
-	"github.com/mendersoftware/mender/datastore"
-	"github.com/mendersoftware/mender/installer"
-	"github.com/mendersoftware/mender/statescript"
-	"github.com/mendersoftware/mender/store"
+	"github.com/antmicro/rdfm/conf"
+	"github.com/antmicro/rdfm/datastore"
+	"github.com/antmicro/rdfm/installer"
+	"github.com/antmicro/rdfm/statescript"
+	"github.com/antmicro/rdfm/store"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )

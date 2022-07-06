@@ -134,7 +134,7 @@ class TestModulesArtifactGen:
                 fd.write("my-content")
             os.chmod(update_file, 0o664)
 
-            artifact_file = os.path.join(file_tree, "my-artifact.mender")
+            artifact_file = os.path.join(file_tree, "my-artifact.rdfm")
 
             # Prepare comand args depending of the Test Case
             cmd_args = " -o %s -n artifact-name -t device-type -d /dest/dir %s" % (

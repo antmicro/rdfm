@@ -23,8 +23,8 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/mendersoftware/mender/system"
-	stest "github.com/mendersoftware/mender/system/testing"
+	"github.com/antmicro/rdfm/system"
+	stest "github.com/antmicro/rdfm/system/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

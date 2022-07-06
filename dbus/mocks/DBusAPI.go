@@ -17,7 +17,7 @@
 package mocks
 
 import (
-	dbus "github.com/mendersoftware/mender/dbus"
+	dbus "github.com/antmicro/rdfm/dbus"
 	mock "github.com/stretchr/testify/mock"
 )
 

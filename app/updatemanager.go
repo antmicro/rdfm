@@ -23,10 +23,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mendersoftware/mender/app/updatecontrolmap"
-	"github.com/mendersoftware/mender/datastore"
-	"github.com/mendersoftware/mender/dbus"
-	"github.com/mendersoftware/mender/store"
+	"github.com/antmicro/rdfm/app/updatecontrolmap"
+	"github.com/antmicro/rdfm/datastore"
+	"github.com/antmicro/rdfm/dbus"
+	"github.com/antmicro/rdfm/store"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"

@@ -22,7 +22,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mendersoftware/mender/conf"
+	"github.com/antmicro/rdfm/conf"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

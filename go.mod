@@ -1,4 +1,4 @@
-module github.com/mendersoftware/mender
+module github.com/antmicro/rdfm
 
 go 1.14
 

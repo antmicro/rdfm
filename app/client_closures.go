@@ -15,8 +15,8 @@
 package app
 
 import (
-	"github.com/mendersoftware/mender/client"
-	"github.com/mendersoftware/mender/conf"
+	"github.com/antmicro/rdfm/client"
+	"github.com/antmicro/rdfm/conf"
 	log "github.com/sirupsen/logrus"
 )
 

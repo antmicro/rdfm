@@ -19,9 +19,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/mendersoftware/mender/client"
-	"github.com/mendersoftware/mender/dbus"
-	"github.com/mendersoftware/mender/installer"
+	"github.com/antmicro/rdfm/client"
+	"github.com/antmicro/rdfm/dbus"
+	"github.com/antmicro/rdfm/installer"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )

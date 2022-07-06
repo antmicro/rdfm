@@ -20,7 +20,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/mendersoftware/mender/system"
+	"github.com/antmicro/rdfm/system"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )

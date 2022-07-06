@@ -30,15 +30,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mendersoftware/mender/app"
-	"github.com/mendersoftware/mender/client"
-	"github.com/mendersoftware/mender/conf"
-	"github.com/mendersoftware/mender/datastore"
-	dev "github.com/mendersoftware/mender/device"
-	"github.com/mendersoftware/mender/installer"
-	"github.com/mendersoftware/mender/store"
-	"github.com/mendersoftware/mender/system"
-	stest "github.com/mendersoftware/mender/system/testing"
+	"github.com/antmicro/rdfm/app"
+	"github.com/antmicro/rdfm/client"
+	"github.com/antmicro/rdfm/conf"
+	"github.com/antmicro/rdfm/datastore"
+	dev "github.com/antmicro/rdfm/device"
+	"github.com/antmicro/rdfm/installer"
+	"github.com/antmicro/rdfm/store"
+	"github.com/antmicro/rdfm/system"
+	stest "github.com/antmicro/rdfm/system/testing"
 	log "github.com/sirupsen/logrus"
 	logtest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
@@ -52,21 +52,21 @@ func init() {
 }
 
 func TestAmbiguousArgumentsArgs(t *testing.T) {
-	err := SetupCLI([]string{"mender", "daemon", "commit"})
+	err := SetupCLI([]string{"rdfm", "daemon", "commit"})
 	assert.Error(t, err)
 	assert.Equal(t, fmt.Sprintf(errMsgAmbiguousArgumentsGivenF, "commit"),
 		err.Error())
 }
 
 func TestCheckUpdate(t *testing.T) {
-	args := []string{"mender", "check-update"}
+	args := []string{"rdfm", "check-update"}
 	err := SetupCLI(args)
 	// Should produce an error since daemon is not running
 	assert.Error(t, err)
 }
 
 func TestSendInventory(t *testing.T) {
-	args := []string{"mender", "send-inventory"}
+	args := []string{"rdfm", "send-inventory"}
 	err := SetupCLI(args)
 	// Should produce an error since daemon is not running
 	assert.Error(t, err)
@@ -161,7 +161,7 @@ func TestRunDaemon(t *testing.T) {
 }
 
 func TestLoggingOptions(t *testing.T) {
-	err := SetupCLI([]string{"mender", "--log-level", "crap", "commit"})
+	err := SetupCLI([]string{"rdfm", "--log-level", "crap", "commit"})
 	assert.Error(t, err, "'crap' log level should have given error")
 	// Should have a reference to log level.
 	assert.Contains(t, err.Error(), "Level")
@@ -172,18 +172,18 @@ func TestLoggingOptions(t *testing.T) {
 	// Ignore errors for now, we just want to know if the logging level was
 	// applied.
 	log.SetLevel(log.DebugLevel)
-	SetupCLI([]string{"mender", "--log-level", "panic"})
+	SetupCLI([]string{"rdfm", "--log-level", "panic"})
 	log.Debugln("Should not show")
 	assert.False(t, testLogContainsMessage(hook.AllEntries(), "Should not show"))
-	SetupCLI([]string{"mender", "--log-level", "debug"})
+	SetupCLI([]string{"rdfm", "--log-level", "debug"})
 	log.Debugln("Should show")
 	assert.True(t, testLogContainsMessage(hook.AllEntries(), "Should show"))
-	SetupCLI([]string{"mender", "--log-level", "info"})
+	SetupCLI([]string{"rdfm", "--log-level", "info"})
 	log.Debugln("Should also not show")
 	assert.False(t, testLogContainsMessage(hook.AllEntries(), "Should also not show"))
 
 	defer os.Remove("test.log")
-	SetupCLI([]string{"mender", "--log-file", "test.log"})
+	SetupCLI([]string{"rdfm", "--log-file", "test.log"})
 	log.Errorln("Should be in log file")
 	fd, err := os.Open("test.log")
 	assert.NoError(t, err)
@@ -194,7 +194,7 @@ func TestLoggingOptions(t *testing.T) {
 	assert.True(t, strings.Contains(string(bytebuf[0:n]),
 		"Should be in log file"))
 
-	err = SetupCLI([]string{"mender", "--no-syslog"})
+	err = SetupCLI([]string{"rdfm", "--no-syslog"})
 	// Just check that the flag can be specified.
 	assert.True(t, err == nil)
 }
@@ -210,7 +210,7 @@ func TestVersion(t *testing.T) {
 	os.Stdout = tfile
 
 	// running with stdout pointing to temp file
-	err = SetupCLI([]string{"mender", "--version"})
+	err = SetupCLI([]string{"rdfm", "--version"})
 
 	// restore previous stdout
 	os.Stdout = oldstdout
@@ -315,7 +315,7 @@ echo mac=00:11:22:33:44:55
 
 	// run bootstrap
 	db.Remove(datastore.AuthTokenName)
-	err = SetupCLI([]string{"mender", "--data", tdir, "--config", cpath,
+	err = SetupCLI([]string{"rdfm", "--data", tdir, "--config", cpath,
 		"--log-level", "debug", "bootstrap"})
 	assert.NoError(t, err)
 
@@ -331,7 +331,7 @@ echo mac=00:11:22:33:44:55
 
 	// force bootstrap and run again, check if key was changed
 	db.Remove(datastore.AuthTokenName)
-	err = SetupCLI([]string{"mender", "--data", tdir, "--config", cpath,
+	err = SetupCLI([]string{"rdfm", "--data", tdir, "--config", cpath,
 		"--log-level", "debug", "bootstrap", "--forcebootstrap"})
 	assert.NoError(t, err)
 
@@ -345,7 +345,7 @@ echo mac=00:11:22:33:44:55
 	// return non 200 status code, we should get an error as authorization has
 	// failed
 	responder.httpStatus = http.StatusUnauthorized
-	err = SetupCLI([]string{"mender", "--data", tdir, "--config", cpath,
+	err = SetupCLI([]string{"rdfm", "--data", tdir, "--config", cpath,
 		"-debug", "bootstrap", "--forcebootstrap"})
 	assert.Error(t, err)
 
@@ -549,7 +549,7 @@ func TestIgnoreServerConfigVerification(t *testing.T) {
 
 	// Run mender setup command (non-interactive)
 	menderSetupNonInteractive := []string{
-		"mender",
+		"rdfm",
 		"--no-syslog",
 		"setup",
 		"--device-type",
@@ -586,7 +586,7 @@ func TestCliHelpText(t *testing.T) {
 	os.Stdout = menderAppCliHelp
 
 	// get App level help
-	err = SetupCLI([]string{"mender", "-help"})
+	err = SetupCLI([]string{"rdfm", "-help"})
 	assert.NoError(t, err, "calling main with -help should not produce an error")
 
 	// rewind and check
@@ -610,7 +610,7 @@ func TestCliHelpText(t *testing.T) {
 	os.Stdout = menderCmdCliHelp
 
 	// get command level help
-	err = SetupCLI([]string{"mender", "setup", "-help"})
+	err = SetupCLI([]string{"rdfm", "setup", "-help"})
 	assert.NoError(t, err, "calling main with -help should not produce an error")
 
 	// rewind and check
@@ -634,7 +634,7 @@ func TestCliHelpText(t *testing.T) {
 	os.Stdout = menderCmdSubcommandsCliHelp
 
 	// get "command with subcommands" level help
-	err = SetupCLI([]string{"mender", "snapshot", "-help"})
+	err = SetupCLI([]string{"rdfm", "snapshot", "-help"})
 	assert.NoError(t, err, "calling main with -help should not produce an error")
 
 	// rewind and check
@@ -653,43 +653,43 @@ func TestCliHelpText(t *testing.T) {
 }
 
 func TestDeprecatedArgs(t *testing.T) {
-	err := SetupCLI([]string{"mender", "-install"})
+	err := SetupCLI([]string{"rdfm", "-install"})
 	assert.Error(t, err)
 	assert.Equal(t, "deprecated command \"-install\", use \"install\" instead", err.Error())
 
-	err = SetupCLI([]string{"mender", "-commit"})
+	err = SetupCLI([]string{"rdfm", "-commit"})
 	assert.Error(t, err)
 	assert.Equal(t, "deprecated command \"-commit\", use \"commit\" instead", err.Error())
 
-	err = SetupCLI([]string{"mender", "-rollback"})
+	err = SetupCLI([]string{"rdfm", "-rollback"})
 	assert.Error(t, err)
 	assert.Equal(t, "deprecated command \"-rollback\", use \"rollback\" instead", err.Error())
 
-	err = SetupCLI([]string{"mender", "-daemon"})
+	err = SetupCLI([]string{"rdfm", "-daemon"})
 	assert.Error(t, err)
 	assert.Equal(t, "deprecated command \"-daemon\", use \"daemon\" instead", err.Error())
 
-	err = SetupCLI([]string{"mender", "-bootstrap"})
+	err = SetupCLI([]string{"rdfm", "-bootstrap"})
 	assert.Error(t, err)
 	assert.Equal(t, "deprecated command \"-bootstrap\", use \"bootstrap\" instead", err.Error())
 
-	err = SetupCLI([]string{"mender", "-check-update"})
+	err = SetupCLI([]string{"rdfm", "-check-update"})
 	assert.Error(t, err)
 	assert.Equal(t, "deprecated command \"-check-update\", use \"check-update\" instead", err.Error())
 
-	err = SetupCLI([]string{"mender", "-send-inventory"})
+	err = SetupCLI([]string{"rdfm", "-send-inventory"})
 	assert.Error(t, err)
 	assert.Equal(t, "deprecated command \"-send-inventory\", use \"send-inventory\" instead", err.Error())
 
-	err = SetupCLI([]string{"mender", "-show-artifact"})
+	err = SetupCLI([]string{"rdfm", "-show-artifact"})
 	assert.Error(t, err)
 	assert.Equal(t, "deprecated command \"-show-artifact\", use \"show-artifact\" instead", err.Error())
 
-	err = SetupCLI([]string{"mender", "-info"})
+	err = SetupCLI([]string{"rdfm", "-info"})
 	assert.Error(t, err)
 	assert.Equal(t, "deprecated flag \"-info\", use \"--log-level info\" instead", err.Error())
 
-	err = SetupCLI([]string{"mender", "-debug"})
+	err = SetupCLI([]string{"rdfm", "-debug"})
 	assert.Error(t, err)
 	assert.Equal(t, "deprecated flag \"-debug\", use \"--log-level debug\" instead", err.Error())
 }

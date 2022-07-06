@@ -33,17 +33,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mendersoftware/mender/app/updatecontrolmap"
-	"github.com/mendersoftware/mender/client"
-	"github.com/mendersoftware/mender/conf"
-	"github.com/mendersoftware/mender/datastore"
-	dev "github.com/mendersoftware/mender/device"
-	"github.com/mendersoftware/mender/installer"
-	"github.com/mendersoftware/mender/statescript"
-	"github.com/mendersoftware/mender/store"
-	"github.com/mendersoftware/mender/system"
-	stest "github.com/mendersoftware/mender/system/testing"
-	"github.com/mendersoftware/mender/tests"
+	"github.com/antmicro/rdfm/app/updatecontrolmap"
+	"github.com/antmicro/rdfm/client"
+	"github.com/antmicro/rdfm/conf"
+	"github.com/antmicro/rdfm/datastore"
+	dev "github.com/antmicro/rdfm/device"
+	"github.com/antmicro/rdfm/installer"
+	"github.com/antmicro/rdfm/statescript"
+	"github.com/antmicro/rdfm/store"
+	"github.com/antmicro/rdfm/system"
+	stest "github.com/antmicro/rdfm/system/testing"
+	"github.com/antmicro/rdfm/tests"
 )
 
 type stateTestController struct {
@@ -4899,7 +4899,7 @@ func subProcessSetup(t *testing.T,
 	controller.DeviceTypeFile = path.Join(tmpdir, "device_type")
 	controller.StateScriptPath = path.Join(tmpdir, "scripts")
 
-	artPath := path.Join(tmpdir, "artifact.mender")
+	artPath := path.Join(tmpdir, "artifact.rdfm")
 	updateStream, err := os.Open(artPath)
 	assert.NoError(t, err)
 	controller.updater.fetchUpdateReturnReadCloser = updateStream

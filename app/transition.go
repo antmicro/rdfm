@@ -16,9 +16,9 @@ package app
 import (
 	"strings"
 
-	"github.com/mendersoftware/mender/client"
-	"github.com/mendersoftware/mender/statescript"
-	"github.com/mendersoftware/mender/store"
+	"github.com/antmicro/rdfm/client"
+	"github.com/antmicro/rdfm/statescript"
+	"github.com/antmicro/rdfm/store"
 	"github.com/pkg/errors"
 )
 

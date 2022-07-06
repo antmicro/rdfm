@@ -27,17 +27,17 @@ func TestMainExitCodes(t *testing.T) {
 	// Cache args.
 	args := os.Args
 	// Successfull main call (0)
-	os.Args = []string{"mender", "--version"}
+	os.Args = []string{"rdfm", "--version"}
 	exitCode := doMain()
 	assert.Equal(t, 0, exitCode)
 	// Ambiguous arguments (1)
-	os.Args = []string{"mender", "commit", "install"}
+	os.Args = []string{"rdfm", "commit", "install"}
 	exitCode = doMain()
 	assert.Equal(t, 1, exitCode)
 	// Nothing to commit (2)
 	storeDir, err := ioutil.TempDir("", "temp_store")
 	assert.NoError(t, err)
-	os.Args = []string{"mender", "-d", storeDir, "commit"}
+	os.Args = []string{"rdfm", "-d", storeDir, "commit"}
 	exitCode = doMain()
 	assert.Equal(t, 2, exitCode)
 	os.Args = args
@@ -58,7 +58,7 @@ func TestBinarySize(t *testing.T) {
 	require.NoError(t, err)
 	t.Logf("Go version: %s", string(version))
 
-	programName := "/tmp/mender"
+	programName := "/tmp/rdfm"
 	cmd = exec.Command("go", "build", "-o", programName)
 	err = cmd.Run()
 	if err != nil {

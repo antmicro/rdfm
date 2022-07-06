@@ -21,7 +21,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/mendersoftware/mender-artifact/utils"
-	"github.com/mendersoftware/mender/store"
+	"github.com/antmicro/rdfm/store"
 )
 
 const (

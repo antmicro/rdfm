@@ -20,10 +20,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mendersoftware/mender/client"
-	"github.com/mendersoftware/mender/conf"
-	"github.com/mendersoftware/mender/datastore"
-	"github.com/mendersoftware/mender/store"
+	"github.com/antmicro/rdfm/client"
+	"github.com/antmicro/rdfm/conf"
+	"github.com/antmicro/rdfm/datastore"
+	"github.com/antmicro/rdfm/store"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
