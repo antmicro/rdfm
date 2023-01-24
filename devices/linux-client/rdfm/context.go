@@ -75,7 +75,7 @@ func createMenderDeviceManager(menderConfig *conf.MenderConfig, store *store.DBS
 		return nil, errors.New("config does not contain partition definitions")
 	}
 
-	deltaInstaller := delta.NewDummy(dualRootFsDevice)
+	deltaInstaller := delta.NewDeltaInstaller(dualRootFsDevice)
 	dm := device.NewDeviceManager(deltaInstaller, menderConfig, store)
 	return dm, nil
 }
