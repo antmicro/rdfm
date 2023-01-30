@@ -1,4 +1,4 @@
-package rdfm
+package app
 
 import (
 	"errors"
@@ -20,7 +20,7 @@ type RDFM struct {
 	deviceManager *device.DeviceManager
 }
 
-func NewContext() (*RDFM, error) {
+func NewRdfmContext() (*RDFM, error) {
 	menderConfig, err := loadMenderConfig()
 	if err != nil {
 		return nil, err

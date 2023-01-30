@@ -3,7 +3,7 @@ package cli
 import (
 	"fmt"
 
-	"github.com/antmicro/rdfm/rdfm"
+	"github.com/antmicro/rdfm/app"
 	log "github.com/sirupsen/logrus"
 
 	//  Watch out for package name collisions with the library below
@@ -92,7 +92,7 @@ func dispatchArtifactCommand(c *libcli.Context) error {
 		log.SetLevel(log.WarnLevel)
 	}
 
-	ctx, err := rdfm.NewContext()
+	ctx, err := app.NewRdfmContext()
 	if err != nil {
 		return err
 	}
