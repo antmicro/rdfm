@@ -5,6 +5,7 @@ import (
 	"path"
 
 	"github.com/antmicro/rdfm/delta"
+	"github.com/antmicro/rdfm/helpers"
 	"github.com/mendersoftware/mender/app"
 	"github.com/mendersoftware/mender/client"
 	"github.com/mendersoftware/mender/conf"
@@ -81,10 +82,37 @@ func isDbStoreInitialized(store *store.DBStore) bool {
 }
 
 // Reinitializes the client database
+// The contents of 'artifact_info' and 'provides_info' files in the default config
+// directory are used to reinitialize the default artifact_name and the provides of
+// the currently installed artifact. If reading these files fails, the artifact_name
+// is initialized to 'unknown'.
 func reinitializeDbStore(s *store.DBStore) (*store.DBStore, error) {
+	var data map[string]string
+	var err error
+
 	log.Debug("Reinitializing database")
-	err := s.WriteTransaction(func(txn store.Transaction) error {
-		return datastore.CommitArtifactData(txn, "unknown", "unknown", make(map[string]string), nil)
+
+	artifactName := "unknown"
+	data, err = helpers.LoadKeyValueFile(path.Join(conf.GetConfDirPath(), "artifact_info"))
+	if err == nil && data["artifact_name"] != "" {
+		artifactName = data["artifact_name"]
+		log.Debug("Reinitializing artifact_name from artifact_info: ", artifactName)
+	}
+
+	provides := make(map[string]string)
+	data, err = helpers.LoadKeyValueFile(path.Join(conf.GetConfDirPath(), "provides_info"))
+	if err == nil {
+		if data["artifact_name"] != "" {
+			log.Warn("provides_info file contained artifact_name - this is not allowed, ignoring")
+			delete(data, "artifact_name")
+		}
+
+		provides = data
+		log.Debug("Reinitializing provides from provides_info: ", provides)
+	}
+
+	err = s.WriteTransaction(func(txn store.Transaction) error {
+		return datastore.CommitArtifactData(txn, artifactName, "unknown", provides, nil)
 	})
 
 	if err != nil {
