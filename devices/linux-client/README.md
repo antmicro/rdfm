@@ -47,3 +47,11 @@ make install
 ### Installation notes
 Installing `rdfm` this way does not offer a complete system updater.
 For this, it's recommended to build complete BSPs containing `rdfm` using [meta-rdfm](https://github.com/antmicro/meta-antmicro/tree/master/meta-rdfm) Yocto layer.
+
+## Running tests
+Use the `test` make target to run the unit tests:
+```
+make test
+```
+
+Additionally, run the scripts available in the `scripts/test-docker` directory. These scripts test basic functionality of the RDFM client.
