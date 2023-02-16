@@ -1,6 +1,9 @@
 package cli
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/mendersoftware/mender-artifact/artifact"
 	"github.com/mendersoftware/mender-artifact/awriter"
 	"github.com/urfave/cli"
@@ -66,6 +69,36 @@ func makeCommonArtifactModificationFlags() []cli.Flag {
 	}
 }
 
+// Simple helper to turn "KEY:VALUE"-type pairs into a dictionary
+// Returns an error on failure
+func parseKeyValuePairs(pairs []string) (*map[string]string, error) {
+	dict := map[string]string{}
+	for _, pair := range pairs {
+		parts := strings.Split(pair, ":")
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("malformed key-value pair: %q", pair)
+		}
+		dict[parts[0]] = dict[parts[1]]
+	}
+	return &dict, nil
+}
+
+func parseDependsValues(args []string) (artifact.TypeInfoDepends, error) {
+	typeInfoArtifactDepends, err := parseKeyValuePairs(args)
+	if err != nil {
+		return nil, err
+	}
+	return artifact.NewTypeInfoDepends(*typeInfoArtifactDepends)
+}
+
+func parseProvidesValues(args []string) (artifact.TypeInfoProvides, error) {
+	typeInfoArtifactProvides, err := parseKeyValuePairs(args)
+	if err != nil {
+		return nil, err
+	}
+	return artifact.NewTypeInfoProvides(*typeInfoArtifactProvides)
+}
+
 // This is a helper for extracting common CLI flags across the write subcommands (write rootfs, write delta)
 // A `WriteArtifactArgs` struct is returned, with the values set from the passed in flags.
 func makeCommonArtifactWriterArgs(c *cli.Context) (*awriter.WriteArtifactArgs, error) {
@@ -77,8 +110,14 @@ func makeCommonArtifactWriterArgs(c *cli.Context) (*awriter.WriteArtifactArgs, e
 	providesArtifactGroup := c.String(flagProvidesGroup)
 
 	typeInfoType := writerArtifactFullRootfsType
-	typeInfoArtifactDepends := map[string]interface{}{}
-	typeInfoArtifactProvides := map[string]string{"abc": "def"}
+	typeInfoArtifactDepends, err := parseDependsValues(c.StringSlice(flagDepends))
+	if err != nil {
+		return nil, err
+	}
+	typeInfoArtifactProvides, err := parseProvidesValues(c.StringSlice(flagProvides))
+	if err != nil {
+		return nil, err
+	}
 	typeInfoClearsArtifactProvides := c.StringSlice(flagClearsProvides)
 
 	args := awriter.WriteArtifactArgs{

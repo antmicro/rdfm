@@ -26,6 +26,10 @@ func TestWriteFullRootfsArtifact(t *testing.T) {
 		"--provides-group", "provided_group",
 		"--clears-provides", "cleared_provide",
 		"--clears-provides", "another_cleared_provide",
+		"--provides", "provide1:AAAAAAAAAAAA",
+		"--provides", "provide2:BBBBBBBBBBBB",
+		"--depends", "depend1:11111111",
+		"--depends", "depend2:22222222",
 		"update.img",
 	})
 	assert.Nil(t, err)
@@ -45,4 +49,18 @@ func TestWriteFullRootfsArtifact(t *testing.T) {
 	assert.Equal(t, reader.GetArtifactProvides().ArtifactGroup, "provided_group")
 	assert.Equal(t, reader.GetArtifactProvides().ArtifactName, "dummy_name")
 	assert.Equal(t, reader.MergeArtifactClearsProvides(), []string{"cleared_provide", "another_cleared_provide"})
+
+	provides, err := reader.MergeArtifactProvides()
+	assert.Nil(t, err)
+	assert.Equal(t, provides, map[string]string{
+		"provide1": "AAAAAAAAAAAA",
+		"provide2": "BBBBBBBBBBBB",
+	})
+
+	depends, err := reader.MergeArtifactDepends()
+	assert.Nil(t, err)
+	assert.Equal(t, depends, map[string]string{
+		"depend1": "11111111",
+		"depend2": "22222222",
+	})
 }
