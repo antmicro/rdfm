@@ -33,6 +33,7 @@ func makeCommands() []cli.Command {
 					Usage:       "Create a full rootfs image artifact",
 					Description: "Creates a non-delta artifact containing the complete rootfs partition image to be installed on a target device",
 					Flags:       makeFullRootfsFlags(),
+					ArgsUsage:   "<path to rootfs image>",
 					Action:      writeFullRootfs,
 				},
 				{
