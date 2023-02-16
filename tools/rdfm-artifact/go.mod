@@ -7,6 +7,8 @@ require github.com/mendersoftware/mender-artifact v0.0.0-20230207074115-08058277
 require (
 	github.com/balena-os/circbuf v0.1.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
+	github.com/mattn/go-isatty v0.0.12 // indirect
+	github.com/mendersoftware/progressbar v0.0.3 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
 	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10 // indirect
