@@ -1,17 +1,16 @@
-package main
+package cli
 
 import (
 	"os"
 	"testing"
 
-	"github.com/antmicro/rdfm-artifact/cli"
 	"github.com/mendersoftware/mender-artifact/areader"
 	"github.com/stretchr/testify/assert"
 )
 
 // Test writing a full rootfs artifact, along with its metadata
 func TestWriteFullRootfsArtifact(t *testing.T) {
-	app := cli.NewApp()
+	app := NewApp()
 	err := app.Run([]string{
 		"rdfm-artifact",
 		"write",
