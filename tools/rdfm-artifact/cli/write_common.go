@@ -78,7 +78,7 @@ func parseKeyValuePairs(pairs []string) (*map[string]string, error) {
 		if len(parts) != 2 {
 			return nil, fmt.Errorf("malformed key-value pair: %q", pair)
 		}
-		dict[parts[0]] = dict[parts[1]]
+		dict[parts[0]] = parts[1]
 	}
 	return &dict, nil
 }
