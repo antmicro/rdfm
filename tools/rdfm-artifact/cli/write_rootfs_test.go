@@ -40,26 +40,36 @@ func TestWriteFullRootfsArtifact(t *testing.T) {
 	// Verify whether the artifact looks sane
 	reader := areader.NewReader(f)
 	assert.Nil(t, reader.ReadArtifact())
-	assert.Equal(t, reader.GetInfo().Version, 3)
-	assert.Equal(t, reader.GetArtifactName(), "dummy_name")
-	assert.Equal(t, reader.GetCompatibleDevices(), []string{"dummy_type", "different_dummy_type"})
-	assert.Equal(t, reader.GetArtifactDepends().ArtifactName, []string{"depended_artifact", "another_depended_artifact"})
-	assert.Equal(t, reader.GetArtifactDepends().ArtifactGroup, []string{"depended_group", "another_depended_group"})
-	assert.Equal(t, reader.GetArtifactProvides().ArtifactGroup, "provided_group")
-	assert.Equal(t, reader.GetArtifactProvides().ArtifactName, "dummy_name")
-	assert.Equal(t, reader.MergeArtifactClearsProvides(), []string{"cleared_provide", "another_cleared_provide"})
+	assert.Equal(t, 3, reader.GetInfo().Version)
+	assert.Equal(t, "dummy_name", reader.GetArtifactName())
+	assert.Equal(t, []string{"dummy_type", "different_dummy_type"}, reader.GetCompatibleDevices())
+	assert.Equal(t, []string{"depended_artifact", "another_depended_artifact"}, reader.GetArtifactDepends().ArtifactName)
+	assert.Equal(t, []string{"depended_group", "another_depended_group"}, reader.GetArtifactDepends().ArtifactGroup)
+	assert.Equal(t, "provided_group", reader.GetArtifactProvides().ArtifactGroup)
+	assert.Equal(t, "dummy_name", reader.GetArtifactProvides().ArtifactName)
+	assert.Equal(t, []string{"cleared_provide", "another_cleared_provide"}, reader.MergeArtifactClearsProvides())
 
+	// Merged provides also include the artifact name and group, alongside user-provided values.
 	provides, err := reader.MergeArtifactProvides()
 	assert.Nil(t, err)
-	assert.Equal(t, provides, map[string]string{
-		"provide1": "AAAAAAAAAAAA",
-		"provide2": "BBBBBBBBBBBB",
-	})
+	assert.Equal(t, map[string]string{
+		"artifact_group": "provided_group",
+		"artifact_name":  "dummy_name",
+		"provide1":       "AAAAAAAAAAAA",
+		"provide2":       "BBBBBBBBBBBB",
+	}, provides)
 
+	// Merged depends include all of the dependency values, including device type, artifact name,
+	// group, and the user-specified custom depends values for the artifact.
 	depends, err := reader.MergeArtifactDepends()
 	assert.Nil(t, err)
-	assert.Equal(t, depends, map[string]string{
-		"depend1": "11111111",
-		"depend2": "22222222",
-	})
+	// The artifact library uses map to interface{} for type erasure, which is why
+	// this is a bit messy..
+	assert.Equal(t, map[string]interface{}(map[string]interface{}{
+		"artifact_group": []interface{}{"depended_group", "another_depended_group"},
+		"artifact_name":  []interface{}{"depended_artifact", "another_depended_artifact"},
+		"depend1":        "11111111",
+		"depend2":        "22222222",
+		"device_type":    []interface{}{"dummy_type", "different_dummy_type"},
+	}), depends)
 }
