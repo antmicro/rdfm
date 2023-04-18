@@ -2,7 +2,10 @@ module github.com/antmicro/rdfm-artifact
 
 go 1.19
 
-require github.com/mendersoftware/mender-artifact v0.0.0-20230207074115-080582777c68
+require (
+	github.com/mendersoftware/mender-artifact v0.0.0-20230207074115-080582777c68
+	golang.org/x/sync v0.0.0-20220929204114-8fcdb60fdcc0
+)
 
 require (
 	cloud.google.com/go/compute v1.10.0 // indirect
@@ -10,6 +13,7 @@ require (
 	cloud.google.com/go/kms v1.5.0 // indirect
 	github.com/armon/go-metrics v0.3.9 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
+	github.com/balena-os/circbuf v0.1.3 // indirect
 	github.com/cenkalti/backoff/v3 v3.0.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -55,11 +59,11 @@ require (
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
-	golang.org/x/net v0.0.0-20221014081412-f15817d10f9b // indirect
+	golang.org/x/crypto v0.7.0 // indirect
+	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783 // indirect
-	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10 // indirect
-	golang.org/x/text v0.3.8 // indirect
+	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/text v0.8.0 // indirect
 	golang.org/x/time v0.0.0-20200416051211-89c76fbcd5d1 // indirect
 	google.golang.org/api v0.100.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -71,6 +75,7 @@ require (
 )
 
 require (
+	github.com/balena-os/librsync-go v0.8.5
 	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.4 // indirect
 	github.com/klauspost/pgzip v1.2.5 // indirect
