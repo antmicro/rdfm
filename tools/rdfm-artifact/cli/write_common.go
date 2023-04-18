@@ -27,6 +27,10 @@ const (
 	flagClearsProvides   = "clears-provides"
 	flagProvides         = "provides"
 	flagDepends          = "depends"
+
+	// Keys for specific values in the provides dictionary
+	providesArtifactNameKey = "artifact_name"
+	providesDeviceTypeKey   = "device_type"
 )
 
 // Flags common across the different artifact modification subcommands
