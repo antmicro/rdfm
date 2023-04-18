@@ -71,7 +71,7 @@ func makeCommonArtifactModificationFlags() []cli.Flag {
 
 // Simple helper to turn "KEY:VALUE"-type pairs into a dictionary
 // Returns an error on failure
-func parseKeyValuePairs(pairs []string) (*map[string]string, error) {
+func parseKeyValuePairs(pairs []string) (map[string]string, error) {
 	dict := map[string]string{}
 	for _, pair := range pairs {
 		parts := strings.Split(pair, ":")
@@ -80,7 +80,7 @@ func parseKeyValuePairs(pairs []string) (*map[string]string, error) {
 		}
 		dict[parts[0]] = parts[1]
 	}
-	return &dict, nil
+	return dict, nil
 }
 
 func parseDependsValues(args []string) (artifact.TypeInfoDepends, error) {
@@ -88,7 +88,7 @@ func parseDependsValues(args []string) (artifact.TypeInfoDepends, error) {
 	if err != nil {
 		return nil, err
 	}
-	return artifact.NewTypeInfoDepends(*typeInfoArtifactDepends)
+	return artifact.NewTypeInfoDepends(typeInfoArtifactDepends)
 }
 
 func parseProvidesValues(args []string) (artifact.TypeInfoProvides, error) {
@@ -96,7 +96,7 @@ func parseProvidesValues(args []string) (artifact.TypeInfoProvides, error) {
 	if err != nil {
 		return nil, err
 	}
-	return artifact.NewTypeInfoProvides(*typeInfoArtifactProvides)
+	return artifact.NewTypeInfoProvides(typeInfoArtifactProvides)
 }
 
 // This is a helper for extracting common CLI flags across the write subcommands (write rootfs, write delta)
