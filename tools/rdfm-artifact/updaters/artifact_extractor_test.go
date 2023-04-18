@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/antmicro/rdfm-artifact/updaters"
-	"github.com/mendersoftware/mender-artifact/areader"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,31 +16,15 @@ const (
 )
 
 // This tests the rootfs image extractor helper
-func TestArtifactFileStorer(t *testing.T) {
-	f, err := os.Open(testArtifactPath)
-	assert.Nil(t, err)
-	defer f.Close()
+func TestArtifactExtractor(t *testing.T) {
 
-	storer := updaters.NewUpdateFileStorer()
-
-	// Set up the artifact reader for dumping the rootfs image
-	reader := areader.NewReader(f)
-	err = reader.ReadArtifactHeaders()
+	extractor := updaters.NewArtifactExtractor()
+	err := extractor.Open(testArtifactPath)
 	assert.Nil(t, err)
-	for _, v := range reader.GetHandlers() {
-		v.SetUpdateStorerProducer(updaters.NewUpdateFileStorerFactory(&storer))
-	}
+	defer extractor.Close()
 
 	var g sync.WaitGroup
 	g.Add(2)
-
-	// The artifact reader writes the rootfs image to the pipe in UpdateFileStorer during the ReadArtifactData call
-	go func() {
-		defer g.Done()
-
-		err = reader.ReadArtifactData()
-		assert.Nil(t, err)
-	}()
 
 	// This goroutine is a sink for the file contents from the artifact extractor
 	// We just write the rootfs image to a temp file somewhere
@@ -57,9 +40,13 @@ func TestArtifactFileStorer(t *testing.T) {
 		}()
 
 		// We just copy the file contents to a temp file here
-		written, err := io.Copy(out, storer.FileContentReader)
+		written, err := io.Copy(out, extractor.Reader())
 		assert.Nil(t, err)
 		// Checking the length is good enough
 		assert.Equal(t, written, int64(testArtifactRootfsImageSize))
 	}()
+
+	// The artifact reader writes the rootfs image to the pipe in UpdateFileStorer during the ReadArtifactData call
+	err = extractor.Extract()
+	assert.Nil(t, err)
 }
