@@ -2,21 +2,14 @@ package cli
 
 import (
 	"fmt"
-	"os"
+	"log"
 
-	"github.com/mendersoftware/mender-artifact/artifact"
-	"github.com/mendersoftware/mender-artifact/awriter"
-	"github.com/mendersoftware/mender-artifact/handlers"
+	"github.com/antmicro/rdfm-artifact/writers"
 	"github.com/urfave/cli"
 )
 
 func makeFullRootfsFlags() []cli.Flag {
-	return append(makeCommonArtifactModificationFlags(),
-		cli.StringFlag{
-			Name:  flagOutputPathName,
-			Usage: "path to the output artifact",
-			Value: defaultFullArtifactPath,
-		})
+	return makeCommonArtifactModificationFlags()
 }
 
 func writeFullRootfs(c *cli.Context) error {
@@ -25,25 +18,27 @@ func writeFullRootfs(c *cli.Context) error {
 	}
 	inputRootfsImage := c.Args().Get(0)
 
-	args, err := makeCommonArtifactWriterArgs(c)
+	outputPath := parseOutputPath(c)
+	payloadProvides, err := parsePayloadProvides(c)
 	if err != nil {
 		return err
 	}
-	args.Updates = &awriter.Updates{
-		Updates: []handlers.Composer{handlers.NewRootfsV3(inputRootfsImage)},
-	}
-
-	f, err := os.OpenFile(c.String(flagOutputPathName), os.O_CREATE|os.O_WRONLY, 0660)
+	payloadDepends, err := parsePayloadDepends(c)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	payloadClearsProvides := parsePayloadClearsProvides(c)
+	artifactName, artifactGroup := parseArtifactName(c), parseArtifactGroup(c)
+	compatArtifacts, compatDevices, compatGroups := parseArtifactCompatibleArtifacts(c), parseArtifactCompatibleDevices(c), parseArtifactCompatibleGroups(c)
 
-	writer := awriter.NewWriter(f, artifact.NewCompressorNone())
-	err = writer.WriteArtifact(args)
-	if err != nil {
-		return err
-	}
+	writer := writers.NewArtifactWriter(outputPath)
+	writer.WithArtifactProvides(artifactName, artifactGroup)
+	writer.WithArtifactDepends(compatArtifacts, compatDevices, compatGroups)
+	writer.WithPayloadProvides(payloadProvides)
+	writer.WithPayloadDepends(payloadDepends)
+	writer.WithPayloadClearsProvides(payloadClearsProvides)
+	writer.WithFullRootfsPayload(inputRootfsImage)
 
-	return nil
+	log.Println("Writing full rootfs artifact...")
+	return writer.Write()
 }
