@@ -1,7 +1,9 @@
 package deltas
 
 import (
+	"fmt"
 	"io"
+	"os"
 
 	"github.com/antmicro/rdfm-artifact/updaters"
 	"github.com/balena-os/librsync-go"
@@ -11,31 +13,30 @@ import (
 type ArtifactDelta struct {
 	baseArtifactPath   string
 	targetArtifactPath string
-	deltaReader        *io.PipeReader
-	deltaWriter        *io.PipeWriter
+	outputDeltaPath    string
 }
 
 func NewArtifactDelta(basePath string, targetPath string) ArtifactDelta {
-	r, w := io.Pipe()
 	return ArtifactDelta{
 		baseArtifactPath:   basePath,
 		targetArtifactPath: targetPath,
-		deltaReader:        r,
-		deltaWriter:        w,
+		outputDeltaPath:    "",
 	}
 }
 
 // Calculate the delta between the rootfs images contained within the input artifacts
-func (d *ArtifactDelta) Delta() error {
+// The deltas are saved to a temporary file with the correct name for support in RDFM
+// Returns path to the temporary file containing raw deltas, or an error on failure.
+func (d *ArtifactDelta) Delta() (string, error) {
 	baseImage := updaters.NewArtifactExtractor()
 	if err := baseImage.Open(d.baseArtifactPath); err != nil {
-		return err
+		return "", err
 	}
 	defer baseImage.Close()
 
 	targetImage := updaters.NewArtifactExtractor()
 	if err := targetImage.Open(d.targetArtifactPath); err != nil {
-		return err
+		return "", err
 	}
 	defer targetImage.Close()
 
@@ -53,20 +54,25 @@ func (d *ArtifactDelta) Delta() error {
 		// Calculate the signature
 		signature, err := librsync.Signature(baseImage.Reader(), io.Discard, DeltaBlockLength, DeltaStrongLength, DeltaSignatureType)
 		if err != nil {
-			d.deltaWriter.CloseWithError(err)
 			return err
 		}
 
+		// Save the deltas to a temporary file
+		// This is required, as RDFM expects a specific file name format for proper
+		// detection of deltas
+		f, err := os.CreateTemp(os.TempDir(), fmt.Sprintf("rootfs-image-delta-*.%d.delta", baseImage.PayloadSize()))
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		d.outputDeltaPath = f.Name()
+
 		// Generate the deltas
-		err = librsync.Delta(signature, targetImage.Reader(), d.deltaWriter)
-		d.deltaWriter.CloseWithError(err)
-		return err
+		return librsync.Delta(signature, targetImage.Reader(), f)
 	})
 
-	return g.Wait()
-}
-
-// This returns a pipe that can be used to read the generated deltas
-func (d *ArtifactDelta) Reader() *io.PipeReader {
-	return d.deltaReader
+	if err := g.Wait(); err != nil {
+		return "", err
+	}
+	return d.outputDeltaPath, nil
 }
