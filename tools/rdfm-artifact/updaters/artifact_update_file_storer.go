@@ -15,6 +15,7 @@ import (
 // between a base and target artifacts.
 // This supports only extracting a single file! Multi-file updates are not supported.
 type UpdateFileStorer struct {
+	FileSize          int64
 	FileContentReader *io.PipeReader
 	fileContentWriter *io.PipeWriter
 }
@@ -22,6 +23,7 @@ type UpdateFileStorer struct {
 func NewUpdateFileStorer() UpdateFileStorer {
 	r, w := io.Pipe()
 	return UpdateFileStorer{
+		FileSize:          0,
 		FileContentReader: r,
 		fileContentWriter: w,
 	}
@@ -52,6 +54,7 @@ func (m *UpdateFileStorer) StoreUpdate(r io.Reader, info os.FileInfo) error {
 		m.fileContentWriter.CloseWithError(err)
 		return err
 	}
+	m.FileSize = info.Size()
 
 	m.fileContentWriter.Close()
 	return nil

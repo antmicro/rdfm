@@ -24,6 +24,11 @@ func (e *ArtifactRootfsReader) Reader() *io.PipeReader {
 	return e.storer.FileContentReader
 }
 
+// Returns the file size of the extracted rootfs image
+func (e *ArtifactRootfsReader) PayloadSize() int64 {
+	return e.storer.FileSize
+}
+
 // Open an artifact for extraction
 func (e *ArtifactRootfsReader) Open(path string) error {
 	f, err := os.Open(path)
