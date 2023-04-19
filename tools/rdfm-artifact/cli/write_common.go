@@ -46,6 +46,10 @@ func makeCommonArtifactModificationFlags() []cli.Flag {
 			Usage:    "Device type this artifact is compatible with. Can be provided multiple times",
 			Required: true,
 		},
+		cli.StringFlag{
+			Name:  flagOutputPathName,
+			Usage: "Path to the output artifact. Defaults to " + defaultFullArtifactPath,
+		},
 		cli.StringSliceFlag{
 			Name:  flagDependsArtifacts,
 			Usage: "Artifact names this artifact depends on. Can be provided multiple times",
@@ -101,6 +105,48 @@ func parseProvidesValues(args []string) (artifact.TypeInfoProvides, error) {
 		return nil, err
 	}
 	return artifact.NewTypeInfoProvides(typeInfoArtifactProvides)
+}
+
+func parseArtifactName(c *cli.Context) string {
+	return c.String(flagArtifactName)
+}
+
+func parseArtifactGroup(c *cli.Context) string {
+	return c.String(flagProvidesGroup)
+}
+
+func parseArtifactCompatibleArtifacts(c *cli.Context) []string {
+	return c.StringSlice(flagDependsArtifacts)
+}
+
+func parseArtifactCompatibleDevices(c *cli.Context) []string {
+	return c.StringSlice(flagDeviceType)
+}
+
+func parseArtifactCompatibleGroups(c *cli.Context) []string {
+	return c.StringSlice(flagDependsGroups)
+}
+
+func parsePayloadProvides(c *cli.Context) (map[string]string, error) {
+	v, err := parseKeyValuePairs(c.StringSlice(flagProvides))
+	return v, err
+}
+
+func parsePayloadDepends(c *cli.Context) (map[string]string, error) {
+	v, err := parseKeyValuePairs(c.StringSlice(flagDepends))
+	return v, err
+}
+
+func parsePayloadClearsProvides(c *cli.Context) []string {
+	return c.StringSlice(flagClearsProvides)
+}
+
+func parseOutputPath(c *cli.Context) string {
+	v := c.String(flagOutputPathName)
+	if v == "" {
+		v = defaultFullArtifactPath
+	}
+	return v
 }
 
 // This is a helper for extracting common CLI flags across the write subcommands (write rootfs, write delta)
