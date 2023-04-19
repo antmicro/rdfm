@@ -1,3 +1,4 @@
 rdfm-artifact
 *.rdfm
 *.img
+.vscode/*
