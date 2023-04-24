@@ -85,4 +85,5 @@ require (
 	github.com/remyoudompheng/go-liblzma v0.0.0-20190506200333-81bf2d431b96 // indirect
 	github.com/stretchr/testify v1.8.1
 	github.com/urfave/cli v1.22.12
+	golang.org/x/exp v0.0.0-20230420155640-133eef4313cb
 )
