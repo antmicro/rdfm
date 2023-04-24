@@ -1,6 +1,7 @@
 package writers
 
 import (
+	"io"
 	"os"
 
 	"github.com/antmicro/rdfm-artifact/deltas"
@@ -64,13 +65,45 @@ func (d *ArtifactWriter) WithPayloadClearsProvides(payloadClearsProvides []strin
 	d.args.TypeInfoV3.ClearsArtifactProvides = payloadClearsProvides
 }
 
+func calculatePayloadChecksum(payload string) (string, error) {
+	checksum := artifact.NewWriterChecksum(io.Discard)
+	image, err := os.Open(payload)
+	if err != nil {
+		return "", err
+	}
+	defer image.Close()
+
+	if _, err = io.Copy(checksum, image); err != nil {
+		return "", err
+	}
+
+	return string(checksum.Checksum()), nil
+}
+
 // Below, "Updates" is equivalent to "payload"
 // The "composer" is responsible for adding files that are relevant to a certain update type
 // Only support two for now - full rootfs image and delta rootfs image payloads
-func (d *ArtifactWriter) WithFullRootfsPayload(pathToRootfs string) {
+func (d *ArtifactWriter) WithFullRootfsPayload(pathToRootfs string) error {
+	checksum, err := calculatePayloadChecksum(pathToRootfs)
+	if err != nil {
+		return err
+	}
+
+	// Set the proper provides value when writing artifacts
+	if d.args.TypeInfoV3.ArtifactProvides != nil {
+		d.args.TypeInfoV3.ArtifactProvides[rdfmRootfsProvidesChecksum] = checksum
+		d.args.TypeInfoV3.ArtifactProvides[rdfmRootfsProvidesVersion] = d.args.Provides.ArtifactName
+	} else {
+		d.WithPayloadProvides(map[string]string{
+			rdfmRootfsProvidesChecksum: checksum,
+			rdfmRootfsProvidesVersion:  d.args.Provides.ArtifactName,
+		})
+	}
+
 	d.args.Updates.Updates = []handlers.Composer{
 		handlers.NewRootfsV3(pathToRootfs),
 	}
+	return nil
 }
 
 func (d *ArtifactWriter) WithDeltaRootfsPayload(baseArtifactPath string, targetArtifactPath string) error {

@@ -62,10 +62,12 @@ func TestWriteFullRootfsArtifact(t *testing.T) {
 	provides, err := reader.MergeArtifactProvides()
 	assert.Nil(t, err)
 	assert.Equal(t, map[string]string{
-		"artifact_group": "provided_group",
-		"artifact_name":  "dummy_name",
-		"provide1":       "AAAAAAAAAAAA",
-		"provide2":       "BBBBBBBBBBBB",
+		"artifact_group":        "provided_group",
+		"artifact_name":         "dummy_name",
+		"provide1":              "AAAAAAAAAAAA",
+		"provide2":              "BBBBBBBBBBBB",
+		"rootfs-image.checksum": "f0f37130db8accd0ef87b03dc65a3e085b15a90185100589038e4eb98e452ba7",
+		"rootfs-image.version":  "dummy_name",
 	}, provides)
 
 	// Merged depends include all of the dependency values, including device type, artifact name,
