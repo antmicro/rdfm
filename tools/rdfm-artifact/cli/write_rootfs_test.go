@@ -38,7 +38,7 @@ func TestWriteFullRootfsArtifact(t *testing.T) {
 		"--depends", "depend1:11111111",
 		"--depends", "depend2:22222222",
 		"--output-path", testRootfsArtifactPath,
-		testRootfsPayload,
+		"--file", testRootfsPayload,
 	})
 	assert.Nil(t, err)
 

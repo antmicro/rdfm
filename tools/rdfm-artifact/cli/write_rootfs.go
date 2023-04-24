@@ -1,23 +1,31 @@
 package cli
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/antmicro/rdfm-artifact/writers"
 	"github.com/urfave/cli"
 )
 
+const (
+	flagInputFilePath = "file"
+)
+
 func makeFullRootfsFlags() []cli.Flag {
-	return makeCommonArtifactModificationFlags()
+	return append(makeCommonArtifactModificationFlags(),
+		cli.StringFlag{
+			Name:     flagInputFilePath,
+			Usage:    "Path to the rootfs image.",
+			Required: true,
+		})
+}
+
+func parseInputFile(c *cli.Context) string {
+	return c.String(flagInputFilePath)
 }
 
 func writeFullRootfs(c *cli.Context) error {
-	if c.NArg() != 1 {
-		return fmt.Errorf("expected 1 argument (rootfs image), got %d instead", c.NArg())
-	}
-	inputRootfsImage := c.Args().Get(0)
-
+	inputRootfsImage := parseInputFile(c)
 	outputPath := parseOutputPath(c)
 	payloadProvides, err := parsePayloadProvides(c)
 	if err != nil {
