@@ -7,10 +7,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	testDeltaBaseArtifact   = "../tests/data/delta-base.rdfm"
+	testDeltaTargetArtifact = "../tests/data/delta-target.rdfm"
+)
+
 func TestDeltaPatcher(t *testing.T) {
-	patcher := NewArtifactDelta("../tests/data/delta-base.rdfm", "../tests/data/delta-target.rdfm")
+	patcher := NewArtifactDelta(testDeltaBaseArtifact, testDeltaTargetArtifact)
 	path, err := patcher.Delta()
 	assert.Nil(t, err)
+	defer os.Remove(path)
 
 	info, err := os.Stat(path)
 	assert.Nil(t, err)
