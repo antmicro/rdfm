@@ -8,8 +8,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	// Relative to the cli/ directory
+	testRootfsPayload      = "../tests/data/dummy-rootfs.img"
+	testRootfsArtifactPath = "../tests/data/full-rootfs-test.rdfm"
+)
+
 // Test writing a full rootfs artifact, along with its metadata
 func TestWriteFullRootfsArtifact(t *testing.T) {
+	defer os.Remove(testRootfsArtifactPath)
+
 	app := NewApp()
 	err := app.Run([]string{
 		"rdfm-artifact",
@@ -29,11 +37,12 @@ func TestWriteFullRootfsArtifact(t *testing.T) {
 		"--provides", "provide2:BBBBBBBBBBBB",
 		"--depends", "depend1:11111111",
 		"--depends", "depend2:22222222",
-		"update.img",
+		"--output-path", testRootfsArtifactPath,
+		testRootfsPayload,
 	})
 	assert.Nil(t, err)
 
-	f, err := os.Open("artifact.rdfm")
+	f, err := os.Open(testRootfsArtifactPath)
 	assert.Nil(t, err)
 	defer f.Close()
 
