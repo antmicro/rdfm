@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	testArtifactName = "testArtifact.rdfm"
+	testArtifactName = "../tests/data/dummy-artifact.rdfm"
 )
 
 // This tests whether unknown subcommands are passed through properly to mender-artifact
