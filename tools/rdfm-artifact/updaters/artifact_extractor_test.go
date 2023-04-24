@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	testArtifactPath            = "../tests/data/testArtifact.rdfm"
+	testArtifactPath            = "../tests/data/dummy-artifact.rdfm"
 	testArtifactRootfsImageSize = 1048576
 )
 
