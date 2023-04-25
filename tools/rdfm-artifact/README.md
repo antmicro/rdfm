@@ -72,3 +72,7 @@ rdfm-artifact write delta-rootfs-image \
     --target-artifact "target.rdfm" \
     --output-path "base-to-target.rdfm"
 ```
+
+## License
+
+`rdfm-artifact` is licensed under the Apache-2.0 license. For details, see the [LICENSE](LICENSE) file.
