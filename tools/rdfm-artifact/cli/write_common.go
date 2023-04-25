@@ -14,7 +14,7 @@ const (
 	flagOutputPathName   = "output-path"
 	flagArtifactName     = "artifact-name"
 	flagDeviceType       = "device-type"
-	flagDependsArtifacts = "depends-artifacts"
+	flagDependsArtifacts = "artifact-name-depends"
 	flagDependsGroups    = "depends-groups"
 	flagProvidesGroup    = "provides-group"
 	flagClearsProvides   = "clears-provides"

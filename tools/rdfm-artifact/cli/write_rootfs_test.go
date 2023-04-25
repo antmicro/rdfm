@@ -26,8 +26,8 @@ func TestWriteFullRootfsArtifact(t *testing.T) {
 		"--artifact-name", "dummy_name",
 		"--device-type", "dummy_type",
 		"--device-type", "different_dummy_type", // Also test if passing multiple values works properly
-		"--depends-artifacts", "depended_artifact",
-		"--depends-artifacts", "another_depended_artifact",
+		"--artifact-name-depends", "depended_artifact",
+		"--artifact-name-depends", "another_depended_artifact",
 		"--depends-groups", "depended_group",
 		"--depends-groups", "another_depended_group",
 		"--provides-group", "provided_group",
