@@ -1,4 +1,4 @@
-package updaters_test
+package extractors
 
 import (
 	"io"
@@ -6,7 +6,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/antmicro/rdfm-artifact/updaters"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,7 +17,7 @@ const (
 // This tests the rootfs image extractor helper
 func TestArtifactExtractor(t *testing.T) {
 
-	extractor := updaters.NewArtifactExtractor()
+	extractor := NewArtifactExtractor()
 	err := extractor.Open(testArtifactPath)
 	assert.Nil(t, err)
 	defer extractor.Close()

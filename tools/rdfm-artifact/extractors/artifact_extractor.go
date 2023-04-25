@@ -1,4 +1,4 @@
-package updaters
+package extractors
 
 import (
 	"io"

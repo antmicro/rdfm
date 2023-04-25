@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/antmicro/rdfm-artifact/updaters"
+	"github.com/antmicro/rdfm-artifact/extractors"
 	"github.com/balena-os/librsync-go"
 	"golang.org/x/sync/errgroup"
 )
@@ -28,13 +28,13 @@ func NewArtifactDelta(basePath string, targetPath string) ArtifactDelta {
 // The deltas are saved to a temporary file with the correct name for support in RDFM
 // Returns path to the temporary file containing raw deltas, or an error on failure.
 func (d *ArtifactDelta) Delta() (string, error) {
-	baseImage := updaters.NewArtifactExtractor()
+	baseImage := extractors.NewArtifactExtractor()
 	if err := baseImage.Open(d.baseArtifactPath); err != nil {
 		return "", err
 	}
 	defer baseImage.Close()
 
-	targetImage := updaters.NewArtifactExtractor()
+	targetImage := extractors.NewArtifactExtractor()
 	if err := targetImage.Open(d.targetArtifactPath); err != nil {
 		return "", err
 	}
