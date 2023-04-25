@@ -26,16 +26,6 @@ const (
 func makeCommonArtifactModificationFlags() []cli.Flag {
 	return []cli.Flag{
 		cli.StringFlag{
-			Name:     flagArtifactName,
-			Usage:    "Name of the artifact",
-			Required: true,
-		},
-		cli.StringSliceFlag{
-			Name:     flagDeviceType,
-			Usage:    "Device type this artifact is compatible with. Can be provided multiple times",
-			Required: true,
-		},
-		cli.StringFlag{
 			Name:  flagOutputPathName,
 			Usage: "Path to the output artifact. Defaults to " + defaultFullArtifactPath,
 		},

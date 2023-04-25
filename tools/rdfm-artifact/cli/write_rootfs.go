@@ -14,6 +14,16 @@ const (
 func makeFullRootfsFlags() []cli.Flag {
 	return append(makeCommonArtifactModificationFlags(),
 		cli.StringFlag{
+			Name:     flagArtifactName,
+			Usage:    "Name of the artifact",
+			Required: true,
+		},
+		cli.StringSliceFlag{
+			Name:     flagDeviceType,
+			Usage:    "Device type this artifact is compatible with. Can be provided multiple times",
+			Required: true,
+		},
+		cli.StringFlag{
 			Name:     flagInputFilePath,
 			Usage:    "Path to the rootfs image.",
 			Required: true,

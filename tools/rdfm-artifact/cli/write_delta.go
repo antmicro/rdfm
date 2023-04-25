@@ -15,6 +15,14 @@ const (
 func makeDeltaRootfsFlags() []cli.Flag {
 	return append(makeCommonArtifactModificationFlags(),
 		cli.StringFlag{
+			Name:  flagArtifactName,
+			Usage: "Name of the artifact",
+		},
+		cli.StringSliceFlag{
+			Name:  flagDeviceType,
+			Usage: "Device type this artifact is compatible with. Can be provided multiple times",
+		},
+		cli.StringFlag{
 			Name:     flagBaseArtifactPath,
 			Usage:    "Path to the base artifact",
 			Required: true,
