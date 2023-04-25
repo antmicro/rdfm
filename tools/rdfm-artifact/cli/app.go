@@ -8,14 +8,16 @@ import (
 const (
 	cliToolName        = "rdfm-artifact"
 	cliToolDescription = "manage creation of RDFM artifacts"
-	cliToolVersion     = "0.1.0"
 )
+
+// Version of the rdfm-artifact CLI tool
+var Version = "unknown"
 
 func NewApp() *cli.App {
 	app := &cli.App{
 		Name:    cliToolName,
 		Usage:   cliToolDescription,
-		Version: cliToolVersion,
+		Version: Version,
 	}
 	app.Commands = makeCommands()
 	app.Flags = makeFlags()
