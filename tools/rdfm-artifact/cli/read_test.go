@@ -11,9 +11,7 @@ const (
 	testArtifactName = "../tests/data/dummy-artifact.rdfm"
 )
 
-// This tests whether unknown subcommands are passed through properly to mender-artifact
-// This should return a success status (mender-artifact was called successfully)
-func TestMenderArtifactPassthrough(t *testing.T) {
+func TestReadArtifact(t *testing.T) {
 	if _, err := os.Stat(testArtifactName); err != nil {
 		t.Skipf("Test artifact %s does not exist - skipping!", testArtifactName)
 	}
@@ -21,7 +19,7 @@ func TestMenderArtifactPassthrough(t *testing.T) {
 	app := NewApp()
 	err := app.Run([]string{
 		"rdfm-artifact",
-		"dump",
+		"read",
 		testArtifactName,
 	})
 	assert.Nil(t, err)

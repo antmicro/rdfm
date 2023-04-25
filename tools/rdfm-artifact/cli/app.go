@@ -1,7 +1,6 @@
 package cli
 
 import (
-	artifactcli "github.com/mendersoftware/mender-artifact/cli"
 	"github.com/urfave/cli"
 )
 
@@ -21,25 +20,21 @@ func NewApp() *cli.App {
 	}
 	app.Commands = makeCommands()
 	app.Flags = makeFlags()
-	app.Action = handleBlankCommands
 
 	return app
 }
 
-// This handles both the case when there is no subcommand provided,
-// and when a subcommand which is not defined below was given.
-// We exploit this to "implement" the remaining functionality of mender-artifact
-// by calling into its cli.App with the proper arguments
-func handleBlankCommands(c *cli.Context) error {
-	if len(c.Args()) == 0 {
-		return nil
-	}
-	// argv[0] is the name of the executable
-	return artifactcli.Run(append([]string{"mender-artifact"}, c.Args()...))
-}
-
 func makeCommands() []cli.Command {
 	return []cli.Command{
+		{
+			Name:        "read",
+			Aliases:     []string{"r"},
+			Usage:       "Read artifact contents",
+			ArgsUsage:   "<path to artifact>",
+			HelpName:    "rdfm-artifact read",
+			Description: "Allows reading the contents of an artifact. Displays the artifact metadata and contained payloads.",
+			Action:      readArtifact,
+		},
 		{
 			Name:        "write",
 			Aliases:     []string{"w"},
