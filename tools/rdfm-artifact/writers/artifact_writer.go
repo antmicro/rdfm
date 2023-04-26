@@ -10,7 +10,6 @@ import (
 	"github.com/mendersoftware/mender-artifact/artifact"
 	"github.com/mendersoftware/mender-artifact/awriter"
 	"github.com/mendersoftware/mender-artifact/handlers"
-	"golang.org/x/exp/maps"
 )
 
 // This is a simple wrapper for awriter for easier manipulation of artifact metadata
@@ -118,8 +117,12 @@ func (d *ArtifactWriter) cloneMetaFromArtifact(artifact string) error {
 			return err
 		}
 
-		maps.Copy(payloadProvides, provides.Map())
-		maps.Copy(payloadDepends, deps.Map())
+		for k, v := range provides {
+			payloadProvides[k] = v
+		}
+		for k, v := range deps {
+			payloadDepends[k] = v
+		}
 	}
 	d.WithPayloadProvides(payloadProvides)
 	d.withPayloadDependsTypeErased(payloadDepends)

@@ -1,10 +1,17 @@
 module github.com/antmicro/rdfm-artifact
 
-go 1.19
+go 1.17
 
 require (
 	github.com/mendersoftware/mender-artifact v0.0.0-20230207074115-080582777c68
-	golang.org/x/sync v0.0.0-20220929204114-8fcdb60fdcc0
+	golang.org/x/sync v0.1.0
+)
+
+require (
+	github.com/balena-os/librsync-go v0.8.5
+	github.com/pkg/errors v0.9.1
+	github.com/stretchr/testify v1.8.1
+	github.com/urfave/cli v1.22.12
 )
 
 require (
@@ -43,9 +50,14 @@ require (
 	github.com/hashicorp/vault/api v1.8.3 // indirect
 	github.com/hashicorp/vault/sdk v0.7.0 // indirect
 	github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb // indirect
+	github.com/klauspost/compress v1.15.9 // indirect
+	github.com/klauspost/cpuid/v2 v2.0.4 // indirect
+	github.com/klauspost/pgzip v1.2.5 // indirect
 	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
+	github.com/mendersoftware/openssl v0.0.0-20220610125625-9fe59ddd6ba4 // indirect
 	github.com/mendersoftware/progressbar v0.0.3 // indirect
+	github.com/minio/sha256-simd v1.0.0 // indirect
 	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.0.0 // indirect
@@ -54,6 +66,7 @@ require (
 	github.com/oklog/run v1.0.0 // indirect
 	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/remyoudompheng/go-liblzma v0.0.0-20190506200333-81bf2d431b96 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
@@ -72,18 +85,4 @@ require (
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/square/go-jose.v2 v2.5.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-)
-
-require (
-	github.com/balena-os/librsync-go v0.8.5
-	github.com/klauspost/compress v1.15.9 // indirect
-	github.com/klauspost/cpuid/v2 v2.0.4 // indirect
-	github.com/klauspost/pgzip v1.2.5 // indirect
-	github.com/mendersoftware/openssl v0.0.0-20220610125625-9fe59ddd6ba4 // indirect
-	github.com/minio/sha256-simd v1.0.0 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
-	github.com/remyoudompheng/go-liblzma v0.0.0-20190506200333-81bf2d431b96 // indirect
-	github.com/stretchr/testify v1.8.1
-	github.com/urfave/cli v1.22.12
-	golang.org/x/exp v0.0.0-20230420155640-133eef4313cb
 )
