@@ -7,10 +7,10 @@ if ! which rdfm-artifact; then
 fi
 
 # Create dummy system "images"
-dd if=/dev/random of=vloop0.img bs=512 count=2048
+dd if=/dev/urandom of=vloop0.img bs=512 count=2048 iflag=fullblock
 cp vloop0.img vloop1.img
 # Replace a part of the second image with random data
-dd if=/dev/random of=vloop1.img bs=512 count=2 seek=16 conv=notrunc
+dd if=/dev/urandom of=vloop1.img bs=512 count=2 seek=16 conv=notrunc iflag=fullblock
 # Save the "updated" image - the vloop1 will be overwritten by the tests
 cp vloop1.img vloop1good.img
 
