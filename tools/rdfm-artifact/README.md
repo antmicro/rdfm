@@ -1,9 +1,14 @@
 # rdfm-artifact - artifact creation tool for RDFM
 
+Copyright (c) 2023 [Antmicro](https://www.antmicro.com)
+
+Artifact creation and management utility for RDFM.
+
+## Description
+
 RDFM is an open-source over-the-air (OTA) update set of tools that enables the management and delivery of system releases to embedded Linux devices.
 
-This repository contains the `rdfm-artifact` command line tool. It allows for easy creation and modification of RDFM-compatible artifacts containing rootfs partition images. These artifacts can contain the full partition image,
-
+This repository contains the `rdfm-artifact` command line tool. It allows for easy creation and modification of RDFM-compatible artifacts containing rootfs partition images.
 A basic RDFM artifact consists of a rootfs image, as well as its checksum, metadata and compatibility with certain device types. 
 
 Additionally, `rdfm-artifact` allows for the generation of delta updates, which contain only the differences between two versions of an artifact rather than the entire artifact itself.
@@ -71,6 +76,14 @@ rdfm-artifact write delta-rootfs-image \
     --base-artifact "base.rdfm" \
     --target-artifact "target.rdfm" \
     --output-path "base-to-target.rdfm"
+```
+
+## Running tests
+
+To run `rdfm-artifact` tests, use the `test`  Makefile target:
+
+```
+make test
 ```
 
 ## License
