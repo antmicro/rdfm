@@ -10,6 +10,7 @@ RUN apt-get update \
     liblzma-dev \
     libssl-dev \
     git \
+    ca-certificates \
     && apt-get autoremove && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -u 1000 rdfm-builder
