@@ -19,3 +19,8 @@ test-proxy:
   stage: local-tests
   script:
     - python3 tests/test-proxy.py
+
+test-metadata:
+  stage: local-tests
+  script:
+    - python3 tests/test-metadata.py

