@@ -253,7 +253,7 @@ if __name__ == '__main__':
 
                     elif message == 'LIST':
                         devicenames: list[str] = [device.name for device in connected_devices]
-                        notified_socket.send(encode_json({'Devices': devicenames}))
+                        notified_socket.send(encode_json({'Devices': sorted(devicenames)}))
 
         # exceptions
         for notified_socket in exception_sockets:

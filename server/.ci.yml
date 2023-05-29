@@ -1,0 +1,21 @@
+image: python:3.10-alpine
+before_script:
+    - pip install pexpect
+
+stages:
+  - local-tests
+
+test-arguments:
+  stage: local-tests
+  script:
+    - python3 tests/test-arguments.py
+
+test-list-devices:
+  stage: local-tests
+  script:
+    - python3 tests/test-list-devices.py
+
+test-proxy:
+  stage: local-tests
+  script:
+    - python3 tests/test-proxy.py

@@ -1,0 +1,62 @@
+version: "3.6"
+
+services:
+  server:
+    build:
+      context: ../..
+      dockerfile: Dockerfile_server
+    ports:
+      - "1234:1234"
+    expose:
+      - "1234"
+    networks:
+      test:
+        ipv4_address: 172.16.100.2
+
+  user1:
+    build:
+      context: ../..
+      dockerfile: Dockerfile_client
+    depends_on:
+      - server
+    environment:
+      - NAME=u1
+      - CLIENT_TYPE=USER
+    networks:
+      test:
+        ipv4_address: 172.16.100.3
+
+  device1:
+    build:
+      context: ../..
+      dockerfile: Dockerfile_client
+    depends_on:
+      - server
+    environment:
+      - NAME=d1
+      - CLIENT_TYPE=DEVICE
+    networks:
+      test:
+        ipv4_address: 172.16.100.4
+
+  device2:
+    build:
+      context: ../..
+      dockerfile: Dockerfile_client
+    depends_on:
+      - server
+    environment:
+      - NAME=d2
+      - CLIENT_TYPE=DEVICE
+    networks:
+      test:
+        ipv4_address: 172.16.100.5
+
+networks:
+  test:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.100.0/24
+
+# to test connection use "python client.py -hostname 0.0.0.0 USER u3"

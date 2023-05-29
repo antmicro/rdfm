@@ -43,7 +43,7 @@ def recv_from_server(server: socket.socket) -> None:
                     
                 message_length: int = int(decode_json(message_header))
                 message: dict = json.loads(server.recv(message_length).decode('utf-8'))
-                print(message)
+                print('\r', message, end=f'\n{client.name} > ')
 
                 # Print message
                 if 'request' in message:
