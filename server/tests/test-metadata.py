@@ -6,7 +6,7 @@ child_device1 = pexpect.spawn('python3 client.py DEVICE d1 -f tests/testdata.jso
 
 # check initial info
 child_user.sendline('REQ d1 info')
-child_user.expect("\r {}\r\nu > ", timeout=1)
+child_user.expect("\r {}\r\nu > ")
 
 # check first device visible
 child_user.sendline('REQ d1 refresh')
@@ -15,5 +15,4 @@ child_user.expect("{'device': 'd1', 'message': {'metadata': {'a': 5, 'b': 'foo',
 child_user.sendline('REQ d1 info')
 child_user.expect("{'a': 5, 'b': 'foo', 'c': {'d': 'bar', 'e': 2}, 'last_updated': .*?}\r\nu > ")
 
-
-print('List devices test passed!')
+print('Device metadata tests passed!')

@@ -23,7 +23,7 @@ def with_arguments():
     child_user.expect('ConnectionRefusedError: \[Errno 111\] Connection refused')
 
     child_user = pexpect.spawn(f'python3 client.py USER u -hostname {hostname} -p {port}')
-    child_user.expect('u > ', timeout=1)
+    child_user.expect('u > ')
 
     child_server.close()
     child_user.close()

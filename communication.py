@@ -1,11 +1,10 @@
-from __future__ import annotations
 import socket
 import json
+import sys
 from enum import Enum
 from datetime import datetime
 from abc import abstractmethod
-
-from typing import Optional
+from typing import Optional, cast
 
 HEADER_LENGTH = 10
 
@@ -13,13 +12,13 @@ class ClientType(Enum):
     USER = "USER",
     DEVICE = "DEVICE"
 
-class Client():
+class Client:
     def __init__(self, name: str, socket: socket.socket):
         self.name = name
-        self.socket = socket
+        self._socket = socket
 
     @staticmethod
-    def registration_packet(client_type: str, name: str) -> bytes:
+    def registration_packet(client_type: str, name: str) -> dict:
         """Creates registration packet to send to the server
 
         Args:
@@ -27,32 +26,50 @@ class Client():
             name: With what name the device wants to be identified
 
         Returns:
-            Serialized json to register a client in the server
+            Registration request for a client in the server
         """
         registration_request = {
             'type': client_type,
             'name': name
         }
-        return encode_json(registration_request)
+        return registration_request
     
+    def get_server_addr(self) -> tuple[str, int]:
+        """Wrapper for getting address of the server from the socket
+
+        Returns:
+            Address of the server
+        """
+        return self._socket.getsockname()
+    
+
     def send(self, message: dict) -> None:
         """Wrapper for message sending
         
         Args:
             message: To send
         """
-        self.socket.send(encode_json(message))
+        self._socket.send(encode_json(message))
+
+    def receive(self) -> Optional[dict]:
+        """Wrapper for message receiving
+        
+        Returns:
+            Received message
+        """
+        return receive_message(self._socket)
 
     @abstractmethod
-    def handle_request(self, request: str | dict) -> str:
+    def handle_request(self, request: dict) -> Optional[dict]:
         """Constructs reply for servers request
 
         Args:
             request: request from the server
 
-        Returns: constructed reply to send to the server
+        Returns:
+            Constructed reply to send to the server
         """
-        None
+        pass
 
 class Device(Client):
     def __init__(self, name: str, socket: socket.socket):
@@ -71,44 +88,25 @@ class Device(Client):
             self.metadata['last_updated'] = str(datetime.now())
         #TODO: other methods of gathering metadata
 
-    def handle_request(self, request: str | dict) -> str:
+    def handle_request(self, request: dict) -> Optional[dict]:
         if request == 'refresh':
             self.update_metadata()
             return {'metadata': self.metadata}
+        return None
 
 class User(Client):
-    def proxy_request(self, device_name: str) -> str:
-        """Send proxy connection request to the device
+    def handle_request(self, request: dict) -> Optional[dict]:
 
-        Args:
-            device_name: Name of the device that we want to connect to
-        """
-        return f"REQ {device_name} proxy"
+        return super().handle_request(request)
     
-    def device_info_request(self, device_name: str) -> str:
-        """Send request for the device metadata
-
-        Args:
-            device_name: Name of the device that we want to connect to
-        """
-        return f"REQ {device_name} info"
-    
-    def device_refresh_info_request(self, device_name: str) -> str:
-        """Send request to force device to upload fresh metadata
-
-        Args:
-            device_name: Name of the device that we want to connect to
-        """
-        return f"REQ {device_name} refresh"
-    
-def receive_message(client: socket.socket):
+def receive_message(client: socket.socket) -> Optional[dict]:
     """Handles message receiving
 
     Args:
         client: Socket from which to receive a message
 
     Returns:
-        Optional[JSON]: Received message if it was succesful
+        Received message if it was succesful
     """
     try:
         message_header: bytes = client.recv(HEADER_LENGTH)
@@ -117,16 +115,16 @@ def receive_message(client: socket.socket):
         if not message_header:
             return None
         
-        message_length = int(decode_json(message_header))
+        message_length = cast(int, decode_json(message_header))
 
-        return decode_json(client.recv(message_length))
+        return cast(dict, decode_json(client.recv(message_length)))
 
     except Exception as e:
         # client closed connection violently
         print(f'exception receiving message: {str(e)}'),
         return None
     
-def encode_json(to_encode: dict) -> bytes:
+def encode_json(to_encode: dict | str) -> bytes:
     """Encodes a dict structure to send over the tcp socket
 
     Args:
@@ -174,7 +172,7 @@ def create_client(client_type: str, name: str, socket: socket.socket) -> Optiona
                 return None
         except AttributeError:
             print(f'Error: {client_type} is not a valid client type')
-            return None
+            sys.exit(1)
         
 def create_listening_socket(hostname: str, port: int = 0) -> socket.socket:
         """Creates listening socket
