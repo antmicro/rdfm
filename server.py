@@ -7,6 +7,8 @@ from typing import Optional
 from communication import *
 from proxy import Proxy
 
+REQUEST_SCHEMA = {}
+
 class Server:
     def __init__(self, hostname: str, port: int):
         self._hostname: str = hostname
@@ -19,26 +21,25 @@ class Server:
         self.connected_devices: list[Device] = []
         self.clients: dict[socket.socket, Client] = {}
     
-    def connect_client(self, client_registration_request: dict,
+    def connect_client(self, new_client_data: dict,
                         client_socket: socket.socket) -> None:
         """Start monitoring the connected client.
         Add it to the device or user containers and active sockets for data transmission
 
         Args:
-            client_registration_request: Received client registration data
+            new_client_data: Client metadata from the new client request
             client_socket: Newly connected client socket
         """
-        print(f'client type: {client_registration_request["type"]}')
-        client: Optional[Client] = create_client(client_registration_request['type'],
-                                 client_registration_request['name'], client_socket)
-        
-        assert client is not None
-        self.clients[client_socket] = client
-        self.sockets.append(client_socket)
-        if isinstance(client, User):
-            self.connected_users.append(client)
-        if isinstance(client, Device):
-            self.connected_devices.append(client)
+        print(f'client group: {new_client_data["group"]}')
+        client = create_client(new_client_data['group'],
+                                 new_client_data['name'], client_socket)
+        if client:
+            self.clients[client_socket] = client
+            self.sockets.append(client_socket)
+            if isinstance(client, User):
+                self.connected_users.append(client)
+            if isinstance(client, Device):
+                self.connected_devices.append(client)
 
     def disconnect_client(self, client_socket: socket.socket) -> None:
         """Stop monitoring the disconnected client.
@@ -47,15 +48,15 @@ class Server:
         Args:
             client_socket: Detected disconnected client socket
         """
-        client: Client = self.clients[client_socket]
-        if client:
+        if client_socket in self.clients:
+            client = self.clients[client_socket]
             del self.clients[client_socket]
             self.sockets.remove(client_socket)
             if isinstance(client, User):
                 self.connected_users.remove(client)
             if isinstance(client, Device):
                 self.connected_devices.remove(client)
-                print('disconnected device')
+                print('Disconnected device')
 
     def get_device_by_name(self, name: str) -> Optional[Device]:
         """Finds and returns connected device with specified name
@@ -70,39 +71,6 @@ class Server:
             if device.name == name:
                 return device
         return None
-    
-    def send_request_to_device(self, name: str, request: str) -> None:
-        """Find device with given name and send request to it
-
-        Args:
-            name: Name of the device to send request to
-            request: Name of the request
-
-        Throws:
-            NameError: There is no connected device with specified name
-        """
-        device: Optional[Device] = self.get_device_by_name(name)
-        try:
-            assert device is not None
-            device.send({ 'request': request })
-            print('Sent request')
-        except NameError:
-            print(f'Error: There is no connected device named {name}')
-    
-    def broadcast_device_to_users(self, device: Device, message: dict) -> None:
-        """Broadcast various information about the device to all connected users
-        Example: Broadcasting that the new device has just connected
-
-        Args:
-            device: About which device we're broadcasting a message
-            message: What information we want to broadcast
-        """
-        for user in self.connected_users:
-            print(f'broadcasted to {user.name}')
-            user.send({
-                'device': device.name,
-                'message': message
-            })
 
     def handle_request(self, request: str | dict, client: Client) -> None:
         """Parse request and perform actions depending on the type
@@ -111,35 +79,30 @@ class Server:
             request: Request that the client received
             client: Recipent of the request
         """
-        if isinstance(request, str) and request.startswith('REQ'):
-            # parse request
-            result = re.match(r"^REQ (.*?) (.*?)$", request)
-            if result:
-                device_name, request_type = result.group(1), result.group(2).lower()
-                device = self.get_device_by_name(device_name)
+        print(f'Request {request["method"]} from {client.name}')
 
-                print(f'Request {request_type} from {client.name}')
-                if device:
-                    if request_type == 'proxy':
-                        print(f'Received proxy request for {device_name}')
-                        assert isinstance(client, User)
-                        proxy = Proxy(self._hostname, client, device)
-                                        
-                        t = Thread(target=proxy.run)
-                        t.start()
-
-                    elif request_type == 'info':
-                        print(f'Received info request for {device_name}')
-                        client.send(device.metadata)
-
-                    elif request_type == 'refresh':
-                        print(f'Received refresh request for {device_name}')
-                        device.send('refresh')
-                        pass
-
-        elif request == 'LIST':
+        # Server requests
+        if request['method'] == 'list':
             devicenames: list[str] = [device.name for device in self.connected_devices]
-            client.send({'Devices': sorted(devicenames)})
+            client.send(create_alert({'devices': sorted(devicenames)}))
+            return
+
+        # Device requests
+        device = self.get_device_by_name(request['device_name'])
+        assert device is not None
+
+        if request['method'] == 'proxy':
+            assert isinstance(client, User)
+            proxy = Proxy(self._hostname, client, device)
+            t = Thread(target=proxy.run)
+            t.start()
+
+        elif request['method'] == 'info':
+            client.send(create_alert(device.metadata))
+
+        elif request['method'] == 'update':
+            device.send({ 'method': 'update' })
+            
     
     def run(self) -> None:
         """Main server loop for receiving and sending requests"""
@@ -158,25 +121,26 @@ class Server:
                     if not client_registration_request:
                         continue
                     assert client_registration_request is not None
+                    jsonschema.validate(instance=client_registration_request, schema=REQUEST_SCHEMA)
                     print('New connection', client_registration_request)
 
-                    self.connect_client(client_registration_request, client_socket)
+                    self.connect_client(client_registration_request['client'], client_socket)
                     print('Accepted new connection from {}:{}, {}'
-                        .format(*client_address, client_registration_request['name'],
+                        .format(*client_address, client_registration_request['client']['name'],
                                 self.clients[client_socket]))
 
                 # existing socket sends message
                 else:
                     message: Optional[dict] = receive_message(notified_socket)
-
                     # identify sender
                     client: Client = self.clients[notified_socket]
 
                     # client disconnected
                     if not message:
                         print('Closed connection from: {}'.format(self.clients[notified_socket].name))
-                        self.disconnect_client(client_socket)
+                        self.disconnect_client(notified_socket)
                         continue
+                    assert message is not None
 
                     assert message is not None
                     print(f'Received message from {client.name}: {message}')
@@ -185,7 +149,6 @@ class Server:
                     if isinstance(client, Device):
                         if 'metadata' in message:
                             client.metadata = message['metadata']
-                        self.broadcast_device_to_users(client, message)
 
                     else:
                         self.handle_request(message, client)
@@ -203,6 +166,9 @@ if __name__ == '__main__':
     parser.add_argument('-port', metavar='p', type=int, default=1234,
                         help='listening port')
     args = parser.parse_args()
+
+    with open ('json_schemas/request_schema.json', 'r') as f:
+        REQUEST_SCHEMA = json.loads(f.read())
 
     server = Server(args.hostname, args.port)
     server.run()

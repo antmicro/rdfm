@@ -1,0 +1,155 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Request",
+    "description": "A request to the rdfm-mgmt server",
+    "type": "object",
+    "$ref": "#/$defs/Request",
+    "$defs": {
+        "Request": {
+            "descrption": "Standard requests defined in this protocol",
+            "oneOf": [
+                { "$ref": "#/$defs/ServerRequest" },
+                { "$ref": "#/$defs/DeviceRequest" },
+                { "$ref": "#/$defs/ClientRequest" }
+            ],
+            "required": [ "method" ]
+        },
+        "ServerRequest": {
+            "description": "Requests sent to server",
+            "oneOf": [
+                { "$ref": "#/$defs/ListRequest" },
+                { "$ref": "#/$defs/MetadataRequest" },
+                { "$ref": "#/$defs/RegisterRequest" }
+            ]
+        },
+        "DeviceRequest": {
+            "description": "Requests that client sends to server to interact with the device",
+            "type": "object",
+            "properties": {
+                "method": {
+                    "type": "string",
+                    "enum": [
+                        "proxy",
+                        "info",
+                        "update"
+                    ]
+                },
+                "device_name": {
+                    "type": "string"
+                }
+            },
+            "required": [ "device_name" ]
+        },
+        "ClientRequest": {
+            "description": "Requests sent from server to client",
+            "oneOf": [
+                { "$ref": "#/$defs/UpdateRequest"},
+                { "$ref": "#/$defs/ConnectReverse" },
+                { "$ref": "#/$defs/Alert" }
+            ],
+            "not" : { "required" : [ "device_name" ] }
+        },
+        "RegisterRequest": {
+            "description": "Request sent by device to the server after connection",
+            "type": "object",
+            "properties": {
+                "method": {
+                    "type": "string",
+                    "enum": [ "register" ]
+                },
+                "client": {
+                    "$ref": "#/$defs/Client"
+                }
+            },
+            "required": [ "client" ]
+        },
+        "ListRequest": {
+            "description": "Requests for getting a list of connected devices",
+            "type": "object",
+            "properties": {
+                "method": {
+                    "type": "string",
+                    "enum": [ "list" ]
+                }
+            }
+        },
+        "UpdateRequest": {
+            "description": "Requests updated metadata from the device",
+            "type": "object",
+            "properties": {
+                "method": {
+                    "type": "string",
+                    "enum": [ "update" ]
+                }
+            }
+        },
+        "ConnectReverse": {
+            "description": "Request with port to connect with reverse shell to the server",
+            "type": "object",
+            "properties": {
+                "properties": {
+                    "method": {
+                        "type": "string",
+                        "enum": [ "connect_reverse" ]
+                    }
+                },
+                "port": {
+                    "$ref": "#/$defs/Port"
+                }
+            },
+            "required": [ "port" ]
+        },
+        
+        "Client": {
+            "description": "Client metadata sent in registration request",
+            "type": "object",
+            "properties": {
+                "group": {
+                    "description": "Group of the client",
+                    "type": "string",
+                    "enum": [ "USER", "DEVICE" ]
+                },
+                "name": {
+                    "type": "string"
+                }
+            },
+            "required": [ "group", "name" ]
+        },
+        "Port": {
+            "description": "Connection port",
+            "type": "integer"
+        },
+        "MetadataRequest": {
+            "description": "Request from the device to update metadata stored on the server",
+            "type": "object",
+            "properties": {
+                "method": {
+                    "type": "string",
+                    "enum": [ "metadata" ]
+                },
+                "metadata": {
+                    "type": "object",
+                    "$ref": "#/$defs/Metadata"
+                }
+            }
+        },
+        "Metadata": {
+            "descrption": "Object containing various informations",
+            "type": "object"
+        },
+        "Alert": {
+            "description": "Message sent not meant to be responded to",
+            "type": "object",
+            "properties": {
+                "method": {
+                    "type": "string",
+                    "enum": [ "alert" ]
+                },
+                "alert": {
+                    "description": "Contents",
+                    "type": "object"
+                }
+            }
+        }
+    }
+}

@@ -1,28 +1,37 @@
 import socket
 import errno
 import sys
-import os
-import pty
+import jsonschema
 from threading import Thread
 
 from communication import *
 
-def connect_reverse(host: str, port: int) -> None:
-    """Creates reverse shell connection with the server
+REQUEST_SCHEMA = {}
+
+def parse_request(user_input: str) -> dict:
+    """Parses user input to the JSON request
 
     Args:
-        host: Hostname of the server
-        port: At which port to connect to the server
-    """
-    print(f'Connecting to proxy at {port}')
-    s: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((host, port))
+        user_input: Input received from the user shell, example: "REQ d1 proxy"
 
-    # open shell
-    os.dup2(s.fileno(),0)
-    os.dup2(s.fileno(),1)
-    os.dup2(s.fileno(),2)
-    pty.spawn("/bin/sh")
+    Returns:
+        JSON request according to the schema
+    """
+    request = {
+        'method': '',
+    }
+
+    tokens = user_input.split()
+    if tokens:
+        tokens[0] = tokens[0].lower()
+        if tokens[0] == 'req':
+            request['device_name'] = tokens[1]
+            request['method'] = tokens[2]
+        elif tokens[0] == 'list':
+            request['method'] = tokens[0]
+
+    jsonschema.validate(instance=request, schema=REQUEST_SCHEMA)
+    return request
 
 def recv_loop(client: Client) -> None:
     """Receive packets from the server
@@ -43,19 +52,13 @@ def recv_loop(client: Client) -> None:
                     print('Connection closed by the server')
                     sys.exit()
                 assert message is not None
-
+                
                 client_response = client.handle_request(message)
                 if client_response:
+                    print('client response:', client_response)
                     client.send(client_response)
-                print('\r', message, end=f'\n{client.name} > ')
 
-                # Print message
-                if 'request' in message:
-                    if message['request'] == 'proxy':
-                        print('received proxy request')
-                        t = Thread(target=connect_reverse,
-                                   args=(client.get_server_addr()[0], message['port']))
-                        t.start()
+                print('\r', message, end=f'\n{client.name} > ')
 
         except IOError as e:
             if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
@@ -76,7 +79,7 @@ def send_loop(client: Client) -> None:
         message = input(f'{client.name} > ')
 
         if message:
-            client.send(message)
+            client.send(parse_request(message))
 
 if __name__ == '__main__':
     import argparse
@@ -93,6 +96,9 @@ if __name__ == '__main__':
     parser.add_argument('-file', metavar='f', type=str, default='',
                         help='file containing device metadata')
     args = parser.parse_args()
+
+    with open ('json_schemas/request_schema.json', 'r') as f:
+        REQUEST_SCHEMA = json.loads(f.read())
 
     client_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((args.hostname, args.port))

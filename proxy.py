@@ -41,7 +41,7 @@ class Proxy:
     def send_connection_request(self) -> None:
         """Send connection request and new port to the device"""
         self.device.send({
-            'request': 'proxy',
+            'method': 'connect_reverse',
             'port': self._port
         })
 
@@ -67,7 +67,10 @@ class Proxy:
 
                         self.sockets.append(self.proxy_device_socket)
                         # send connection invitation to the user
-                        self.user.send({'message': f'connect to shell at {self._port}'})
+                        self.user.send(create_alert({
+                            'message': 'shell ready to connect',
+                            'port': self._port
+                        }))
                     # user connected
                     else:
                         self.proxy_user_socket, proxy_user_address = self.proxy_listen_socket.accept()
@@ -99,8 +102,8 @@ class Proxy:
                 # send empty message to disconnect new sockets
                 if notified_socket == self.proxy_device_socket and self.proxy_user_socket:
                     assert self.proxy_user_socket is not None
-                    self.proxy_user_socket.send(b'');
+                    self.proxy_user_socket.send(b"");
                 else:
                     assert self.proxy_device_socket is not None
-                    self.proxy_device_socket.send(b'')
+                    self.proxy_device_socket.send(b"")
                 sys.exit()
