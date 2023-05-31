@@ -18,48 +18,49 @@ import (
 )
 
 type RDFM struct {
-	menderConfig  *conf.MenderConfig
+	configuration *conf.MenderConfig
 	store         *store.DBStore
 	deviceManager *device.DeviceManager
 }
 
 func NewRdfmContext() (*RDFM, error) {
-	menderConfig, err := loadMenderConfig()
+	config, err := loadConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	store, err := loadMenderDbStore()
+	store, err := loadDbStore()
 	if err != nil {
 		return nil, err
 	}
 
-	deviceManager, err := createMenderDeviceManager(menderConfig, store)
+	deviceManager, err := createDeviceManager(config, store)
 	if err != nil {
 		return nil, err
 	}
 
 	ctx := RDFM{
-		menderConfig:  menderConfig,
+		configuration: config,
 		store:         store,
 		deviceManager: deviceManager,
 	}
 	return &ctx, nil
 }
 
-func loadMenderConfig() (*conf.MenderConfig, error) {
-	menderConfig, err := conf.LoadConfig(conf.DefaultConfFile, conf.DefaultFallbackConfFile)
+func loadConfig() (*conf.MenderConfig, error) {
+	config, err := conf.LoadConfig(RdfmDefaultConfigPath, RdfmFallbackConfigPath)
 	if err != nil {
 		return nil, errors.New("failed to load configuration from file")
 	}
 
-	if menderConfig.MenderConfigFromFile.DeviceTypeFile != "" {
-		menderConfig.DeviceTypeFile = menderConfig.MenderConfigFromFile.DeviceTypeFile
+	if config.MenderConfigFromFile.DeviceTypeFile != "" {
+		config.DeviceTypeFile = config.MenderConfigFromFile.DeviceTypeFile
 	} else {
-		menderConfig.MenderConfigFromFile.DeviceTypeFile = path.Join(conf.DefaultDataStore, "device_type")
-		menderConfig.DeviceTypeFile = path.Join(conf.DefaultDataStore, "device_type")
+		deviceTypeFile := path.Join(RdfmDataDirectory, "device_type")
+		config.MenderConfigFromFile.DeviceTypeFile = deviceTypeFile
+		config.DeviceTypeFile = deviceTypeFile
 	}
-	return menderConfig, nil
+	return config, nil
 }
 
 // Checks whether the database is initialized by looking at the stored provides
@@ -93,14 +94,14 @@ func reinitializeDbStore(s *store.DBStore) (*store.DBStore, error) {
 	log.Debug("Reinitializing database")
 
 	artifactName := "unknown"
-	data, err = helpers.LoadKeyValueFile(path.Join(conf.GetConfDirPath(), "artifact_info"))
+	data, err = helpers.LoadKeyValueFile(RdfmArtifactInfoPath)
 	if err == nil && data["artifact_name"] != "" {
 		artifactName = data["artifact_name"]
 		log.Debug("Reinitializing artifact_name from artifact_info: ", artifactName)
 	}
 
 	provides := make(map[string]string)
-	data, err = helpers.LoadKeyValueFile(path.Join(conf.GetConfDirPath(), "provides_info"))
+	data, err = helpers.LoadKeyValueFile(RdfmProvidesInfoPath)
 	if err == nil {
 		if data["artifact_name"] != "" {
 			log.Warn("provides_info file contained artifact_name - this is not allowed, ignoring")
@@ -121,8 +122,8 @@ func reinitializeDbStore(s *store.DBStore) (*store.DBStore, error) {
 	return s, nil
 }
 
-func loadMenderDbStore() (*store.DBStore, error) {
-	store := store.NewDBStore(conf.DefaultDataStore)
+func loadDbStore() (*store.DBStore, error) {
+	store := store.NewDBStore(RdfmDataDirectory)
 	if store == nil {
 		return nil, errors.New("failed to load DB store")
 	}
@@ -134,16 +135,16 @@ func loadMenderDbStore() (*store.DBStore, error) {
 	return reinitializeDbStore(store)
 }
 
-func createMenderDeviceManager(menderConfig *conf.MenderConfig, store *store.DBStore) (*device.DeviceManager, error) {
-	bootEnv := installer.NewEnvironment(new(system.OsCalls), menderConfig.BootUtilitiesSetActivePart, menderConfig.BootUtilitiesGetNextActivePart)
+func createDeviceManager(config *conf.MenderConfig, store *store.DBStore) (*device.DeviceManager, error) {
+	bootEnv := installer.NewEnvironment(new(system.OsCalls), config.BootUtilitiesSetActivePart, config.BootUtilitiesGetNextActivePart)
 
-	dualRootFsDevice := installer.NewDualRootfsDevice(bootEnv, new(system.OsCalls), menderConfig.GetDeviceConfig())
+	dualRootFsDevice := installer.NewDualRootfsDevice(bootEnv, new(system.OsCalls), config.GetDeviceConfig())
 	if dualRootFsDevice == nil {
 		return nil, errors.New("config does not contain partition definitions")
 	}
 
 	deltaInstaller := delta.NewDeltaInstaller(dualRootFsDevice)
-	dm := device.NewDeviceManager(deltaInstaller, menderConfig, store)
+	dm := device.NewDeviceManager(deltaInstaller, config, store)
 	return dm, nil
 }
 
@@ -151,21 +152,21 @@ func createMenderDeviceManager(menderConfig *conf.MenderConfig, store *store.DBS
 // This can be either an artifact on the local filesystem, or an HTTP URL
 func (ctx *RDFM) InstallArtifact(path string) error {
 	clientConfig := client.Config{}
-	stateExec := device.NewStateScriptExecutor(ctx.menderConfig)
+	stateExec := device.NewStateScriptExecutor(ctx.configuration)
 
 	return app.DoStandaloneInstall(ctx.deviceManager, path, clientConfig, stateExec, false)
 }
 
 // Attempt to commit the currently installed update
 func (ctx *RDFM) CommitCurrentArtifact() error {
-	stateExec := device.NewStateScriptExecutor(ctx.menderConfig)
+	stateExec := device.NewStateScriptExecutor(ctx.configuration)
 
 	return app.DoStandaloneCommit(ctx.deviceManager, stateExec)
 }
 
 // Attempt to rollback the currently installed update
 func (ctx *RDFM) RollbackCurrentArtifact() error {
-	stateExec := device.NewStateScriptExecutor(ctx.menderConfig)
+	stateExec := device.NewStateScriptExecutor(ctx.configuration)
 
 	return app.DoStandaloneRollback(ctx.deviceManager, stateExec)
 }
