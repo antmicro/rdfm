@@ -8,13 +8,18 @@ System enables to execute parts of the architecture on distributed systems and c
 
 ## System architecture
 
-The system architecture consists of three main parts:
+The system architecture consists of:
 
 ``communication.py`` - Communication protocol used in comunication between server and client instances.
 
 ``server.py`` - Used as a service provider for accessing connected devices informations and estabilish connection with available device services.
 
+``proxy.py`` - Used to manage TCP proxy connection forwarding between user and device.
+
 ``client.py`` - Used to communicate with the server, available for devices and users. For users also acting as a shell panel.
+
+``request_schema.json`` - Contains valid communication requests. Server validates incoming requests with this schema.
+All new instructions definitions should be put here.
 
 :::{figure-md} summary
 ![Architecture summary](images/summary.png)

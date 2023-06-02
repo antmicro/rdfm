@@ -24,6 +24,14 @@ List devices:
 
 ``LIST``
 
+Fetch information about device:
+
+``REQ devicename info``
+
+Requesting device to upload new metadata:
+
+``REQ devicename update ``
+
 Send **proxy** request to a device:
 
 ``REQ devicename proxy``
