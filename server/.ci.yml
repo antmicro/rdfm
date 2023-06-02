@@ -3,7 +3,18 @@ before_script:
   - pip install -r requirements.txt
 
 stages:
+  - code-check
   - local-tests
+
+check-formatting:
+  stage: code-check
+  script:
+    - for f in *.py; do python3 -m pycodestyle "$f"; done
+
+check-typings:
+  stage: code-check
+  script:
+    - for f in *.py; do python3 -m mypy "$f"; done
 
 test-arguments:
   stage: local-tests

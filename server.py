@@ -1,30 +1,33 @@
 import socket
 import select
-import re
 from threading import Thread
 from typing import Optional
+import jsonschema
 
 from communication import *
 from proxy import Proxy
 
 REQUEST_SCHEMA = {}
 
+
 class Server:
     def __init__(self, hostname: str, port: int):
         self._hostname: str = hostname
         self._port: int = port
 
-        self.server_socket: socket.socket = create_listening_socket(hostname, port)
+        self.server_socket: socket.socket = create_listening_socket(
+            hostname, port)
         self.sockets: list[socket.socket] = [self.server_socket]
-        
+
         self.connected_users: list[User] = []
         self.connected_devices: list[Device] = []
         self.clients: dict[socket.socket, Client] = {}
-    
+
     def connect_client(self, new_client_data: dict,
-                        client_socket: socket.socket) -> None:
+                       client_socket: socket.socket) -> None:
         """Start monitoring the connected client.
-        Add it to the device or user containers and active sockets for data transmission
+        Add it to the device or user containers and active sockets for
+        data transmission
 
         Args:
             new_client_data: Client metadata from the new client request
@@ -32,7 +35,7 @@ class Server:
         """
         print(f'client group: {new_client_data["group"]}')
         client = create_client(new_client_data['group'],
-                                 new_client_data['name'], client_socket)
+                               new_client_data['name'], client_socket)
         if client:
             self.clients[client_socket] = client
             self.sockets.append(client_socket)
@@ -72,7 +75,7 @@ class Server:
                 return device
         return None
 
-    def handle_request(self, request: str | dict, client: Client) -> None:
+    def handle_request(self, request: dict, client: Client) -> None:
         """Parse request and perform actions depending on the type
 
         Args:
@@ -83,7 +86,8 @@ class Server:
 
         # Server requests
         if request['method'] == 'list':
-            devicenames: list[str] = [device.name for device in self.connected_devices]
+            devicenames: list[str] = [
+                device.name for device in self.connected_devices]
             client.send(create_alert({'devices': sorted(devicenames)}))
             return
 
@@ -101,33 +105,38 @@ class Server:
             client.send(create_alert(device.metadata))
 
         elif request['method'] == 'update':
-            device.send({ 'method': 'update' })
-            
-    
+            device.send({'method': 'update'})
+
     def run(self) -> None:
         """Main server loop for receiving and sending requests"""
         print(f'Listening for connections on {self._hostname}:{self._port}...')
 
         while True:
-            read_sockets, _, exception_sockets = select.select(self.sockets, [], self.sockets)
+            read_sockets, _, exception_sockets = select.select(
+                self.sockets, [], self.sockets)
 
             # iterate over notified sockets
             for notified_socket in read_sockets:
                 # new connection
                 if notified_socket == self.server_socket:
                     client_socket, client_address = self.server_socket.accept()
-                    client_registration_request: Optional[dict] = receive_message(client_socket)
-                    # disconnected immediately
-                    if not client_registration_request:
-                        continue
-                    assert client_registration_request is not None
-                    jsonschema.validate(instance=client_registration_request, schema=REQUEST_SCHEMA)
-                    print('New connection', client_registration_request)
+                    registration_request: Optional[dict] = receive_message(
+                                                                client_socket)
 
-                    self.connect_client(client_registration_request['client'], client_socket)
+                    # disconnected immediately
+                    if not registration_request:
+                        continue
+                    assert registration_request is not None
+                    jsonschema.validate(instance=registration_request,
+                                        schema=REQUEST_SCHEMA)
+                    print('New connection', registration_request)
+
+                    self.connect_client(
+                        registration_request['client'], client_socket)
                     print('Accepted new connection from {}:{}, {}'
-                        .format(*client_address, client_registration_request['client']['name'],
-                                self.clients[client_socket]))
+                          .format(*client_address,
+                                  registration_request['client']['name'],
+                                  self.clients[client_socket]))
 
                 # existing socket sends message
                 else:
@@ -137,7 +146,8 @@ class Server:
 
                     # client disconnected
                     if not message:
-                        print('Closed connection from: {}'.format(self.clients[notified_socket].name))
+                        print('Closed connection from: {}'.format(
+                            self.clients[notified_socket].name))
                         self.disconnect_client(notified_socket)
                         continue
                     assert message is not None
@@ -157,17 +167,19 @@ class Server:
             for notified_socket in exception_sockets:
                 self.disconnect_client(notified_socket)
 
+
 if __name__ == '__main__':
     import argparse
 
-    parser = argparse.ArgumentParser(description='rdfm-mgmt-shell server instance.')
+    parser = argparse.ArgumentParser(
+        description='rdfm-mgmt-shell server instance.')
     parser.add_argument('-hostname', type=str, default='127.0.0.1',
                         help='ip addr or domain name of the host')
     parser.add_argument('-port', metavar='p', type=int, default=1234,
                         help='listening port')
     args = parser.parse_args()
 
-    with open ('json_schemas/request_schema.json', 'r') as f:
+    with open('json_schemas/request_schema.json', 'r') as f:
         REQUEST_SCHEMA = json.loads(f.read())
 
     server = Server(args.hostname, args.port)

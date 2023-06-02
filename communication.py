@@ -13,12 +13,14 @@ from typing import Optional, cast
 
 HEADER_LENGTH = 10
 REQUEST_SCHEMA = {}
-with open ('json_schemas/request_schema.json', 'r') as f:
+with open('json_schemas/request_schema.json', 'r') as f:
     REQUEST_SCHEMA = json.loads(f.read())
+
 
 class ClientType(Enum):
     USER = "user",
     DEVICE = "device"
+
 
 class Client:
     def __init__(self, name: str, socket: socket.socket):
@@ -43,30 +45,23 @@ class Client:
                 'name': name
             }
         }
-        jsonschema.validate(instance=registration_request, schema=REQUEST_SCHEMA)
+        jsonschema.validate(instance=registration_request,
+                            schema=REQUEST_SCHEMA)
         return registration_request
-    
+
     def get_server_addr(self) -> tuple[str, int]:
         """Wrapper for getting address of the server from the socket
 
         Returns:
             Address of the server
         """
-        (hostname, port) = self._socket.getsockname()
-        return (hostname, port)
-    
-    def get_server_addr(self) -> tuple[str, int]:
-        """Wrapper for getting address of the server from the socket
 
-        Returns:
-            Address of the server
-        """
-        return self._socket.getsockname()
-    
+        (ip_addr, port) = self._socket.getsockname()
+        return (ip_addr, port)
 
     def send(self, message: dict) -> None:
         """Wrapper for message sending
-        
+
         Args:
             message: To send
         """
@@ -74,7 +69,7 @@ class Client:
 
     def receive(self) -> Optional[dict]:
         """Wrapper for message receiving
-        
+
         Returns:
             Received message
         """
@@ -92,22 +87,23 @@ class Client:
         """
         pass
 
+
 class Device(Client):
     def __init__(self, name: str, socket: socket.socket):
         super().__init__(name, socket)
         self.metadata: dict = {}
         self.metadata_file = ''
-        
+
     def update_metadata(self) -> None:
         """Collects device metadata
         As a test for now just reads prepared sample data from json file
         """
 
         if self.metadata_file:
-            with open (self.metadata_file, 'r') as f:
+            with open(self.metadata_file, 'r') as f:
                 self.metadata = json.loads(f.read())
             self.metadata['last_updated'] = str(datetime.now())
-        #TODO: other methods of gathering metadata
+        # TODO: other methods of gathering metadata
 
     def handle_request(self, request: dict) -> Optional[dict]:
         if request['method'] == 'update':
@@ -119,11 +115,10 @@ class Device(Client):
         elif request['method'] == 'connect_reverse':
             print('received proxy request')
             assert request['port'] is not None
-            t = Thread(target=self.connect_reverse,
-                        args=(request['port'],))
+            t = Thread(target=self.connect_reverse, args=(request['port'], ))
             t.start()
         return None
-    
+
     def connect_reverse(self, port: int) -> None:
         """Creates reverse shell connection with the server
 
@@ -135,15 +130,17 @@ class Device(Client):
         s.connect((self.get_server_addr()[0], port))
 
         # open shell
-        os.dup2(s.fileno(),0)
-        os.dup2(s.fileno(),1)
-        os.dup2(s.fileno(),2)
+        os.dup2(s.fileno(), 0)
+        os.dup2(s.fileno(), 1)
+        os.dup2(s.fileno(), 2)
         pty.spawn("/bin/sh")
+
 
 class User(Client):
     def handle_request(self, request: dict) -> Optional[dict]:
         return super().handle_request(request)
-    
+
+
 def receive_message(client: socket.socket) -> Optional[dict]:
     """Handles message receiving
 
@@ -159,7 +156,7 @@ def receive_message(client: socket.socket) -> Optional[dict]:
         # connection closed
         if not message_header:
             return None
-        
+
         message_length = cast(int, decode_json(message_header))
         decoded_message = cast(dict, decode_json(client.recv(message_length)))
         jsonschema.validate(instance=decoded_message, schema=REQUEST_SCHEMA)
@@ -169,7 +166,8 @@ def receive_message(client: socket.socket) -> Optional[dict]:
         # client closed connection violently
         print(f'exception receiving message: {str(e)}'),
         return None
-    
+
+
 def encode_json(to_encode: dict | str) -> bytes:
     """Encodes a dict structure to send over the tcp socket
 
@@ -182,12 +180,13 @@ def encode_json(to_encode: dict | str) -> bytes:
     content = json.dumps(to_encode).encode('utf-8')
     return f"{len(content):<{HEADER_LENGTH}}".encode('utf-8') + content
 
+
 def decode_json(to_decode: bytes) -> dict | int:
     """Decodes received json received from the tcp socket, without header
 
     Args:
         to_decode: Encoded json
-        
+
     Returns:
         Decoded json to dict or str
     """
@@ -195,7 +194,9 @@ def decode_json(to_decode: bytes) -> dict | int:
     assert isinstance(decoded, dict) or isinstance(decoded, int)
     return decoded
 
-def create_client(client_type: str, name: str, socket: socket.socket) -> Optional[Client]:
+
+def create_client(client_type: str, name: str,
+                  socket: socket.socket) -> Optional[Client]:
     """Creates a new client
 
     Args:
@@ -221,7 +222,8 @@ def create_client(client_type: str, name: str, socket: socket.socket) -> Optiona
     except AttributeError:
         print(f'Error: {client_type} is not a valid client type')
         sys.exit(1)
-        
+
+
 def create_listening_socket(hostname: str, port: int = 0) -> socket.socket:
     """Creates listening socket
 
@@ -232,16 +234,18 @@ def create_listening_socket(hostname: str, port: int = 0) -> socket.socket:
     Returns:
         Socket for server to listen for incoming connections
     """
-    
-    new_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    new_socket: socket.socket = socket.socket(socket.AF_INET,
+                                              socket.SOCK_STREAM)
     new_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     new_socket.bind((hostname, port))
     new_socket.listen()
     return new_socket
 
+
 def create_alert(alert_content: dict) -> dict:
     """Creates a message that client doesn't have to respond to
-    
+
     Args:
         alert_content: Message that we want to send as an alert
 
