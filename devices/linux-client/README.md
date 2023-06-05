@@ -1,5 +1,10 @@
-RDFM: over-the-air updater for embedded Linux devices
-=====================================================
+# RDFM: over-the-air updater for embedded Linux devices
+
+Copyright (c) 2023 [Antmicro](https://www.antmicro.com)
+
+Open source software updater for embedded Linux devices.
+
+## Description
 
 Remote Device Fleet Manager (RDFM) is an open-source the over-the-air (OTA) software updater for embedded Linux
 devices.
@@ -55,3 +60,9 @@ make test
 ```
 
 Additionally, run the scripts available in the `scripts/test-docker` directory. These scripts test basic functionality of the RDFM client.
+
+
+## License
+
+`rdfm` is licensed under the Apache-2.0 license. For details, see the [LICENSE](LICENSE) file.
+
