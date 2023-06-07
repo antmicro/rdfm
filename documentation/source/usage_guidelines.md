@@ -42,3 +42,7 @@ If proxy request was succesful, a message with port to connect to will be sent t
 To connect just use ``netcat`` (or similiar program)
 
 ``nc IP_ADDR PORT``
+
+Exit client:
+
+``exit``
