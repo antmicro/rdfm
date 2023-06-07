@@ -7,6 +7,7 @@ from threading import Thread
 from communication import *
 
 REQUEST_SCHEMA = {}
+CLIENT_TYPE = "USER"
 
 
 def parse_request(user_input: str) -> Optional[dict]:
@@ -62,11 +63,6 @@ def recv_loop(client: Client) -> None:
                     sys.exit()
                 assert message is not None
 
-                client_response = client.handle_request(message)
-                if client_response:
-                    print('client response:', client_response)
-                    client.send(client_response)
-
                 print('\r', message, end=f'\n{client.name} > ')
 
         except IOError as e:
@@ -107,14 +103,9 @@ if __name__ == '__main__':
                         help='ip addr or domain name of the server')
     parser.add_argument('-port', metavar='p', type=int, default=1234,
                         help='listening port on the server')
-    parser.add_argument('client_type', type=str.upper,
-                        choices=['USER', 'DEVICE'],
-                        help='client type')
     parser.add_argument('name', type=str,
                         help="""client name for identification,
                                 without whitespaces""")
-    parser.add_argument('-file', metavar='f', type=str, default='',
-                        help='file containing device metadata')
     args = parser.parse_args()
 
     with open('json_schemas/request_schema.json', 'r') as f:
@@ -125,12 +116,10 @@ if __name__ == '__main__':
     client_socket.connect((args.hostname, args.port))
 
     # send registration
-    client: Optional[Client] = create_client(
-        args.client_type, args.name, client_socket)
+    client: Optional[Client] = create_client(CLIENT_TYPE, args.name,
+                                             client_socket)
     assert client is not None
-    if isinstance(client, Device):
-        client.metadata_file = args.file
-    client.send(client.registration_packet(args.client_type, args.name))
+    client.send(client.registration_packet(args.name))
 
     t = Thread(target=recv_loop, args=(client,))
     t.start()

@@ -2,13 +2,8 @@ import socket
 import json
 import sys
 import jsonschema
-import os
-import pty
 
-from threading import Thread
 from enum import Enum
-from datetime import datetime
-from abc import abstractmethod
 from typing import Optional, cast
 
 HEADER_LENGTH = 10
@@ -28,11 +23,10 @@ class Client:
         self._socket = socket
 
     @staticmethod
-    def registration_packet(client_type: str, name: str) -> dict:
+    def registration_packet(name: str) -> dict:
         """Creates registration packet to send to the server
 
         Args:
-            client_type: Specifies if client is a user or a device
             name: With what name the device wants to be identified
 
         Returns:
@@ -41,7 +35,7 @@ class Client:
         registration_request = {
             'method': 'register',
             'client': {
-                'group': client_type,
+                'group': "USER",
                 'name': name
             }
         }
@@ -75,70 +69,15 @@ class Client:
         """
         return receive_message(self._socket)
 
-    @abstractmethod
-    def handle_request(self, request: dict) -> Optional[dict]:
-        """Constructs reply for servers request
-
-        Args:
-            request: request from the server
-
-        Returns:
-            Constructed reply to send to the server
-        """
-        pass
-
 
 class Device(Client):
     def __init__(self, name: str, socket: socket.socket):
         super().__init__(name, socket)
         self.metadata: dict = {}
-        self.metadata_file = ''
-
-    def update_metadata(self) -> None:
-        """Collects device metadata
-        As a test for now just reads prepared sample data from json file
-        """
-
-        if self.metadata_file:
-            with open(self.metadata_file, 'r') as f:
-                self.metadata = json.loads(f.read())
-            self.metadata['last_updated'] = str(datetime.now())
-        # TODO: other methods of gathering metadata
-
-    def handle_request(self, request: dict) -> Optional[dict]:
-        if request['method'] == 'update':
-            self.update_metadata()
-            return {
-                'method': 'metadata',
-                'metadata': self.metadata
-            }
-        elif request['method'] == 'connect_reverse':
-            print('received proxy request')
-            assert request['port'] is not None
-            t = Thread(target=self.connect_reverse, args=(request['port'], ))
-            t.start()
-        return None
-
-    def connect_reverse(self, port: int) -> None:
-        """Creates reverse shell connection with the server
-
-        Args:
-            port: At which port to connect to the server
-        """
-        print(f'Connecting to proxy at {port}')
-        s: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((self.get_server_addr()[0], port))
-
-        # open shell
-        os.dup2(s.fileno(), 0)
-        os.dup2(s.fileno(), 1)
-        os.dup2(s.fileno(), 2)
-        pty.spawn("/bin/sh")
 
 
 class User(Client):
-    def handle_request(self, request: dict) -> Optional[dict]:
-        return super().handle_request(request)
+    pass
 
 
 def receive_message(client: socket.socket) -> Optional[dict]:

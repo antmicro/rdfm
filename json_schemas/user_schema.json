@@ -1,0 +1,103 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Request",
+    "description": "A request to the rdfm-mgmt server",
+    "type": "object",
+    "$ref": "#/$defs/Request",
+    "$defs": {
+        "Request": {
+            "descrption": "Standard requests defined in this protocol",
+            "oneOf": [
+                { "$ref": "#/$defs/ServerRequest" },
+                { "$ref": "#/$defs/DeviceRequest" },
+                { "$ref": "#/$defs/ClientRequest" }
+            ],
+            "required": [ "method" ]
+        },
+        "ServerRequest": {
+            "description": "Requests sent to server",
+            "oneOf": [
+                { "$ref": "#/$defs/ListRequest" },
+                { "$ref": "#/$defs/RegisterRequest" }
+            ]
+        },
+        "DeviceRequest": {
+            "description": "Requests that client sends to server to interact with the device",
+            "type": "object",
+            "properties": {
+                "method": {
+                    "type": "string",
+                    "enum": [
+                        "proxy",
+                        "info",
+                        "update"
+                    ]
+                },
+                "device_name": {
+                    "type": "string"
+                }
+            },
+            "required": [ "device_name" ]
+        },
+        "ClientRequest": {
+            "description": "Requests sent from server to client",
+            "oneOf": [
+                { "$ref": "#/$defs/Alert" }
+            ],
+            "not" : { "required" : [ "device_name" ] }
+        },
+        "RegisterRequest": {
+            "description": "Request sent by client to the server after connection",
+            "type": "object",
+            "properties": {
+                "method": {
+                    "type": "string",
+                    "enum": [ "register" ]
+                },
+                "client": {
+                    "$ref": "#/$defs/Client"
+                }
+            },
+            "required": [ "client" ]
+        },
+        "ListRequest": {
+            "description": "Requests for getting a list of connected devices",
+            "type": "object",
+            "properties": {
+                "method": {
+                    "type": "string",
+                    "enum": [ "list" ]
+                }
+            }
+        },
+        "Client": {
+            "description": "Client metadata sent in registration request",
+            "type": "object",
+            "properties": {
+                "group": {
+                    "description": "Group of the client",
+                    "type": "string",
+                    "enum": [ "USER" ]
+                },
+                "name": {
+                    "type": "string"
+                }
+            },
+            "required": [ "group", "name" ]
+        },
+        "Alert": {
+            "description": "Message sent not meant to be responded to",
+            "type": "object",
+            "properties": {
+                "method": {
+                    "type": "string",
+                    "enum": [ "alert" ]
+                },
+                "alert": {
+                    "description": "Contents",
+                    "type": "object"
+                }
+            }
+        }
+    }
+}

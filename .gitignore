@@ -1,0 +1,26 @@
+# Rust
+target/
+
+**/*.rs.bk
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Auto-generated schemas
+device_schema.json

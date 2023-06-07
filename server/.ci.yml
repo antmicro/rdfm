@@ -1,6 +1,12 @@
 image: python:3.10-alpine
 before_script:
+  - apk add --no-cache gcc musl-dev curl
+  - curl https://sh.rustup.rs -sSf | ash -s -- -y
+  - source $HOME/.cargo/env
   - pip install -r requirements.txt
+  - cd device
+  - cargo build && cargo run --bin rdfm-schema-generator -- --schema-path=../json_schemas/device_schema.json
+  - cd ..
 
 stages:
   - code-check
@@ -10,6 +16,9 @@ check-formatting:
   stage: code-check
   script:
     - for f in *.py; do python3 -m pycodestyle "$f"; done
+    - cd device
+    - cargo fmt --all -- --check
+    - cd ..
 
 check-typing:
   stage: code-check

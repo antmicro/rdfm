@@ -2,10 +2,10 @@ import pexpect
 import time
 
 child_server = pexpect.spawn('python3 server.py')
+child_server.expect('Listening for connections on 127.0.0.1:1234...')
 
-child_user = pexpect.spawn('python3 client.py USER u')
-child_device = pexpect.spawn('python3 client.py DEVICE d1')
-time.sleep(3)
+child_user = pexpect.spawn('python3 client.py u')
+child_device = pexpect.spawn('./device/target/debug/rdfm-device-client --name "d1"')
 
 time.sleep(5)
 child_user.sendline('REQ d1 proxy')
