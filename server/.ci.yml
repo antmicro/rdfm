@@ -11,7 +11,7 @@ check-formatting:
   script:
     - for f in *.py; do python3 -m pycodestyle "$f"; done
 
-check-typings:
+check-typing:
   stage: code-check
   script:
     - for f in *.py; do python3 -m mypy "$f"; done
