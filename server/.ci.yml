@@ -1,6 +1,6 @@
 image: python:3.10-alpine
 before_script:
-    - pip install pexpect
+  - pip install -r requirements.txt
 
 stages:
   - local-tests
