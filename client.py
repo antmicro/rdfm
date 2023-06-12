@@ -9,7 +9,7 @@ from communication import *
 REQUEST_SCHEMA = {}
 
 
-def parse_request(user_input: str) -> dict:
+def parse_request(user_input: str) -> Optional[dict]:
     """Parses user input to the JSON request
 
     Args:
@@ -23,6 +23,9 @@ def parse_request(user_input: str) -> dict:
         'method': '',
     }
 
+    if user_input.lower() == "exit":
+        os._exit(0)
+
     tokens = user_input.split()
     if tokens:
         tokens[0] = tokens[0].lower()
@@ -31,9 +34,12 @@ def parse_request(user_input: str) -> dict:
             request['method'] = tokens[2]
         elif tokens[0] == 'list':
             request['method'] = tokens[0]
-
-    jsonschema.validate(instance=request, schema=REQUEST_SCHEMA)
-    return request
+    try:
+        jsonschema.validate(instance=request, schema=REQUEST_SCHEMA)
+        return request
+    except Exception:
+        print("Invalid request")
+        return None
 
 
 def recv_loop(client: Client) -> None:
@@ -77,20 +83,26 @@ def send_loop(client: Client) -> None:
     """Send messages to the server
 
     Args:
-        server: Listening server socket
+        client: Socket to send data to
     """
     while True:
-        message = input(f'{client.name} > ')
+        message: str = input(f'{client.name} > ')
 
         if message:
-            client.send(parse_request(message))
+            to_send: Optional[dict] = parse_request(message)
+            if to_send:
+                assert to_send is not None
+                client.send(to_send)
 
 
 if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(
-        description='rdfm-mgmt-shell server instance.')
+        description='rdfm-mgmt-shell server instance.',
+        usage="""Documentation and list of commands:
+        https://github.com/antmicro/rdfm/docs
+        To exit just input "exit".""")
     parser.add_argument('-hostname', type=str, default='127.0.0.1',
                         help='ip addr or domain name of the server')
     parser.add_argument('-port', metavar='p', type=int, default=1234,

@@ -35,3 +35,9 @@ test-metadata:
   stage: local-tests
   script:
     - python3 tests/test-metadata.py
+
+  
+test-crash-client-input:
+  stage: local-tests
+  script:
+    - python3 tests/test-crash-client-input.py

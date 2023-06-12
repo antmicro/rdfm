@@ -149,6 +149,9 @@ def receive_message(client: socket.socket) -> Optional[dict]:
 
     Returns:
         Received message if it was succesful
+
+    Throws:
+        ValueError: Received message is not a valid request
     """
     try:
         message_header: bytes = client.recv(HEADER_LENGTH)
@@ -164,7 +167,7 @@ def receive_message(client: socket.socket) -> Optional[dict]:
 
     except Exception as e:
         # client closed connection violently
-        print(f'exception receiving message: {str(e)}'),
+        print(f'Exception receiving message: {str(e)}'),
         return None
 
 

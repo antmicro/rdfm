@@ -140,22 +140,26 @@ class Server:
 
                 # existing socket sends message
                 else:
-                    message: Optional[dict] = receive_message(notified_socket)
+                    message: Optional[dict] = None
                     # identify sender
                     client: Client = self.clients[notified_socket]
 
-                    # client disconnected
-                    if not message:
-                        print('Closed connection from: {}'.format(
-                            self.clients[notified_socket].name))
-                        self.disconnect_client(notified_socket)
+                    try:
+                        message = receive_message(notified_socket)
+                        if not message:
+                            # client disconnected
+                            print('Closed connection from:',
+                                  self.clients[notified_socket].name)
+                            self.disconnect_client(notified_socket)
+                            break
+                    except Exception:
+                        # received invalid request
                         continue
                     assert message is not None
 
-                    assert message is not None
+                    # identify sender
                     print(f'Received message from {client.name}: {message}')
 
-                    # broadcast message from device to listening users
                     if isinstance(client, Device):
                         if 'metadata' in message:
                             client.metadata = message['metadata']
