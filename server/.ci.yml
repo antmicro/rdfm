@@ -1,12 +1,18 @@
 image: python:3.10-alpine
 before_script:
   - apk add --no-cache gcc musl-dev curl
+  - apk add busybox-extras
   - curl https://sh.rustup.rs -sSf | ash -s -- -y
   - source $HOME/.cargo/env
   - pip install -r requirements.txt
   - cd device
   - cargo build && cargo run --bin rdfm-schema-generator -- --schema-path=../json_schemas/device_schema.json
   - cd ..
+
+cache:
+  key: shared-cache
+  paths:
+    - device/target/
 
 stages:
   - code-check
@@ -19,34 +25,64 @@ check-formatting:
     - cd device
     - cargo fmt --all -- --check
     - cd ..
+  only:
+    refs:
+      - merge_requests
+      - main
 
 check-typing:
   stage: code-check
   script:
     - for f in *.py; do python3 -m mypy "$f"; done
+  only:
+    refs:
+      - merge_requests
+      - main
+    changes:
+      - "*.py"
 
 test-arguments:
   stage: local-tests
   script:
     - python3 tests/test-arguments.py
+  only:
+    refs:
+      - merge_requests
+      - main
 
 test-list-devices:
   stage: local-tests
   script:
     - python3 tests/test-list-devices.py
+  only:
+    refs:
+      - merge_requests
+      - main
 
 test-proxy:
   stage: local-tests
   script:
     - python3 tests/test-proxy.py
+  only:
+    refs:
+      - merge_requests
+      - main
 
 test-metadata:
   stage: local-tests
   script:
     - python3 tests/test-metadata.py
+  only:
+    refs:
+      - merge_requests
+      - main
 
-  
 test-crash-client-input:
   stage: local-tests
   script:
     - python3 tests/test-crash-client-input.py
+  only:
+    refs:
+      - merge_requests
+      - main
+      

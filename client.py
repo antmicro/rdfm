@@ -1,6 +1,7 @@
 import socket
 import errno
 import sys
+import os
 import jsonschema
 from threading import Thread
 
