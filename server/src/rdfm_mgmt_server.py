@@ -1,10 +1,10 @@
 import socket
 import select
+import json
+import jsonschema
 from threading import Thread
 from typing import Optional
-import jsonschema
-
-from communication import *
+from rdfm_mgmt_communication import *
 from proxy import Proxy
 
 REQUEST_SCHEMA = {}
@@ -181,9 +181,12 @@ if __name__ == '__main__':
                         help='ip addr or domain name of the host')
     parser.add_argument('-port', metavar='p', type=int, default=1234,
                         help='listening port')
+    parser.add_argument('-schemas', metavar='s', type=str,
+                        default='json_schemas',
+                        help='directory with requests schemas')
     args = parser.parse_args()
 
-    with open('json_schemas/request_schema.json', 'r') as f:
+    with open(f'{args.schemas}/request_schema.json', 'r') as f:
         REQUEST_SCHEMA = json.loads(f.read())
 
     server = Server(args.hostname, args.port)

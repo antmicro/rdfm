@@ -24,3 +24,6 @@ dmypy.json
 
 # Auto-generated schemas
 device_schema.json
+
+# Poetry
+**/dist/

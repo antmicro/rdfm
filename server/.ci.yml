@@ -1,24 +1,69 @@
 image: $CI_REGISTRY_IMAGE:rdfm-ci-base
 
-before_script:
-  - pip install -r requirements.txt
-  - cd device
-  - cargo build && cargo run --bin rdfm-schema-generator -- --schema-path=../json_schemas/device_schema.json
-  - cd ..
+variables:
+  CARGO_HOME: $CI_PROJECT_DIR/.cargo
+  PIP_CACHE_DIR: CI_PROJECT_DIR/.cache/pip
 
 cache:
-  key: shared-cache
+  key: "$CI_PIPELINE_ID"
   paths:
     - device/target/
+    - json_schemas/
+    - client/
+    - server/
+    - .cargo/
+    - .cache/pip/
+
+.build:
+  before_script:
+    - ls
+    - ls json_schemas
+    - |
+      if [[ -d device/target ]]; then
+        exit 0
+      fi
+    - apk add openssl-dev
+    - cd device
+    - cargo build && cargo run --bin rdfm-schema-generator -- --schema-path=../json_schemas/device_schema.json
+    - cd ..
+    - pip3 install poetry
+    - cd server
+    - poetry build && poetry install
+    - pip3 install -e .
+    - cd ../client
+    - poetry build && poetry install
+    - pip3 install -e .
+    - cd ..
 
 stages:
+  - build
   - code-check
   - local-tests
 
-check-formatting:
+build:
+  extends: .build
+  stage: build
+  script:
+    - echo "Build finished"
+
+python-formatting:
+  extends: .build
   stage: code-check
   script:
-    - for f in *.py; do python3 -m pycodestyle "$f"; done
+    - cd server
+    - poetry run test
+    - cd ../client
+    - poetry run test
+    - cd ..
+  only:
+    refs:
+      - merge_requests
+      - main
+
+rust-formatting:
+  extends: .build
+  stage: code-check
+  script:
     - cd device
     - cargo fmt --all -- --check
     - cd ..
@@ -27,18 +72,8 @@ check-formatting:
       - merge_requests
       - main
 
-check-typing:
-  stage: code-check
-  script:
-    - for f in *.py; do python3 -m mypy "$f"; done
-  only:
-    refs:
-      - merge_requests
-      - main
-    changes:
-      - "*.py"
-
 test-arguments:
+  extends: .build
   stage: local-tests
   script:
     - python3 tests/test-arguments.py
@@ -48,6 +83,7 @@ test-arguments:
       - main
 
 test-list-devices:
+  extends: .build
   stage: local-tests
   script:
     - python3 tests/test-list-devices.py
@@ -57,6 +93,7 @@ test-list-devices:
       - main
 
 test-proxy:
+  extends: .build
   stage: local-tests
   script:
     - python3 tests/test-proxy.py
@@ -66,6 +103,7 @@ test-proxy:
       - main
 
 test-metadata:
+  extends: .build
   stage: local-tests
   script:
     - python3 tests/test-metadata.py
@@ -75,6 +113,7 @@ test-metadata:
       - main
 
 test-crash-client-input:
+  extends: .build
   stage: local-tests
   script:
     - python3 tests/test-crash-client-input.py

@@ -1,9 +1,8 @@
 import socket
 import select
 import sys
-from typing import Final
-
-from communication import *
+from typing import Optional, Final
+from rdfm_mgmt_communication import *
 
 PROXY_BUFFER_SIZE: Final = 4096
 

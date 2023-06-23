@@ -2,12 +2,13 @@ import socket
 import errno
 import sys
 import os
+import json
 import jsonschema
+from typing import Optional
 from threading import Thread
+from rdfm_mgmt_communication import Client, create_client
 
-from communication import *
-
-REQUEST_SCHEMA = {}
+REQUEST_SCHEMA: dict = {}
 CLIENT_TYPE = "USER"
 
 
@@ -36,6 +37,7 @@ def parse_request(user_input: str) -> Optional[dict]:
             request['method'] = tokens[2]
         elif tokens[0] == 'list':
             request['method'] = tokens[0]
+
     try:
         jsonschema.validate(instance=request, schema=REQUEST_SCHEMA)
         return request
@@ -61,7 +63,7 @@ def recv_loop(client: Client) -> None:
                 if message is None:
                     # server closed
                     print('Connection closed by the server')
-                    sys.exit()
+                    os._exit(1)
                 assert message is not None
 
                 print('\r', message, end=f'\n{client.name} > ')
