@@ -11,13 +11,13 @@ child_user.sendline('LIST')
 child_user.expect("\r {'method': 'alert', 'alert': {'devices': \[\]}}\r\nu > ")
 
 # check first device visible
-child_device1 = pexpect.spawn('./device/target/debug/rdfm-device-client --name "d1" --no-ssl')
+child_device1 = pexpect.spawn('./device/target/debug/rdfm_mgmt_device --name "d1" --no-ssl')
 time.sleep(1)
 child_user.sendline('LIST')
 child_user.expect("\r {'method': 'alert', 'alert': {'devices': \['d1'\]}}\r\nu > ")
 
 # check second device visible
-child_device2 = pexpect.spawn('./device/target/debug/rdfm-device-client --name "d2" --no-ssl')
+child_device2 = pexpect.spawn('./device/target/debug/rdfm_mgmt_device --name "d2" --no-ssl')
 time.sleep(1)
 child_user.sendline('LIST')
 child_user.expect("\r {'method': 'alert', 'alert': {'devices': \['d1', 'd2'\]}}\r\nu > ")

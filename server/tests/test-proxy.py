@@ -6,7 +6,7 @@ child_server.expect('Listening for connections on 127.0.0.1:1234...')
 
 child_user = pexpect.spawn('python3 -m rdfm_mgmt_client u')
 child_device = pexpect.spawn(
-    './device/target/debug/rdfm-device-client --name "d1" --no-ssl'
+    './device/target/debug/rdfm_mgmt_device --name "d1" --no-ssl'
 )
 
 time.sleep(5)

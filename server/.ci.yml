@@ -24,7 +24,7 @@ cache:
       fi
     - apk add openssl-dev
     - cd device
-    - cargo build && cargo run --bin rdfm-schema-generator -- --schema-path=../json_schemas/device_schema.json
+    - cargo build && cargo run --bin rdfm_schema_generator -- --schema-path=../json_schemas/device_schema.json
     - cd ..
     - pip3 install poetry
     - cd server
