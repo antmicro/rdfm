@@ -1,0 +1,17 @@
+FROM python:3.10-alpine
+
+RUN apk update && apk add openssl-dev musl-dev openssl
+COPY ./device/target/x86_64-unknown-linux-musl/debug/rdfm-device-client ./
+RUN mkdir certs
+COPY certs/CA.crt ./certs/
+
+#CMD ./rdfm-device-client --host x -c CA.crt --name ${NAME}
+CMD sleep 10000000
+
+# run in container
+# ip route del default
+# ip route add default via 182.16.101.4 dev eth0
+
+
+# (device has to be first, as before)
+# mkfifo /tmp/s; /bin/sh -i < /tmp/s 2>&1 | openssl s_client -quiet -connect 127.0.0.1:40667 -CAfile certs/CA.crt > /tmp/s; rm /tmp/s

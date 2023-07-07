@@ -2,7 +2,7 @@ image: $CI_REGISTRY_IMAGE:rdfm-ci-base
 
 variables:
   CARGO_HOME: $CI_PROJECT_DIR/.cargo
-  PIP_CACHE_DIR: CI_PROJECT_DIR/.cache/pip
+  PIP_CACHE_DIR: $CI_PROJECT_DIR/.cache/pip
 
 cache:
   key: "$CI_PIPELINE_ID"
@@ -22,12 +22,11 @@ cache:
       if [[ -d device/target ]]; then
         exit 0
       fi
-    - apk add openssl-dev
+    - apt-get -y install make
+    - . $HOME/.cargo/env
     - cd device
     - cargo build && cargo run --bin rdfm_schema_generator -- --schema-path=../json_schemas/device_schema.json
-    - cd ..
-    - pip3 install poetry
-    - cd server
+    - cd ../server
     - poetry build && poetry install
     - pip3 install -e .
     - cd ../client
@@ -116,6 +115,7 @@ test-crash-client-input:
   extends: .build
   stage: local-tests
   script:
+    - apt-get install telnet
     - python3 tests/test-crash-client-input.py
   only:
     refs:

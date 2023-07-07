@@ -3,54 +3,76 @@ version: "3.6"
 services:
   server:
     build:
-      context: ../..
+      context: .
       dockerfile: Dockerfile_server
     ports:
       - "1234:1234"
+      - "3434:3434"
     expose:
-      - "1234"
+      - "1:65555"
     networks:
+      test3:
+        ipv4_address: 192.16.101.2
       test:
         ipv4_address: 172.16.100.2
+    extra_hosts:
+      - "x:0.0.0.0"
+    cap_add:
+      - NET_ADMIN
 
-  user1:
+  user:
     build:
-      context: ../..
-      dockerfile: Dockerfile_client
-    depends_on:
-      - server
-    environment:
-      - NAME=u1
-      - CLIENT_TYPE=USER
-    networks:
-      test:
-        ipv4_address: 172.16.100.3
-
-  device1:
-    build:
-      context: ../..
-      dockerfile: Dockerfile_client
+      context: .
+      dockerfile: Dockerfile_user
     depends_on:
       - server
     environment:
       - NAME=d1
-      - CLIENT_TYPE=DEVICE
+    networks:
+      test3:
+        ipv4_address: 192.16.101.3
+    extra_hosts:
+      - "x:192.16.101.2"
+    cap_add:
+      - NET_ADMIN
+
+  device1:
+    build:
+      context: .
+      dockerfile: Dockerfile_device
+    expose:
+      - "22"
+    depends_on:
+      - server
+    environment:
+      - NAME=d1
     networks:
       test:
         ipv4_address: 172.16.100.4
+      test2:
+        ipv4_address: 182.16.101.4
+    extra_hosts:
+      - "x:172.16.100.1"
+    cap_add:
+      - NET_ADMIN
 
   device2:
     build:
-      context: ../..
-      dockerfile: Dockerfile_client
+      context: .
+      dockerfile: Dockerfile_device
+    expose:
+      - "22"
     depends_on:
       - server
     environment:
       - NAME=d2
-      - CLIENT_TYPE=DEVICE
     networks:
-      test:
-        ipv4_address: 172.16.100.5
+      test2:
+        ipv4_address: 182.16.101.5
+    extra_hosts:
+      - "x:172.16.100.1"
+    cap_add:
+      - NET_ADMIN
 
 networks:
   test:
@@ -58,5 +80,14 @@ networks:
     ipam:
       config:
         - subnet: 172.16.100.0/24
-
-# to test connection use "python client.py -hostname 0.0.0.0 USER u3"
+  test2:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 182.16.101.0/24
+  test3:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.16.101.0/24
+# to test connection use "python client.py -hostname 0.0.0.0 u3"

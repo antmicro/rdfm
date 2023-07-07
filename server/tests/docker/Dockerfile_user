@@ -1,0 +1,15 @@
+FROM python:3.10-alpine
+
+RUN pip3 install jsonschema
+
+RUN apk update && apk add openssl
+
+RUN mkdir ./json_schemas
+COPY json_schemas/* ./json_schemas/
+COPY client.py communication.py certs/CA.crt ./
+
+CMD sleep 10000000
+
+# python3 client.py -hostname x -c CA.crt u
+
+# openssl s_client -connect localhost:40667 -CAfile certs/CA.crt 

@@ -27,3 +27,6 @@ device_schema.json
 
 # Poetry
 **/dist/
+
+# Certificates
+certs/

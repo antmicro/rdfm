@@ -1,6 +1,7 @@
 import socket
 import select
 import json
+import sys
 import jsonschema
 from threading import Thread
 from typing import Optional
@@ -11,12 +12,21 @@ REQUEST_SCHEMA = {}
 
 
 class Server:
-    def __init__(self, hostname: str, port: int):
+    def __init__(self, hostname: str, port: int,
+                 encrypted: bool, cert: str, cert_key: str):
         self._hostname: str = hostname
         self._port: int = port
 
+        self.encrypted = encrypted
+        self.cert: str = cert
+        self.cert_key: str = cert_key
+
         self.server_socket: socket.socket = create_listening_socket(
-            hostname, port)
+                                                                hostname,
+                                                                port,
+                                                                self.encrypted,
+                                                                self.cert,
+                                                                self.cert_key)
         self.sockets: list[socket.socket] = [self.server_socket]
 
         self.connected_users: list[User] = []
@@ -97,7 +107,8 @@ class Server:
 
         if request['method'] == 'proxy':
             assert isinstance(client, User)
-            proxy = Proxy(self._hostname, client, device)
+            proxy = Proxy(self._hostname, client, device,
+                          self.encrypted, self.cert, self.cert_key)
             t = Thread(target=proxy.run)
             t.start()
 
@@ -119,7 +130,12 @@ class Server:
             for notified_socket in read_sockets:
                 # new connection
                 if notified_socket == self.server_socket:
-                    client_socket, client_address = self.server_socket.accept()
+                    try:
+                        (client_socket,
+                         client_address) = self.server_socket.accept()
+                    except Exception as e:
+                        print('Error: ', e, file=sys.stderr)
+                        continue
                     registration_request: Optional[dict] = receive_message(
                                                                 client_socket)
 
@@ -184,10 +200,17 @@ if __name__ == '__main__':
     parser.add_argument('-schemas', metavar='s', type=str,
                         default='json_schemas',
                         help='directory with requests schemas')
+    parser.add_argument('-no_ssl', action='store_false', dest='encrypted',
+                        help='turn off encryption')
+    parser.add_argument('-cert', type=str, default='./certs/SERVER.crt',
+                        help="""server cert file""")
+    parser.add_argument('-key', type=str, default='./certs/SERVER.key',
+                        help="""server cert key file""")
     args = parser.parse_args()
 
     with open(f'{args.schemas}/request_schema.json', 'r') as f:
         REQUEST_SCHEMA = json.loads(f.read())
 
-    server = Server(args.hostname, args.port)
+    server = Server(args.hostname, args.port,
+                    args.encrypted, args.cert, args.key)
     server.run()

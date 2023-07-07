@@ -2,6 +2,7 @@ import socket
 import json
 import sys
 import jsonschema
+import ssl
 
 from enum import Enum
 from typing import Optional, cast
@@ -166,12 +167,17 @@ def create_client(client_type: str, name: str,
         sys.exit(1)
 
 
-def create_listening_socket(hostname: str, port: int = 0) -> socket.socket:
+def create_listening_socket(hostname: str, port: int = 0,
+                            encrypted: bool = False,
+                            crt: str = "", key: str = "") -> socket.socket:
     """Creates listening socket
 
     Args:
         hostname: hostname to listen on
         port: port to listen on, defaults to ephemeral port
+        encrypted: whether connection should use SSL
+        crt: server's crt path
+        key: path to server's crt key
 
     Returns:
         Socket for server to listen for incoming connections
@@ -180,6 +186,11 @@ def create_listening_socket(hostname: str, port: int = 0) -> socket.socket:
     new_socket: socket.socket = socket.socket(socket.AF_INET,
                                               socket.SOCK_STREAM)
     new_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    if encrypted:
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.load_cert_chain(crt, key)
+        new_socket = context.wrap_socket(new_socket, server_side=True)
+
     new_socket.bind((hostname, port))
     new_socket.listen()
     return new_socket

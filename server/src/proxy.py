@@ -8,7 +8,8 @@ PROXY_BUFFER_SIZE: Final = 4096
 
 
 class Proxy:
-    def __init__(self, hostname: str, user: User, device: Device):
+    def __init__(self, hostname: str, user: User, device: Device,
+                 encrypted: bool = False, crt: str = "", key: str = ""):
         """Creates a proxy connection between user and device
 
         Here a new server listening socket is created.
@@ -25,6 +26,7 @@ class Proxy:
             hostname: IP addr of the server
             user: User that required proxy connection
             device: Device that the user requested to connect to
+            encrypted: whether connection should use SSL
         """
         self.device: Device = device
         self.user: User = user
@@ -33,7 +35,9 @@ class Proxy:
         self.proxy_user_socket: Optional[socket.socket] = None
 
         # creating new server listening socket
-        self.proxy_socket: socket.socket = create_listening_socket(hostname)
+        self.proxy_socket: socket.socket = create_listening_socket(hostname, 0,
+                                                                   encrypted,
+                                                                   crt, key)
         self.sockets: list[socket.socket] = [self.proxy_socket]
 
         self._hostname: str = self.proxy_socket.getsockname()[0]
@@ -68,7 +72,7 @@ class Proxy:
                         print("Device connected to proxy:", new_device_address)
 
                         device_message: bytes = self.proxy_device_socket.recv(
-                            PROXY_BUFFER_SIZE)
+                                                            PROXY_BUFFER_SIZE)
                         # disconnected immediately
                         if not device_message:
                             continue
@@ -100,8 +104,8 @@ class Proxy:
                         sys.exit()
 
                     # device -> user
-                    if notified_socket == self.proxy_device_socket:
-                        assert self.proxy_user_socket is not None
+                    if (notified_socket == self.proxy_device_socket
+                            and self.proxy_user_socket):
                         self.proxy_user_socket.send(message)
 
                     # user -> device

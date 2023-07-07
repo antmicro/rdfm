@@ -1,0 +1,12 @@
+FROM python:3.10-alpine
+
+RUN pip3 install jsonschema
+
+RUN mkdir ./json_schemas
+RUN mkdir ./certs
+COPY json_schemas/* ./json_schemas/
+COPY server.py proxy.py communication.py ./
+COPY certs/SERVER.crt certs/SERVER.key ./certs/
+
+#CMD python3 server.py -hostname 0.0.0.0
+CMD sleep 10000000

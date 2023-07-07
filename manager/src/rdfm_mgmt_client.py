@@ -2,8 +2,9 @@ import socket
 import errno
 import sys
 import os
-import json
 import jsonschema
+import json
+import ssl
 from typing import Optional
 from threading import Thread
 from rdfm_mgmt_communication import Client, create_client
@@ -37,7 +38,6 @@ def parse_request(user_input: str) -> Optional[dict]:
             request['method'] = tokens[2]
         elif tokens[0] == 'list':
             request['method'] = tokens[0]
-
     try:
         jsonschema.validate(instance=request, schema=REQUEST_SCHEMA)
         return request
@@ -109,6 +109,11 @@ if __name__ == '__main__':
     parser.add_argument('name', type=str,
                         help="""client name for identification,
                                 without whitespaces""")
+    parser.add_argument('-no_ssl', action='store_true',
+                        help='turn off encryption')
+    parser.add_argument('-cert', metavar='c', type=str,
+                        default='./certs/CA.crt',
+                        help="""CA cert file""")
     args = parser.parse_args()
 
     with open('json_schemas/request_schema.json', 'r') as f:
@@ -117,6 +122,11 @@ if __name__ == '__main__':
     client_socket: socket.socket = socket.socket(
         socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((args.hostname, args.port))
+    if not args.no_ssl:
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        context.load_verify_locations(args.cert)
+        client_socket = context.wrap_socket(client_socket,
+                                            server_hostname=args.hostname)
 
     # send registration
     client: Optional[Client] = create_client(CLIENT_TYPE, args.name,
