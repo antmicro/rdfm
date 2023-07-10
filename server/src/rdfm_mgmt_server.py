@@ -34,6 +34,7 @@ def device_update(devicename: str):
 def device_proxy(devicename: str):
     proxy = Proxy('127.0.0.1', None, server.connected_devices[devicename],
                   args.encrypted, args.cert, args.key)
+    server.proxy_connections.append(proxy)
     t = Thread(target=proxy.run)
     t.start()
 
@@ -64,6 +65,8 @@ class Server:
         self.encrypted = encrypted
         self.cert: str = cert
         self.cert_key: str = cert_key
+
+        self.proxy_connections: list[Proxy] = []
 
         self.server_socket: socket.socket = create_listening_socket(
                                                                 hostname,
@@ -98,6 +101,18 @@ class Server:
             if isinstance(client, Device):
                 self.connected_devices[client.name] = client
 
+    def get_client_proxy_connections(self, client: Client) -> list[Proxy]:
+        """Get a list of proxy connections that the client is involved in
+
+        Args:
+            client: Self explanatory
+
+        Returns:
+            List of currently opened proxy connections that include the client
+        """
+        return [p for p in self.proxy_connections
+                if client == p.user or client == p.device]
+
     def disconnect_client(self, client_socket: socket.socket) -> None:
         """Stop monitoring the disconnected client.
         Remove it from the device or user containers and active sockets
@@ -105,15 +120,27 @@ class Server:
         Args:
             client_socket: Detected disconnected client socket
         """
-        if client_socket in self.clients:
-            client = self.clients[client_socket]
-            del self.clients[client_socket]
-            self.sockets.remove(client_socket)
-            if isinstance(client, User):
-                self.connected_users.remove(client)
-            if isinstance(client, Device):
-                del self.connected_devices[client.name]
-                print('Disconnected device')
+        # stop listening to this socket
+        self.sockets.remove(client_socket)
+
+        if client_socket not in self.clients:
+            return
+        # disconnect its proxies
+        client = self.clients[client_socket]
+        print("Disconnecting", client.name, "...")
+        client_proxies = self.get_client_proxy_connections(client)
+        print(len(client_proxies))
+        for p in client_proxies:
+            p.disconnect()
+            self.proxy_connections.remove(p)
+
+        # remove its client
+        if isinstance(client, User):
+            self.connected_users.remove(client)
+        if isinstance(client, Device):
+            del self.connected_devices[client.name]
+            print('Disconnected device')
+        del self.clients[client_socket]
 
     def handle_request(self, request: dict, client: Client) -> None:
         """Parse request and perform actions depending on the type
@@ -139,6 +166,7 @@ class Server:
             assert isinstance(client, User)
             proxy = Proxy(self._hostname, client, device,
                           self.encrypted, self.cert, self.cert_key)
+            self.proxy_connections.append(proxy)
             t = Thread(target=proxy.run)
             t.start()
 

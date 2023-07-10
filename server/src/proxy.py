@@ -1,6 +1,7 @@
 import socket
 import select
 import sys
+import os
 from typing import Optional, Final
 from rdfm_mgmt_communication import *
 
@@ -45,7 +46,7 @@ class Proxy:
         self._hostname: str = self.proxy_socket.getsockname()[0]
         self._port: int = self.proxy_socket.getsockname()[1]
         print(f'Opened proxy socket at {self._port} for dev',
-              {self.device.name})
+              f'{self.device.name}, pid {os.getpid()}', )
 
     def send_connection_request(self) -> None:
         """Send connection request and new port to the device"""
@@ -53,6 +54,20 @@ class Proxy:
             'method': 'connect_reverse',
             'port': self._port
         })
+
+    def disconnect(self) -> None:
+        """Sends empty message to proxy sockets to disconnect them"""
+        try:
+            for s in [self.proxy_socket,
+                      self.proxy_device_socket,
+                      self.proxy_user_socket]:
+                if s:
+                    assert s is not None
+                    s.shutdown(socket.SHUT_RDWR)
+                    s.close()
+            print("Disconnected proxy")
+        except Exception as e:
+            print("Error during proxy disconnect:", str(e))
 
     def run(self) -> None:
         """Main proxy loop for forwarding messages between user and device.
@@ -77,6 +92,7 @@ class Proxy:
                                                             PROXY_BUFFER_SIZE)
                         # disconnected immediately
                         if not device_message:
+                            self.disconnect()
                             continue
 
                         self.sockets.append(self.proxy_device_socket)
@@ -102,6 +118,7 @@ class Proxy:
                     # close it and exit thread
                     if not message:
                         print(f'Closed proxy socket at {self._port}')
+                        self.disconnect()
                         sys.exit()
 
                     # device -> user
@@ -118,12 +135,6 @@ class Proxy:
             for notified_socket in exception_sockets:
                 self.sockets.remove(notified_socket)
                 print(f"Proxy connection with {self.device.name} ended")
-                # send empty message to disconnect new sockets
-                if (notified_socket == self.proxy_device_socket and
-                        self.proxy_user_socket):
-                    assert self.proxy_user_socket is not None
-                    self.proxy_user_socket.send(b"")
-                else:
-                    assert self.proxy_device_socket is not None
-                    self.proxy_device_socket.send(b"")
+                # send empty message to disconnect proxy sockets
+                self.disconnect()
                 sys.exit()
