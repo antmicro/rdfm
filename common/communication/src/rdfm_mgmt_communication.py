@@ -1,11 +1,8 @@
 import socket
 import json
-import base64
-import os
 import sys
 import ssl
 from request_models import *
-import urllib
 
 from typing import Optional, cast
 
@@ -49,6 +46,7 @@ class Client:
             s: New socket
         """
         self._socket = s
+
 
 class Device(Client):
     required_capabilities: dict[str, list[str]] = {
