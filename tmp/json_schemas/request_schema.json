@@ -1,0 +1,17 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Request",
+    "description": "A request to the rdfm-mgmt server",
+    "type": "object",
+    "$ref": "#/$defs/Request",
+    "$defs": {
+        "Request": {
+            "descrption": "Standard requests defined in this protocol",
+            "anyOf": [
+                { "$ref": "file:json_schemas/user_schema.json" },
+                { "$ref": "file:json_schemas/device_schema.json" }
+            ],
+            "required": [ "method" ]
+        }
+    }
+}
