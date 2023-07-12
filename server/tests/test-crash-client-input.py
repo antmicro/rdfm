@@ -1,9 +1,6 @@
 import pexpect
 import time
 
-pexpect.run("tests/certgen.sh")
-time.sleep(3)
-
 child_server = pexpect.spawn('python3 -m rdfm_mgmt_server -no_ssl')
 child_user = pexpect.spawn('python3 -m rdfm_mgmt_client u -no_ssl')
 

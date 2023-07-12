@@ -1,5 +1,5 @@
 import socket
-from _typeshed import Incomplete
+from _typeshed import Incomplete as Incomplete
 from enum import Enum
 from typing import Optional
 

@@ -3,12 +3,56 @@ import select
 import json
 import sys
 import jsonschema
+import time
+from flask import Flask
 from threading import Thread
 from typing import Optional
 from rdfm_mgmt_communication import *
 from proxy import Proxy
 
 REQUEST_SCHEMA = {}
+app = Flask(__name__)
+
+
+@app.route('/')
+def index():
+    return create_alert({'devices': sorted(server.connected_devices.keys())})
+
+
+@app.route('/device/<devicename>', methods=['GET'])
+def device_metadata(devicename: str):
+    return create_alert(server.connected_devices[devicename].metadata)
+
+
+@app.route('/device/<devicename>/update')
+def device_update(devicename: str):
+    server.connected_devices[devicename].send({'method': 'update'})
+    return {}
+
+
+@app.route('/device/<devicename>/proxy')
+def device_proxy(devicename: str):
+    proxy = Proxy('127.0.0.1', None, server.connected_devices[devicename],
+                  args.encrypted, args.cert, args.key)
+    t = Thread(target=proxy.run)
+    t.start()
+
+    while proxy._port is None:
+        time.sleep(0.25)
+
+    timeout = 5 * 60
+    interval = 1
+    start = time.time()
+    while (proxy.proxy_device_socket is None and
+           time.time() - start < timeout):
+        time.sleep(interval)
+
+    if proxy.proxy_device_socket:
+        return create_alert({
+            'message': 'shell ready to connect',
+            'port': proxy._port
+        })
+    return 'Device proxy request timeout'
 
 
 class Server:
@@ -30,7 +74,7 @@ class Server:
         self.sockets: list[socket.socket] = [self.server_socket]
 
         self.connected_users: list[User] = []
-        self.connected_devices: list[Device] = []
+        self.connected_devices: dict[str, Device] = {}
         self.clients: dict[socket.socket, Client] = {}
 
     def connect_client(self, new_client_data: dict,
@@ -52,7 +96,7 @@ class Server:
             if isinstance(client, User):
                 self.connected_users.append(client)
             if isinstance(client, Device):
-                self.connected_devices.append(client)
+                self.connected_devices[client.name] = client
 
     def disconnect_client(self, client_socket: socket.socket) -> None:
         """Stop monitoring the disconnected client.
@@ -68,22 +112,8 @@ class Server:
             if isinstance(client, User):
                 self.connected_users.remove(client)
             if isinstance(client, Device):
-                self.connected_devices.remove(client)
+                del self.connected_devices[client.name]
                 print('Disconnected device')
-
-    def get_device_by_name(self, name: str) -> Optional[Device]:
-        """Finds and returns connected device with specified name
-
-        Args:
-            name: The name of the device we're looking for
-
-        Returns:
-            Device with specified name if it's connected
-        """
-        for device in self.connected_devices:
-            if device.name == name:
-                return device
-        return None
 
     def handle_request(self, request: dict, client: Client) -> None:
         """Parse request and perform actions depending on the type
@@ -96,13 +126,13 @@ class Server:
 
         # Server requests
         if request['method'] == 'list':
-            devicenames: list[str] = [
-                device.name for device in self.connected_devices]
-            client.send(create_alert({'devices': sorted(devicenames)}))
+            client.send(create_alert({
+                'devices': sorted(self.connected_devices.keys())
+            }))
             return
 
         # Device requests
-        device = self.get_device_by_name(request['device_name'])
+        device = self.connected_devices[request['device_name']]
         assert device is not None
 
         if request['method'] == 'proxy':
@@ -197,6 +227,8 @@ if __name__ == '__main__':
                         help='ip addr or domain name of the host')
     parser.add_argument('-port', metavar='p', type=int, default=1234,
                         help='listening port')
+    parser.add_argument('-http_port', metavar='hp', type=int, default=5000,
+                        help='listening port')
     parser.add_argument('-schemas', metavar='s', type=str,
                         default='json_schemas',
                         help='directory with requests schemas')
@@ -213,4 +245,13 @@ if __name__ == '__main__':
 
     server = Server(args.hostname, args.port,
                     args.encrypted, args.cert, args.key)
-    server.run()
+    t = Thread(target=server.run, daemon=True)
+    t.start()
+
+    if args.encrypted:
+        app.run(host=args.hostname, port=args.http_port,
+                debug=True, use_reloader=False,
+                ssl_context=(args.cert, args.key))
+    else:
+        app.run(host=args.hostname, port=args.http_port,
+                debug=True, use_reloader=False)

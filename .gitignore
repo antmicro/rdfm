@@ -30,3 +30,5 @@ device_schema.json
 
 # Certificates
 certs/
+# Local tests
+.gitlab-ci-local/

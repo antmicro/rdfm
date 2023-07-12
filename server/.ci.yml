@@ -22,7 +22,8 @@ cache:
       if [[ -d device/target ]]; then
         exit 0
       fi
-    - apt-get -y install make
+    - apt-get -y install make netcat openssl
+    - pip3 install flask
     - . $HOME/.cargo/env
     - cd device
     - cargo build && cargo run --bin rdfm_schema_generator -- --schema-path=../json_schemas/device_schema.json

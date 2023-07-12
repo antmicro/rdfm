@@ -166,6 +166,47 @@ files = [
 ]
 
 [[package]]
+name = "types-click"
+version = "7.1.8"
+description = "Typing stubs for click"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-click-7.1.8.tar.gz", hash = "sha256:b6604968be6401dc516311ca50708a0a28baa7a0cb840efd7412f0dbbff4e092"},
+    {file = "types_click-7.1.8-py3-none-any.whl", hash = "sha256:8cb030a669e2e927461be9827375f83c16b8178c365852c060a34e24871e7e81"},
+]
+
+[[package]]
+name = "types-flask"
+version = "1.1.6"
+description = "Typing stubs for Flask"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-Flask-1.1.6.tar.gz", hash = "sha256:aac777b3abfff9436e6b01f6d08171cf23ea6e5be71cbf773aaabb1c5763e9cf"},
+    {file = "types_Flask-1.1.6-py3-none-any.whl", hash = "sha256:6ab8a9a5e258b76539d652f6341408867298550b19b81f0e41e916825fc39087"},
+]
+
+[package.dependencies]
+types-click = "*"
+types-Jinja2 = "*"
+types-Werkzeug = "*"
+
+[[package]]
+name = "types-jinja2"
+version = "2.11.9"
+description = "Typing stubs for Jinja2"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-Jinja2-2.11.9.tar.gz", hash = "sha256:dbdc74a40aba7aed520b7e4d89e8f0fe4286518494208b35123bcf084d4b8c81"},
+    {file = "types_Jinja2-2.11.9-py3-none-any.whl", hash = "sha256:60a1e21e8296979db32f9374d8a239af4cb541ff66447bb915d8ad398f9c63b2"},
+]
+
+[package.dependencies]
+types-MarkupSafe = "*"
+
+[[package]]
 name = "types-jsonschema"
 version = "4.17.0.8"
 description = "Typing stubs for jsonschema"
@@ -174,6 +215,28 @@ python-versions = "*"
 files = [
     {file = "types-jsonschema-4.17.0.8.tar.gz", hash = "sha256:96a56990910f405e62de58862c0bbb3ac29ee6dba6d3d99aa0ba7f874cc547de"},
     {file = "types_jsonschema-4.17.0.8-py3-none-any.whl", hash = "sha256:f5958eb7b53217dfb5125f0412aeaef226a8a9013eac95816c95b5b523f6796b"},
+]
+
+[[package]]
+name = "types-markupsafe"
+version = "1.1.10"
+description = "Typing stubs for MarkupSafe"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-MarkupSafe-1.1.10.tar.gz", hash = "sha256:85b3a872683d02aea3a5ac2a8ef590193c344092032f58457287fbf8e06711b1"},
+    {file = "types_MarkupSafe-1.1.10-py3-none-any.whl", hash = "sha256:ca2bee0f4faafc45250602567ef38d533e877d2ddca13003b319c551ff5b3cc5"},
+]
+
+[[package]]
+name = "types-werkzeug"
+version = "1.0.9"
+description = "Typing stubs for Werkzeug"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-Werkzeug-1.0.9.tar.gz", hash = "sha256:5cc269604c400133d452a40cee6397655f878fc460e03fde291b9e3a5eaa518c"},
+    {file = "types_Werkzeug-1.0.9-py3-none-any.whl", hash = "sha256:194bd5715a13c598f05c63e8a739328657590943bce941e8a3619a6b5d4a54ec"},
 ]
 
 [[package]]
@@ -190,4 +253,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "751d5beb406ab3ca8ce65be891cc2e07164853ca45734d3bd549b705d424e039"
+content-hash = "57abc43280c1f93adf81ee34d9ce86ed6db0b2ef2561e7459fdb10b0d38ad64c"

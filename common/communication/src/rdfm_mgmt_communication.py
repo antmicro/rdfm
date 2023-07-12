@@ -111,7 +111,7 @@ def receive_message(client: socket.socket) -> Optional[dict]:
         return None
 
 
-def encode_json(to_encode: dict | str) -> bytes:
+def encode_json(to_encode: dict) -> bytes:
     """Encodes a dict structure to send over the tcp socket
 
     Args:
@@ -131,7 +131,7 @@ def decode_json(to_decode: bytes) -> dict | int:
         to_decode: Encoded json
 
     Returns:
-        Decoded json to dict or str
+        Decoded json to dict or int
     """
     decoded = json.loads(to_decode.decode('utf-8').strip())
     assert isinstance(decoded, dict) or isinstance(decoded, int)

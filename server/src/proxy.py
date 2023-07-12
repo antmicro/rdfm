@@ -8,7 +8,7 @@ PROXY_BUFFER_SIZE: Final = 4096
 
 
 class Proxy:
-    def __init__(self, hostname: str, user: User, device: Device,
+    def __init__(self, hostname: str, user: Optional[User], device: Device,
                  encrypted: bool = False, crt: str = "", key: str = ""):
         """Creates a proxy connection between user and device
 
@@ -24,12 +24,14 @@ class Proxy:
 
         Args:
             hostname: IP addr of the server
-            user: User that required proxy connection
+            user: User that required proxy connection, None if HTTP requested
             device: Device that the user requested to connect to
-            encrypted: whether connection should use SSL
+            encrypted: Whether connection should use SSL
+            crt: File with server certificate
+            key: File with certificate key
         """
         self.device: Device = device
-        self.user: User = user
+        self.user: Optional[User] = user
 
         self.proxy_device_socket: Optional[socket.socket] = None
         self.proxy_user_socket: Optional[socket.socket] = None
@@ -42,8 +44,8 @@ class Proxy:
 
         self._hostname: str = self.proxy_socket.getsockname()[0]
         self._port: int = self.proxy_socket.getsockname()[1]
-        print(f'Opened proxy socket at {self._port}',
-              f'(user: {user.name}, device: {device.name})')
+        print(f'Opened proxy socket at {self._port} for dev',
+              {self.device.name})
 
     def send_connection_request(self) -> None:
         """Send connection request and new port to the device"""
@@ -79,10 +81,11 @@ class Proxy:
 
                         self.sockets.append(self.proxy_device_socket)
                         # send connection invitation to the user
-                        self.user.send(create_alert({
-                            'message': 'shell ready to connect',
-                            'port': self._port
-                        }))
+                        if self.user:
+                            self.user.send(create_alert({
+                                'message': 'shell ready to connect',
+                                'port': self._port
+                            }))
                     # user connected
                     else:
                         (self.proxy_user_socket,
@@ -98,14 +101,13 @@ class Proxy:
                     # client disconnected from proxy connection
                     # close it and exit thread
                     if not message:
-                        print(f'Closed proxy socket at {self._port}',
-                              f'(user: {self.user.name},',
-                              f'device: {self.device.name})')
+                        print(f'Closed proxy socket at {self._port}')
                         sys.exit()
 
                     # device -> user
-                    if (notified_socket == self.proxy_device_socket
-                            and self.proxy_user_socket):
+                    if (notified_socket == self.proxy_device_socket and
+                            self.proxy_user_socket):
+                        assert self.proxy_user_socket is not None
                         self.proxy_user_socket.send(message)
 
                     # user -> device

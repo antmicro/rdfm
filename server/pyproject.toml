@@ -19,6 +19,9 @@ mypy = "^1.4.0"
 types-jsonschema = "^4.17.0.8"
 pycodestyle = "^2.10.0"
 
+
+[tool.poetry.group.types.dependencies]
+types-flask = "^1.1.6"
 [tool.poetry.scripts]
 test = 'scripts:test'
 
