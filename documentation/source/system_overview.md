@@ -14,20 +14,17 @@ and clients.
 
 The system architecture consists of:
 
-``communication.py`` - Communication protocol used in comunication between
+``rdfm_mgmt_communication`` - Communication protocol used in comunication between
 server and client instances.
 
-``server.py`` - Used as a service provider for accessing connected devices
-informations and estabilish connection with available device services.
+``rdfm_mgmt_server`` - Used as a service provider for accessing connected devices
+informations and estabilish proxy connection with available device services.
 
-``proxy.py`` - Used to manage TCP proxy connection forwarding between user
-and device.
+``rdfm_mgmt_client`` - Used as a shell user client for server communication.
 
-``client.py`` - Used as a shell user panel for server communication.
+``rdfm_mgmt_device`` - Client for device.
 
-``rdfm-device-client`` - Client for device.
-
-``rdfm-schema-generator`` - Schema generator for server-device communication.
+``rdfm_schema_generator`` - Schema generator for server-device communication.
 
 ``json_schemas`` - Directory containing valid communication requests. \
 Server validates incoming requests with this schema. \
