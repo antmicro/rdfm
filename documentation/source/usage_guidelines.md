@@ -84,7 +84,7 @@ by using `no_ssl` argument.
 
 ## Using a connected client
 
-List devices:
+List connected devices:
 
 ```
 LIST
@@ -93,19 +93,36 @@ LIST
 Fetch information about device:
 
 ```
-REQ devicename info
+REQ device_name info
 ```
 
 Requesting device to upload new metadata:
 
 ```
-REQ devicename update
+REQ device_name update
 ```
 
-Send **proxy** request to a device:
+Request **proxy** connection with a device:
 
 ```
-REQ devicename proxy
+REQ device_name proxy
+```
+
+**File transfer**:
+
+Upload file to device:
+
+```
+REQ device_name upload file_path src_file_path
+```
+
+Where file_path indicates path on device, src_file_path indicates of file
+to upload.
+
+Download file from device:
+
+```
+REQ device_name download file_path
 ```
 
 **Connecting to the device**:
@@ -116,14 +133,37 @@ To connect just use these (or similiar) programs:
 
 **Encrypted:**
 
-```nc SERVER_ADDR PORT```
+```openssl s_client -CAfile certs/CA.crt -quiet -connect SERVER_ADDR:PORT```
 
 **Not encrypted:**
 
-```openssl s_client -connect SERVER_ADDR:PORT```
+```nc SERVER_ADDR PORT```
 
 Exit client:
 
 ```
 exit
 ```
+
+## Communicating with server via HTTP (server management)
+
+To use encrypted connection via HTTP request matching `CA.crt` certificate
+is needed.
+
+Endpoints:
+
+GET `/`
+
+Returns list connected devices
+
+GET `/device/<devicename>`
+
+Fetch information about device
+
+GET `/device/<devicename>/update`
+
+Request device to upload new metadata
+
+GET `/device/<devicename>/proxy`
+
+Request **proxy** connection with a device

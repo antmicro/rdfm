@@ -8,28 +8,55 @@ and clients.
 
 ## Supported devices
 
-* devices running Linux and ``python3``
+* devices running Linux
 
 ## System architecture
 
 The system architecture consists of:
 
-``rdfm_mgmt_communication`` - Communication protocol used in comunication between
-server and client instances.
+``rdfm_mgmt_communication`` - Communication protocol used in comunication
+between server and client instances.
 
-``rdfm_mgmt_server`` - Used as a service provider for accessing connected devices
-informations and estabilish proxy connection with available device services.
+``rdfm_mgmt_server`` - Used as a service provider for accessing (via TCP
+and HTTP) connected devices informations and estabilish proxy connection
+with available device services.
 
-``rdfm_mgmt_client`` - Used as a shell user client for server communication.
+``rdfm_mgmt_client`` - Used as a shell user client for server
+communication (TCP-only)
 
-``rdfm_mgmt_device`` - Client for device.
+``rdfm_mgmt_device`` - Client for device (TCP-only communication)
 
-``rdfm_schema_generator`` - Schema generator for server-device communication.
+## Communication with server
 
-``json_schemas`` - Directory containing valid communication requests. \
-Server validates incoming requests with this schema. \
-All new instructions definitions should be put here. \
-Device requests can be automatically generated using device client.
+Communication with server is performed by JSON API.
+It is possible via TCP sockets (which `rdfm_mgmt_client` and
+`rdfm_mgmt_server` use) or via HTTP requests.
+
+Communication via TCP sockets uses the same API model but it's
+encoded to enable detection of message that is corrupted or split
+into multiple packets. \
+It is done by adding header containing length of utf-8 encoded
+JSON message - preview of the format:
+
+```text
+0        10                         10+h
++---------+----------------------------+
+| HEADER  | utf-8 encoded JSON message |
++---------+----------------------------+
+```
+Header is a 10-bytes long number (``h`` on the graph) describing length
+of the utf-8 encoded JSON message.
+
+Requests and responses types are distinguished by ``'method'`` field
+
+Example of request sent to server:
+
+``{'method': 'register', 'client': {'group': 'USER', 'name': 'testuser'}}``
+
+Example of response sent by the server:
+
+``{'method': 'alert', 'alert': {'devices': ['d1', 'd2']}}``
+
 
 :::{figure-md} summary
 ![Architecture summary](images/summary.png)
