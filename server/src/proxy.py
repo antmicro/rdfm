@@ -4,6 +4,7 @@ import sys
 import os
 from typing import Optional, Final
 from rdfm_mgmt_communication import *
+from request_models import ProxyRequest, Alert
 
 PROXY_BUFFER_SIZE: Final = 4096
 
@@ -50,10 +51,7 @@ class Proxy:
 
     def send_connection_request(self) -> None:
         """Send connection request and new port to the device"""
-        self.device.send({
-            'method': 'connect_reverse',
-            'port': self._port
-        })
+        self.device.send(ProxyRequest(port=self._port))  # type: ignore
 
     def disconnect(self) -> None:
         """Sends empty message to proxy sockets to disconnect them"""
@@ -98,7 +96,7 @@ class Proxy:
                         self.sockets.append(self.proxy_device_socket)
                         # send connection invitation to the user
                         if self.user:
-                            self.user.send(create_alert({
+                            self.user.send(Alert(alert={  # type: ignore
                                 'message': 'shell ready to connect',
                                 'port': self._port
                             }))

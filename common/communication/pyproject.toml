@@ -4,12 +4,21 @@ version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
+packages = [
+    { include = "rdfm_mgmt_communication.py", from = "src" },
+    { include = "request_models.py", from = "src" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"
 
-[tool.poetry.group.dev.dependencies]
+[tool.poetry.group.test.dependencies]
 mypy = "^1.4.0"
+types-jsonschema = "^4.17.0.8"
+pycodestyle = "^2.10.0"
+
+[tool.poetry.scripts]
+test = 'scripts:static_checks'
 
 [build-system]
 requires = ["poetry-core"]

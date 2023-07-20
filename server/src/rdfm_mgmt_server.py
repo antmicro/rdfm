@@ -1,32 +1,35 @@
 import socket
 import select
-import json
 import sys
-import jsonschema
+import json
 import time
 from flask import Flask
 from threading import Thread
 from typing import Optional
 from rdfm_mgmt_communication import *
+from request_models import *
 from proxy import Proxy
 
-REQUEST_SCHEMA = {}
 app = Flask(__name__)
 
 
 @app.route('/')
 def index():
-    return create_alert({'devices': sorted(server.connected_devices.keys())})
+    return Alert(alert={
+        'devices': sorted(server.connected_devices.keys())
+    }).json()
 
 
 @app.route('/device/<devicename>', methods=['GET'])
 def device_metadata(devicename: str):
-    return create_alert(server.connected_devices[devicename].metadata)
+    return Alert(  # type: ignore
+        alert=server.connected_devices[devicename].metadata
+    ).json()
 
 
 @app.route('/device/<devicename>/update')
 def device_update(devicename: str):
-    server.connected_devices[devicename].send({'method': 'update'})
+    server.connected_devices[devicename].send(UpdateRequest())  # type: ignore
     return {}
 
 
@@ -49,10 +52,10 @@ def device_proxy(devicename: str):
         time.sleep(interval)
 
     if proxy.proxy_device_socket:
-        return create_alert({
+        return Alert(alert={  # type: ignore
             'message': 'shell ready to connect',
             'port': proxy._port
-        })
+        }).json()
     return 'Device proxy request timeout'
 
 
@@ -80,7 +83,9 @@ class Server:
         self.connected_devices: dict[str, Device] = {}
         self.clients: dict[socket.socket, Client] = {}
 
-    def connect_client(self, new_client_data: dict,
+        self.file_transfers: list[FileTransfer] = []
+
+    def connect_client(self, new_client_data: ClientRequest,
                        client_socket: socket.socket) -> None:
         """Start monitoring the connected client.
         Add it to the device or user containers and active sockets for
@@ -90,9 +95,9 @@ class Server:
             new_client_data: Client metadata from the new client request
             client_socket: Newly connected client socket
         """
-        print(f'client group: {new_client_data["group"]}')
-        client = create_client(new_client_data['group'],
-                               new_client_data['name'], client_socket)
+        print(f'client group: {new_client_data.group}')
+        client = create_client(new_client_data.group,
+                               new_client_data.name, client_socket)
         if client:
             self.clients[client_socket] = client
             self.sockets.append(client_socket)
@@ -129,7 +134,7 @@ class Server:
         client = self.clients[client_socket]
         print("Disconnecting", client.name, "...")
         client_proxies = self.get_client_proxy_connections(client)
-        print(len(client_proxies))
+        print(f'Closing {len(client_proxies)} proxy connections')
         for p in client_proxies:
             p.disconnect()
             self.proxy_connections.remove(p)
@@ -142,39 +147,76 @@ class Server:
             print('Disconnected device')
         del self.clients[client_socket]
 
-    def handle_request(self, request: dict, client: Client) -> None:
+    def handle_request(self, request: Request, client: Client) -> None:
         """Parse request and perform actions depending on the type
 
         Args:
             request: Request that the client received
             client: Recipent of the request
         """
-        print(f'Request {request["method"]} from {client.name}')
 
-        # Server requests
-        if request['method'] == 'list':
-            client.send(create_alert({
-                'devices': sorted(self.connected_devices.keys())
-            }))
-            return
-
-        # Device requests
-        device = self.connected_devices[request['device_name']]
-        assert device is not None
-
-        if request['method'] == 'proxy':
-            assert isinstance(client, User)
-            proxy = Proxy(self._hostname, client, device,
-                          self.encrypted, self.cert, self.cert_key)
-            self.proxy_connections.append(proxy)
-            t = Thread(target=proxy.run)
-            t.start()
-
-        elif request['method'] == 'info':
-            client.send(create_alert(device.metadata))
-
-        elif request['method'] == 'update':
-            device.send({'method': 'update'})
+        match request:
+            case InfoDeviceRequest(device_name=device_name):
+                client.send(Alert(  # type: ignore
+                    alert=self.connected_devices[device_name].metadata
+                ))
+            case UpdateDeviceRequest(device_name=device_name):
+                self.connected_devices[device_name].send(
+                    UpdateRequest()  # type: ignore
+                )
+            case ProxyDeviceRequest(device_name=device_name):
+                assert isinstance(client, User)
+                proxy = Proxy(self._hostname, client,
+                              self.connected_devices[device_name],
+                              self.encrypted, self.cert, self.cert_key)
+                t = Thread(target=proxy.run)
+                t.start()
+            # TODO: move file transfer to another thread
+            case DownloadDeviceRequest(device_name=device_name,
+                                       file_path=file_path):
+                print('Registered new file transfer')
+                device = self.connected_devices[device_name]
+                self.file_transfers.append(
+                    FileTransfer(client, device, file_path)
+                )
+                device.send(
+                    DownloadRequest(file_path=file_path)  # type: ignore
+                )
+            case UploadDeviceRequest(device_name=device_name,
+                                     file_path=file_path):
+                print('Registered new file transfer')
+                device = self.connected_devices[device_name]
+                self.file_transfers.append(
+                    FileTransfer(device, client, file_path)
+                )
+                device.send(UploadRequest(file_path=file_path))  # type: ignore
+            case ListRequest():
+                client.send(Alert(alert={  # type: ignore
+                    'devices': sorted(self.connected_devices.keys())
+                }))
+            case SendFileRequest(file_path=file_path):
+                matching_transfers = filter(
+                    lambda transfer:
+                        (transfer.sender == client and
+                         transfer.file_path == file_path),
+                    self.file_transfers
+                )
+                receivers: list[Client] = [t.receiver
+                                           for t in matching_transfers]
+                for receiver in receivers:
+                    receiver.send(request)
+            case FileCompletedRequest(file_path=file_path):
+                matching_transfers = filter(
+                    lambda transfer:
+                        (transfer.receiver == client and
+                         transfer.file_path == file_path),
+                    self.file_transfers
+                )
+                for transfer in matching_transfers:
+                    self.file_transfers.remove(transfer)
+            case Metadata(metadata=metadata):
+                assert isinstance(client, Device)
+                client.metadata = metadata
 
     def run(self) -> None:
         """Main server loop for receiving and sending requests"""
@@ -194,32 +236,29 @@ class Server:
                     except Exception as e:
                         print('Error: ', e, file=sys.stderr)
                         continue
-                    registration_request: Optional[dict] = receive_message(
-                                                                client_socket)
+                    register_request: Optional[Request] = receive(
+                                                            client_socket)
 
                     # disconnected immediately
-                    if not registration_request:
+                    if not register_request:
                         continue
-                    assert registration_request is not None
-                    jsonschema.validate(instance=registration_request,
-                                        schema=REQUEST_SCHEMA)
-                    print('New connection', registration_request)
+                    assert isinstance(register_request, RegisterRequest)
+                    print('New connection', register_request)
 
-                    self.connect_client(
-                        registration_request['client'], client_socket)
+                    self.connect_client(register_request.client, client_socket)
                     print('Accepted new connection from {}:{}, {}'
                           .format(*client_address,
-                                  registration_request['client']['name'],
+                                  register_request.client.name,
                                   self.clients[client_socket]))
 
                 # existing socket sends message
                 else:
-                    message: Optional[dict] = None
+                    message: Optional[Request] = None
                     # identify sender
                     client: Client = self.clients[notified_socket]
 
                     try:
-                        message = receive_message(notified_socket)
+                        message = receive(notified_socket)
                         if not message:
                             # client disconnected
                             print('Closed connection from:',
@@ -230,16 +269,7 @@ class Server:
                         # received invalid request
                         continue
                     assert message is not None
-
-                    # identify sender
-                    print(f'Received message from {client.name}: {message}')
-
-                    if isinstance(client, Device):
-                        if 'metadata' in message:
-                            client.metadata = message['metadata']
-
-                    else:
-                        self.handle_request(message, client)
+                    self.handle_request(message, client)
 
             # exceptions
             for notified_socket in exception_sockets:
@@ -257,9 +287,6 @@ if __name__ == '__main__':
                         help='listening port')
     parser.add_argument('-http_port', metavar='hp', type=int, default=5000,
                         help='listening port')
-    parser.add_argument('-schemas', metavar='s', type=str,
-                        default='json_schemas',
-                        help='directory with requests schemas')
     parser.add_argument('-no_ssl', action='store_false', dest='encrypted',
                         help='turn off encryption')
     parser.add_argument('-cert', type=str, default='./certs/SERVER.crt',
@@ -267,9 +294,6 @@ if __name__ == '__main__':
     parser.add_argument('-key', type=str, default='./certs/SERVER.key',
                         help="""server cert key file""")
     args = parser.parse_args()
-
-    with open(f'{args.schemas}/request_schema.json', 'r') as f:
-        REQUEST_SCHEMA = json.loads(f.read())
 
     server = Server(args.hostname, args.port,
                     args.encrypted, args.cert, args.key)

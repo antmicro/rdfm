@@ -18,8 +18,11 @@ mypy = "^1.4.0"
 types-jsonschema = "^4.17.0.8"
 pycodestyle = "^2.10.0"
 
+
+[tool.poetry.group.types.dependencies]
+types-urllib3 = "^1.26.25.13"
 [tool.poetry.scripts]
-test = 'scripts:test'
+test = 'scripts:static_checks'
 
 [build-system]
 requires = ["poetry-core"]

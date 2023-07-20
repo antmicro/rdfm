@@ -23,13 +23,16 @@ pycodestyle = "^2.10.0"
 [tool.poetry.group.types.dependencies]
 types-flask = "^1.1.6"
 [tool.poetry.scripts]
-test = 'scripts:test'
+test = 'scripts:static_checks'
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [mypy]
+plugins = [
+    "pydantic.mypy"
+]
 disallow_untyped_defs = true
 disallow_any_unimported = true
 no_implicit_optional = true

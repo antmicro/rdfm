@@ -1,48 +1,17 @@
 import socket
 import json
 import sys
-import jsonschema
 import ssl
+from request_models import *
 
-from enum import Enum
 from typing import Optional, cast
 
 HEADER_LENGTH = 10
-REQUEST_SCHEMA = {}
-with open('json_schemas/request_schema.json', 'r') as f:
-    REQUEST_SCHEMA = json.loads(f.read())
-
-
-class ClientType(Enum):
-    USER = "user",
-    DEVICE = "device"
-
 
 class Client:
     def __init__(self, name: str, socket: socket.socket):
         self.name = name
         self._socket = socket
-
-    @staticmethod
-    def registration_packet(name: str) -> dict:
-        """Creates registration packet to send to the server
-
-        Args:
-            name: With what name the device wants to be identified
-
-        Returns:
-            Registration request for a client in the server
-        """
-        registration_request = {
-            'method': 'register',
-            'client': {
-                'group': "USER",
-                'name': name
-            }
-        }
-        jsonschema.validate(instance=registration_request,
-                            schema=REQUEST_SCHEMA)
-        return registration_request
 
     def get_server_addr(self) -> tuple[str, int]:
         """Wrapper for getting address of the server from the socket
@@ -54,7 +23,7 @@ class Client:
         (ip_addr, port) = self._socket.getsockname()
         return (ip_addr, port)
 
-    def send(self, message: dict) -> None:
+    def send(self, message: Request) -> None:
         """Wrapper for message sending
 
         Args:
@@ -62,13 +31,22 @@ class Client:
         """
         self._socket.send(encode_json(message))
 
-    def receive(self) -> Optional[dict]:
-        """Wrapper for message receiving
+    def receive(self) -> Optional[Request]:
+        """Wrapper for receiving a message that can contain a file part
 
         Returns:
             Received message
         """
-        return receive_message(self._socket)
+        
+        received = receive(self._socket)
+        return received
+
+
+class FileTransfer():
+    def __init__(self, receiver: Client, sender: Client, file_path: str):
+        self.receiver: Client = receiver
+        self.sender: Client = sender
+        self.file_path: str = file_path
 
 
 class Device(Client):
@@ -78,20 +56,25 @@ class Device(Client):
 
 
 class User(Client):
-    pass
+    def __init__(self, name: str, socket: socket.socket):
+        super().__init__(name, socket)
+
+    def prompt(self, message: str) -> None:
+        """Prints prompt with message"""
+        print('\r', message, end=f'\n{self.name} > ')
 
 
-def receive_message(client: socket.socket) -> Optional[dict]:
-    """Handles message receiving
+def receive(client: socket.socket) -> Optional[Request]:
+    """Handles data receiving from socket
 
     Args:
-        client: Socket from which to receive a message
+        client: Socket from which to receive data
 
     Returns:
-        Received message if it was succesful
+        Received data if it was succesful
 
     Throws:
-        ValueError: Received message is not a valid request
+        ValueError: Received data is not valid
     """
     try:
         message_header: bytes = client.recv(HEADER_LENGTH)
@@ -101,17 +84,22 @@ def receive_message(client: socket.socket) -> Optional[dict]:
             return None
 
         message_length = cast(int, decode_json(message_header))
-        decoded_message = cast(dict, decode_json(client.recv(message_length)))
-        jsonschema.validate(instance=decoded_message, schema=REQUEST_SCHEMA)
+        message = client.recv(message_length)
+        remaining_bytes = message_length - len(message)
+        while remaining_bytes > 0:
+            message += client.recv(message_length)
+            remaining_bytes -= len(message)
+        decoded_message = decode_json(message)
+
         return decoded_message
 
     except Exception as e:
         # client closed connection violently
-        print(f'Exception receiving message: {str(e)}'),
+        print('Exception receiving message:', str(e))
         return None
 
 
-def encode_json(to_encode: dict) -> bytes:
+def encode_json(to_encode: Request) -> bytes:
     """Encodes a dict structure to send over the tcp socket
 
     Args:
@@ -120,30 +108,34 @@ def encode_json(to_encode: dict) -> bytes:
     Returns:
         Encoded json with header
     """
-    content = json.dumps(to_encode).encode('utf-8')
+    content = to_encode.json().encode('utf-8')
     return f"{len(content):<{HEADER_LENGTH}}".encode('utf-8') + content
 
 
-def decode_json(to_decode: bytes) -> dict | int:
-    """Decodes received json received from the tcp socket, without header
+def decode_json(to_decode: bytes) -> Request | int:
+    """Decodes json received from the tcp socket, without header
 
     Args:
         to_decode: Encoded json
 
     Returns:
-        Decoded json to dict or int
+        Decoded json to request or int (header with msg length)
     """
-    decoded = json.loads(to_decode.decode('utf-8').strip())
-    assert isinstance(decoded, dict) or isinstance(decoded, int)
-    return decoded
+    decoded = to_decode.decode('utf-8').strip()
+    if decoded.isnumeric():
+        return int(decoded)
+    else:
+        decoded = Container.parse_obj({'data': json.loads(to_decode)}).data
+
+        return decoded
 
 
-def create_client(client_type: str, name: str,
+def create_client(client_group: ClientGroups, name: str,
                   socket: socket.socket) -> Optional[Client]:
     """Creates a new client
 
     Args:
-        client_type: Tells if client wants to be recognized as user of device
+        client_group: Tells if client wants to be recognized as user of device
         name: With what name the device wants to be identified
         socket: Socket with which the client is connecting to the server
         file: Path to the file containing metadata
@@ -155,15 +147,15 @@ def create_client(client_type: str, name: str,
         AttributeError: Provided not supported client type
     """
     try:
-        client_enum = getattr(ClientType, client_type)
-        if client_enum == ClientType.USER:
+        client_enum = getattr(ClientGroups, client_group)
+        if client_enum == ClientGroups.USER:
             return User(name, socket)
-        elif client_enum == ClientType.DEVICE:
+        elif client_enum == ClientGroups.DEVICE:
             return Device(name, socket)
         else:
             return None
     except AttributeError:
-        print(f'Error: {client_type} is not a valid client type')
+        print(f'Error: {client_group} is not a valid client type')
         sys.exit(1)
 
 
@@ -194,18 +186,3 @@ def create_listening_socket(hostname: str, port: int = 0,
     new_socket.bind((hostname, port))
     new_socket.listen()
     return new_socket
-
-
-def create_alert(alert_content: dict) -> dict:
-    """Creates a message that client doesn't have to respond to
-
-    Args:
-        alert_content: Message that we want to send as an alert
-
-    Returns:
-        Wrapped message according to JSON schema alert structure
-    """
-    return {
-        'method': 'alert',
-        'alert': alert_content
-    }
