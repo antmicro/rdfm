@@ -2,6 +2,7 @@ import socket
 import select
 import sys
 import jwt
+import sqlite3
 import time
 import os
 from threading import Thread
@@ -367,9 +368,10 @@ class Server:
             for notified_socket in read_sockets:
                 # new connection
                 if notified_socket == self.server_socket:
+                    print('new')
                     try:
                         (client_socket,
-                         client_address) = self.server_socket.accept()
+                        client_address) = self.server_socket.accept()
                     except Exception as e:
                         print('Error: ', e, file=sys.stderr)
                         continue

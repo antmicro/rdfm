@@ -1,0 +1,3 @@
+shell_connect = false
+file_transfer = false
+exec_cmds = false
