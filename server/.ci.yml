@@ -118,7 +118,10 @@ test-file-transfer:
   extends: .build
   stage: local-tests
   script:
+<<<<<<< HEAD
     - echo "file_transfer = true" > 'capabilities.toml'
+=======
+>>>>>>> c634b0f (Fix merge conflicts)
     - python3 tests/test-file-transfer.py
   only:
     refs:
