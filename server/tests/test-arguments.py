@@ -6,10 +6,10 @@ def default_arguments():
     time.sleep(3)
     
     child_server = pexpect.spawn('python3 -m rdfm_mgmt_server')
-    child_server.expect_exact('Listening for connections on 127.0.0.1:1234...')
+    child_server.expect('Listening for connections on 127.0.0.1:1234...')
 
     child_user = pexpect.spawn('python3 -m rdfm_mgmt_client u')
-    child_user.expect_exact('u > ')
+    child_user.expect('u > ')
 
     child_server.close()
     child_user.close()
@@ -18,13 +18,13 @@ def default_arguments():
 
 def with_arguments(hostname, port):    
     child_server = pexpect.spawn(f'python3 -m rdfm_mgmt_server -hostname {hostname} -p {port}')
-    child_server.expect_exact(f'Listening for connections on {hostname}:{port}...')
+    child_server.expect(f'Listening for connections on {hostname}:{port}...')
 
     child_user = pexpect.spawn('python3 -m rdfm_mgmt_client u')
-    child_user.expect_exact(pexpect.EOF)
+    child_user.expect(pexpect.EOF)
 
     child_user = pexpect.spawn(f'python3 -m rdfm_mgmt_client u -hostname {hostname} -p {port}')
-    child_user.expect_exact('u > ')
+    child_user.expect('u > ')
 
     child_server.close()
     child_user.close()

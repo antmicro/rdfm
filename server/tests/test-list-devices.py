@@ -10,7 +10,7 @@ pexpect.run("tests/certgen.sh")
 time.sleep(3)
 
 child_server = pexpect.spawn("python3 -m rdfm_mgmt_server")
-child_server.expect_exact("Listening for connections on 127.0.0.1:1234...")
+child_server.expect("Listening for connections on 127.0.0.1:1234...")
 
 child_user = pexpect.spawn("python3 -m rdfm_mgmt_client u")
 child_user.expect('{"method":"alert","alert":{"message":"Connected as u"}}\r\nu >')

@@ -20,6 +20,7 @@ class DeviceRequest(Request):
     device_name: str
 
 class DeviceRequest(Request):
+    method: str
     device_name: str
 
 class ClientGroups(str, Enum):
