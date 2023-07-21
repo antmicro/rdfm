@@ -2,8 +2,6 @@ import socket
 import select
 import sys
 import jwt
-import sqlite3
-import time
 import os
 from threading import Thread
 from typing import Optional
@@ -13,20 +11,42 @@ from proxy import Proxy
 from database.devices import DevicesDB
 import database.db
 
-jwt_key = os.environ['JWT_SECRET']
 CONNECTION_TRIES = 2
+
+
+class FileTransfer():
+    def __init__(self, device: Device,
+                 device_filepath: str,
+                 server_filepath: str):
+        # Device that should upload/download file
+        self.device: Device = device
+        # Filepath on device
+        self.device_filepath: str = device_filepath
+        # Filepath in server cache
+        self.server_filepath: str = server_filepath
+
+        self.started: bool = False
+        self.uploaded: bool = False
+
+        self.error: bool = False
+        self.error_msg: str = ''
+
+    def __del__(self):
+        os.remove(self.server_filepath)
 
 
 class Server:
     def __init__(self, hostname: str, port: int,
                  encrypted: bool, cert: str, cert_key: str,
-                 db_path: str):
+                 db_path: str, jwt_secret: str):
         self._hostname: str = hostname
         self._port: int = port
 
         self.encrypted = encrypted
         self.cert: str = cert
         self.cert_key: str = cert_key
+
+        self.jwt_secret = jwt_secret
 
         self.proxy_connections: list[Proxy] = []
 
@@ -45,7 +65,8 @@ class Server:
         self.db = database.db.create(db_path)
         self._devices_db: DevicesDB = DevicesDB(self.db)
 
-        self.file_transfers: list[FileTransfer] = []
+        # filename in server cache -> transfer object
+        self.file_transfers: dict[str, FileTransfer] = {}
 
     def can_device_register(self, register_request: RegisterRequest,
                             device_socket: socket.socket) -> bool:
@@ -90,7 +111,7 @@ class Server:
                 "name": device_data.name,
                 "mac_address": device_data.mac_address
             },
-            jwt_key, algorithm="HS256"
+            self.jwt_secret, algorithm="HS256"
         )
         return AuthTokenRequest(jwt=token)  # type: ignore
 
@@ -115,7 +136,7 @@ class Server:
             assert isinstance(auth_request, AuthTokenRequest)
             print('Device trying to auth with JWT')
             try:
-                decoded = jwt.decode(auth_request.jwt, jwt_key,
+                decoded = jwt.decode(auth_request.jwt, self.jwt_secret,
                                      algorithms=["HS256"])
                 device = self._devices_db.get_device(
                     decoded['name'], decoded['mac_address']
@@ -176,10 +197,10 @@ class Server:
         else:
             new_client_data = connect_request.client
             client: Optional[Client] = create_client(
-                                                new_client_data.group,
-                                                new_client_data.name,
-                                                client_socket,
-                                                new_client_data.capabilities)
+                new_client_data.group,
+                new_client_data.name,
+                client_socket,
+                new_client_data.capabilities)
             if client:
                 assert isinstance(client, User)
                 self.connected_users.append(client)
@@ -282,74 +303,20 @@ class Server:
                 t = Thread(target=proxy.run)
                 t.start()
 
-                while proxy.port is None:
-                    time.sleep(0.25)
-
-                timeout = 30
-                interval = 1
-                start = time.time()
-                while (proxy.proxy_device_socket is None and
-                        time.time() - start < timeout):
-                    time.sleep(interval)
-
-                if proxy.proxy_device_socket:
-                    return Alert(alert={  # type: ignore
-                        'message': 'shell ready to connect',
-                        'port': proxy.port
-                    })
+                if wait_at_most(60, 0.25, lambda: proxy.port is not None):
+                    if wait_at_most(30, 1,
+                                    lambda: proxy.proxy_device_socket):
+                        return Alert(alert={  # type: ignore
+                            'message': 'shell ready to connect',
+                            'port': proxy.port
+                        })
                 return Alert(alert={  # type: ignore
                     'message': 'Device proxy request timeout'
-                })
-
-            # TODO: move file transfer to another thread
-            case DownloadDeviceRequest(device_name=_, file_path=file_path):
-                print('Registered new file transfer')
-                assert client is not None
-                self.file_transfers.append(
-                    FileTransfer(client, device, file_path)
-                )
-                device.send(
-                    DownloadRequest(file_path=file_path)  # type: ignore
-                )
-                return Alert(alert={  # type: ignore
-                    'message': 'Downloading file...'
-                })
-            case UploadDeviceRequest(device_name=_, file_path=file_path,
-                                     src_file_path=_):
-                print('Registered new file transfer')
-                self.file_transfers.append(
-                    FileTransfer(device, client, file_path)
-                )
-                device.send(UploadRequest(file_path=file_path))  # type: ignore
-                return Alert(alert={  # type: ignore
-                    'message': 'Uploading file...'
                 })
             case ListRequest():
                 return Alert(alert={  # type: ignore
                     'devices': sorted(self.connected_devices.keys())
                 })
-            case SendFileRequest(file_path=file_path):
-                matching_transfers = filter(
-                    lambda transfer:
-                        (transfer.sender == client and
-                         transfer.file_path == file_path),
-                    self.file_transfers
-                )
-                receivers: list[Client] = [t.receiver
-                                           for t in matching_transfers]
-                for receiver in receivers:
-                    receiver.send(request)
-                return None
-            case FileCompletedRequest(file_path=file_path):
-                matching_transfers = filter(
-                    lambda transfer:
-                        (transfer.receiver == client and
-                         transfer.file_path == file_path),
-                    self.file_transfers
-                )
-                for transfer in matching_transfers:
-                    self.file_transfers.remove(transfer)
-                return None
             case Metadata(metadata=metadata):
                 assert isinstance(client, Device)
                 client.metadata = metadata
@@ -371,7 +338,7 @@ class Server:
                     print('new')
                     try:
                         (client_socket,
-                        client_address) = self.server_socket.accept()
+                         client_address) = self.server_socket.accept()
                     except Exception as e:
                         print('Error: ', e, file=sys.stderr)
                         continue
@@ -380,7 +347,7 @@ class Server:
                     # if JWT fails, try with register request
                     for try_nr in range(CONNECTION_TRIES):
                         connection_request: Optional[Request] = receive(
-                                                                 client_socket)
+                            client_socket)
                         print("Received connection request",
                               connection_request)
 
@@ -393,8 +360,8 @@ class Server:
                                            AuthTokenRequest))
 
                         connection_response: Request = self.connect_client(
-                                                            connection_request,
-                                                            client_socket)
+                            connection_request,
+                            client_socket)
                         client_socket.send(encode_json(connection_response))
                         if (not isinstance(connection_response, Alert) or
                                 'error' not in connection_response.alert):

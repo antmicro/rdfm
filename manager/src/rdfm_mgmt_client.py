@@ -1,18 +1,16 @@
+import argparse
 import socket
 import errno
 import sys
 import os
-import base64
-import urllib.parse
 import ssl
-import base64
-from math import ceil
+import requests
 from typing import Optional
 from threading import Thread
 from rdfm_mgmt_communication import (
     Client,
     User,
-    create_client
+    create_client,
 )
 from request_models import (
     Container,
@@ -20,9 +18,8 @@ from request_models import (
     ClientGroups,
     ClientRequest,
     RegisterRequest,
-    SendFileRequest,
-    FileCompletedRequest,
-    UploadDeviceRequest
+    UploadDeviceRequest,
+    DownloadDeviceRequest,
 )
 
 
@@ -52,6 +49,11 @@ def user_cmd_to_request(user_input: str) -> Optional[Request]:
                 request['method'] = tokens[2]
                 if tokens[2] == 'download':
                     request['file_path'] = tokens[3]
+                    if len(tokens) > 4:
+                        request['dst_file_path'] = tokens[4]
+                    else:
+                        request['dst_file_path'] = os.path.basename(
+                                                        request['file_path'])
                 if tokens[2] == 'upload':
                     request['file_path'] = tokens[3]
                     request['src_file_path'] = tokens[4]
@@ -85,11 +87,7 @@ def recv_loop(client: User) -> None:
                     print('Connection closed by the server')
                     os._exit(1)
                 assert request is not None
-                match request:
-                    case SendFileRequest():
-                        download_file_part(client, request)
-                    case _:
-                        client.prompt(str(request.model_dump_json()))
+                client.prompt(str(request.model_dump_json()))
 
         except IOError as e:
             if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
@@ -101,11 +99,66 @@ def recv_loop(client: User) -> None:
             sys.exit()
 
 
-def send_loop(client: User) -> None:
+def send_upload_request(request: UploadDeviceRequest,
+                        args) -> requests.Response:
+    """Sends upload request via server file transfer API
+
+    Args:
+        request: Request parsed from client cmd
+        args: Client program args
+
+    Returns:
+        server response
+    """
+    to_send = {
+        'url': f'{args.files_url}/device/{request.device_name}/upload',
+        'data': {
+            'file_path': request.file_path
+        },
+        'files': {
+            'file': open(request.src_file_path),
+        }
+    }
+    if args.files_url.startswith('https'):
+        to_send['verify'] = args.cert
+    res = requests.post(**to_send)  # type: ignore
+    return res
+
+
+def send_download_request(request: DownloadDeviceRequest,
+                          args) -> int:
+    """Sends download request via server file transfer API
+
+    Args:
+        request: Request parsed from client cmd
+        args: Client program args
+
+    Returns:
+        response status code
+    """
+    to_send = {
+        'url': f'{args.files_url}/device/{request.device_name}/download',
+        'data': {
+            'file_path': request.file_path
+        }
+    }
+    if args.files_url.startswith('https'):
+        to_send['verify'] = args.cert
+    res = requests.get(**to_send)  # type: ignore
+    with open(request.dst_file_path, 'wb') as f:
+        for chunk in res.iter_content(chunk_size=1024):
+            if chunk:
+                f.write(chunk)
+
+    return res.status_code
+
+
+def send_loop(client: User, args) -> None:
     """Send messages to the server
 
     Args:
         client: Client connected to the server
+        args: Client program args
     """
     while True:
         cmd: str = input(f'{client.name} > ')
@@ -116,73 +169,18 @@ def send_loop(client: User) -> None:
                 assert to_send is not None
                 client.send(to_send)
                 if isinstance(to_send, UploadDeviceRequest):
-                    src_file_path = to_send.src_file_path
-                    upload_file(client, to_send.file_path, src_file_path)
-
-
-def download_file_part(client: User, request: SendFileRequest) -> None:
-    """Download file part
-
-    Args:
-        client: Client connected to the server
-        request: Request containing file part received from server
-    """
-    try:
-        file_name = os.path.basename(request.file_path)
-        write_mode = 'ab'
-        if request.part == 1:
-            client.prompt(f'Started downloading file {request.file_path}')
-            write_mode = 'wb'
-        with open(file_name, write_mode) as f:
-            f.write(base64.urlsafe_b64decode(
-                urllib.parse.unquote(request.content)
-            ))
-        if request.part == request.parts_total:
-            client.prompt(f'{request.file_path} downloaded')
-            client.send(
-                FileCompletedRequest(  # type: ignore
-                    file_path=request.file_path
-                )
-            )
-    except Exception as e:
-        client.prompt(f'Couldn\'t receive {file_name}, {e}')
-
-
-def upload_file(client: User, file_path: str, src_file_path: str) -> None:
-    """Send file to the server that will forward it to the device
-    Device that will receive file was specified in 'upload' request
-    that serves as a file transfer register packet
-
-    Args:
-        client: Client connected to the server
-        file_path: Path where to upload file on device
-        src_file_path: Path of the file to send
-    """
-
-    BUFSIZE = 16384
-    bytes_to_send = os.path.getsize(src_file_path)
-    parts_to_send = ceil(bytes_to_send / BUFSIZE)
-
-    try:
-        with open(src_file_path, "rb") as f:
-            for i in range(1, parts_to_send+1):
-                buf = f.read(min(bytes_to_send, BUFSIZE))
-                bytes_to_send -= len(buf)
-
-                client.send(SendFileRequest(  # type: ignore
-                    part=i,
-                    parts_total=parts_to_send,
-                    file_path=file_path,
-                    content=base64.standard_b64encode(buf).decode(),
-                ))
-        print("File uploaded")
-    except Exception as e:
-        client.prompt(f'Exception thrown while uploading file, {str(e)}')
+                    print("Uploading file...")
+                    res = send_upload_request(to_send, args)
+                    if res:
+                        print(res)
+                if isinstance(to_send, DownloadDeviceRequest):
+                    print("Downloading file...")
+                    res_status_code = send_download_request(to_send, args)
+                    if res_status_code:
+                        print(res_status_code)
 
 
 if __name__ == '__main__':
-    import argparse
-
     parser = argparse.ArgumentParser(
         description='rdfm-mgmt-shell server instance.',
         usage="""Documentation and list of commands:
@@ -190,6 +188,9 @@ if __name__ == '__main__':
         To exit just input "exit".""")
     parser.add_argument('-hostname', type=str, default='127.0.0.1',
                         help='ip addr or domain name of the server')
+    parser.add_argument('-files_url', type=str,
+                        default='https://127.0.0.1:5000/',
+                        help='url of file transfer api')
     parser.add_argument('-port', metavar='p', type=int, default=1234,
                         help='listening port on the server')
     parser.add_argument('name', type=str,
@@ -224,4 +225,4 @@ if __name__ == '__main__':
 
     t = Thread(target=recv_loop, args=(client,))
     t.start()
-    send_loop(client)
+    send_loop(client, args)

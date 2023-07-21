@@ -60,4 +60,6 @@ curl = pexpect.spawn("curl https://127.0.0.1:5000/ --cacert ./certs/CA.crt")
 assert parse_json_output(curl) == alert
 child_user.expect_exact('{"method":"alert","alert":{"devices":["d1"]}}\r\nu > ')
 
+os.remove("auth_token.json")
+
 print("List devices test passed!")

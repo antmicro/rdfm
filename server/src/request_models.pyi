@@ -66,22 +66,13 @@ class UploadRequest(Request):
 class DownloadDeviceRequest(DeviceRequest):
     method: Literal['download']
     file_path: str
+    dst_file_path: str
     device_name: str
 
 class DownloadRequest(Request):
     method: Literal['download']
     file_path: str
-
-class SendFileRequest(Request):
-    method: Literal['send_file']
-    file_path: str
-    part: PositiveInt
-    parts_total: PositiveInt
-    content: str
-
-class FileCompletedRequest(Request):
-    method: Literal['file_completed']
-    file_path: str
+    url: str
 
 class Alert(Request):
     method: Literal['alert']
@@ -91,4 +82,4 @@ class Metadata(BaseModel):
     metadata: dict
 
 class Container(BaseModel):
-    data: Union[ClientGroups, RegisterRequest, ListRequest, InfoDeviceRequest, ProxyDeviceRequest, ProxyRequest, UpdateDeviceRequest, UpdateRequest, UploadDeviceRequest, UploadRequest, DownloadDeviceRequest, DownloadRequest, SendFileRequest, FileCompletedRequest, AuthTokenRequest, Alert, Metadata]
+    data: Union[ClientGroups, RegisterRequest, ListRequest, InfoDeviceRequest, ProxyDeviceRequest, ProxyRequest, UpdateDeviceRequest, UpdateRequest, UploadDeviceRequest, UploadRequest, DownloadDeviceRequest, DownloadRequest, AuthTokenRequest, Alert, Metadata]

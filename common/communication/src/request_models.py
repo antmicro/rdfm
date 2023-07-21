@@ -77,22 +77,13 @@ class UploadRequest(Request):
 class DownloadDeviceRequest(DeviceRequest):
     method: Literal['download'] = 'download'  
     file_path: str
+    dst_file_path: str
     device_name: str
 
 class DownloadRequest(Request):
     method: Literal['download'] = 'download'  
     file_path: str
-
-class SendFileRequest(Request):
-    method: Literal['send_file'] = 'send_file'  
-    file_path: str
-    part: PositiveInt
-    parts_total: PositiveInt
-    content: str
-
-class FileCompletedRequest(Request):
-    method: Literal['file_completed'] = 'file_completed'  
-    file_path: str
+    url: str
 
 class Alert(Request):
     method: Literal['alert'] = 'alert'  
@@ -116,8 +107,6 @@ class Container(BaseModel):
         UploadRequest,
         DownloadDeviceRequest,
         DownloadRequest,
-        SendFileRequest,
-        FileCompletedRequest,
         AuthTokenRequest,
         Alert,
         Metadata

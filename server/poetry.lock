@@ -810,6 +810,20 @@ files = [
 ]
 
 [[package]]
+name = "types-pyjwt"
+version = "1.7.1"
+description = "Typing stubs for PyJWT"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-PyJWT-1.7.1.tar.gz", hash = "sha256:99c1a0d94d370951f9c6e57b1c369be280b2cbfab72c0f9c0998707490f015c9"},
+    {file = "types_PyJWT-1.7.1-py2.py3-none-any.whl", hash = "sha256:810112a84b6c060bb5bc1959a1d229830465eccffa91d8a68eeaac28fb7713ac"},
+]
+
+[package.dependencies]
+types-cryptography = "*"
+
+[[package]]
 name = "types-werkzeug"
 version = "1.0.9"
 description = "Typing stubs for Werkzeug"
@@ -851,4 +865,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "833572a51ed40a79568adeaefd40de3980ea8fe3e205d8e9f38a94df35332224"
+content-hash = "2de49b8616f437d6815290f7f0a65618ab2b9a789107863b654c8d97ee894d9e"

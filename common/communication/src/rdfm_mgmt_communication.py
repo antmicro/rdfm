@@ -2,6 +2,7 @@ import socket
 import json
 import sys
 import ssl
+import time
 from request_models import *
 
 from typing import Optional, cast
@@ -32,7 +33,7 @@ class Client:
         self._socket.send(encode_json(message))
 
     def receive(self) -> Optional[Request]:
-        """Wrapper for receiving a message that can contain a file part
+        """Wrapper for receiving a message
 
         Returns:
             Received message
@@ -101,14 +102,6 @@ class User(Client):
     def prompt(self, message: str) -> None:
         """Prints prompt with message"""
         print('\r', message, end=f'\n{self.name} > ')
-
-
-class FileTransfer():
-    def __init__(self, receiver: Client, sender: Optional[Client],
-                 file_path: str):
-        self.receiver: Client = receiver
-        self.sender: Optional[Client] = sender
-        self.file_path: str = file_path
 
 
 def receive_exactly(client: socket.socket, n: int) -> bytes:
@@ -256,3 +249,20 @@ def create_listening_socket(hostname: str, port: int = 0,
     new_socket.bind((hostname, port))
     new_socket.listen()
     return new_socket
+
+def wait_at_most(seconds: float, interval: float, condition: callable) -> bool:
+    """Waits until condition is fulfilled, returns as soon as condition
+    is fulfilled
+
+    Args:
+        seconds: How much seconds to wait
+        interval: Length of interval in seconds
+        condition: Condition to check
+
+    Returns:
+        True if condition was fulfilled, false if time passed"""
+    
+    start = time.time()
+    while not condition() and time.time() - start < seconds:
+        time.sleep(interval)
+    return condition()
