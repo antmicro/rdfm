@@ -54,6 +54,22 @@ to include metadata provide file in argument `--file-metadata`
 
 Client names should not contain whitespaces.
 
+Device clients have set of capabilities that describe what functionalities
+can be executed on it.
+
+They are stored in `capabilities.toml` file, created with a set of default
+capabilities:
+
+```
+shell_connect = false
+file_transfer = false
+exec_cmds = false
+```
+
+Server and device client both check for capabilities before trying to handle
+requests.
+
+
 ## User client
 ### Building
 
