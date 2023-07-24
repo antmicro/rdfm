@@ -111,6 +111,34 @@ class FileTransfer():
         self.file_path: str = file_path
 
 
+def receive_exactly(client: socket.socket, n: int) -> bytes:
+    """Helper to receive exactly n bytes from the given socket
+
+    Args:
+        client: Socket to read from
+        n: How many bytes to read
+
+    Returns:
+        Received bytes from the socket
+
+    Throws:
+        RuntimeError: If an EOF occurs during the reception
+    """
+    result: bytes = client.recv(n)
+    if len(result) == 0:
+        raise RuntimeError("EOF while reading from socket")
+    n -= len(result)
+
+    while n > 0:
+        bytes_read: bytes = client.recv(n)
+        if len(bytes_read) == 0:
+            raise RuntimeError("EOF while reading from socket")
+        result += bytes_read
+        n -= len(bytes_read)
+
+    return result
+
+
 def receive(client: socket.socket) -> Optional[Request]:
     """Handles message receiving
 
@@ -124,20 +152,11 @@ def receive(client: socket.socket) -> Optional[Request]:
         ValueError: Received message is not a valid request
     """
     try:
-        message_header: bytes = client.recv(HEADER_LENGTH)
+        message_header: bytes = receive_exactly(client, HEADER_LENGTH)
+        message_length: int = cast(int, decode_json(message_header))
 
-        # connection closed
-        if not message_header:
-            return None
-
-        message_length = cast(int, decode_json(message_header))
-        message = client.recv(message_length)
-        remaining_bytes = message_length - len(message)
-        while remaining_bytes > 0:
-            message += client.recv(message_length)
-            remaining_bytes -= len(message)
+        message: bytes = receive_exactly(client, message_length)
         decoded_message = decode_json(message)
-
         return decoded_message
 
     except Exception as e:
