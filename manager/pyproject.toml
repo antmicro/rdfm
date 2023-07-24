@@ -12,6 +12,7 @@ packages = [
 python = "^3.10"
 jsonschema = "^4.17.3"
 rdfm_mgmt_communication = {path = "../common/communication"}
+pydantic = "^2.0.3"
 
 [tool.poetry.group.test.dependencies]
 mypy = "^1.4.0"

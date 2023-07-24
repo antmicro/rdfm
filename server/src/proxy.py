@@ -45,13 +45,13 @@ class Proxy:
         self.sockets: list[socket.socket] = [self.proxy_socket]
 
         self._hostname: str = self.proxy_socket.getsockname()[0]
-        self._port: int = self.proxy_socket.getsockname()[1]
-        print(f'Opened proxy socket at {self._port} for dev',
+        self.port: int = self.proxy_socket.getsockname()[1]
+        print(f'Opened proxy socket at {self.port} for dev',
               f'{self.device.name}, pid {os.getpid()}', )
 
     def send_connection_request(self) -> None:
         """Send connection request and new port to the device"""
-        self.device.send(ProxyRequest(port=self._port))  # type: ignore
+        self.device.send(ProxyRequest(port=self.port))  # type: ignore
 
     def disconnect(self) -> None:
         """Sends empty message to proxy sockets to disconnect them"""
@@ -71,6 +71,7 @@ class Proxy:
         """Main proxy loop for forwarding messages between user and device.
         Started with sending a connection request to the device so it connects
         with a new socket"""
+
         self.send_connection_request()
         while True:
             read_sockets, _, exception_sockets = select.select(self.sockets,
@@ -94,12 +95,6 @@ class Proxy:
                             continue
 
                         self.sockets.append(self.proxy_device_socket)
-                        # send connection invitation to the user
-                        if self.user:
-                            self.user.send(Alert(alert={  # type: ignore
-                                'message': 'shell ready to connect',
-                                'port': self._port
-                            }))
                     # user connected
                     else:
                         (self.proxy_user_socket,
@@ -115,7 +110,7 @@ class Proxy:
                     # client disconnected from proxy connection
                     # close it and exit thread
                     if not message:
-                        print(f'Closed proxy socket at {self._port}')
+                        print(f'Closed proxy socket at {self.port}')
                         self.disconnect()
                         sys.exit()
 

@@ -21,15 +21,14 @@ cache:
         exit 0
       fi
     - apt-get -y install make netcat openssl
-    - pip3 install flask pydantic
     - . $HOME/.cargo/env
     - cd device && cargo build && cd ..
-    - cd server && poetry build && poetry install && pip3 install -e . && cd ..
-    - cd client && poetry build && poetry install && pip3 install -e . && cd ..
+    - cd server && poetry build && poetry install && python -m build && pip3 install -e . && cd ..
+    - cd client && poetry build && poetry install && python -m build && pip3 install -e . && cd ..
 
 stages:
   - build
-  - code-check
+  - static-checks
   - local-tests
 
 build:
@@ -38,9 +37,9 @@ build:
   script:
     - echo "Build finished"
 
-python-formatting:
+python-check:
   extends: .build
-  stage: code-check
+  stage: static-checks
   script:
     - cd server
     - poetry run test
@@ -52,12 +51,13 @@ python-formatting:
       - merge_requests
       - main
 
-rust-formatting:
+rust-check:
   extends: .build
-  stage: code-check
+  stage: static-checks
   script:
     - cd device
     - cargo fmt --all -- --check
+    - cargo test
     - cd ..
   only:
     refs:
@@ -88,6 +88,10 @@ test-proxy:
   extends: .build
   stage: local-tests
   script:
+    - |
+      echo "shell_connect = true" > 'capabilities.toml'
+      echo "file_transfer = false" >> 'capabilities.toml'
+      echo "exec_cmds = false" >> 'capabilities.toml'
     - python3 tests/test-proxy.py
   only:
     refs:
@@ -110,6 +114,17 @@ test-crash-client-input:
   script:
     - apt-get install telnet
     - python3 tests/test-crash-client-input.py
+  only:
+    refs:
+      - merge_requests
+      - main
+
+test-file-transfer:
+  extends: .build
+  stage: local-tests
+  script:
+    - echo "file_transfer = true" > 'capabilities.toml'
+    - python3 tests/test-file-transfer.py
   only:
     refs:
       - merge_requests

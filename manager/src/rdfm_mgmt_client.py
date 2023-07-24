@@ -58,7 +58,7 @@ def user_cmd_to_request(user_input: str) -> Optional[Request]:
             request['method'] = tokens[0]
 
     try:
-        parsed_request = Container.parse_obj({'data': request}).data
+        parsed_request = Container.model_validate({'data': request}).data
         assert isinstance(parsed_request, Request)
         return parsed_request
     except Exception:
@@ -89,7 +89,7 @@ def recv_loop(client: User) -> None:
                     case SendFileRequest():
                         download_file_part(client, request)
                     case _:
-                        client.prompt(str(request.json()))
+                        client.prompt(str(request.model_dump_json()))
 
         except IOError as e:
             if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
@@ -213,7 +213,7 @@ if __name__ == '__main__':
 
     # send registration
     client: Optional[Client] = create_client(ClientGroups.USER, args.name,
-                                             client_socket)
+                                             client_socket, None)
     assert client is not None
     assert isinstance(client, User)
     reg_req = RegisterRequest(client=ClientRequest(  # type: ignore

@@ -3,6 +3,7 @@ import json
 import sys
 import ssl
 from request_models import *
+import urllib
 
 from typing import Optional, cast
 
@@ -37,23 +38,58 @@ class Client:
         Returns:
             Received message
         """
-        
-        received = receive(self._socket)
-        return received
+        return receive(self._socket)
 
 
 class FileTransfer():
-    def __init__(self, receiver: Client, sender: Client, file_path: str):
+    def __init__(self, receiver: Client, sender: Optional[Client],
+                 file_path: str):
         self.receiver: Client = receiver
-        self.sender: Client = sender
+        self.sender: Optional[Client] = sender
         self.file_path: str = file_path
 
 
 class Device(Client):
-    def __init__(self, name: str, socket: socket.socket):
+    required_capabilities: dict[str, list[str]] = {
+        'download': [ 'file_transfer' ],
+        'upload': [ 'file_transfer' ],
+        'proxy':[ 'shell_connect' ],
+        'info': [],
+        'update': [],
+        'capabilities': []
+    }
+
+    def __init__(self, name: str, socket: socket.socket,
+                 capabilities: dict):
         super().__init__(name, socket)
+        # what interactions are available
+        self.capabilities: dict = {
+            'shell_connect': False,
+            'file_transfer': False,
+            'exec_cmds': False,
+        }
+        for k, v in capabilities.items():
+            self.capabilities[k] = v
+
+
+        # RO data, like sensors data, cpu usage, coords, etc.
         self.metadata: dict = {}
 
+    def can_handle_request(self, request_method: str) -> bool:
+        """Checks if device has capabilities to perform request,
+        
+        Args:
+            request_method - `method` field of the request, ex. "proxy"
+
+        Returns:
+            Device can handle request
+        """
+
+        required_capabilities = Device.required_capabilities[request_method]
+        for cap in required_capabilities:
+            if cap not in self.capabilities or not self.capabilities[cap]:
+                return False
+        return True
 
 class User(Client):
     def __init__(self, name: str, socket: socket.socket):
@@ -68,13 +104,13 @@ def receive(client: socket.socket) -> Optional[Request]:
     """Handles data receiving from socket
 
     Args:
-        client: Socket from which to receive data
+        client: Socket from which to receive a message
 
     Returns:
-        Received data if it was succesful
+        Received message if it was succesful
 
     Throws:
-        ValueError: Received data is not valid
+        ValueError: Received message is not a valid request
     """
     try:
         message_header: bytes = client.recv(HEADER_LENGTH)
@@ -95,7 +131,7 @@ def receive(client: socket.socket) -> Optional[Request]:
 
     except Exception as e:
         # client closed connection violently
-        print('Exception receiving message:', str(e))
+        print(f'Exception receiving message: {str(e)}'),
         return None
 
 
@@ -125,13 +161,14 @@ def decode_json(to_decode: bytes) -> Request | int:
     if decoded.isnumeric():
         return int(decoded)
     else:
-        decoded = Container.parse_obj({'data': json.loads(to_decode)}).data
+        decoded = Container.model_validate({'data': json.loads(to_decode)}).data
 
         return decoded
 
 
 def create_client(client_group: ClientGroups, name: str,
-                  socket: socket.socket) -> Optional[Client]:
+                  socket: socket.socket,
+                  capabilities: Optional[dict]) -> Optional[Client]:
     """Creates a new client
 
     Args:
@@ -151,7 +188,8 @@ def create_client(client_group: ClientGroups, name: str,
         if client_enum == ClientGroups.USER:
             return User(name, socket)
         elif client_enum == ClientGroups.DEVICE:
-            return Device(name, socket)
+            assert capabilities is not None
+            return Device(name, socket, capabilities)
         else:
             return None
     except AttributeError:

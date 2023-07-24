@@ -1,8 +1,13 @@
 from enum import Enum
 from pydantic import BaseModel, PositiveInt as PositiveInt, conint as conint
-from typing import Union
+from typing import Literal, Optional, Union
 
-class Request(BaseModel): ...
+class Request(BaseModel):
+    method: str
+
+class DeviceRequest(Request):
+    method: str
+    device_name: str
 
 class ClientGroups(str, Enum):
     USER: str
@@ -11,65 +16,66 @@ class ClientGroups(str, Enum):
 class ClientRequest(BaseModel):
     name: str
     group: ClientGroups
+    capabilities: Optional[dict]
 
 class RegisterRequest(Request):
-    method: None
+    method: Literal['register']
     client: ClientRequest
 
 class ListRequest(Request):
-    method: None
+    method: Literal['list']
 
-class InfoDeviceRequest(Request):
-    method: None
+class InfoDeviceRequest(DeviceRequest):
+    method: Literal['info']
     device_name: str
 
-class ProxyDeviceRequest(Request):
-    method: None
+class ProxyDeviceRequest(DeviceRequest):
+    method: Literal['proxy']
     device_name: str
 
 class ProxyRequest(Request):
-    method: None
+    method: Literal['proxy']
     port: None
 
-class UpdateDeviceRequest(Request):
-    method: None
+class UpdateDeviceRequest(DeviceRequest):
+    method: Literal['update']
     device_name: str
 
 class UpdateRequest(Request):
-    method: None
+    method: Literal['update']
 
-class UploadDeviceRequest(Request):
-    method: None
+class UploadDeviceRequest(DeviceRequest):
+    method: Literal['upload']
     file_path: str
     src_file_path: str
     device_name: str
 
 class UploadRequest(Request):
-    method: None
+    method: Literal['upload']
     file_path: str
 
-class DownloadDeviceRequest(Request):
-    method: None
+class DownloadDeviceRequest(DeviceRequest):
+    method: Literal['download']
     file_path: str
     device_name: str
 
 class DownloadRequest(Request):
-    method: None
+    method: Literal['download']
     file_path: str
 
 class SendFileRequest(Request):
-    method: None
+    method: Literal['send_file']
     file_path: str
     part: PositiveInt
     parts_total: PositiveInt
     content: str
 
 class FileCompletedRequest(Request):
-    method: None
+    method: Literal['file_completed']
     file_path: str
 
 class Alert(Request):
-    method: None
+    method: Literal['alert']
     alert: dict
 
 class Metadata(BaseModel):

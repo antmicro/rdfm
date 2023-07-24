@@ -1,7 +1,11 @@
 # type: ignore
 
 from enum import Enum
-from typing import Literal, Union
+from typing import (
+    Literal,
+    Union,
+    Optional
+)
 from pydantic import (
     BaseModel,
     PositiveInt,
@@ -9,7 +13,11 @@ from pydantic import (
 ) 
 
 class Request(BaseModel):
-    pass
+    method: str
+
+class DeviceRequest(Request):
+    method: str
+    device_name: str
 
 class ClientGroups(str, Enum):
     USER = "USER"
@@ -18,6 +26,7 @@ class ClientGroups(str, Enum):
 class ClientRequest(BaseModel):
     name: str
     group: ClientGroups
+    capabilities: Optional[dict] = None
 
 class RegisterRequest(Request):
     method: Literal['register'] = 'register'  
@@ -28,11 +37,11 @@ class ListRequest(Request):
     method: Literal['list'] = 'list'  
 
 
-class InfoDeviceRequest(Request):
+class InfoDeviceRequest(DeviceRequest):
     method: Literal['info'] = 'info'  
     device_name: str
 
-class ProxyDeviceRequest(Request):
+class ProxyDeviceRequest(DeviceRequest):
     method: Literal['proxy'] = 'proxy'  
     device_name: str
 
@@ -40,14 +49,14 @@ class ProxyRequest(Request):
     method: Literal['proxy'] = 'proxy'  
     port: conint(ge = 0, le = 65535)
 
-class UpdateDeviceRequest(Request):
+class UpdateDeviceRequest(DeviceRequest):
     method: Literal['update'] = 'update'  
     device_name: str
 
 class UpdateRequest(Request):
     method: Literal['update'] = 'update'  
 
-class UploadDeviceRequest(Request):
+class UploadDeviceRequest(DeviceRequest):
     method: Literal['upload'] = 'upload'  
     file_path: str
     src_file_path: str
@@ -57,7 +66,7 @@ class UploadRequest(Request):
     method: Literal['upload'] = 'upload'  
     file_path: str
 
-class DownloadDeviceRequest(Request):
+class DownloadDeviceRequest(DeviceRequest):
     method: Literal['download'] = 'download'  
     file_path: str
     device_name: str
@@ -85,7 +94,7 @@ class Metadata(BaseModel):
     metadata: dict
 
 class Container(BaseModel):
-    """ container holds a subclass of Request"""
+    """container holds a list of models to enable parsing from json"""
     data: Union[
         ClientGroups,
         RegisterRequest,

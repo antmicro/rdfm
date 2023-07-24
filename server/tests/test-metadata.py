@@ -16,7 +16,7 @@ child_device1 = pexpect.spawn(
 # check initial info
 time.sleep(2)
 child_user.sendline("REQ d1 info")
-child_user.expect('{"method":"alert","alert":{}}\r\nu > ')
+child_user.expect('{"method":"alert","alert":{"metadata":{},"capabilities":{"shell_connect":false,"file_transfer":false,"exec_cmds":false}}}\r\nu > ')
 
 # check first device visible
 child_user.sendline("REQ d1 update")
@@ -24,7 +24,7 @@ time.sleep(2)
 
 child_user.sendline("REQ d1 info")
 child_user.expect(
-    '{"method":"alert","alert":{"a":5,"b":"foo","c":{"d":"bar","e":2}}}\r\nu > '
+    '{"method":"alert","alert":{"metadata":{"a":5,"b":"foo","c":{"d":"bar","e":2}},"capabilities":{"shell_connect":false,"file_transfer":false,"exec_cmds":false}}}\r\nu > '
 )
 
 print("Device metadata tests passed!")
