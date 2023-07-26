@@ -2,10 +2,18 @@ import sqlite3
 import time
 import os
 import json
+import datetime
 from typing import Optional
 from rdfm_mgmt_communication import Device
+import models.device
+from sqlalchemy import create_engine, select, update
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import Session
+from sqlalchemy.schema import MetaData
 
 class DevicesDB:
+    engine: Engine
+
     def __init__(self, filepath: str):
         self.filepath = filepath
         if not filepath.endswith('.db'):
@@ -22,27 +30,14 @@ class DevicesDB:
         Returns:
             Creation success
         """
-        self._db_con: sqlite3.Connection = sqlite3.connect(
-            self.filepath, check_same_thread=False
-        )
-        cur = self._db_con.cursor()
-        cur.execute(
-            f"""CREATE TABLE if not exists
-            devices (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                last_access INTEGER NOT NULL,
-                name TEXT NOT NULL,
-                mac_address TEXT NOT NULL,
-                capabilities TEXT NOT NULL,  --json dump of capabilities
-                metadata TEXT NOT NULL       --json dump of collected metadata
-            )
-            """
-        )
-        res = cur.execute(
-            f"""SELECT name FROM sqlite_master
-            WHERE name='devices'"""
-        )
-        return res is not None
+        try:
+            self.engine = create_engine("sqlite:///devices.db", echo=True)
+            # This actually creates all the tables in the database for entities that inherit from models.device.Base
+            models.device.Base.metadata.create_all(self.engine)
+            return True
+        except:
+            print("Database init failed!")
+            return False
 
 
     def get_device(self, name: str, mac_address: str) -> Optional[Device]:
@@ -51,46 +46,49 @@ class DevicesDB:
         Returns:
             Device object without socket recreated from database row
         """
-        cur = self._db_con.cursor()
-        cur.execute(
-            f"""SELECT * from devices
-            WHERE name = ? AND mac_address = ?""",
-            (name, mac_address)
-        )
-        row = cur.fetchone()
-        if row:
-            print(row)
-            (dev_id, timestamp, name, mac_addr,
-             capabilities_dump, metadata_dump) = row
-            device = Device(name, None, mac_addr,
-                            json.loads(capabilities_dump))
-            device.metadata = json.loads(metadata_dump)
-            
-            return device
-        return None
+        try:
+            with Session(self.engine) as session:
+                stmt = (
+                    select(models.device.Device)
+                        .where(models.device.Device.name == name)
+                        .where(models.device.Device.mac_address == mac_address)
+                )
+                dev: models.device.Device = session.scalar(stmt)
+                if dev is None:
+                    return None
+
+                server_device = Device(dev.name,
+                                       None,
+                                       dev.mac_address, 
+                                       json.loads(dev.capabilities))
+                server_device.metadata = json.loads(dev.device_metadata)
+                return server_device
+        except Exception as e:
+            print("Device fetch failed!", repr(e))
+            return None
 
     def update_timestamp(self, name: str, mac_address: str):
         """Update device's last healthcheck time in database
         """
-        cur = self._db_con.cursor()
-        cur.execute(
-            f"""UPDATE devices
-            WHERE name = ? AND mac_address = ?""",
-            (name, mac_address)
-        )
+        with Session(self.engine) as session:
+            stmt = (
+                update(models.device.Device)
+                    .values(last_accessed=datetime.datetime.now())
+                    .where(models.device.Device.name == name)
+                    .where(models.device.Device.mac_address == mac_address)
+            )
+            session.execute(stmt)
+
         
     def insert_device(self, device: Device):
         """Add device to database
         """
-        cur = self._db_con.cursor()
-        cur.execute(
-            f"""INSERT INTO devices
-            (name, mac_address, last_access, capabilities, metadata)
-            values (?, ?, ?, ?, ?);""",
-            (device.name, device.mac_address, int(time.time()),
-             json.dumps(device.capabilities), json.dumps(device.metadata))
-        )
-        self._db_con.commit()
+        with Session(self.engine) as session:
+            db_device = models.device.Device()
+            db_device.name = device.name
+            db_device.mac_address = device.mac_address
+            db_device.capabilities = json.dumps(device.capabilities)
+            db_device.device_metadata = json.dumps(device.metadata)
 
-    def __del__(self):
-        self._db_con.close()
+            session.add(db_device)
+            session.commit()
