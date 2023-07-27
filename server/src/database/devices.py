@@ -14,31 +14,9 @@ from sqlalchemy.schema import MetaData
 class DevicesDB:
     engine: Engine
 
-    def __init__(self, filepath: str):
-        self.filepath = filepath
-        if not filepath.endswith('.db'):
-            self.filepath = filepath + '.db'
-        if not self.init_db():
-            print("Database connection failed")
-        else:
-            print("Database connected")
+    def __init__(self, db: Engine):
+        self.engine = db
         
-
-    def init_db(self) -> bool:
-        """Creates connection to device database and creates table if not exists
-        
-        Returns:
-            Creation success
-        """
-        try:
-            self.engine = create_engine("sqlite:///devices.db", echo=True)
-            # This actually creates all the tables in the database for entities that inherit from models.device.Base
-            models.device.Base.metadata.create_all(self.engine)
-            return True
-        except:
-            print("Database init failed!")
-            return False
-
 
     def get_device(self, name: str, mac_address: str) -> Optional[Device]:
         """Gets device from database

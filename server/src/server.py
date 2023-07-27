@@ -10,6 +10,7 @@ from rdfm_mgmt_communication import *
 from request_models import *
 from proxy import Proxy
 from database.devices import DevicesDB
+import database.db
 
 jwt_key = os.environ['JWT_SECRET']
 CONNECTION_TRIES = 2
@@ -40,7 +41,8 @@ class Server:
         self.clients: dict[socket.socket, Client] = {}
         self.connected_devices: dict[str, Device] = {}
 
-        self._devices_db: DevicesDB = DevicesDB(db_path)
+        self.db = database.db.create(db_path)
+        self._devices_db: DevicesDB = DevicesDB(self.db)
 
         self.file_transfers: list[FileTransfer] = []
 
