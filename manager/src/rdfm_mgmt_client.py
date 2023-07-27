@@ -43,21 +43,21 @@ def user_cmd_to_request(user_input: str) -> Optional[Request]:
     if user_input.lower() == "exit":
         os._exit(0)
 
-    tokens = user_input.split()
-    if tokens:
-        tokens[0] = tokens[0].lower()
-        if tokens[0] == 'req':
-            request['device_name'] = tokens[1]
-            request['method'] = tokens[2]
-            if tokens[2] == 'download':
-                request['file_path'] = tokens[3]
-            if tokens[2] == 'upload':
-                request['file_path'] = tokens[3]
-                request['src_file_path'] = tokens[4]
-        elif tokens[0] == 'list':
-            request['method'] = tokens[0]
-
     try:
+        tokens = user_input.split()
+        if tokens:
+            tokens[0] = tokens[0].lower()
+            if tokens[0] == 'req':
+                request['device_name'] = tokens[1]
+                request['method'] = tokens[2]
+                if tokens[2] == 'download':
+                    request['file_path'] = tokens[3]
+                if tokens[2] == 'upload':
+                    request['file_path'] = tokens[3]
+                    request['src_file_path'] = tokens[4]
+            elif tokens[0] == 'list':
+                request['method'] = tokens[0]
+
         parsed_request = Container.model_validate({'data': request}).data
         assert isinstance(parsed_request, Request)
         return parsed_request

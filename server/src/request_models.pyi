@@ -17,10 +17,15 @@ class ClientRequest(BaseModel):
     name: str
     group: ClientGroups
     capabilities: Optional[dict]
+    mac_address: Optional[str]
 
 class RegisterRequest(Request):
     method: Literal['register']
     client: ClientRequest
+
+class AuthTokenRequest(Request):
+    method: Literal['auth_token']
+    jwt: str
 
 class ListRequest(Request):
     method: Literal['list']
@@ -82,4 +87,4 @@ class Metadata(BaseModel):
     metadata: dict
 
 class Container(BaseModel):
-    data: Union[ClientGroups, RegisterRequest, ListRequest, InfoDeviceRequest, ProxyDeviceRequest, ProxyRequest, UpdateDeviceRequest, UpdateRequest, UploadDeviceRequest, UploadRequest, DownloadDeviceRequest, DownloadRequest, SendFileRequest, FileCompletedRequest, Alert, Metadata]
+    data: Union[ClientGroups, RegisterRequest, ListRequest, InfoDeviceRequest, ProxyDeviceRequest, ProxyRequest, UpdateDeviceRequest, UpdateRequest, UploadDeviceRequest, UploadRequest, DownloadDeviceRequest, DownloadRequest, SendFileRequest, FileCompletedRequest, AuthTokenRequest, Alert, Metadata]

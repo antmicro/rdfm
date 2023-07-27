@@ -3,14 +3,13 @@ import json
 import sys
 import ssl
 from request_models import *
-import urllib
 
 from typing import Optional, cast
 
 HEADER_LENGTH = 10
 
 class Client:
-    def __init__(self, name: str, socket: socket.socket):
+    def __init__(self, name: str, socket: Optional[socket.socket]):
         self.name = name
         self._socket = socket
 
@@ -39,14 +38,14 @@ class Client:
             Received message
         """
         return receive(self._socket)
+    
+    def set_socket(self, s: socket.socket):
+        """Set client socket to a new one
 
-
-class FileTransfer():
-    def __init__(self, receiver: Client, sender: Optional[Client],
-                 file_path: str):
-        self.receiver: Client = receiver
-        self.sender: Optional[Client] = sender
-        self.file_path: str = file_path
+        Args:
+            s: New socket
+        """
+        self._socket = s
 
 
 class Device(Client):
@@ -59,18 +58,18 @@ class Device(Client):
         'capabilities': []
     }
 
-    def __init__(self, name: str, socket: socket.socket,
-                 capabilities: dict):
+    def __init__(self, name: str, socket: Optional[socket.socket],
+                 mac_address: str, capabilities: dict):
         super().__init__(name, socket)
+        self.mac_address = mac_address
         # what interactions are available
-        self.capabilities: dict = {
+        self.capabilities: dict[str, bool] = {
             'shell_connect': False,
             'file_transfer': False,
             'exec_cmds': False,
         }
         for k, v in capabilities.items():
             self.capabilities[k] = v
-
 
         # RO data, like sensors data, cpu usage, coords, etc.
         self.metadata: dict = {}
@@ -84,12 +83,16 @@ class Device(Client):
         Returns:
             Device can handle request
         """
-
-        required_capabilities = Device.required_capabilities[request_method]
-        for cap in required_capabilities:
-            if cap not in self.capabilities or not self.capabilities[cap]:
-                return False
-        return True
+        return all([(c in self.capabilities and self.capabilities[c])
+                    for c in Device.required_capabilities[request_method]])
+    
+    def set_socket(self, s: socket.socket) -> None:
+        """Set device client's socket to a new one
+        
+        Args:
+            s: New socket
+        """
+        self._socket = s
 
 class User(Client):
     def __init__(self, name: str, socket: socket.socket):
@@ -100,8 +103,16 @@ class User(Client):
         print('\r', message, end=f'\n{self.name} > ')
 
 
+class FileTransfer():
+    def __init__(self, receiver: Client, sender: Optional[Client],
+                 file_path: str):
+        self.receiver: Client = receiver
+        self.sender: Optional[Client] = sender
+        self.file_path: str = file_path
+
+
 def receive(client: socket.socket) -> Optional[Request]:
-    """Handles data receiving from socket
+    """Handles message receiving
 
     Args:
         client: Socket from which to receive a message
@@ -161,7 +172,9 @@ def decode_json(to_decode: bytes) -> Request | int:
     if decoded.isnumeric():
         return int(decoded)
     else:
-        decoded = Container.model_validate({'data': json.loads(to_decode)}).data
+        decoded = Container.model_validate({
+            'data': json.loads(to_decode)
+        }).data
 
         return decoded
 

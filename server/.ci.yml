@@ -25,6 +25,7 @@ cache:
     - cd device && cargo build && cd ..
     - cd server && poetry build && poetry install && python -m build && pip3 install -e . && cd ..
     - cd client && poetry build && poetry install && python -m build && pip3 install -e . && cd ..
+    - export JWT_SECRET="testsecret123123123"
 
 stages:
   - build
@@ -41,11 +42,8 @@ python-check:
   extends: .build
   stage: static-checks
   script:
-    - cd server
-    - poetry run test
-    - cd ../client
-    - poetry run test
-    - cd ..
+    - cd server && poetry run test && cd ..
+    - cd client && poetry run test && cd ..
   only:
     refs:
       - merge_requests
@@ -55,10 +53,7 @@ rust-check:
   extends: .build
   stage: static-checks
   script:
-    - cd device
-    - cargo fmt --all -- --check
-    - cargo test
-    - cd ..
+    - cd device && cargo fmt --all -- --check && cargo test && cd ..
   only:
     refs:
       - merge_requests

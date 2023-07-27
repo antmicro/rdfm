@@ -394,6 +394,23 @@ files = [
 typing-extensions = ">=4.6.0,<4.7.0 || >4.7.0"
 
 [[package]]
+name = "pyjwt"
+version = "2.8.0"
+description = "JSON Web Token implementation in Python"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "PyJWT-2.8.0-py3-none-any.whl", hash = "sha256:59127c392cc44c2da5bb3192169a91f429924e17aff6534d70fdc02ab3e04320"},
+    {file = "PyJWT-2.8.0.tar.gz", hash = "sha256:57e28d156e3d5c10088e0c68abb90bfac3df82b40a71bd0daa20c65ccd5c23de"},
+]
+
+[package.extras]
+crypto = ["cryptography (>=3.4.0)"]
+dev = ["coverage[toml] (==5.0.4)", "cryptography (>=3.4.0)", "pre-commit", "pytest (>=6.0.0,<7.0.0)", "sphinx (>=4.5.0,<5.0.0)", "sphinx-rtd-theme", "zope.interface"]
+docs = ["sphinx (>=4.5.0,<5.0.0)", "sphinx-rtd-theme", "zope.interface"]
+tests = ["coverage[toml] (==5.0.4)", "pytest (>=6.0.0,<7.0.0)"]
+
+[[package]]
 name = "pyrsistent"
 version = "0.19.3"
 description = "Persistent/Functional/Immutable data structures"
@@ -465,6 +482,17 @@ files = [
 ]
 
 [[package]]
+name = "types-cryptography"
+version = "3.3.23.2"
+description = "Typing stubs for cryptography"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-cryptography-3.3.23.2.tar.gz", hash = "sha256:09cc53f273dd4d8c29fa7ad11fefd9b734126d467960162397bc5e3e604dea75"},
+    {file = "types_cryptography-3.3.23.2-py3-none-any.whl", hash = "sha256:b965d548f148f8e87f353ccf2b7bd92719fdf6c845ff7cedf2abb393a0643e4f"},
+]
+
+[[package]]
 name = "types-flask"
 version = "1.1.6"
 description = "Typing stubs for Flask"
@@ -504,6 +532,19 @@ files = [
     {file = "types-jsonschema-4.17.0.8.tar.gz", hash = "sha256:96a56990910f405e62de58862c0bbb3ac29ee6dba6d3d99aa0ba7f874cc547de"},
     {file = "types_jsonschema-4.17.0.8-py3-none-any.whl", hash = "sha256:f5958eb7b53217dfb5125f0412aeaef226a8a9013eac95816c95b5b523f6796b"},
 ]
+
+[[package]]
+name = "types-jwt"
+version = "0.1.3"
+description = "Typing stubs for jwt"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types_jwt-0.1.3-py2.py3-none-any.whl", hash = "sha256:36a1d5f99b349428f9ca5695e5caf3378398ae31d7aaed1c668c81451ba79b08"},
+]
+
+[package.dependencies]
+types-cryptography = "*"
 
 [[package]]
 name = "types-markupsafe"
@@ -558,4 +599,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "601be9642d57dfe07c5b65266630d1d6414be2ce7ee5c72b34be3d03fe6a0de8"
+content-hash = "e46d1518cfe33afeea4d798078ee2aee6ed0b7b61e0095443cef12cdbe64ce10"

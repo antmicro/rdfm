@@ -1,17 +1,24 @@
 import socket
 import select
 import sys
+import jwt
 import time
+import os
 from threading import Thread
 from typing import Optional
 from rdfm_mgmt_communication import *
 from request_models import *
 from proxy import Proxy
+from database.devices import DevicesDB
+
+jwt_key = os.environ['JWT_SECRET']
+CONNECTION_TRIES = 2
 
 
 class Server:
     def __init__(self, hostname: str, port: int,
-                 encrypted: bool, cert: str, cert_key: str):
+                 encrypted: bool, cert: str, cert_key: str,
+                 db_path: str):
         self._hostname: str = hostname
         self._port: int = port
 
@@ -30,32 +37,158 @@ class Server:
         self.sockets: list[socket.socket] = [self.server_socket]
 
         self.connected_users: list[User] = []
-        self.connected_devices: dict[str, Device] = {}
         self.clients: dict[socket.socket, Client] = {}
+        self.connected_devices: dict[str, Device] = {}
+
+        self._devices_db: DevicesDB = DevicesDB(db_path)
 
         self.file_transfers: list[FileTransfer] = []
 
-    def connect_client(self, new_client_data: ClientRequest,
-                       client_socket: socket.socket) -> None:
+    def can_device_register(self, register_request: RegisterRequest,
+                            device_socket: socket.socket) -> bool:
+        """Decides if device can register in our server
+
+        Args:
+            register_request: Register request sent by device client
+            device_socket: Socket with which server tries to connect
+
+        Returns:
+            Can device client register in our server
+        """
+        # here can be placed some logic that decides if device can
+        # connect to our server
+        # example: ban list of ip or types of devices, or capabilities rules
+        return True
+
+    def register_device(self, register_request: RegisterRequest,
+                        device_socket: socket.socket
+                        ) -> Alert | AuthTokenRequest:
+
+        if not self.can_device_register(register_request, device_socket):
+            return Alert(alert={  # type: ignore
+                'error': 'Device registration refused'
+            })
+
+        device_data: ClientRequest = register_request.client
+
+        assert device_data.name is not None
+        assert device_data.mac_address is not None
+        assert device_data.capabilities is not None
+        device = Device(device_data.name, device_socket,
+                        device_data.mac_address,
+                        device_data.capabilities)
+        self._devices_db.insert_device(device)
+        self.connected_devices[device_data.name] = device
+        self.clients[device_socket] = device
+        self.sockets.append(device_socket)
+
+        token = jwt.encode(
+            {
+                "name": device_data.name,
+                "mac_address": device_data.mac_address
+            },
+            jwt_key, algorithm="HS256"
+        )
+        return AuthTokenRequest(jwt=token)  # type: ignore
+
+    def authorize_device(self,
+                         auth_request: AuthTokenRequest | RegisterRequest,
+                         device_socket: socket.socket
+                         ) -> Alert | AuthTokenRequest:
+        """If device connects for the first time (sends registration request
+        instead of JWT token) it checks if it is authorized and generates
+        JWT token, else checks JWT token
+
+        Args:
+            auth_request: Device client auth request (register or JWT token)
+            device_socket: New socket of device client sending request
+
+        Returns:
+            Message containing JWT token or authorization success message
+        """
+
+        try:
+            # device client auth with token
+            assert isinstance(auth_request, AuthTokenRequest)
+            print('Device trying to auth with JWT')
+            try:
+                decoded = jwt.decode(auth_request.jwt, jwt_key,
+                                     algorithms=["HS256"])
+                device = self._devices_db.get_device(
+                    decoded['name'], decoded['mac_address']
+                )
+                if device:
+                    device.set_socket(device_socket)
+                    self.connected_devices[decoded['name']] = device
+                    self.clients[device_socket] = device
+                    self.sockets.append(device_socket)
+                    return Alert(alert={  # type: ignore
+                        'message': f'Connected as {device.name}'
+                    })
+                else:
+                    print("No device in database")
+                    return Alert(alert={  # type: ignore
+                        'error': 'Device not found in database'
+                    })
+            except Exception as e:
+                error_msg = f'JWT token validation failed", {str(e)}'
+                print(error_msg)
+                Alert(alert={  # type: ignore
+                    'error': error_msg
+                })
+            return Alert(alert={  # type: ignore
+                'error': 'Connection failed'
+            })
+
+        except Exception:
+            # device client auth without token
+            print('Device trying to connect without JWT')
+            print(type(auth_request))
+            assert isinstance(auth_request, RegisterRequest)
+            return self.register_device(auth_request, device_socket)
+
+    def connect_client(self,
+                       connect_request: AuthTokenRequest | RegisterRequest,
+                       client_socket: socket.socket
+                       ) -> Alert | AuthTokenRequest:
         """Start monitoring the connected client.
         Add it to the device or user containers and active sockets for
         data transmission
 
         Args:
-            new_client_data: Client metadata from the new client request
+            connect_request: New client request
             client_socket: Newly connected client socket
+
+        Returns:
+            reply for client
         """
 
-        client = create_client(new_client_data.group,
-                               new_client_data.name, client_socket,
-                               new_client_data.capabilities)
-        if client:
-            self.clients[client_socket] = client
-            self.sockets.append(client_socket)
-            if isinstance(client, User):
+        print('Trying to connect client...')
+        # currently only device clients use JWT
+        if (isinstance(connect_request, AuthTokenRequest) or
+                connect_request.client.group == ClientGroups.DEVICE):
+            res = self.authorize_device(connect_request, client_socket)
+            print(res)
+            return res
+        else:
+            new_client_data = connect_request.client
+            client: Optional[Client] = create_client(
+                                                new_client_data.group,
+                                                new_client_data.name,
+                                                client_socket,
+                                                new_client_data.capabilities)
+            if client:
+                assert isinstance(client, User)
                 self.connected_users.append(client)
-            if isinstance(client, Device):
-                self.connected_devices[client.name] = client
+                self.clients[client_socket] = client
+                self.sockets.append(client_socket)
+                return Alert(alert={  # type: ignore
+                    'message': f'Connected as {new_client_data.name}'
+                })
+            else:
+                return Alert(alert={  # type: ignore
+                    'error': 'Connection refused'
+                })
 
     def get_client_proxy_connections(self, client: Client) -> list[Proxy]:
         """Get a list of proxy connections that the client is involved in
@@ -238,20 +371,37 @@ class Server:
                     except Exception as e:
                         print('Error: ', e, file=sys.stderr)
                         continue
-                    register_request: Optional[Request] = receive(
-                        client_socket)
 
-                    # disconnected immediately
-                    if not register_request:
-                        continue
-                    assert isinstance(register_request, RegisterRequest)
-                    print('New connection', register_request)
+                    # 2 tries for device connection
+                    # if JWT fails, try with register request
+                    for try_nr in range(CONNECTION_TRIES):
+                        connection_request: Optional[Request] = receive(
+                                                                 client_socket)
+                        print("Received connection request",
+                              connection_request)
 
-                    self.connect_client(register_request.client, client_socket)
-                    print('Accepted new connection from {}:{}, {}'
-                          .format(*client_address,
-                                  register_request.client.name,
-                                  self.clients[client_socket]))
+                        # disconnected immediately
+                        if not connection_request:
+                            continue
+                        assert (isinstance(connection_request,
+                                           RegisterRequest) or
+                                isinstance(connection_request,
+                                           AuthTokenRequest))
+
+                        connection_response: Request = self.connect_client(
+                                                            connection_request,
+                                                            client_socket)
+                        client_socket.send(encode_json(connection_response))
+                        if (not isinstance(connection_response, Alert) or
+                                'error' not in connection_response.alert):
+                            print('Accepted new connection from {}:{}, {}'
+                                  .format(*client_address,
+                                          self.clients[client_socket].name,
+                                          self.clients[client_socket]))
+                            break
+                        elif try_nr == CONNECTION_TRIES - 1:
+                            # refuse connection
+                            client_socket.close()
 
                 # existing socket sends message
                 else:

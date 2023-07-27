@@ -27,11 +27,15 @@ class ClientRequest(BaseModel):
     name: str
     group: ClientGroups
     capabilities: Optional[dict] = None
+    mac_address: Optional[str] = None
 
 class RegisterRequest(Request):
     method: Literal['register'] = 'register'  
     client: ClientRequest
 
+class AuthTokenRequest(Request):
+    method: Literal['auth_token'] = 'auth_token'
+    jwt: str
 
 class ListRequest(Request):
     method: Literal['list'] = 'list'  
@@ -110,6 +114,7 @@ class Container(BaseModel):
         DownloadRequest,
         SendFileRequest,
         FileCompletedRequest,
+        AuthTokenRequest,
         Alert,
         Metadata
     ]

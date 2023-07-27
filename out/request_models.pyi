@@ -87,4 +87,4 @@ class Metadata(BaseModel):
     metadata: dict
 
 class Container(BaseModel):
-    data: Union[ClientGroups, RegisterRequest, ListRequest, InfoDeviceRequest, ProxyDeviceRequest, ProxyRequest, UpdateDeviceRequest, UpdateRequest, UploadDeviceRequest, UploadRequest, DownloadDeviceRequest, DownloadRequest, SendFileRequest, FileCompletedRequest, AuthTokenRequest, Alert, Metadata]
+    data: Union[ClientGroups, RegisterRequest, ListRequest, InfoDeviceRequest, ProxyDeviceRequest, ProxyRequest, UpdateDeviceRequest, UpdateRequest, UploadDeviceRequest, UploadRequest, DownloadDeviceRequest, DownloadRequest, SendFileRequest, FileCompletedRequest, Alert, Metadata]

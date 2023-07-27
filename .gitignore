@@ -22,6 +22,9 @@ venv.bak/
 .dmypy.json
 dmypy.json
 
+# Type stubs
+out/
+
 # Auto-generated schemas
 device_schema.json
 
@@ -30,5 +33,15 @@ device_schema.json
 
 # Certificates
 certs/
+
 # Local tests
 .gitlab-ci-local/
+
+# Auth tokens
+auth_token.*
+
+# Device capabilities
+capabilities.toml
+
+# Databases
+*.db

@@ -62,10 +62,14 @@ if __name__ == '__main__':
                         help="""server cert file""")
     parser.add_argument('-key', type=str, default='./certs/SERVER.key',
                         help="""server cert key file""")
+    parser.add_argument('-database', metavar='db', type=str,
+                        default='devices.db',
+                        help='filepath to store device database')
     args = parser.parse_args()
 
     server = Server(args.hostname, args.port,
-                    args.encrypted, args.cert, args.key)
+                    args.encrypted, args.cert, args.key,
+                    args.database)
     t = Thread(target=server.run, daemon=True)
     t.start()
 
