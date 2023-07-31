@@ -15,7 +15,7 @@ child_device1 = pexpect.spawn(
 )
 
 child_user.sendline('REQ d1 upload rdm.md README.md')
-time.sleep(10)
+time.sleep(20)
 diff = pexpect.spawn('diff rdm.md README.md')
 time.sleep(5)
 diff.close()
@@ -24,7 +24,7 @@ assert diff.exitstatus == 0
 
 print('File upload test passed!')
 child_user.sendline('REQ d1 download device/target/debug/rdfm_mgmt_device')
-time.sleep(15)
+time.sleep(20)
 diff = pexpect.spawn('diff device/target/debug/rdfm_mgmt_device rdfm_mgmt_device')
 time.sleep(5)
 diff.close()

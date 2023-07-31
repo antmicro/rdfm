@@ -1,11 +1,12 @@
 import os
 import jwt
-import uuid
-import time
-from flask import Flask, request, send_file, Response
+from flask import (
+    Flask,
+    request,
+    Response
+)
 from threading import Thread
-from server import Server, FileTransfer
-from rdfm_mgmt_communication import wait_at_most
+from server import Server
 from request_models import (
     ListRequest,
     InfoDeviceRequest,
@@ -16,153 +17,15 @@ from request_models import (
     UploadRequest,
     Request
 )
-
+from file_transfer import (
+    new_file_transfer,
+    upload_file,
+    download_file,
+)
 from typing import Optional
-from werkzeug import local
-http_request = local.LocalProxy
 
 app = Flask(__name__)
 global server
-
-
-def get_device_file_dir(device_name: str) -> Optional[str]:
-    """Checks where files that are uploaded/downloaded from device are
-    in server transferred files cache directory.
-
-    Args:
-        device_name: Device name
-
-    Returns:
-        path to device directory in server transferred files cache
-    """
-    assert device_name is not None
-    device_file_dir = os.path.join(
-        os.path.abspath(app.config['UPLOAD_FOLDER']),
-        device_name)
-    return device_file_dir
-
-
-def new_file_transfer(device_name: str,
-                      device_filepath: str) -> Alert:
-    """Creates new file transfer for device if it is possible
-
-    Args:
-        device_name: Name of the device to upload/download files
-        device_filepath: Path on device where file will
-            be downloaded/uploaded from
-
-    Returns:
-        Response about result of creating new transfer
-    """
-    # Check that device is connected
-    if device_name not in server.connected_devices:
-        return Alert(alert={  # type: ignore
-            'error': 'Device not found'
-        })
-    device = server.connected_devices[device_name]
-
-    # Create file transfer with random cache filename
-    cache_filename = str(uuid.uuid4())
-    while cache_filename in server.file_transfers:
-        cache_filename = str(uuid.uuid4())
-    cache_device_dir: Optional[str] = get_device_file_dir(device.name)
-    assert cache_device_dir is not None
-    server.file_transfers[cache_filename] = FileTransfer(
-                                                    device,
-                                                    device_filepath,
-                                                    os.path.join(
-                                                        cache_device_dir,
-                                                        cache_filename
-                                                    ))
-    return Alert(alert={  # type: ignore
-        'message': 'New file transfer',
-        'filename': cache_filename
-    })
-
-
-def upload_file(request,
-                filename: str) -> Optional[Alert]:
-    print('xxxxx', type(request))
-    """Wrapper to avoid boilerplate code while uploading file as user and
-    as a device client
-
-    Args:
-        request: HTTP request that was sent
-        filename: Server cache filename
-
-    Returns:
-        Alert if upload failed
-    """
-    file = request.files['file']
-    if file.filename == '':
-        return None
-    if file:
-        try:
-            # Find/create device's directory in server cache
-            cache_device_dir = get_device_file_dir(
-                                server.file_transfers[filename].device.name)
-            if not cache_device_dir:
-                return None
-            assert cache_device_dir is not None
-            device_file_dir = os.path.abspath(cache_device_dir)
-            if not os.path.exists(device_file_dir):
-                os.makedirs(device_file_dir)
-                print('Created directory', device_file_dir)
-
-            # Generate tmp filename
-            file.save(os.path.join(device_file_dir, filename))
-            print('File uploaded at',
-                  os.path.join(device_file_dir, filename)
-                  )
-            server.file_transfers[filename].uploaded = True
-
-        except Exception as e:
-            error_msg = f'Error saving file, {str(e)}'
-            print(error_msg)
-            return Alert(alert={  # type: ignore
-                'error': error_msg
-            })
-    return None
-
-
-def download_file(filename: str) -> Request | Response:
-    """Wrapper to avoid boilerplate code while downloading file as user and
-    as a device client
-
-    Args:
-        device_name: Optional device name (if it was provided user sent it)
-
-    Returns:
-        reply to request or sends a file
-    """
-
-    transfer = server.file_transfers[filename]
-    print('Waiting for file', filename, 'to be uploaded...')
-
-    # Wait for device to start upload
-    if not wait_at_most(30, 0.5, lambda: transfer.started):
-        return Alert(alert={  # type: ignore
-            'error': 'Device timeout'
-        })
-
-    # Wait until file uploads
-    while not transfer.uploaded and not transfer.error:
-        time.sleep(1)
-    if transfer.error:
-        print('Device sent back an error')
-        return Alert(alert={  # type: ignore
-            'error': transfer.error_msg
-        })
-
-    device_file_dir = get_device_file_dir(transfer.device.name)
-    if not device_file_dir:
-        return Alert(alert={  # type: ignore
-            'error': f'No file to download'
-        })
-
-    filepath = os.path.join(device_file_dir, filename)
-    print('Sending', filepath)
-    return send_file(filepath)
 
 
 @app.route('/upload', methods=['POST'])  # Device endpoint
@@ -197,7 +60,9 @@ def upload() -> str:
                 'message': 'File upload cancelled'
             }).model_dump_json()
 
-        res: Optional[Alert] = upload_file(request, filename)
+        res: Optional[Alert] = upload_file(request, filename,
+                                           app.config['UPLOAD_FOLDER'],
+                                           server.file_transfers)
         if res:
             return res.model_dump_json()
 
@@ -222,15 +87,24 @@ def upload() -> str:
 
 @app.route('/download/<filename>', methods=['GET'])  # Device endpoint
 def download(filename):
-    res = download_file(filename)
+    res = download_file(filename, app.config['UPLOAD_FOLDER'],
+                        server.file_transfers)
     if isinstance(res, Request):
         return res.model_dump_json()
     return res
 
 
-@app.route('/device/<device_name>/upload', methods=['POST'])  # Client endpoint
+@app.route('/device/<device_name>/upload', methods=['POST'])  # User endpoint
 def upload_device(device_name) -> str:
-    res: Alert = new_file_transfer(device_name, request.form['file_path'])
+    # Check that device is connected
+    if device_name not in server.connected_devices:
+        return Alert(alert={  # type: ignore
+            'error': 'Device not found'
+        })
+    device = server.connected_devices[device_name]
+    res: Alert = new_file_transfer(device_name, device,
+                                   request.form['file_path'],
+                                   server.file_transfers)
     if 'error' in res.alert:
         return res.model_dump_json()
 
@@ -251,7 +125,9 @@ def upload_device(device_name) -> str:
                 device.required_capabilities['download']}
         ).model_dump_json()
 
-    upload_res: Optional[Alert] = upload_file(request, filename)
+    upload_res: Optional[Alert] = upload_file(request, filename,
+                                              app.config['UPLOAD_FOLDER'],
+                                              server.file_transfers)
     if upload_res:
         return upload_res.model_dump_json()
     server.file_transfers[filename].started = True
@@ -267,10 +143,18 @@ def upload_device(device_name) -> str:
     }).model_dump_json()
 
 
-@app.route('/device/<device_name>/download',  # Client endpoint
+@app.route('/device/<device_name>/download',  # User endpoint
            methods=['GET'])
 def download_device(device_name) -> str | Response:
-    res: Alert = new_file_transfer(device_name, request.form['file_path'])
+    # Check that device is connected
+    if device_name not in server.connected_devices:
+        return Alert(alert={  # type: ignore
+            'error': 'Device not found'
+        })
+    device = server.connected_devices[device_name]
+    res: Alert = new_file_transfer(device_name, device,
+                                   request.form['file_path'],
+                                   server.file_transfers)
     if 'error' in res.alert:
         return res.model_dump_json()
 
@@ -296,7 +180,8 @@ def download_device(device_name) -> str | Response:
         file_path=request.form['file_path']
     ))
 
-    download_res = download_file(filename)
+    download_res = download_file(filename, app.config['UPLOAD_FOLDER'],
+                                 server.file_transfers)
     if isinstance(download_res, Request):
         return download_res.model_dump_json()
     return download_res

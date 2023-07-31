@@ -2,37 +2,16 @@ import socket
 import select
 import sys
 import jwt
-import os
 from threading import Thread
 from typing import Optional
 from rdfm_mgmt_communication import *
 from request_models import *
+from file_transfer import FileTransfer
 from proxy import Proxy
 from database.devices import DevicesDB
 import database.db
 
 CONNECTION_TRIES = 2
-
-
-class FileTransfer():
-    def __init__(self, device: Device,
-                 device_filepath: str,
-                 server_filepath: str):
-        # Device that should upload/download file
-        self.device: Device = device
-        # Filepath on device
-        self.device_filepath: str = device_filepath
-        # Filepath in server cache
-        self.server_filepath: str = server_filepath
-
-        self.started: bool = False
-        self.uploaded: bool = False
-
-        self.error: bool = False
-        self.error_msg: str = ''
-
-    def __del__(self):
-        os.remove(self.server_filepath)
 
 
 class Server:
@@ -335,7 +314,6 @@ class Server:
             for notified_socket in read_sockets:
                 # new connection
                 if notified_socket == self.server_socket:
-                    print('new')
                     try:
                         (client_socket,
                          client_address) = self.server_socket.accept()
