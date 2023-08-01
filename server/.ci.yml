@@ -124,3 +124,14 @@ test-file-transfer:
     refs:
       - merge_requests
       - main
+
+test-package-api:
+  extends: .build
+  stage: local-tests
+  script:
+    - python3 tests/test-packages.py
+  only:
+    refs:
+      - merge_requests
+      - main
+
