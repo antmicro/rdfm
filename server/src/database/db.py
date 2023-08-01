@@ -4,8 +4,11 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy.schema import MetaData
 from typing import Optional
-import models
+from models.base import Base
 
+# Import all models below
+import models.device
+import models.package
 
 def create(filepath: str) -> Engine:
     """Creates connection to device database and creates table if it does not exist
@@ -17,7 +20,7 @@ def create(filepath: str) -> Engine:
     try:
         db: Engine = create_engine(f"sqlite:///{filepath}", echo=True)
         # This actually creates all the tables in the database for entities that inherit from models.device.Base
-        models.device.Base.metadata.create_all(db)
+        Base.metadata.create_all(db)
         return db
     except Exception as e:
         print("Database initialization failed:", repr(e))
