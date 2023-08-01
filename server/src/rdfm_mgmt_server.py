@@ -3,7 +3,9 @@ import jwt
 from flask import (
     Flask,
     request,
-    Response
+    Response,
+    abort,
+    send_from_directory
 )
 from threading import Thread
 from server import Server
@@ -23,6 +25,14 @@ from file_transfer import (
     download_file,
 )
 from typing import Optional
+import storage
+from storage.local import LocalStorage, LOCAL_STORAGE_PATH
+import hashlib
+import traceback
+import datetime
+import models.package
+import json
+import tempfile
 
 app = Flask(__name__)
 global server
@@ -187,6 +197,22 @@ def download_device(device_name) -> str | Response:
     return download_res
 
 
+def api_error(error_str: str, code: int):
+    return {
+        "error": error_str
+    }, code
+
+
+def metadata_contains_reserved_keys(metadata: dict[str, str]) -> bool:
+    """Verify whether the user-provided metadata is legal, i.e does not
+       contain any forbidden names.
+    """
+    return any([
+        key.startswith("rdfm.storage.")
+        for key in metadata
+    ])
+
+
 @app.route('/')
 def index():
     response = server.handle_request(ListRequest())
@@ -219,6 +245,129 @@ def device_proxy(device_name: str):
     )
     assert response is not None
     return response.model_dump_json()
+
+
+@app.route('/api/v1/packages')
+def fetch_packages():
+    """ Fetch a list of packages uploaded to the server
+    """
+    try:
+        packages = server._packages_db.fetch_all()
+        return [
+            {
+                "id": package.id,
+                "created": package.created,
+                "sha256": package.sha256,
+                "metadata": json.loads(package.info)
+            } for package in packages
+        ]
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception during package fetch:", repr(e))
+        return {}, 500
+
+
+@app.route('/api/v1/packages', methods=['POST'])
+def upload_package():
+    """ Upload an update package
+        The request is a multipart request containing the following:
+        - name='file': Contents of the package being uploaded
+        Remaining key/value pairs from the form request are used as
+        metadata for the artifact.
+    """
+    try:
+        # TODO: Allow changing this from the configuration
+        driver_name = "local"
+
+        meta = request.form.to_dict()
+        if metadata_contains_reserved_keys(meta):
+            return api_error("provided metadata contains reserved key", 400)
+
+        if "file" not in request.files:
+            return api_error("missing package file", 400)
+
+        driver = storage.driver_by_name(driver_name)
+        if driver is None:
+            return api_error("invalid storage driver", 500)
+
+        sha256 = ""
+        with tempfile.NamedTemporaryFile('wb+') as f:
+            request.files["file"].save(f.name)
+            success = driver.upsert(meta, f.name)
+            if not success:
+                return api_error("could not store artifact", 500)
+            sha256 = hashlib.file_digest(f, 'sha256').hexdigest()
+
+        package = models.package.Package()
+        package.created = datetime.datetime.now()
+        package.info = json.dumps(meta)
+        package.driver = driver_name
+        package.sha256 = sha256
+        success = server._packages_db.create(package)
+        if not success:
+            return api_error("could not create package", 500)
+
+        return {}, 200
+
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception during package upload:", repr(e))
+        return {}, 500
+
+
+@app.route('/api/v1/packages/<identifier>', methods=['GET'])
+def fetch_package(identifier: int):
+    """ Fetch information about a single package given by the specified ID
+    """
+    try:
+        pkg = server._packages_db.fetch_one(identifier)
+        if pkg is None:
+            return api_error("specified package does not exist", 404)
+
+        return {
+            "id": pkg.id,
+            "created": pkg.created,
+            "sha256": pkg.sha256,
+            "driver": pkg.driver,
+            "metadata": json.loads(pkg.info)
+        }, 200
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception during package fetch:", repr(e))
+        return {}, 500
+
+
+@app.route('/api/v1/packages/<identifier>', methods=['DELETE'])
+def delete_package(identifier: int):
+    """ Delete the specified package
+    """
+    try:
+        package = server._packages_db.fetch_one(identifier)
+        if package is None:
+            return api_error("specified package does not exist", 404)
+
+        if not server._packages_db.delete(identifier):
+            return api_error("delete failed", 500)
+
+        metadata = json.loads(package.info)
+        driver = storage.driver_by_name(package.driver)
+        if driver is None:
+            return api_error("delete failed", 500)
+        driver.delete(metadata)
+
+        return {}, 200
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception during package fetch:", repr(e))
+        return api_error("delete failed", 500)
+
+
+@app.route('/local_storage/<name>')
+def fetch_local_package(name: str):
+    """ Endpoint for exposing local package storage
+        Should not be used in production deployment
+    """
+    return send_from_directory(LOCAL_STORAGE_PATH, name)
 
 
 if __name__ == '__main__':
