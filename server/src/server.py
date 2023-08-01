@@ -9,6 +9,7 @@ from request_models import *
 from file_transfer import FileTransfer
 from proxy import Proxy
 from database.devices import DevicesDB
+from database.packages import PackagesDB
 import database.db
 
 CONNECTION_TRIES = 2
@@ -43,6 +44,7 @@ class Server:
 
         self.db = database.db.create(db_path)
         self._devices_db: DevicesDB = DevicesDB(self.db)
+        self._packages_db: PackagesDB = PackagesDB(self.db)
 
         # filename in server cache -> transfer object
         self.file_transfers: dict[str, FileTransfer] = {}
