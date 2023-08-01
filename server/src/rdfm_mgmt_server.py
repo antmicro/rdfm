@@ -362,6 +362,79 @@ def delete_package(identifier: int):
         return api_error("delete failed", 500)
 
 
+KEY_SOFTVER = "rdfm.software.version"
+KEY_DEVTYPE = "rdfm.hardware.devtype"
+
+
+@app.route('/api/v1/update/check', methods=['POST'])
+def check_for_update():
+    """ Testing endpoint for update checks for devices.
+        Request must contain the device's metadata - at minimum, the
+        rdfm.software.version and rdfm.hardware.devtype pairs must be
+        present. Based on this metadata, a matching package is picked
+        from the available ones (most recent compatible one).
+        TODO: This will be rewritten once we have the infrastructure
+        for assigning artifacts to devices.
+    """
+
+    device_meta = request.json
+    print("Device metadata:", device_meta)
+    if KEY_DEVTYPE not in device_meta:
+        return api_error("metadata is missing a device type", 400)
+    if KEY_SOFTVER not in device_meta:
+        return api_error("metadata is missing a software version", 400)
+
+    try:
+        packages = [
+            {
+                "id": pkg.id,
+                "created": pkg.created,
+                "sha256": pkg.sha256,
+                "driver": pkg.driver,
+                "metadata": json.loads(pkg.info)
+            } for pkg in server._packages_db.fetch_all()
+        ]
+        # Check most recent packages first
+        # This would probably be better done in the DB..
+        packages.sort(key=lambda x: x["created"], reverse=True)
+
+        for pkg in packages:
+            # Only packages for matching device type may be used
+            if pkg["metadata"][KEY_DEVTYPE] != device_meta[KEY_DEVTYPE]:
+                continue
+            # Skip over already installed package
+            if pkg["metadata"][KEY_SOFTVER] == device_meta[KEY_SOFTVER]:
+                # FIXME: Packages will be manually assigned in the future
+                # For now, we automatically try to assign a package to a device
+                # This break is just so we don't try to reassign older packages
+                break
+            # A candidate package was found
+            # Here, we could also check extra requirements
+            # For example, the package depends on some certain metadata
+            # values other than the device type or package version
+
+            print("Matching package for device type:", pkg)
+
+            driver = storage.driver_by_name(pkg["driver"])
+            if driver is None:
+                return api_error("invalid storage driver", 500)
+
+            link = driver.generate_link(pkg["metadata"], 60 * 60)
+            print("Link:", link)
+
+            return {
+                "id": pkg["id"],
+                "created": pkg["created"],
+                "sha256": pkg["sha256"],
+                "uri": link
+            }, 200
+        return {}, 204
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception during update check:", repr(e))
+        return {}, 500
+
+
 @app.route('/local_storage/<name>')
 def fetch_local_package(name: str):
     """ Endpoint for exposing local package storage
