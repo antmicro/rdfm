@@ -250,6 +250,16 @@ def device_proxy(device_name: str):
 @app.route('/api/v1/packages')
 def fetch_packages():
     """ Fetch a list of packages uploaded to the server
+
+    :status 200: no error
+    :status 401: user did not provide authorization data,
+                 or the authorization has expired
+
+    :>jsonarr integer id: package identifier
+    :>jsonarr string created: creation date
+    :>jsonarr string sha256: sha256 of the uploaded package
+    :>jsonarr string driver: storage driver used to store the package
+    :>jsonarr dict[str, str] metadata: package metadata (key/value pairs)
     """
     try:
         packages = server._packages_db.fetch_all()
@@ -269,11 +279,24 @@ def fetch_packages():
 
 @app.route('/api/v1/packages', methods=['POST'])
 def upload_package():
-    """ Upload an update package
-        The request is a multipart request containing the following:
-        - name='file': Contents of the package being uploaded
-        Remaining key/value pairs from the form request are used as
-        metadata for the artifact.
+    """ Upload an update package.
+
+    Uploads an update package to the server.
+    Remaining key/value pairs in the form request are used as
+    metadata for the artifact.
+
+    :form file: binary contents of the package
+    :form rdfm.software.version: required: software version of the package
+    :form rdfm.hardware.devtype: required: compatible device type
+    :form `...`: remaining package metadata
+
+    :status 200: no error, package was uploaded
+    :status 400: provided metadata contains keys reserved by RDFM
+                 or a file was not provided
+    :status 401: user did not provide authorization data,
+                 or the authorization has expired
+    :status 403: user was authorized, but did not have permission
+                 to upload packages
     """
     try:
         # TODO: Allow changing this from the configuration
@@ -318,6 +341,18 @@ def upload_package():
 @app.route('/api/v1/packages/<identifier>', methods=['GET'])
 def fetch_package(identifier: int):
     """ Fetch information about a single package given by the specified ID
+
+    :param identifier: package identifier
+    :status 200: no error
+    :status 401: user did not provide authorization data,
+                 or the authorization has expired
+    :status 404: specified package does not exist
+
+    :>json integer id: package identifier
+    :>json string created: creation date
+    :>json string sha256: sha256 of the uploaded package
+    :>json string driver: storage driver used to store the package
+    :>json dict[str, str] metadata: package metadata (simple key/value pairs)
     """
     try:
         pkg = server._packages_db.fetch_one(identifier)
@@ -340,6 +375,14 @@ def fetch_package(identifier: int):
 @app.route('/api/v1/packages/<identifier>', methods=['DELETE'])
 def delete_package(identifier: int):
     """ Delete the specified package
+
+    :param identifier: package identifier
+    :status 200: no error
+    :status 401: user did not provide authorization data,
+                 or the authorization has expired
+    :status 403: user was authorized, but did not have permission
+                 to delete packages
+    :status 404: specified package does not exist
     """
     try:
         package = server._packages_db.fetch_one(identifier)
@@ -369,12 +412,24 @@ KEY_DEVTYPE = "rdfm.hardware.devtype"
 @app.route('/api/v1/update/check', methods=['POST'])
 def check_for_update():
     """ Testing endpoint for update checks for devices.
-        Request must contain the device's metadata - at minimum, the
-        rdfm.software.version and rdfm.hardware.devtype pairs must be
-        present. Based on this metadata, a matching package is picked
-        from the available ones (most recent compatible one).
-        TODO: This will be rewritten once we have the infrastructure
-        for assigning artifacts to devices.
+
+    Request must contain the device's metadata - at minimum, the
+    `rdfm.software.version` and `rdfm.hardware.devtype` pairs must be
+    present. Based on this metadata, a matching package is picked
+    from the available ones (most recent compatible one).
+
+    TODO: This will be rewritten once we have the infrastructure
+    for assigning artifacts to devices.
+
+    :status 200: no updates are available
+    :status 204: an update is available
+    :status 400: device metadata is missing device type and/or software version
+    :status 401: device did not provide authorization data,
+                 or the authorization has expired
+
+    :>jsonarr string rdfm.software.version: required: running software version
+    :>jsonarr string rdfm.hardware.devtype: required: device type
+    :>jsonarr string `...`: other device metadata
     """
 
     device_meta = request.json
@@ -437,8 +492,15 @@ def check_for_update():
 
 @app.route('/local_storage/<name>')
 def fetch_local_package(name: str):
-    """ Endpoint for exposing local package storage
-        Should not be used in production deployment
+    """ Endpoint for exposing local package storage.
+
+    **WARNING: Local storage should not be used in production deployment,
+    only for local testing!**
+    This will be disabled in the future for non-prod configurations.
+
+    :param name: identifier (UUID) of the package object in local storage
+    :status 200: no error
+    :status 404: specified package does not exist
     """
     return send_from_directory(LOCAL_STORAGE_PATH, name)
 
