@@ -175,6 +175,10 @@ func (ctx *RDFM) GetCurrentArtifactName() (string, error) {
 	return ctx.deviceManager.GetCurrentArtifactName()
 }
 
+func (ctx *RDFM) GetCurrentDeviceType() (string, error) {
+	return ctx.deviceManager.GetDeviceType()
+}
+
 func (ctx *RDFM) GetCurrentArtifactProvides() (map[string]string, error) {
 	return ctx.deviceManager.GetProvides()
 }

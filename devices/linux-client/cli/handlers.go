@@ -57,6 +57,12 @@ func makeCommands() []*libcli.Command {
 			Action:  dispatchArtifactCommand,
 		},
 		{
+			Name:    "show-device",
+			Aliases: []string{},
+			Usage:   "show the current device type",
+			Action:  dispatchArtifactCommand,
+		},
+		{
 			Name:    "show-provides",
 			Aliases: []string{},
 			Usage:   "show the current artifact's provides",
@@ -86,9 +92,10 @@ func handleAppFlags(ctx *libcli.Context) error {
 }
 
 func dispatchArtifactCommand(c *libcli.Context) error {
-	//  When printing the artifact name and provides, set the log level to warn if
-	//  not specified otherwise for cleaner output.
-	if (c.Command.Name == "show-artifact" || c.Command.Name == "show-provides") && !c.IsSet(cliToolLogLevelFlagName) {
+	//  When printing the artifact name, device type and provides, set the log level
+	//  to warn if not specified otherwise for cleaner output.
+	if (c.Command.Name == "show-artifact" || c.Command.Name == "show-provides" ||
+		c.Command.Name == "show-device") && !c.IsSet(cliToolLogLevelFlagName) {
 		log.SetLevel(log.WarnLevel)
 	}
 
@@ -123,6 +130,16 @@ func dispatchArtifactCommand(c *libcli.Context) error {
 			fmt.Println(name)
 			return nil
 		}
+	case "show-device":
+		{
+			device, err := ctx.GetCurrentDeviceType()
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(device)
+			return nil
+		}
 	case "show-provides":
 		{
 			provides, err := ctx.GetCurrentArtifactProvides()
@@ -137,6 +154,5 @@ func dispatchArtifactCommand(c *libcli.Context) error {
 			return nil
 		}
 	}
-
 	panic("should never be reached")
 }
