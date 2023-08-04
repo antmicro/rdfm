@@ -1,7 +1,8 @@
 from typing import List
 from typing import Optional
+from typing import Any
 from sqlalchemy import ForeignKey
-from sqlalchemy import String, Text, Integer, DateTime
+from sqlalchemy import String, Text, Integer, DateTime, JSON
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
@@ -16,4 +17,4 @@ class Package(models.base.Base):
     created: Mapped[datetime.datetime] = mapped_column(DateTime)
     driver: Mapped[str] = mapped_column(Text)
     sha256: Mapped[str] = mapped_column(Text)
-    info: Mapped[str] = mapped_column(Text)
+    info: Mapped[dict[str, Any]] = mapped_column(JSON)
