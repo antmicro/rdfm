@@ -24,7 +24,7 @@ from file_transfer import (
     upload_file,
     download_file,
 )
-from typing import Optional
+from typing import Optional, List
 import storage
 from storage.local import LocalStorage, LOCAL_STORAGE_PATH
 import hashlib
@@ -268,7 +268,7 @@ def fetch_packages():
                 "id": package.id,
                 "created": package.created,
                 "sha256": package.sha256,
-                "metadata": json.loads(package.info)
+                "metadata": package.info
             } for package in packages
         ]
     except Exception as e:
@@ -323,7 +323,7 @@ def upload_package():
 
         package = models.package.Package()
         package.created = datetime.datetime.now()
-        package.info = json.dumps(meta)
+        package.info = meta
         package.driver = driver_name
         package.sha256 = sha256
         success = server._packages_db.create(package)
@@ -364,7 +364,7 @@ def fetch_package(identifier: int):
             "created": pkg.created,
             "sha256": pkg.sha256,
             "driver": pkg.driver,
-            "metadata": json.loads(pkg.info)
+            "metadata": pkg.info
         }, 200
     except Exception as e:
         traceback.print_exc()
@@ -392,11 +392,10 @@ def delete_package(identifier: int):
         if not server._packages_db.delete(identifier):
             return api_error("delete failed", 500)
 
-        metadata = json.loads(package.info)
         driver = storage.driver_by_name(package.driver)
         if driver is None:
             return api_error("delete failed", 500)
-        driver.delete(metadata)
+        driver.delete(package.info)
 
         return {}, 200
     except Exception as e:
@@ -439,26 +438,18 @@ def check_for_update():
     if KEY_SOFTVER not in device_meta:
         return api_error("metadata is missing a software version", 400)
 
+    softver = device_meta[KEY_SOFTVER]
+    devtype = device_meta[KEY_DEVTYPE]
+
     try:
-        packages = [
-            {
-                "id": pkg.id,
-                "created": pkg.created,
-                "sha256": pkg.sha256,
-                "driver": pkg.driver,
-                "metadata": json.loads(pkg.info)
-            } for pkg in server._packages_db.fetch_all()
-        ]
+        packages = server._packages_db.fetch_compatible(devtype)
         # Check most recent packages first
         # This would probably be better done in the DB..
-        packages.sort(key=lambda x: x["created"], reverse=True)
+        packages.sort(key=lambda x: x.created, reverse=True)
 
         for pkg in packages:
-            # Only packages for matching device type may be used
-            if pkg["metadata"][KEY_DEVTYPE] != device_meta[KEY_DEVTYPE]:
-                continue
             # Skip over already installed package
-            if pkg["metadata"][KEY_SOFTVER] == device_meta[KEY_SOFTVER]:
+            if pkg.info[KEY_SOFTVER] == softver:
                 # FIXME: Packages will be manually assigned in the future
                 # For now, we automatically try to assign a package to a device
                 # This break is just so we don't try to reassign older packages
@@ -470,17 +461,17 @@ def check_for_update():
 
             print("Matching package for device type:", pkg)
 
-            driver = storage.driver_by_name(pkg["driver"])
+            driver = storage.driver_by_name(pkg.driver)
             if driver is None:
                 return api_error("invalid storage driver", 500)
 
-            link = driver.generate_link(pkg["metadata"], 60 * 60)
+            link = driver.generate_link(pkg.info, 60 * 60)
             print("Link:", link)
 
             return {
-                "id": pkg["id"],
-                "created": pkg["created"],
-                "sha256": pkg["sha256"],
+                "id": pkg.id,
+                "created": pkg.created,
+                "sha256": pkg.sha256,
                 "uri": link
             }, 200
         return {}, 204

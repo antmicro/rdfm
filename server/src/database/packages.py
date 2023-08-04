@@ -3,9 +3,9 @@ import time
 import os
 import json
 import datetime
-from typing import Optional, List
+from typing import Optional, List, Any
 import models.package
-from sqlalchemy import create_engine, select, update, delete
+from sqlalchemy import create_engine, select, update, delete, desc
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy.schema import MetaData
@@ -64,6 +64,27 @@ class PackagesDB:
         except Exception as e:
             print("Package fetch failed:", repr(e))
             return None
+
+
+    def fetch_compatible(self, devtype: str) -> List[models.package.Package]:
+        """ Fetches a list of packages compatible with the specified device type,
+            sorted by their creation date (most recent first)
+        """
+        try:
+            with Session(self.engine) as session:
+                stmt = (
+                    select(models.package.Package)
+                    .where(models.package.Package.info["rdfm.hardware.devtype"].as_string() == devtype)
+                    .order_by(desc(models.package.Package.created))
+                )
+                packages = session.scalars(stmt)
+                print(packages)
+                if packages is None:
+                    return []
+                return [x for x in packages]
+        except Exception as e:
+            print("Package fetch failed:", repr(e))
+            return []
 
 
     def delete(self, identifier: int) -> bool:
