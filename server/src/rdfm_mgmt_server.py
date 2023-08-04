@@ -404,10 +404,6 @@ def delete_package(identifier: int):
         return api_error("delete failed", 500)
 
 
-KEY_SOFTVER = "rdfm.software.version"
-KEY_DEVTYPE = "rdfm.hardware.devtype"
-
-
 @app.route('/api/v1/update/check', methods=['POST'])
 def check_for_update():
     """ Testing endpoint for update checks for devices.
@@ -433,13 +429,13 @@ def check_for_update():
 
     device_meta = request.json
     print("Device metadata:", device_meta)
-    if KEY_DEVTYPE not in device_meta:
+    if models.package.META_DEVICE_TYPE not in device_meta:
         return api_error("metadata is missing a device type", 400)
-    if KEY_SOFTVER not in device_meta:
+    if models.package.META_SOFT_VER not in device_meta:
         return api_error("metadata is missing a software version", 400)
 
-    softver = device_meta[KEY_SOFTVER]
-    devtype = device_meta[KEY_DEVTYPE]
+    softver = device_meta[models.package.META_SOFT_VER]
+    devtype = device_meta[models.package.META_DEVICE_TYPE]
 
     try:
         packages = server._packages_db.fetch_compatible(devtype)
@@ -449,7 +445,7 @@ def check_for_update():
 
         for pkg in packages:
             # Skip over already installed package
-            if pkg.info[KEY_SOFTVER] == softver:
+            if pkg.info[models.package.META_SOFT_VER] == softver:
                 # FIXME: Packages will be manually assigned in the future
                 # For now, we automatically try to assign a package to a device
                 # This break is just so we don't try to reassign older packages
