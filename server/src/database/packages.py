@@ -12,6 +12,9 @@ from sqlalchemy.schema import MetaData
 
 
 class PackagesDB:
+    """ Wrapper class for managing package data stored in the database
+    """
+
     engine: Engine
 
     def __init__(self, db: Engine):
@@ -38,8 +41,11 @@ class PackagesDB:
     def create(self, package: models.package.Package) -> bool:
         """Creates a new package
 
+        Args:
+            package: package to create
+
         Returns:
-            Whether the operation was successful
+            True the operation was successful
         """
         try:
             with Session(self.engine) as session:
@@ -53,6 +59,9 @@ class PackagesDB:
 
     def fetch_one(self, identifier: int) -> Optional[models.package.Package]:
         """ Fetches a package with the specified ID
+
+        Args:
+            identifier: numeric ID of the package
         """
         try:
             with Session(self.engine) as session:
@@ -69,6 +78,11 @@ class PackagesDB:
     def fetch_compatible(self, devtype: str) -> List[models.package.Package]:
         """ Fetches a list of packages compatible with the specified device type,
             sorted by their creation date (most recent first)
+
+        Args:
+            devtype: device type used to search for compatible packages.
+                     This is compared with the `rdfm.hardware.devtype` entry
+                     in package metadata to determine if a package is compatible.
         """
         try:
             with Session(self.engine) as session:
@@ -89,6 +103,9 @@ class PackagesDB:
 
     def delete(self, identifier: int) -> bool:
         """ Delete a package with the specified ID
+
+        Args:
+            identifier: numeric ID of the package
         """
         try:
             with Session(self.engine) as session:
