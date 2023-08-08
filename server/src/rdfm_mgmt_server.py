@@ -1,6 +1,7 @@
 import os
 from flask import (
     Flask,
+    request
 )
 from threading import Thread
 import server
@@ -8,6 +9,30 @@ import api.v1
 
 app = Flask(__name__)
 app.register_blueprint(api.v1.create_routes())
+
+@app.before_request
+def before_request_func():
+    if app.debug:
+        print({
+            'request': request,
+            'form': request.form,
+            'files': request.files
+        })
+
+
+@app.after_request
+def after_request_func(response):
+    response.direct_passthrough = True
+    if app.debug:
+        try:
+            print({
+                'response': response.get_data(),
+                'status code': response.status
+            })
+        except Exception as e:
+            print('Exception printing response'
+                  'this can happen if it contains a file:', e)
+    return response
 
 if __name__ == '__main__':
     import argparse

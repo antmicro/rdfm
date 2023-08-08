@@ -12,7 +12,7 @@ child_server = pexpect.spawn(f'bash -c "python3 -m rdfm_mgmt_server -cache_dir {
 print('Cache directory:', os.system(f'find / -name "{cache_dir}" -type d'))
 child_server.expect_exact('Running on https://127.0.0.1:5000')
 
-child_user = pexpect.spawn('python3 -m rdfm_mgmt_client u')
+child_user = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_client u 2>&1 | tee filetx-manager.log"')
 child_user.expect_exact("Connected as u")
 
 child_device = pexpect.spawn('bash -c "./devices/linux-client/rdfm daemonize --name d1 2>&1 | tee filetx-device.log"')

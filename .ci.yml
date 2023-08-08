@@ -1,7 +1,8 @@
-image: $CI_REGISTRY_IMAGE:rdfm-ci-base
+image: $CI_REGISTRY_IMAGE:rdfm-ci-base-bookworm
 
 variables:
   PIP_CACHE_DIR: $CI_PROJECT_DIR/.cache/pip
+  GOROOT: ""
 
 .build:
   before_script:
@@ -59,6 +60,14 @@ test-arguments:
     refs:
       - merge_requests
       - main
+  artifacts:
+    when: on_failure
+    paths:
+    - arg-def-server.log
+    - arg-def-manager.log
+    - arg-server.log
+    - arg-manager-failing.log
+    - arg-manager-passing.log
 
 test-list-devices:
   extends: .build
@@ -69,6 +78,17 @@ test-list-devices:
     refs:
       - merge_requests
       - main
+  artifacts:
+    when: on_failure
+    paths:
+    - list-server.log
+    - list-manager.log
+    - list-device1.log
+    - list-device2.log
+    - list-curl1.log
+    - list-curl2.log
+    - list-curl3.log
+    - list-curl14log
 
 test-proxy:
   extends: .build
@@ -83,6 +103,19 @@ test-proxy:
     refs:
       - merge_requests
       - main
+  artifacts:
+    when: on_failure
+    paths:
+    - proxy-noenc-server.log
+    - proxy-noenc-manager.log
+    - proxy-noenc-device.log
+    - proxy-enc-server.log
+    - proxy-enc-manager.log
+    - proxy-enc-device.log
+    - 2proxy-server.log
+    - 2proxy-manager.log
+    - 2proxy-device.log
+
 
 test-metadata:
   extends: .build
@@ -93,6 +126,12 @@ test-metadata:
     refs:
       - merge_requests
       - main
+  artifacts:
+    when: on_failure
+    paths:
+    - metadata-server.log
+    - metadata-manager.log
+    - metadata-device.log
 
 test-crash-client-input:
   extends: .build
@@ -103,6 +142,12 @@ test-crash-client-input:
     refs:
       - merge_requests
       - main
+  artifacts:
+    when: on_failure
+    paths:
+    - crash-server.log
+    - crash-manager.log
+    - crash-telnet.log
 
 test-file-transfer:
   extends: .build

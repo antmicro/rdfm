@@ -2,8 +2,6 @@ package daemon
 
 import (
 	"bytes"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,8 +17,6 @@ import (
 	"strings"
 	"time"
 
-	libcli "github.com/urfave/cli/v2"
-
 	"github.com/antmicro/rdfm/app"
 	"github.com/antmicro/rdfm/daemon/capabilities"
 	"github.com/antmicro/rdfm/daemon/proxy"
@@ -31,20 +27,29 @@ import (
 )
 
 const HEADER_LEN = 10
+const MSG_RECV_TIMEOUT_INTERVALS = 10
+const MSG_RECV_INTERVAL_S = 1
 
-type Device struct {
-	name          string
-	fileMetadata  string
-	encrypt_proxy bool
-	socket        net.Conn
-	metadata      map[string]interface{}
-	caps          capabilities.DeviceCapabilities
-	macAddr       string
-	rdfmCtx       *app.RDFM
+type AuthToken struct {
+	value string
+	// Path to file where auth token is saved
+	file string
 }
 
-func (d Device) recv() (requests.Request, error) {
-	hdr, err := netUtils.RecvExactly(d.socket, HEADER_LEN)
+type Device struct {
+	name         string
+	fileMetadata string
+	encryptProxy bool
+	socket       net.Conn
+	metadata     map[string]interface{}
+	caps         capabilities.DeviceCapabilities
+	macAddr      string
+	rdfmCtx      *app.RDFM
+	authToken    *AuthToken
+}
+
+func recv(s net.Conn) ([]byte, error) {
+	hdr, err := netUtils.RecvExactly(s, HEADER_LEN)
 
 	if err != nil {
 		log.Println("Error receiving header:", err)
@@ -56,12 +61,32 @@ func (d Device) recv() (requests.Request, error) {
 		return nil, err
 	}
 
-	msg, err := netUtils.RecvExactly(d.socket, msg_len)
+	msg, err := netUtils.RecvExactly(s, msg_len)
 	if err != nil {
 		if err != io.EOF {
 			log.Println("Error receiving msg:", err)
 			return nil, err
 		}
+	}
+	return msg, nil
+}
+
+func (d Device) recv() (requests.Request, error) {
+	var msg []byte
+	var err error
+
+	for i := 0; i < MSG_RECV_TIMEOUT_INTERVALS; i++ {
+		msg, err = recv(d.socket)
+		if err != nil {
+			return nil, err
+		}
+		if len(msg) > 0 {
+			break
+		}
+		time.Sleep(MSG_RECV_INTERVAL_S * time.Second)
+	}
+	if len(msg) == 0 {
+		return nil, errors.New("server response timeout")
 	}
 
 	parsed, err := requests.Parse(string(msg[:]))
@@ -124,47 +149,88 @@ func (d *Device) communicationLoop() error {
 	}
 }
 
-func (d Device) connect() error {
-	// Try to get JWT token from config
-	token := d.rdfmCtx.Configuration.TenantToken
-	// Try to auth using token
-	if token != "" {
-		log.Println("Token found, trying to auth...")
-		d.send(requests.Auth{
-			Method: "auth_token",
-			Jwt:    token,
-		})
-		res, err := d.recv()
-		if err != nil {
-			log.Println("Error sending token", err)
-			return err
-		}
-
-		switch r := res.(type) {
-		case requests.Alert:
-			log.Printf("alert: %v %T", r.Alert, r.Alert)
-			log.Println(r)
-			msg, present := r.Alert["message"]
-			if present {
-				log.Println(msg)
-				return nil
+func (d *Device) loadAuthToken() error {
+	authToken, err := os.ReadFile(d.rdfmCtx.RdfmConfig.AuthTokenFile)
+	if len(authToken) > 0 {
+		log.Println("Found auth token: ", authToken)
+		if err == nil {
+			d.authToken = &AuthToken{
+				value: string(authToken),
+				file:  app.RdfmTokenPath,
 			}
-			msg, present = r.Alert["error"]
-			if present {
-				log.Println("Failed to connect using token", msg)
-			}
-		default:
-			err = errors.New("unknown server response")
-			log.Println(err)
-			return err
 		}
 	} else {
-		log.Println("No TenantToken in configuration")
+		log.Println("Auth token not found in path provided in config, ",
+			d.rdfmCtx.RdfmConfig.AuthTokenFile)
+		authToken, err = os.ReadFile(app.RdfmTokenPath)
+		if err != nil {
+			log.Println("Auth token not found in default path, ",
+				app.RdfmTokenPath)
+			return err
+		}
+		log.Println("Auth token found in default path")
+		d.authToken = &AuthToken{
+			value: string(authToken),
+			file:  app.RdfmTokenPath,
+		}
+	}
+	return nil
+}
+
+func (d *Device) connect(jwtAuth bool) error {
+	file, err := os.OpenFile(app.RdfmTokenPath, os.O_CREATE, 0600)
+	if err != nil {
+		return err
+	}
+	d.authToken = &AuthToken{
+		file:  file.Name(),
+		value: "",
+	}
+	if jwtAuth {
+		log.Println("Trying to connect using auth token")
+		if err := d.loadAuthToken(); err != nil {
+			log.Println("Error loading auth token, ", err)
+			if err != nil {
+				log.Println("Error creating file for auth token, ", d.authToken.file)
+				return err
+			}
+		}
+		// Try to auth using token
+		if d.authToken.value != "" {
+			log.Println("Token found, trying to auth...")
+			d.send(requests.Auth{
+				Method: "auth_token",
+				Jwt:    d.authToken.value,
+			})
+			res, err := d.recv()
+			if err != nil {
+				log.Println("Error sending token", err)
+			}
+
+			switch r := res.(type) {
+			case requests.Alert:
+				msg, present := r.Alert["message"]
+				if present {
+					log.Println(msg)
+					return nil
+				}
+				msg, present = r.Alert["error"]
+				if present {
+					log.Println("Failed to connect using token", msg)
+				}
+			default:
+				err = errors.New("unknown server response")
+				log.Println(err, res)
+				return err
+			}
+		} else {
+			log.Println("No AuthToken in configuration")
+		}
 	}
 
 	// JWT auth failed/no token
 	log.Println("Registering device...")
-	err := d.send(requests.Register{
+	err = d.send(requests.Register{
 		Method: "register",
 		Client: requests.Client{
 			Name:         d.name,
@@ -174,23 +240,34 @@ func (d Device) connect() error {
 		},
 	})
 	if err != nil {
+		log.Println("Error sending register request to server: ", err)
 		return err
 	}
 	res, err := d.recv()
 	if err != nil {
+		log.Println("Error receiving response to register request from server: ", err)
 		return err
 	}
 	switch r := res.(type) {
 	// Got JWT token from server
 	case requests.Auth:
-		d.rdfmCtx.Configuration.TenantToken = r.Jwt
-		log.Println("Got JWT token!")
-		//TODO: Save it in config files - currently no function to do it
-		// besides explict calling function on specified file
+		d.authToken.value = r.Jwt
+		log.Println("Got auth token!")
+
+		err = os.WriteFile(d.authToken.file, []byte(r.Jwt), 0600)
+		if err != nil {
+			log.Println("Error saving auth token to file ", d.authToken.file)
+			return err
+		}
 	case requests.Alert:
 		log.Println(r.Alert)
 		return errors.New("registration refused")
+	default:
+		err = errors.New("received unknown response")
+		log.Println(err, res)
+		return err
 	}
+	log.Println("Connected to the server")
 
 	return nil
 }
@@ -214,9 +291,9 @@ func (d *Device) handleRequest(request requests.Request) (requests.Request, erro
 			log.Println("Failed to get server's proxy address")
 			return nil, err
 		}
-		if d.encrypt_proxy {
+		if d.encryptProxy {
 			go proxy.ConnectReverseEncrypted(addr, r.Port,
-				d.rdfmCtx.Configuration.ServerCertificate)
+				d.rdfmCtx.RdfmConfig.ServerCertificate)
 		} else {
 			go proxy.ConnectReverseUnencrypted(addr, r.Port)
 		}
@@ -241,7 +318,8 @@ func (d *Device) handleRequest(request requests.Request) (requests.Request, erro
 		}, nil
 	case requests.Download:
 		// Download to device
-		log.Printf("Received download request of file %s", r.FilePath)
+		log.Println("Received download request of file ", r.FilePath)
+		log.Println("Downloading file from ", r.Url)
 
 		out, err := os.Create(r.FilePath)
 		if err != nil {
@@ -264,12 +342,13 @@ func (d *Device) handleRequest(request requests.Request) (requests.Request, erro
 	case requests.Upload:
 		// Upload from device
 		log.Printf("Received upload request of file %s", r.FilePath)
-		endpoint := fmt.Sprintf("%s/upload", d.rdfmCtx.Configuration.ServerURL)
+		endpoint := fmt.Sprintf("%s/upload", d.rdfmCtx.RdfmConfig.ServerURL)
+		log.Println("Uploading file to ", endpoint)
 		fileSent := false
 
 		body := &bytes.Buffer{}
 		writer := multipart.NewWriter(body)
-		writer.WriteField("jwt", d.rdfmCtx.Configuration.TenantToken)
+		writer.WriteField("jwt", d.authToken.value)
 		writer.WriteField("file_path", r.FilePath)
 
 		file, err := os.Open(r.FilePath)
@@ -337,27 +416,25 @@ func (d Device) checkUpdatesPeriodically() {
 
 	go func() {
 		for {
-			time.Sleep(
-				time.Duration(d.rdfmCtx.Configuration.UpdatePollIntervalSeconds) *
-					time.Second)
 			log.Println("Checking updates...")
 			metadata := map[string]string{
 				"rdfm.hardware.devtype": devType,
 				"rdfm.software.version": swVer,
 				"rdfm.hardware.macaddr": d.macAddr,
 			}
+			log.Println("Metadata to check updates: ", metadata)
 			serializedMetadata, err := json.Marshal(metadata)
 			if err != nil {
 				log.Println("Failed to serialize metadata", err)
 				return
 			}
-			res, err := http.Post(
-				fmt.Sprintf("%s/api/v1/update/check", d.rdfmCtx.Configuration.ServerURL),
-				"application/json",
+			endpoint := fmt.Sprintf("%s/api/v1/update/check",
+				d.rdfmCtx.RdfmConfig.ServerURL)
+			res, err := http.Post(endpoint, "application/json",
 				bytes.NewBuffer(serializedMetadata),
 			)
 			if err != nil {
-				log.Println("Failed to check updates", err)
+				log.Println("Failed to check updates from ", err)
 				return
 			}
 
@@ -392,106 +469,10 @@ func (d Device) checkUpdatesPeriodically() {
 			case 401:
 				log.Println("Device did not provide authorization data, or the authorization has expired")
 			}
+			update_duration := time.Duration(d.rdfmCtx.RdfmConfig.UpdatePollIntervalSeconds) * time.Second
+			log.Printf("Next update check in %s\n", update_duration)
+			time.Sleep(time.Duration(update_duration))
 		}
 		log.Println("Stopped checking for updates")
 	}()
-}
-
-func Run(c *libcli.Context) error {
-
-	host := c.String("host")
-	port := c.Int("port")
-	name := c.String("name")
-	fileMetadata := c.String("file-metadata")
-	notEncrypted := c.Bool("no-ssl")
-	config := c.String("config")
-
-	ctx, err := app.NewRdfmContext()
-	if err != nil {
-		log.Fatal("Failed to create RDFM context", err)
-		return err
-	}
-
-	caps, err := capabilities.LoadCapabilities(config)
-	if err != nil {
-		log.Fatal("Failed to load config:", err)
-		return err
-	}
-
-	var conn net.Conn
-	var cert []byte
-	if !notEncrypted {
-		cert, err = os.ReadFile(ctx.Configuration.ServerCertificate)
-		if err != nil {
-			log.Fatal("Failed to read certificate file:", err)
-			return err
-		} else {
-			conf := &tls.Config{}
-			os.Setenv("SSL_CERT_DIR", filepath.Dir(string(ctx.Configuration.ServerCertificate)))
-			log.Printf("Set $SSL_CERT_DIR to \"%s\"\n", os.Getenv("SSL_CERT_DIR"))
-			caCertPool := x509.NewCertPool()
-			caCertPool.AppendCertsFromPEM(cert)
-			conf = &tls.Config{
-				RootCAs: caCertPool,
-			}
-
-			if len(cert) > 0 {
-				log.Println("Creating TLS socket")
-				conn, err = tls.Dial(
-					"tcp",
-					fmt.Sprintf("%s:%d", host, port),
-					conf,
-				)
-				if err != nil {
-					return err
-				}
-			}
-		}
-	} else {
-		log.Println("Creating TCP socket")
-		conn, err = net.Dial(
-			"tcp",
-			fmt.Sprintf("%s:%d", host, port),
-		)
-	}
-	if err != nil {
-		log.Println("Failed to create socket", err)
-		return err
-	}
-
-	ourMacAddr, err := netUtils.ConnectedMacAddr(conn)
-	if err != nil {
-		return err
-	} else {
-		log.Println("Our MAC addr:", ourMacAddr)
-	}
-
-	if err != nil {
-		log.Fatal("Failed to connect to the server")
-		return err
-	}
-
-	device := Device{
-		name:          name,
-		fileMetadata:  fileMetadata,
-		socket:        conn,
-		encrypt_proxy: !notEncrypted,
-		metadata:      nil,
-		caps:          caps,
-		macAddr:       ourMacAddr,
-		rdfmCtx:       ctx,
-	}
-
-	err = device.connect()
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	err = device.startClient()
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	log.Println("Daemon exited")
-	return nil
 }

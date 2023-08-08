@@ -4,6 +4,7 @@ import errno
 import sys
 import os
 import ssl
+import time
 import requests
 from typing import Optional
 from threading import Thread
@@ -68,7 +69,54 @@ def user_cmd_to_request(user_input: str) -> Optional[Request]:
         return None
 
 
-def recv_loop(client: User) -> None:
+def communication_loop(client: User, args) -> None:
+    """Send and receive packages to the server
+
+    Args:
+        client: Client connected to the server
+        args: Client program args
+    """
+
+    while True:
+        if send(client, args):
+            recv(client)
+
+
+def send(client: User, args) -> bool:
+    """Send messages to the server
+
+    Args:
+        client: Client connected to the server
+        args: Client program args
+    Returns: false request should be sent, true otherwise
+    """
+    cmd: str = input(f'\r{client.name} > ')
+    while cmd is None:
+        time.sleep(1)
+    assert cmd is not None
+    to_send: Optional[Request] = user_cmd_to_request(cmd)
+    if not to_send:
+        return False
+
+    assert to_send is not None
+    client.send(to_send)
+    if isinstance(to_send, UploadDeviceRequest):
+        print("Uploading file...")
+        res = send_upload_request(to_send, args)
+        if res:
+            print(res)
+        return False
+    if isinstance(to_send, DownloadDeviceRequest):
+        print("Downloading file...")
+        res_status_code = send_download_request(to_send, args)
+        if res_status_code:
+            print(res_status_code)
+        return False
+
+    return True
+
+
+def recv(client: User) -> None:
     """Receive packets from the server
 
     Args:
@@ -77,26 +125,19 @@ def recv_loop(client: User) -> None:
     Throws:
         IOError: There is no upcoming data
     """
-    while True:
-        try:
-            # loop over all received messages
-            while True:
-                request: Optional[Request] = client.receive()
-                if request is None:
-                    # server closed
-                    print('Connection closed by the server')
-                    os._exit(1)
-                assert request is not None
-                client.prompt(str(request.model_dump_json()))
+    try:
+        request: Optional[Request] = client.receive()
+        if request:
+            print(request.model_dump_json())
 
-        except IOError as e:
-            if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
-                print('Reading error: {}'.format(str(e)))
-                sys.exit()
-
-        except Exception as e:
-            print('Reading error: ', e)
+    except IOError as e:
+        if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
+            print('Reading error: {}'.format(str(e)))
             sys.exit()
+
+    except Exception as e:
+        print('Reading error: ', e)
+        sys.exit()
 
 
 def send_upload_request(request: UploadDeviceRequest,
@@ -153,33 +194,6 @@ def send_download_request(request: DownloadDeviceRequest,
     return res.status_code
 
 
-def send_loop(client: User, args) -> None:
-    """Send messages to the server
-
-    Args:
-        client: Client connected to the server
-        args: Client program args
-    """
-    while True:
-        cmd: str = input(f'{client.name} > ')
-
-        if cmd:
-            to_send: Optional[Request] = user_cmd_to_request(cmd)
-            if to_send:
-                assert to_send is not None
-                client.send(to_send)
-                if isinstance(to_send, UploadDeviceRequest):
-                    print("Uploading file...")
-                    res = send_upload_request(to_send, args)
-                    if res:
-                        print(res)
-                if isinstance(to_send, DownloadDeviceRequest):
-                    print("Downloading file...")
-                    res_status_code = send_download_request(to_send, args)
-                    if res_status_code:
-                        print(res_status_code)
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='rdfm-mgmt-shell server instance.',
@@ -222,7 +236,10 @@ if __name__ == '__main__':
         name=args.name
     ))
     client.send(reg_req)
+    request: Optional[Request] = client.receive()
+    if not request:
+        print("Device not connected")
+        exit(1)
+    print(request)
 
-    t = Thread(target=recv_loop, args=(client,))
-    t.start()
-    send_loop(client, args)
+    communication_loop(client, args)

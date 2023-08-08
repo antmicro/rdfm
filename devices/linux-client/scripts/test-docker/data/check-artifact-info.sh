@@ -35,11 +35,13 @@ cp -v ./scripts/test-docker/data/var_lib_rdfm.conf /var/lib/rdfm/rdfm.conf
 # Check if the output is sane
 if ! rdfm show-artifact | grep $ARTIFACT_DUMMY; then
 	echo "Artifact name is invalid!"
+	echo "Expected $ARTIFACT_DUMMY, got $(rdfm show-artifact)"
 	exit 1
 fi
 
 if ! rdfm show-provides | grep $PROVIDES_DUMMY; then
 	echo "Provides are invalid!"
+	echo "Expected $PROVIDES_DUMMY, got $(rdfm show-provides)"
 	exit 1
 fi
 

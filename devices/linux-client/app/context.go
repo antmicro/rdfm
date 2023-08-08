@@ -1,14 +1,16 @@
 package app
 
 import (
+	"encoding/json"
 	"errors"
 	"path"
 
+	conf "github.com/antmicro/rdfm/conf"
 	"github.com/antmicro/rdfm/delta"
 	"github.com/antmicro/rdfm/helpers"
 	"github.com/mendersoftware/mender/app"
 	"github.com/mendersoftware/mender/client"
-	"github.com/mendersoftware/mender/conf"
+	mconf "github.com/mendersoftware/mender/conf"
 	"github.com/mendersoftware/mender/datastore"
 	"github.com/mendersoftware/mender/device"
 	"github.com/mendersoftware/mender/installer"
@@ -18,13 +20,33 @@ import (
 )
 
 type RDFM struct {
-	Configuration *conf.MenderConfig
+	RdfmConfig    *conf.RDFMConfig
+	menderConfig  *mconf.MenderConfig
 	store         *store.DBStore
 	deviceManager *device.DeviceManager
 }
 
+// overlay mender config with shared rdfm config fields and return it
+func OverlayMenderConfig(rdfmConfig *conf.RDFMConfig, menderConfig *mconf.MenderConfig) (*mconf.MenderConfig, error) {
+	fromRdfm, err := json.Marshal(rdfmConfig.ToMenderConfig())
+	if err != nil {
+		log.Println("Error casting and serializing RDFMConf: ", err)
+		return nil, err
+	}
+	if err := json.Unmarshal(fromRdfm, &menderConfig); err != nil {
+		log.Println("Error overlaying MenderConf with RDFMConf: ", err)
+		return nil, err
+	}
+	return menderConfig, nil
+}
+
 func NewRdfmContext() (*RDFM, error) {
-	config, err := loadConfig()
+	rdfmConfig, menderConfig, err := loadConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	menderConfig, err = OverlayMenderConfig(rdfmConfig, menderConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -34,40 +56,31 @@ func NewRdfmContext() (*RDFM, error) {
 		return nil, err
 	}
 
-	deviceManager, err := createDeviceManager(config, store)
+	deviceManager, err := createDeviceManager(menderConfig, store)
 	if err != nil {
 		return nil, err
 	}
 
 	ctx := RDFM{
-		Configuration: config,
-		store:         store,
-		deviceManager: deviceManager,
+		rdfmConfig,
+		menderConfig,
+		store,
+		deviceManager,
 	}
 	return &ctx, nil
 }
 
-func loadConfig() (*conf.MenderConfig, error) {
-	config, err := conf.LoadConfig(RdfmDefaultConfigPath, RdfmFallbackConfigPath)
+func loadConfig() (*conf.RDFMConfig, *mconf.MenderConfig, error) {
+	RDFMConfig, MenderConfig, err := conf.LoadConfig(RdfmDefaultConfigPath, RdfmOverlayConfigPath)
 	if err != nil {
-		return nil, errors.New("failed to load configuration from file")
+		return nil, nil, errors.New("failed to load configuration from file")
+	}
+	if MenderConfig.DeviceTypeFile == "" {
+		deviceTypeFile := path.Join(RdfmDataDirectory, "device_type")
+		RDFMConfig.DeviceTypeFile = deviceTypeFile
 	}
 
-	if config.MenderConfigFromFile.DeviceTypeFile != "" {
-		config.DeviceTypeFile = config.MenderConfigFromFile.DeviceTypeFile
-	} else {
-		deviceTypeFile := path.Join(RdfmDataDirectory, "device_type")
-		config.MenderConfigFromFile.DeviceTypeFile = deviceTypeFile
-		config.DeviceTypeFile = deviceTypeFile
-	}
-	if config.UpdatePollIntervalSeconds == 0 {
-		log.Debug("Setting UpdatePollIntervalSeconds to 15min")
-		config.UpdatePollIntervalSeconds = 15 * 60
-	} else {
-		log.Debugf("UpdatePollIntervalSeconds set to %ds\n",
-			config.UpdatePollIntervalSeconds)
-	}
-	return config, nil
+	return RDFMConfig, MenderConfig, nil
 }
 
 // Checks whether the database is initialized by looking at the stored provides
@@ -142,7 +155,7 @@ func loadDbStore() (*store.DBStore, error) {
 	return reinitializeDbStore(store)
 }
 
-func createDeviceManager(config *conf.MenderConfig, store *store.DBStore) (*device.DeviceManager, error) {
+func createDeviceManager(config *mconf.MenderConfig, store *store.DBStore) (*device.DeviceManager, error) {
 	bootEnv := installer.NewEnvironment(new(system.OsCalls), config.BootUtilitiesSetActivePart, config.BootUtilitiesGetNextActivePart)
 
 	dualRootFsDevice := installer.NewDualRootfsDevice(bootEnv, new(system.OsCalls), config.GetDeviceConfig())
@@ -159,21 +172,33 @@ func createDeviceManager(config *conf.MenderConfig, store *store.DBStore) (*devi
 // This can be either an artifact on the local filesystem, or an HTTP URL
 func (ctx *RDFM) InstallArtifact(path string) error {
 	clientConfig := client.Config{}
-	stateExec := device.NewStateScriptExecutor(ctx.Configuration)
+	menderConfig, err := OverlayMenderConfig(ctx.RdfmConfig, ctx.menderConfig)
+	if err != nil {
+		return err
+	}
+	stateExec := device.NewStateScriptExecutor(menderConfig)
 
 	return app.DoStandaloneInstall(ctx.deviceManager, path, clientConfig, stateExec, false)
 }
 
 // Attempt to commit the currently installed update
 func (ctx *RDFM) CommitCurrentArtifact() error {
-	stateExec := device.NewStateScriptExecutor(ctx.Configuration)
+	menderConfig, err := OverlayMenderConfig(ctx.RdfmConfig, ctx.menderConfig)
+	if err != nil {
+		return err
+	}
+	stateExec := device.NewStateScriptExecutor(menderConfig)
 
 	return app.DoStandaloneCommit(ctx.deviceManager, stateExec)
 }
 
 // Attempt to rollback the currently installed update
 func (ctx *RDFM) RollbackCurrentArtifact() error {
-	stateExec := device.NewStateScriptExecutor(ctx.Configuration)
+	menderConfig, err := OverlayMenderConfig(ctx.RdfmConfig, ctx.menderConfig)
+	if err != nil {
+		return err
+	}
+	stateExec := device.NewStateScriptExecutor(menderConfig)
 
 	return app.DoStandaloneRollback(ctx.deviceManager, stateExec)
 }

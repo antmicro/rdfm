@@ -78,7 +78,7 @@ func makeCommands() []*libcli.Command {
 						  like proxy connection, file transfer,
 						  metadata collection, and automatic
 						  updates installation`,
-			Action: daemon.Run,
+			Action: daemon.Daemonize,
 			Flags: []libcli.Flag{
 				&libcli.StringFlag{
 					Name:  "host",
@@ -163,53 +163,44 @@ func dispatchArtifactCommand(c *libcli.Context) error {
 
 	switch c.Command.Name {
 	case "install":
-		{
-			if c.NArg() != 1 {
-				return fmt.Errorf(cliToolMissingArgumentFormat, "path to artifact")
-			}
-			return ctx.InstallArtifact(c.Args().Get(0))
+		if c.NArg() != 1 {
+			return fmt.Errorf(cliToolMissingArgumentFormat, "path to artifact")
 		}
+		return ctx.InstallArtifact(c.Args().Get(0))
+
 	case "commit":
-		{
-			return ctx.CommitCurrentArtifact()
-		}
+		return ctx.CommitCurrentArtifact()
+
 	case "rollback":
-		{
-			return ctx.RollbackCurrentArtifact()
-		}
+		return ctx.RollbackCurrentArtifact()
+
 	case "show-artifact":
-		{
-			name, err := ctx.GetCurrentArtifactName()
-			if err != nil {
-				return err
-			}
-
-			fmt.Println(name)
-			return nil
+		name, err := ctx.GetCurrentArtifactName()
+		if err != nil {
+			return err
 		}
+		fmt.Println(name)
+		return nil
+
 	case "show-device":
-		{
-			device, err := ctx.GetCurrentDeviceType()
-			if err != nil {
-				return err
-			}
-
-			fmt.Println(device)
-			return nil
+		device, err := ctx.GetCurrentDeviceType()
+		if err != nil {
+			return err
 		}
+		fmt.Println(device)
+		return nil
+
 	case "show-provides":
-		{
-			provides, err := ctx.GetCurrentArtifactProvides()
-			if err != nil {
-				return err
-			}
-
-			for k, v := range provides {
-				fmt.Printf("%s=%s\n", k, v)
-			}
-
-			return nil
+		provides, err := ctx.GetCurrentArtifactProvides()
+		if err != nil {
+			return err
 		}
+		for k, v := range provides {
+			fmt.Printf("%s=%s\n", k, v)
+		}
+		return nil
+
+	default:
+		panic("should never be reached")
 	}
-	panic("should never be reached")
 }

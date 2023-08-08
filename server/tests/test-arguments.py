@@ -5,10 +5,10 @@ def default_arguments():
     pexpect.run("server/tests/certgen.sh")
     time.sleep(3)
     
-    child_server = pexpect.spawn('python3 -m rdfm_mgmt_server')
+    child_server = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_server 2>&1 | tee arg-def-server.log"')
     child_server.expect('Listening for connections on 127.0.0.1:1234...')
 
-    child_user = pexpect.spawn('python3 -m rdfm_mgmt_client u')
+    child_user = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_client u 2>&1 | tee arg-def-manager.log""')
     child_user.expect('u > ')
 
     child_server.close()
@@ -17,13 +17,13 @@ def default_arguments():
     print('Default arguments test passed!')
 
 def with_arguments(hostname, port):    
-    child_server = pexpect.spawn(f'python3 -m rdfm_mgmt_server -hostname {hostname} -p {port}')
+    child_server = pexpect.spawn(f'bash -c "python3 -m rdfm_mgmt_server -hostname {hostname} -p {port} 2>&1 | tee arg-server.log"')
     child_server.expect(f'Listening for connections on {hostname}:{port}...')
 
-    child_user = pexpect.spawn('python3 -m rdfm_mgmt_client u')
+    child_user = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_client u 2>&1 | tee arg-manager-failing.log""')
     child_user.expect(pexpect.EOF)
 
-    child_user = pexpect.spawn(f'python3 -m rdfm_mgmt_client u -hostname {hostname} -p {port}')
+    child_user = pexpect.spawn(f'bash -c "python3 -m rdfm_mgmt_client u -hostname {hostname} -p {port} 2>&1 | tee arg-manager-passing.log"')
     child_user.expect('u > ')
 
     child_server.close()

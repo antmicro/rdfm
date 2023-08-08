@@ -61,8 +61,8 @@ EOF
 
 	# Patch the configuration for rootfs partitions to pass in the loop devices
 	# # A/B are /dev/dummydevA and /dev/dummydevB respectively
-	sed -i "s;/dev/dummydevA;$PART_A;" /var/lib/rdfm/rdfm.conf
-	sed -i "s;/dev/dummydevB;$PART_B;" /var/lib/rdfm/rdfm.conf
+	sed -i "s;/dev/dummydevA;$PART_A;" /etc/rdfm/rdfm.conf
+	sed -i "s;/dev/dummydevB;$PART_B;" /etc/rdfm/rdfm.conf
 }
 
 # This tests the dependency tracking for delta updates

@@ -26,7 +26,7 @@ func mkfifo() string {
 		err := cmd.Run()
 		if err != nil {
 			log.Println("mkfifo finished with error:", err)
-			// try again - we're in a loop waiting for success!
+			// try again when collision detected
 		} else {
 			log.Println("Created fifo", fifo)
 			break
