@@ -18,7 +18,7 @@ import (
 )
 
 type RDFM struct {
-	configuration *conf.MenderConfig
+	Configuration *conf.MenderConfig
 	store         *store.DBStore
 	deviceManager *device.DeviceManager
 }
@@ -40,7 +40,7 @@ func NewRdfmContext() (*RDFM, error) {
 	}
 
 	ctx := RDFM{
-		configuration: config,
+		Configuration: config,
 		store:         store,
 		deviceManager: deviceManager,
 	}
@@ -59,6 +59,13 @@ func loadConfig() (*conf.MenderConfig, error) {
 		deviceTypeFile := path.Join(RdfmDataDirectory, "device_type")
 		config.MenderConfigFromFile.DeviceTypeFile = deviceTypeFile
 		config.DeviceTypeFile = deviceTypeFile
+	}
+	if config.UpdatePollIntervalSeconds == 0 {
+		log.Debug("Setting UpdatePollIntervalSeconds to 15min")
+		config.UpdatePollIntervalSeconds = 15 * 60
+	} else {
+		log.Debugf("UpdatePollIntervalSeconds set to %ds\n",
+			config.UpdatePollIntervalSeconds)
 	}
 	return config, nil
 }
@@ -152,21 +159,21 @@ func createDeviceManager(config *conf.MenderConfig, store *store.DBStore) (*devi
 // This can be either an artifact on the local filesystem, or an HTTP URL
 func (ctx *RDFM) InstallArtifact(path string) error {
 	clientConfig := client.Config{}
-	stateExec := device.NewStateScriptExecutor(ctx.configuration)
+	stateExec := device.NewStateScriptExecutor(ctx.Configuration)
 
 	return app.DoStandaloneInstall(ctx.deviceManager, path, clientConfig, stateExec, false)
 }
 
 // Attempt to commit the currently installed update
 func (ctx *RDFM) CommitCurrentArtifact() error {
-	stateExec := device.NewStateScriptExecutor(ctx.configuration)
+	stateExec := device.NewStateScriptExecutor(ctx.Configuration)
 
 	return app.DoStandaloneCommit(ctx.deviceManager, stateExec)
 }
 
 // Attempt to rollback the currently installed update
 func (ctx *RDFM) RollbackCurrentArtifact() error {
-	stateExec := device.NewStateScriptExecutor(ctx.configuration)
+	stateExec := device.NewStateScriptExecutor(ctx.Configuration)
 
 	return app.DoStandaloneRollback(ctx.deviceManager, stateExec)
 }
