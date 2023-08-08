@@ -416,15 +416,20 @@ def check_for_update():
     TODO: This will be rewritten once we have the infrastructure
     for assigning artifacts to devices.
 
-    :status 200: no updates are available
-    :status 204: an update is available
+    :status 200: an update is available
+    :status 204: no updates are available
     :status 400: device metadata is missing device type and/or software version
     :status 401: device did not provide authorization data,
                  or the authorization has expired
 
-    :>jsonarr string rdfm.software.version: required: running software version
-    :>jsonarr string rdfm.hardware.devtype: required: device type
-    :>jsonarr string `...`: other device metadata
+    :<jsonarr string rdfm.software.version: required: running software version
+    :<jsonarr string rdfm.hardware.devtype: required: device type
+    :<jsonarr string `...`: other device metadata
+
+    :>json integer id: package identifier
+    :>json string created: creation date
+    :>json string sha256: sha256 of the uploaded package
+    :>json string uri: generated URI for downloading the package
     """
 
     device_meta = request.json
