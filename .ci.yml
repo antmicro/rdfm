@@ -1,0 +1,248 @@
+image: $CI_REGISTRY_IMAGE:rdfm-ci-base
+
+variables:
+  CARGO_HOME: $CI_PROJECT_DIR/.cargo
+  PIP_CACHE_DIR: $CI_PROJECT_DIR/.cache/pip
+
+.build:
+  before_script:
+    - python -V
+    - apt-get -y install make netcat openssl
+    - . $HOME/.cargo/env
+    - cd server && poetry build && poetry install && python -m build && pip3 install -e . && cd ..
+    - cd manager && poetry build && poetry install && python -m build && pip3 install -e . && cd ..
+    - export JWT_SECRET="testsecret123123123"
+
+stages:
+  - docs-build
+  - docs-deploy
+  - build
+  - static-checks
+  - local-tests
+
+build:
+  extends: .build
+  stage: build
+  script:
+    - echo "Build finished"
+
+python-check:
+  extends: .build
+  stage: static-checks
+  script:
+    - cd server && poetry run test && cd ..
+    - cd manager && poetry run test && cd ..
+  only:
+    refs:
+      - merge_requests
+      - main
+
+test-arguments:
+  extends: .build
+  stage: local-tests
+  script:
+    - cd server
+    - python3 tests/test-arguments.py
+  only:
+    refs:
+      - merge_requests
+      - main
+
+test-list-devices:
+  extends: .build
+  stage: local-tests
+  script:
+    - cd server
+    - python3 tests/test-list-devices.py
+  when: manual
+  only:
+    refs:
+      - merge_requests
+      - main
+
+test-proxy:
+  extends: .build
+  stage: local-tests
+  script:
+    - cd server
+    - |
+      echo "shell_connect = true" > 'capabilities.toml'
+      echo "file_transfer = false" >> 'capabilities.toml'
+      echo "exec_cmds = false" >> 'capabilities.toml'
+    - python3 tests/test-proxy.py
+  when: manual
+  only:
+    refs:
+      - merge_requests
+      - main
+
+test-metadata:
+  extends: .build
+  stage: local-tests
+  script:
+    - cd server
+    - python3 tests/test-metadata.py
+  when: manual
+  only:
+    refs:
+      - merge_requests
+      - main
+
+test-crash-client-input:
+  extends: .build
+  stage: local-tests
+  script:
+    - apt-get install telnet
+    - cd server
+    - python3 tests/test-crash-client-input.py
+  when: manual
+  only:
+    refs:
+      - merge_requests
+      - main
+
+test-file-transfer:
+  extends: .build
+  stage: local-tests
+  script:
+    - cd server
+    - echo "file_transfer = true" > 'capabilities.toml'
+    - python3 tests/test-file-transfer.py
+  when: manual
+  only:
+    refs:
+      - merge_requests
+      - main
+
+test-package-api:
+  extends: .build
+  stage: local-tests
+  script:
+    - cd server
+    - python3 tests/test-packages.py
+  only:
+    refs:
+      - merge_requests
+      - main
+
+# ===== rdfm-client ===== #
+
+.rdfm-client:
+  before_script:
+    - export PATH=$HOME/go/bin/:$PATH
+    - cd devices/linux-client
+
+build-rdfm-client:
+  extends: .rdfm-client
+  stage: build
+  script:
+    - make
+
+test-rdfm-client:
+  extends: .rdfm-client
+  stage: local-tests
+  script:
+    # Build and install rdfm-artifact, which is required for the tests
+    - cd ../../tools/rdfm-artifact && make && make install && cd ../../devices/linux-client
+    - make test
+  only:
+    refs:
+      - merge_requests
+      - main
+
+test-rdfm-client-docker:
+  extends: .rdfm-client
+  stage: local-tests
+  script:
+    # Build and install rdfm-artifact, which is required for the tests
+    - cd ../../tools/rdfm-artifact && make && make install && cd ../../devices/linux-client
+    # The tests are running in a Docker container, install and set up
+    # the Docker daemon
+    - apt update && apt -qq -y --no-install-recommends install docker.io
+    - ../../common/docker/start-docker.sh
+    # HACK: For CI runs, we have to replace the -it flag in docker run
+    #       as this is not a real terminal.
+    # HACK: We also comment out git invocations, as only a subfolder is mounted
+    #       in the container, which would cause that call to fail. This is fine,
+    #       as the invocation is only required when container UID != source UID
+    #       (i.e, not in CI runs, where we run everything as root).
+    - sed -i "s/\-it//g" ./scripts/test-docker/test-artifact-info.sh
+    - sed -i "s/git/#git/g" ./scripts/test-docker/data/check-artifact-info.sh
+    - sed -i "s/\-it//g" ./scripts/test-docker/test-deltas.sh
+    - sed -i "s/git/#git/g" ./scripts/test-docker/data/check-delta-patching.sh
+    # Run rdfm-client Docker tests
+    - ./scripts/test-docker/test-artifact-info.sh
+    - cd scripts/test-docker/ && ./make-delta-samples.sh && cd ../../
+    - ./scripts/test-docker/test-deltas.sh
+  only:
+    refs:
+      - merge_requests
+      - main
+
+# ===== rdfm-artifact ===== #
+
+.rdfm-artifact:
+  before_script:
+    - export PATH=$HOME/go/bin/:$PATH
+    - cd tools/rdfm-artifact
+
+build-rdfm-artifact:
+  extends: .rdfm-artifact
+  stage: build
+  script:
+    - make
+
+test-rdfm-artifact:
+  extends: .rdfm-artifact
+  stage: local-tests
+  script:
+    - make test
+  only:
+    refs:
+      - merge_requests
+      - main
+
+# ===== documentation ===== #
+
+docs-build:
+  stage: docs-build
+  before_script:
+    # Disable venvs and just install everything globally
+    # The server module must be accessible by Sphinx to
+    # properly autogenerate API documentation
+    - poetry config virtualenvs.create false
+    # Install doc building requirements
+    - pip3 install -r documentation/requirements.txt
+    - pip3 install sphinxcontrib-httpdomain
+    # Build and install the server
+    - cd server/ && poetry build --verbose && poetry install --verbose && pip3 install --verbose -e . && cd ../
+    - cd documentation/
+  script:
+    - make html latexpdf
+    - cp build/latex/*.pdf build/html/
+    # Make sure the docs archive lands in the root of the repository
+    - tar cf ../$CI_DOCS_ARCHIVE -C build/html/ .
+  only:
+    refs:
+      - merge_requests
+      - main
+  artifacts:
+    paths:
+      - documentation/build
+      - $CI_DOCS_ARCHIVE
+
+docs-deploy:
+  variables:
+    GIT_STRATEGY: none
+  dependencies:
+    - docs-build
+  stage: docs-deploy
+  tags: ["docs"]
+  script: echo 'Deploying docs'
+  only:
+    refs:
+      - merge_requests
+      - main
+  artifacts:
+    paths:
+      - $CI_DOCS_ARCHIVE
