@@ -510,7 +510,7 @@ develop = false
 
 [package.source]
 type = "directory"
-url = "../communication"
+url = "../common/communication"
 
 [[package]]
 name = "referencing"
@@ -865,4 +865,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "2de49b8616f437d6815290f7f0a65618ab2b9a789107863b654c8d97ee894d9e"
+content-hash = "591941f32e0e37a9f1085e82e8871afe318bb1384575b099b8716b128226ec44"

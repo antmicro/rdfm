@@ -381,7 +381,7 @@ develop = false
 
 [package.source]
 type = "directory"
-url = "../communication"
+url = "../common/communication"
 
 [[package]]
 name = "referencing"
@@ -603,4 +603,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "9a1c5b49a3ff586eeff5e35c8d97f70764c77d2b14fbcf7a70615b6893af9bab"
+content-hash = "2ff0e600c3753015634a4f79004310351e40e055f80f266b3a1bc95839ea1865"
