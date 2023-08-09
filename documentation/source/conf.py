@@ -32,8 +32,8 @@ sys.path.insert(0, os.path.abspath('../server/src/'))
 # -- General configuration -----------------------------------------------------
 
 # General information about the project.
-project = u'RDFM Management Shell Docs'
-basic_filename = u'rdfm-mgmt-shell-docs'
+project = u'RDFM Documentation'
+basic_filename = u'rdfm-docs'
 authors = u'Antmicro'
 copyright = f'{authors}, {datetime.now().year}'
 

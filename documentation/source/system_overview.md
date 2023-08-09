@@ -1,42 +1,30 @@
-# System overview
+# System Architecture
 
-System enables to execute parts of the architecture on distributed systems
-and communicate on various devices due to standarised communication protocol.
+The reference architecture of an RDFM system consists of:
 
-Connection can be encrypted with TLS by using certificates on server
-and clients.
+- `RDFM Management Server` - handles device connections, packages, deployment, remote device management
+- `Devices` - devices connect to a central management server and utilize the exposed `REST API` and device-server RDFM protocol for providing remote management functionality
+- `Users` - individual users that are authenticated and allowed read-only/read-write access to resources exposed by the server
 
-## Supported devices
+The system architecture can be visualized as follows:
 
-* devices running Linux
+:::{figure-md} summary
+![Architecture summary](images/summary.png)
 
-## System architecture
+Summary of the system architecture
+:::
 
-The system architecture consists of:
+## HTTP REST API
 
-``rdfm_mgmt_communication`` - Communication protocol used in comunication
-between server and client instances.
+For functionality not requiring a persistent connection, the server exposes an HTTP API. A complete list of available endpoints can be found
+in the [RDFM Server API Reference](api.rst) chapter. The clients use this API to perform update checks.
 
-``rdfm_mgmt_server`` - Used as a service provider for accessing (via TCP
-and HTTP) connected devices informations and estabilish proxy connection
-with available device services.
+## Device-server RDFM Protocol
 
-``rdfm_mgmt_client`` - Used as a shell user client for server
-communication (TCP-only)
+The devices also maintain a persistent connection to the RDFM Management Server by utilizing a custom JSON-based message protocol.
+This is used to securely expose additional management functionality without directly exposing device ports to the Internet.
 
-``rdfm_mgmt_device`` - Client for device (TCP-only communication)
-
-## Communication with server
-
-Communication with server is performed by JSON API.
-It is possible via TCP sockets (which `rdfm_mgmt_client` and
-`rdfm_mgmt_server` use) or via HTTP requests.
-
-Communication via TCP sockets uses the same API model but it's
-encoded to enable detection of message that is corrupted or split
-into multiple packets. \
-It is done by adding header containing length of utf-8 encoded
-JSON message - preview of the format:
+Each message sent using the RDFM protocol is structured as follows:
 
 ```text
 0        10                         10+h
@@ -44,22 +32,15 @@ JSON message - preview of the format:
 | HEADER  | utf-8 encoded JSON message |
 +---------+----------------------------+
 ```
-Header is a 10-bytes long number (``h`` on the graph) describing length
-of the utf-8 encoded JSON message.
 
-Requests and responses types are distinguished by ``'method'`` field
+The header is a 10-bytes UTF-8 encoded number representing the total length in bytes of the following message being sent.
 
-Example of request sent to server:
+The message is a UTF-8 encoded JSON object. Request and response messages are distinguished by the mandatory ``'method'`` field.
+
+An example request sent to the server may look like:
 
 ``{'method': 'register', 'client': {'group': 'USER', 'name': 'testuser'}}``
 
-Example of response sent by the server:
+A response from the server may look like:
 
 ``{'method': 'alert', 'alert': {'devices': ['d1', 'd2']}}``
-
-
-:::{figure-md} summary
-![Architecture summary](images/summary.png)
-
-Summary of the system architecture
-:::
