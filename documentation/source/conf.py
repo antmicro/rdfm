@@ -11,6 +11,8 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 from datetime import datetime
+import sys
+import os
 
 from antmicro_sphinx_utils.defaults import (
     numfig_format,
@@ -25,6 +27,7 @@ from antmicro_sphinx_utils.defaults import (
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('../server/src/'))
 
 # -- General configuration -----------------------------------------------------
 
@@ -46,6 +49,8 @@ numfig = True
 
 # If you need to add extensions just add to those lists
 extensions = default_extensions
+extensions.append('sphinxcontrib.autohttp.flask')
+extensions.append('sphinxcontrib.autohttp.flaskqref')
 myst_enable_extensions = default_myst_enable_extensions
 myst_fence_as_directive = default_myst_fence_as_directive
 
