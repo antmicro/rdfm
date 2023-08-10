@@ -1,17 +1,30 @@
 image: $CI_REGISTRY_IMAGE:rdfm-ci-base
 
 variables:
-  CARGO_HOME: $CI_PROJECT_DIR/.cargo
   PIP_CACHE_DIR: $CI_PROJECT_DIR/.cache/pip
 
 .build:
   before_script:
     - python -V
-    - apt-get -y install make netcat openssl
-    - . $HOME/.cargo/env
+    - apt update && apt-get -y install make netcat-openbsd openssl telnet
     - cd server && poetry build && poetry install && python -m build && pip3 install -e . && cd ..
     - cd manager && poetry build && poetry install && python -m build && pip3 install -e . && cd ..
+    - cd devices/linux-client && sudo make install && cd ../..
     - export JWT_SECRET="testsecret123123123"
+    - |
+      if [[ $(losetup --list | wc -l) == 0 ]]; then
+        dd if=/dev/zero of=blockfile bs=1M count=100
+        losetup /dev/loop0 blockfile
+        losetup /dev/loop1 blockfile
+      fi
+    - cp server/tests/etc_rdfm.conf /etc/rdfm/rdfm.conf
+    - cat /etc/rdfm/rdfm.conf
+    - mkdir /var/lib/rdfm && cp server/tests/etc_rdfm.conf /var/lib/rdfm/rdfm.conf
+    - |
+      echo "device_type=dummy" > /var/lib/rdfm/device_type
+    - chmod -R 777 /etc/rdfm
+    - chmod -R 777 /var/lib/rdfm
+
 
 stages:
   - docs-build
@@ -41,8 +54,7 @@ test-arguments:
   extends: .build
   stage: local-tests
   script:
-    - cd server
-    - python3 tests/test-arguments.py
+    - python3 server/tests/test-arguments.py
   only:
     refs:
       - merge_requests
@@ -52,9 +64,7 @@ test-list-devices:
   extends: .build
   stage: local-tests
   script:
-    - cd server
-    - python3 tests/test-list-devices.py
-  when: manual
+    - python3 server/tests/test-list-devices.py
   only:
     refs:
       - merge_requests
@@ -64,13 +74,11 @@ test-proxy:
   extends: .build
   stage: local-tests
   script:
-    - cd server
     - |
       echo "shell_connect = true" > 'capabilities.toml'
       echo "file_transfer = false" >> 'capabilities.toml'
       echo "exec_cmds = false" >> 'capabilities.toml'
-    - python3 tests/test-proxy.py
-  when: manual
+    - python3 server/tests/test-proxy.py
   only:
     refs:
       - merge_requests
@@ -80,9 +88,7 @@ test-metadata:
   extends: .build
   stage: local-tests
   script:
-    - cd server
-    - python3 tests/test-metadata.py
-  when: manual
+    - python3 server/tests/test-metadata.py
   only:
     refs:
       - merge_requests
@@ -92,10 +98,7 @@ test-crash-client-input:
   extends: .build
   stage: local-tests
   script:
-    - apt-get install telnet
-    - cd server
-    - python3 tests/test-crash-client-input.py
-  when: manual
+    - python3 server/tests/test-crash-client-input.py
   only:
     refs:
       - merge_requests
@@ -105,21 +108,24 @@ test-file-transfer:
   extends: .build
   stage: local-tests
   script:
-    - cd server
     - echo "file_transfer = true" > 'capabilities.toml'
-    - python3 tests/test-file-transfer.py
+    - python3 server/tests/test-file-transfer.py
   when: manual
   only:
     refs:
       - merge_requests
       - main
+  artifacts:
+    when: on_failure
+    paths:
+    - filetx-server.log
+    - filetx-device.log
 
 test-package-api:
   extends: .build
   stage: local-tests
   script:
-    - cd server
-    - python3 tests/test-packages.py
+    - python3 server/tests/test-packages.py
   only:
     refs:
       - merge_requests

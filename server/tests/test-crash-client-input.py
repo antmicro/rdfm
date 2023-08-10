@@ -1,7 +1,9 @@
 import pexpect
 import time
+import sys
 
 child_server = pexpect.spawn("python3 -m rdfm_mgmt_server -no_ssl")
+time.sleep(3)
 child_user = pexpect.spawn("python3 -m rdfm_mgmt_client u -no_ssl")
 
 # check invalid request warning

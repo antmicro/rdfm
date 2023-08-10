@@ -2,7 +2,7 @@ import pexpect
 import time
 
 def default_arguments():    
-    pexpect.run("tests/certgen.sh")
+    pexpect.run("server/tests/certgen.sh")
     time.sleep(3)
     
     child_server = pexpect.spawn('python3 -m rdfm_mgmt_server')
@@ -31,9 +31,9 @@ def with_arguments(hostname, port):
 
     print('Arguments test passed!')
 
-pexpect.run("tests/certgen.sh")
+pexpect.run("server/tests/certgen.sh")
 time.sleep(3)
 default_arguments()
-pexpect.run("tests/certgen.sh 0.0.0.0")
+pexpect.run("server/tests/certgen.sh 0.0.0.0")
 time.sleep(3)
 with_arguments('0.0.0.0', 3333)
