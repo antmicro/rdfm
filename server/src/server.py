@@ -380,3 +380,8 @@ class Server:
             # exceptions
             for notified_socket in exception_sockets:
                 self.disconnect_client(notified_socket)
+
+
+""" Global instance of the RDFM server
+"""
+instance: Optional[Server] = None
