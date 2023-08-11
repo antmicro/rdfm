@@ -112,7 +112,7 @@ def upload_device(device_name) -> str:
             'error': 'Device not found'
         })
     device = server.connected_devices[device_name]
-    res: Alert = new_file_transfer(device_name, device,
+    res: Alert = new_file_transfer(app.config['UPLOAD_FOLDER'], device,
                                    request.form['file_path'],
                                    server.file_transfers)
     if 'error' in res.alert:
@@ -160,9 +160,9 @@ def download_device(device_name) -> str | Response:
     if device_name not in server.connected_devices:
         return Alert(alert={  # type: ignore
             'error': 'Device not found'
-        })
+        }).model_dump_json()
     device = server.connected_devices[device_name]
-    res: Alert = new_file_transfer(device_name, device,
+    res: Alert = new_file_transfer(app.config['UPLOAD_FOLDER'], device,
                                    request.form['file_path'],
                                    server.file_transfers)
     if 'error' in res.alert:

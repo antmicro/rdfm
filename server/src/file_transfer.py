@@ -25,14 +25,12 @@ class FileTransfer():
         self.error: bool = False
         self.error_msg: str = ''
 
-    def __del__(self):
-        os.remove(self.server_filepath)
-
 
 def get_device_file_dir(upload_dir: str,
                         device_name: str) -> Optional[str]:
     """Checks where files that are uploaded/downloaded from device are
     in server transferred files cache directory.
+    If it doesn't exist, it is created along with parent dirs.
 
     Args:
         upload_dir: Server file cache directory
@@ -45,6 +43,8 @@ def get_device_file_dir(upload_dir: str,
     device_file_dir = os.path.join(
         os.path.abspath(upload_dir),
         device_name)
+    if not os.path.exists(device_file_dir):
+        os.makedirs(device_file_dir)
     return device_file_dir
 
 
@@ -93,8 +93,10 @@ def upload_file(request, filename: str, upload_dir: str,
     Returns:
         Alert if upload failed
     """
+    print('Uploading', request.files['file'])
     file = request.files['file']
     if file.filename == '':
+        print('Error: empty filename')
         return None
     if file:
         try:
@@ -102,11 +104,14 @@ def upload_file(request, filename: str, upload_dir: str,
             cache_device_dir = get_device_file_dir(
                                             upload_dir,
                                             transfers[filename].device.name)
+            print('Saving file in', cache_device_dir)
             if not cache_device_dir:
+                print(cache_device_dir, "doesn't exist")
                 return None
             assert cache_device_dir is not None
             device_file_dir = os.path.abspath(cache_device_dir)
             if not os.path.exists(device_file_dir):
+                print("Device dir in cache does't exist, creating it")
                 os.makedirs(device_file_dir)
                 print('Created directory', device_file_dir)
 
