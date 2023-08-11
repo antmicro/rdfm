@@ -9,6 +9,7 @@ from sqlalchemy.orm import relationship
 import datetime
 
 from models.base import Base
+import models.group
 
 class Device(Base):
     __tablename__ = "devices"
@@ -19,3 +20,4 @@ class Device(Base):
     mac_address: Mapped[str] = mapped_column(Text)
     capabilities: Mapped[str] = mapped_column(Text)
     device_metadata: Mapped[str] = mapped_column(Text)
+    group: Mapped[Optional[int]] = mapped_column(ForeignKey(models.group.Group.id, ondelete="RESTRICT"))
