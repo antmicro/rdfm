@@ -131,6 +131,17 @@ test-package-api:
       - merge_requests
       - main
 
+test-group-api:
+  extends: .build
+  stage: local-tests
+  script:
+    - cd server
+    - pytest tests/test-groups.py
+  only:
+    refs:
+      - merge_requests
+      - main
+
 # ===== rdfm-client ===== #
 
 .rdfm-client:

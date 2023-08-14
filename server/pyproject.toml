@@ -22,6 +22,9 @@ pyjwt = "^2.8.0"
 sqlalchemy = "^2.0.19"
 types-flask = "^1.1.6"
 types-pyjwt = "^1.7.1"
+pytest = "^7.4.0"
+pexpect = "^4.8.0"
+requests = "^2.31.0"
 
 [tool.poetry.group.test.dependencies]
 mypy = "^1.4.0"
