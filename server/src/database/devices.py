@@ -45,6 +45,15 @@ class DevicesDB:
             print("Device fetch failed!", repr(e))
             return None
 
+    def get_device_data(self, mac_address: str) -> Optional[models.device.Device]:
+        with Session(self.engine) as session:
+            stmt = (
+                select(models.device.Device)
+                    .where(models.device.Device.mac_address == mac_address)
+            )
+            return session.scalar(stmt)
+
+
     def update_timestamp(self, name: str, mac_address: str):
         """Update device's last healthcheck time in database
         """

@@ -16,6 +16,9 @@ META_SOFT_VER = "rdfm.software.version"
 """ Metadata key for the device type a package is compatible with """
 META_DEVICE_TYPE = "rdfm.hardware.devtype"
 
+""" Metadata key for the device's MAC address """
+META_MAC_ADDRESS = "rdfm.hardware.macaddr"
+
 class Package(models.base.Base):
     __tablename__ = "packages"
 
