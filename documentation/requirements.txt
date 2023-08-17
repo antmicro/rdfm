@@ -1,1 +1,2 @@
+sphinx==7.1.2 # required because Sphinx 7.2.0 causes the docs build to fail
 https://github.com/antmicro/antmicro-sphinx-utils/archive/main.zip
