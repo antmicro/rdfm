@@ -35,11 +35,18 @@ if __name__ == '__main__':
                         default=os.environ['JWT_SECRET'],
                         help="""JWT secret key, if not provided it will
                             be read from $JWT_SECRET env var""")
+    parser.add_argument('-test_mocks', action='store_true',
+                        dest='create_mocks',
+                        help="""insert mock data into the
+                            database for running tests""")
     args = parser.parse_args()
 
     server.instance = server.Server(args.hostname, args.port,
                                     args.encrypted, args.cert, args.key,
                                     args.database, args.jwt_secret)
+    if args.create_mocks:
+        server.instance.create_mock_data()
+
     t = Thread(target=server.instance.run, daemon=True)
     t.start()
 

@@ -51,6 +51,24 @@ class Server:
         # filename in server cache -> transfer object
         self.file_transfers: dict[str, FileTransfer] = {}
 
+    def create_mock_data(self):
+        """ Creates mock data
+
+        Fills the database with mock data to be used for testing purposes
+        This does not check if the data was previously inserted, it is
+        assumed that for tests a clean database is always used.
+        """
+        print("WARNING: Creating mock data in the database")
+        print("WARNING: Do not use in production!")
+
+        # Create dummy devices
+        self._devices_db.insert_device(
+            Device("foo", None, "00:00:00:00:00:00", {}))
+        self._devices_db.insert_device(
+            Device("bar", None, "11:11:11:11:11:11", {}))
+        self._devices_db.insert_device(
+            Device("baz", None, "22:22:22:22:22:22", {}))
+
     def can_device_register(self, register_request: RegisterRequest,
                             device_socket: socket.socket) -> bool:
         """Decides if device can register in our server
