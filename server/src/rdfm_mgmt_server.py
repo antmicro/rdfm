@@ -260,7 +260,37 @@ def fetch_packages():
     :>jsonarr string sha256: sha256 of the uploaded package
     :>jsonarr string driver: storage driver used to store the package
     :>jsonarr dict[str, str] metadata: package metadata (key/value pairs)
-    """
+
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        GET /api/v1/packages HTTP/1.1
+        Accept: application/json, text/javascript
+
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+
+        [
+            {
+                "created": "Thu, 17 Aug 2023 10:41:08 GMT",
+                "id": 1,
+                "metadata": {
+                    "rdfm.hardware.devtype": "dummydevice",
+                    "rdfm.software.version": "v10",
+                    "rdfm.storage.local.length": 4194304,
+                    "rdfm.storage.local.uuid": "6f7483ac-5cde-467f-acf7-39e4b397e313"
+                },
+                "sha256": "4e415854e6d0cf9855b2290c02638e8651537989b8862ff9c9cb91b8d956ea06"
+            }
+        ]
+    """  # noqa: E501
     try:
         packages = server._packages_db.fetch_all()
         return [
@@ -297,7 +327,40 @@ def upload_package():
                  or the authorization has expired
     :status 403: user was authorized, but did not have permission
                  to upload packages
-    """
+
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        POST /api/v1/packages HTTP/1.1
+        Accept: */*
+        Content-Length: 4194738
+        Content-Type: multipart/form-data; boundary=------------------------0f8f9642db3a513e
+
+        --------------------------0f8f9642db3a513e
+        Content-Disposition: form-data; name="rdfm.software.version"
+
+        v10
+        --------------------------0f8f9642db3a513e
+        Content-Disposition: form-data; name="rdfm.hardware.devtype"
+
+        dummydevice
+        --------------------------0f8f9642db3a513e
+        Content-Disposition: form-data; name="file"; filename="file.img"
+        Content-Type: application/octet-stream
+
+        <file contents>
+        --------------------------0f8f9642db3a513e--
+
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+    """  # noqa: E501
     try:
         # TODO: Allow changing this from the configuration
         driver_name = "local"
@@ -338,7 +401,7 @@ def upload_package():
         return {}, 500
 
 
-@app.route('/api/v1/packages/<identifier>', methods=['GET'])
+@app.route('/api/v1/packages/<int:identifier>', methods=['GET'])
 def fetch_package(identifier: int):
     """ Fetch information about a single package given by the specified ID
 
@@ -353,7 +416,35 @@ def fetch_package(identifier: int):
     :>json string sha256: sha256 of the uploaded package
     :>json string driver: storage driver used to store the package
     :>json dict[str, str] metadata: package metadata (simple key/value pairs)
-    """
+
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        GET /api/v1/packages/1 HTTP/1.1
+        Accept: application/json, text/javascript
+
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+
+        {
+            "created": "Thu, 17 Aug 2023 10:41:08 GMT",
+            "id": 1,
+            "metadata": {
+                "rdfm.hardware.devtype": "dummydevice",
+                "rdfm.software.version": "v10",
+                "rdfm.storage.local.length": 4194304,
+                "rdfm.storage.local.uuid": "6f7483ac-5cde-467f-acf7-39e4b397e313"
+            },
+            "sha256": "4e415854e6d0cf9855b2290c02638e8651537989b8862ff9c9cb91b8d956ea06"
+        }
+    """  # noqa: E501
     try:
         pkg = server._packages_db.fetch_one(identifier)
         if pkg is None:
@@ -372,7 +463,7 @@ def fetch_package(identifier: int):
         return {}, 500
 
 
-@app.route('/api/v1/packages/<identifier>', methods=['DELETE'])
+@app.route('/api/v1/packages/<int:identifier>', methods=['DELETE'])
 def delete_package(identifier: int):
     """ Delete the specified package
 
@@ -383,6 +474,19 @@ def delete_package(identifier: int):
     :status 403: user was authorized, but did not have permission
                  to delete packages
     :status 404: specified package does not exist
+
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        DELETE /api/v1/packages/1 HTTP/1.1
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
     """
     try:
         package = server._packages_db.fetch_one(identifier)
@@ -482,7 +586,7 @@ def check_for_update():
         return {}, 500
 
 
-@app.route('/local_storage/<name>')
+@app.route('/local_storage/<string:name>')
 def fetch_local_package(name: str):
     """ Endpoint for exposing local package storage.
 
