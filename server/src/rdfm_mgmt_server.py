@@ -619,8 +619,8 @@ if __name__ == '__main__':
     parser.add_argument('-key', type=str, default='./certs/SERVER.key',
                         help="""server cert key file""")
     parser.add_argument('-database', metavar='db', type=str,
-                        default='devices.db',
-                        help='filepath to store device database')
+                        default='sqlite:///devices.db',
+                        help='database connection string')
     parser.add_argument('-cache_dir', type=str, default='server_file_cache',
                         help='file transfer cache directory')
     parser.add_argument('-jwt_secret', type=str,

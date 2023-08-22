@@ -18,7 +18,7 @@ CONNECTION_TRIES = 2
 class Server:
     def __init__(self, hostname: str, port: int,
                  encrypted: bool, cert: str, cert_key: str,
-                 db_path: str, jwt_secret: str):
+                 db_conn: str, jwt_secret: str):
         self._hostname: str = hostname
         self._port: int = port
 
@@ -42,7 +42,7 @@ class Server:
         self.clients: dict[socket.socket, Client] = {}
         self.connected_devices: dict[str, Device] = {}
 
-        self.db = database.db.create(db_path)
+        self.db = database.db.create(db_conn)
         self._devices_db: DevicesDB = DevicesDB(self.db)
         self._packages_db: PackagesDB = PackagesDB(self.db)
 
