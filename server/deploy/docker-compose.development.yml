@@ -1,0 +1,20 @@
+services:
+  rdfm-server:
+    image: antmicro/rdfm-server:latest
+    restart: unless-stopped
+    environment:
+      - RDFM_JWT_SECRET=foobarbaz
+      - RDFM_DB_CONNSTRING=sqlite:////database/development.db
+      - RDFM_HOSTNAME=rdfm-server
+      - RDFM_API_PORT=5000
+      - RDFM_DEVICE_PORT=1234
+      - RDFM_DISABLE_ENCRYPTION=1
+    ports:
+      - "1234:1234"
+      - "5000:5000"
+    volumes:
+      - db:/database/
+
+volumes:
+  db:
+
