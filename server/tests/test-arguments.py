@@ -2,8 +2,9 @@ import pexpect
 import time
 
 def default_arguments():    
-    pexpect.run("server/tests/certgen.sh")
-    time.sleep(3)
+    print("pwd: ", pexpect.run("pwd")) # TODO: remove after testing scalerunner
+    print("Certs dir at:", pexpect.run("find / -type d -name 'certs'")) # TODO: remove after testing scalerunner
+    print("Certs:", pexpect.run("ls certs")) # TODO: remove after testing scalerunner
     
     child_server = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_server 2>&1 | tee arg-def-server.log"')
     child_server.expect('Listening for connections on 127.0.0.1:1234...')
@@ -31,7 +32,6 @@ def with_arguments(hostname, port):
 
     print('Arguments test passed!')
 
-pexpect.run("server/tests/certgen.sh")
 time.sleep(3)
 default_arguments()
 pexpect.run("server/tests/certgen.sh 0.0.0.0")

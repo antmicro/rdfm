@@ -1,13 +1,21 @@
 image: $CI_REGISTRY_IMAGE:rdfm-ci-base-bookworm
 
 variables:
+  SSL_CERT_DIR: "certs"
   PIP_CACHE_DIR: $CI_PROJECT_DIR/.cache/pip
   GOROOT: ""
+  SCALENODE_CPU: 2
+  SCALENODE_RAM: 2048
+  SCALENODE_DISK: 20
+
+.ace: &ace
+  tags: ['ace-x86_64']
 
 .build:
+  <<: *ace
   before_script:
     - python -V
-    - apt update && apt-get -y install make netcat-openbsd openssl telnet
+    - apt update && apt-get -y install make netcat-openbsd openssl telnet uuid-runtime xxd
     - cd server && poetry build && poetry install && python -m build && pip3 install -e . && cd ..
     - cd manager && poetry build && poetry install && python -m build && pip3 install -e . && cd ..
     - cd devices/linux-client && sudo make install && cd ../..
@@ -25,6 +33,7 @@ variables:
       echo "device_type=dummy" > /var/lib/rdfm/device_type
     - chmod -R 777 /etc/rdfm
     - chmod -R 777 /var/lib/rdfm
+    - server/tests/certgen.sh
 
 
 stages:
@@ -190,6 +199,7 @@ test-group-api:
 # ===== rdfm-client ===== #
 
 .rdfm-client:
+  <<: *ace
   before_script:
     - export PATH=$HOME/go/bin/:$PATH
     - cd devices/linux-client
@@ -220,7 +230,8 @@ test-rdfm-client-docker:
     - cd ../../tools/rdfm-artifact && make && make install && cd ../../devices/linux-client
     # The tests are running in a Docker container, install and set up
     # the Docker daemon
-    - apt update && apt -qq -y --no-install-recommends install docker.io
+    - apt update && apt -qq -y --no-install-recommends install docker.io cgroupfs-mount crun fuse-overlayfs pigz ca-certificates
+    - cgroupfs-mount
     - ../../common/docker/start-docker.sh
     # HACK: For CI runs, we have to replace the -it flag in docker run
     #       as this is not a real terminal.
@@ -244,6 +255,7 @@ test-rdfm-client-docker:
 # ===== rdfm-artifact ===== #
 
 .rdfm-artifact:
+  <<: *ace
   before_script:
     - export PATH=$HOME/go/bin/:$PATH
     - cd tools/rdfm-artifact
@@ -267,6 +279,7 @@ test-rdfm-artifact:
 # ===== documentation ===== #
 
 docs-build:
+  <<: *ace
   stage: docs-build
   before_script:
     # Disable venvs and just install everything globally

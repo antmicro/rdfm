@@ -4,18 +4,18 @@ import time
 import filecmp
 import requests
 
-pexpect.run("server/tests/certgen.sh")
 time.sleep(3)
 cache_dir = 'server_file_cache'
 
 child_server = pexpect.spawn(f'bash -c "python3 -m rdfm_mgmt_server -cache_dir {cache_dir} 2>&1 | tee filetx-server.log"')
-print('Cache directory:', os.system(f'find / -name "{cache_dir}" -type d'))
+#print('Cache directory:', os.system(f'find / -name "{cache_dir}" -type d'))
 child_server.expect_exact('Running on https://127.0.0.1:5000')
 
 child_user = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_client u 2>&1 | tee filetx-manager.log"')
 child_user.expect_exact("Connected as u")
 
 child_device = pexpect.spawn('bash -c "./devices/linux-client/rdfm daemonize --name d1 2>&1 | tee filetx-device.log"')
+child_device.expect_exact('Connected to the server')
 
 ### http api test
 # download

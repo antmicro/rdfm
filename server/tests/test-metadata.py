@@ -1,8 +1,6 @@
 import pexpect
 import time
 
-pexpect.run("server/tests/certgen.sh")
-time.sleep(3)
 
 child_server = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_server 2>&1 | tee metadata-server.log"')
 child_server.expect("Listening for connections on 127.0.0.1:1234...")

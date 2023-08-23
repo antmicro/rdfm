@@ -10,7 +10,8 @@ if [ "$(id -u)" != "0" ]; then
 	exit 1
 fi
 
-export DOCKER_HOST="unix:///var/run/docker-dind.sock"
+export DOCKER_DATA_ROOT="$CI_PROJECT_DIR/.docker_data_root"
+export DOCKER_HOST="unix:///var/run/docker.sock"
 export DOCKER_DRIVER=vfs
 export DOCKER_CONTEXT=dind
 export LOGDIR="$(pwd)/logs/"
@@ -20,16 +21,13 @@ ls /var/run/docker.sock || true
 
 # Start dockerd in the background
 dockerd \
-	-H $DOCKER_HOST \
-	-s $DOCKER_DRIVER >$LOGDIR/dockerd.log 2>&1 & disown
-
-# Sleep for a bit until the daemon starts
-sleep 10
-
-# Set up a custom context so we use the right socket (the daemon
-# we just started)
-docker context create "$DOCKER_CONTEXT" --docker host="$DOCKER_HOST"
-docker context use "$DOCKER_CONTEXT"
+	--data-root=$DOCKER_DATA_ROOT \
+	-s fuse-overlayfs \
+	--add-runtime=crun=/usr/bin/crun \
+	--default-runtime=crun \
+	--config-file="" > /dev/null 2>&1 &
+# Wait until daemon starts
+while ! test -S /var/run/docker.sock; do echo "Waiting for Docker..." && sleep 1; done; echo "Docker started"
 
 # For debugging, print some docker info
 docker info

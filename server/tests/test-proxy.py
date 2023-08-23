@@ -107,7 +107,6 @@ def two_proxies():
     print("Two proxies test passed!")
 
 not_encrypted_proxy()
-pexpect.run("server/tests/certgen.sh")
 time.sleep(5)
 encrypted_proxy()
 time.sleep(5)
