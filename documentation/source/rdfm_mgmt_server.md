@@ -43,3 +43,53 @@ poetry build && poetry install && poetry run python -m rdfm_mgmt_server -no_ssl
 
 This launches the RDFM Management Server with no encryption, listening on `localhost`/`127.0.0.1`. By default, the device communication socket is listening on port `1234`, while the HTTP API is exposed on port `5000`.
 
+## Setting up a Dockerized development environment
+
+The RDFM server can also be deployed using a Docker container.
+A `Dockerfile` is provided in the `server/deploy/` directory that builds a container suitable for running the server.
+To manually build the container image, run the following from the **RDFM repository root** folder:
+
+```bash
+docker build -f server/deploy/Dockerfile -t antmicro/rdfm-server:latest .
+```
+
+A simple `docker-compose` file that can be used to run the server is provided below, and in the `server/deploy/docker-compose.development.yml` file.
+
+```yaml
+services:
+  rdfm-server:
+    image: antmicro/rdfm-server:latest
+    restart: unless-stopped
+    environment:
+      - RDFM_JWT_SECRET=<REPLACE_WITH_CUSTOM_JWT_SECRET>
+      - RDFM_DB_CONNSTRING=sqlite:////database/development.db
+      - RDFM_HOSTNAME=rdfm-server
+      - RDFM_API_PORT=5000
+      - RDFM_DEVICE_PORT=1234
+      - RDFM_DISABLE_ENCRYPTION=1
+    ports:
+      - "1234:1234"
+      - "5000:5000"
+    volumes:
+      - db:/database/
+
+volumes:
+  db:
+```
+
+The server can then be started using the following command:
+
+```bash
+docker-compose -f server/deploy/docker-compose.development.yml up
+```
+
+Configuration of the RDFM server can be changed by using the following environment variables:
+
+- `RDFM_JWT_SECRET` - secret key used by the server when issuing JWT tokens, this value must be kept secret and not easily guessable (for example, a random hexadecimal string).
+- `RDFM_HOSTNAME` - hostname/IP address to listen on, when running the server in a container use the service name here (using above example, `rdfm-server`).
+- `RDFM_API_PORT` - HTTP API port
+- `RDFM_DEVICE_PORT` - device-server protocol port
+- `RDFM_DB_CONNSTRING` - database connection string, for examples please refer to: [SQLAlchemy - Backend-specific URLs](https://docs.sqlalchemy.org/en/20/core/engines.html#backend-specific-urls). Currently, only the SQLite and PostgreSQL engines were verified to work with RDFM (however: the PostgreSQL engine requires adding additional dependencies which are currently not part of the default server image, this may change in the future).
+- `RDFM_DISABLE_ENCRYPTION` - disables encryption of device-server protocol data and usage of HTTPS in the API routes
+- `RDFM_SERVER_CERT` - when using encryption, path to the server's certificate. The certificate can be stored on a Docker volume mounted to the container. For reference on generating the certificate/key pairs, see the `server/tests/certgen.sh` script.
+- `RDFM_SERVER_KEY` - when using encryption, path to the server's private key. Additionally, the above also applies here.
