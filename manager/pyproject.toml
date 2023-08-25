@@ -1,11 +1,12 @@
 [tool.poetry]
-name = "rdfm-mgmt-client"
+name = "rdfm-mgmt"
 version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
 packages = [
     { include = "rdfm_mgmt_client.py", from = "src" },
+    { include = "rdfm/**/*.py", from = "src" },
 ]
 
 [tool.poetry.dependencies]
@@ -15,6 +16,9 @@ rdfm_mgmt_communication = {path = "../common/communication"}
 pydantic = "^2.0.3"
 requests = "^2.31.0"
 types-requests = "^2.31.0.2"
+requests-toolbelt = "^1.0.0"
+progressbar2 = "^4.2.0"
+marshmallow = "^3.20.1"
 
 [tool.poetry.group.test.dependencies]
 mypy = "^1.4.0"
@@ -25,6 +29,7 @@ pycodestyle = "^2.10.0"
 [tool.poetry.group.types.dependencies]
 types-urllib3 = "^1.26.25.13"
 [tool.poetry.scripts]
+rdfm-mgmt = 'rdfm.manager:main'
 test = 'scripts:static_checks'
 
 [build-system]

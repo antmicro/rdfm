@@ -171,6 +171,26 @@ files = [
 referencing = ">=0.28.0"
 
 [[package]]
+name = "marshmallow"
+version = "3.20.1"
+description = "A lightweight library for converting complex datatypes to and from native Python datatypes."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "marshmallow-3.20.1-py3-none-any.whl", hash = "sha256:684939db93e80ad3561392f47be0230743131560a41c5110684c16e21ade0a5c"},
+    {file = "marshmallow-3.20.1.tar.gz", hash = "sha256:5d2371bbe42000f2b3fb5eaa065224df7d8f8597bc19a1bbfa5bfe7fba8da889"},
+]
+
+[package.dependencies]
+packaging = ">=17.0"
+
+[package.extras]
+dev = ["flake8 (==6.0.0)", "flake8-bugbear (==23.7.10)", "mypy (==1.4.1)", "pre-commit (>=2.4,<4.0)", "pytest", "pytz", "simplejson", "tox"]
+docs = ["alabaster (==0.7.13)", "autodocsumm (==0.2.11)", "sphinx (==7.0.1)", "sphinx-issues (==3.0.1)", "sphinx-version-warning (==1.1.2)"]
+lint = ["flake8 (==6.0.0)", "flake8-bugbear (==23.7.10)", "mypy (==1.4.1)", "pre-commit (>=2.4,<4.0)"]
+tests = ["pytest", "pytz", "simplejson"]
+
+[[package]]
 name = "mypy"
 version = "1.4.1"
 description = "Optional static typing for Python"
@@ -226,6 +246,35 @@ files = [
     {file = "mypy_extensions-1.0.0-py3-none-any.whl", hash = "sha256:4392f6c0eb8a5668a69e23d168ffa70f0be9ccfd32b5cc2d26a34ae5b844552d"},
     {file = "mypy_extensions-1.0.0.tar.gz", hash = "sha256:75dbf8955dc00442a438fc4d0666508a9a97b6bd41aa2f0ffe9d2f2725af0782"},
 ]
+
+[[package]]
+name = "packaging"
+version = "23.1"
+description = "Core utilities for Python packages"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "packaging-23.1-py3-none-any.whl", hash = "sha256:994793af429502c4ea2ebf6bf664629d07c1a9fe974af92966e4b8d2df7edc61"},
+    {file = "packaging-23.1.tar.gz", hash = "sha256:a392980d2b6cffa644431898be54b0045151319d1e7ec34f0cfed48767dd334f"},
+]
+
+[[package]]
+name = "progressbar2"
+version = "4.2.0"
+description = "A Python Progressbar library to provide visual (yet text based) progress to long running operations."
+optional = false
+python-versions = ">=3.7.0"
+files = [
+    {file = "progressbar2-4.2.0-py2.py3-none-any.whl", hash = "sha256:1a8e201211f99a85df55f720b3b6da7fb5c8cdef56792c4547205be2de5ea606"},
+    {file = "progressbar2-4.2.0.tar.gz", hash = "sha256:1393922fcb64598944ad457569fbeb4b3ac189ef50b5adb9cef3284e87e394ce"},
+]
+
+[package.dependencies]
+python-utils = ">=3.0.0"
+
+[package.extras]
+docs = ["sphinx (>=1.8.5)"]
+tests = ["flake8 (>=3.7.7)", "freezegun (>=0.3.11)", "pytest (>=4.6.9)", "pytest-cov (>=2.6.1)", "pytest-mypy", "sphinx (>=1.8.5)"]
 
 [[package]]
 name = "pycodestyle"
@@ -371,6 +420,25 @@ files = [
 typing-extensions = ">=4.6.0,<4.7.0 || >4.7.0"
 
 [[package]]
+name = "python-utils"
+version = "3.7.0"
+description = "Python Utils is a module with some convenient utilities not included with the standard Python install"
+optional = false
+python-versions = ">3.8.0"
+files = [
+    {file = "python-utils-3.7.0.tar.gz", hash = "sha256:1970468fff1c0adbd60b9a751e6a786223a9f0373c954571912d9cf4be49b552"},
+    {file = "python_utils-3.7.0-py2.py3-none-any.whl", hash = "sha256:e31c1187168c314c984932e99c2d3f973465443493869ae041dd9e2e18e998aa"},
+]
+
+[package.dependencies]
+typing-extensions = ">3.10.0.2"
+
+[package.extras]
+docs = ["mock", "python-utils", "sphinx"]
+loguru = ["loguru"]
+tests = ["flake8", "loguru", "pytest", "pytest-asyncio", "pytest-cov", "pytest-mypy", "sphinx", "types-setuptools"]
+
+[[package]]
 name = "rdfm-mgmt-communication"
 version = "0.1.0"
 description = ""
@@ -418,6 +486,20 @@ urllib3 = ">=1.21.1,<3"
 [package.extras]
 socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
+
+[[package]]
+name = "requests-toolbelt"
+version = "1.0.0"
+description = "A utility belt for advanced users of python-requests"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+files = [
+    {file = "requests-toolbelt-1.0.0.tar.gz", hash = "sha256:7681a0a3d047012b5bdc0ee37d7f8f07ebe76ab08caeccfc3921ce23c88d5bc6"},
+    {file = "requests_toolbelt-1.0.0-py2.py3-none-any.whl", hash = "sha256:cccfdd665f0a24fcf4726e690f65639d272bb0637b9b92dfd91a5568ccf6bd06"},
+]
+
+[package.dependencies]
+requests = ">=2.0.1,<3.0.0"
 
 [[package]]
 name = "rpds-py"
@@ -603,4 +685,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "2ff0e600c3753015634a4f79004310351e40e055f80f266b3a1bc95839ea1865"
+content-hash = "95b2aa4a455fd8a69508c3bd413f4395ef4e7603d8db5d13be245410680e68a5"
