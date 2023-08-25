@@ -1,19 +1,20 @@
-# RDFM: over-the-air updater for embedded devices
+# Remote Device Fleet Manager - RDFM
 
 Copyright (c) 2023 [Antmicro](https://www.antmicro.com)
 
-Open source Over-the-Air (OTA) software updater and manager for embedded devices.
+Remote Device Fleet Manager (RDFM) is an open source Over-the-Air (OTA) software updater and fleet manager for embedded devices.
 
 ## Description
 
-This repository contains sources for the RDFM OTA update system for embedded devices. It is structured as follows:
+This repository contains sources for the RDFM OTA update / fleet manager system.
+It is structured as follows:
 
-- `documentation/` - contains sources required for building the RDFM documentation
-- `devices/` - contains RDFM-compatible clients that handle communication with the RDFM management server and perform the actual update procedure
-- `server/` - contains the RDFM management server that distributes packages to connected devices
-- `manager/` - contains the CLI tool used for managing devices connected to the server
-- `tools/` - contains tools used by RDFM components
-- `common/` - contains common libraries used by RDFM components
+- `documentation/` - sources for the RDFM documentation
+- `devices/` - RDFM-compatible clients that handle communication with the RDFM management server and perform the actual update procedure
+- `server/` - RDFM management server that distributes packages to connected devices
+- `manager/` - CLI tool used for managing devices connected to the server
+- `tools/` - tools used by RDFM components
+- `common/` - common libraries used by RDFM components
 
 For more details, see the individual README files in the above directories and the RDFM documentation pages.
 
