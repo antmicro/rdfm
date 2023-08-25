@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/antmicro/rdfm/third_party/block_device"
 	"github.com/balena-os/librsync-go"
 	"github.com/mendersoftware/mender-artifact/artifact"
 	"github.com/mendersoftware/mender-artifact/handlers"
@@ -48,14 +47,14 @@ func (d DeltaRootfsInstaller) openActiveForReading() (*os.File, error) {
 	return activeDevice, nil
 }
 
-func (d DeltaRootfsInstaller) openInactiveForWriting(imageSize int64) (*block_device.BlockDevice, error) {
+func (d DeltaRootfsInstaller) openInactiveForWriting(imageSize int64) (*BlockDevice, error) {
 	inactivePartition, err := d.realDev.GetInactive()
 	if err != nil {
 		return nil, err
 	}
 	fmt.Println("Using", inactivePartition, "as installation target")
 
-	inactiveDevice, err := block_device.BlockDev.Open(inactivePartition, imageSize)
+	inactiveDevice, err := Open(inactivePartition, imageSize)
 	if err != nil {
 		errmsg := "Failed to write the update to the inactive partition: %q"
 		return nil, errors.Wrapf(err, errmsg, inactivePartition)
