@@ -72,6 +72,7 @@ def fetch_packages():
                     "rdfm.storage.local.length": 4194304,
                     "rdfm.storage.local.uuid": "6f7483ac-5cde-467f-acf7-39e4b397e313"
                 },
+                "driver": "local",
                 "sha256": "4e415854e6d0cf9855b2290c02638e8651537989b8862ff9c9cb91b8d956ea06"
             }
         ]
@@ -83,7 +84,8 @@ def fetch_packages():
                 "id": package.id,
                 "created": package.created,
                 "sha256": package.sha256,
-                "metadata": package.info
+                "metadata": package.info,
+                "driver": package.driver
             } for package in packages
         ]
     except Exception as e:
@@ -227,6 +229,7 @@ def fetch_package(identifier: int):
                 "rdfm.storage.local.length": 4194304,
                 "rdfm.storage.local.uuid": "6f7483ac-5cde-467f-acf7-39e4b397e313"
             },
+            "driver": "local",
             "sha256": "4e415854e6d0cf9855b2290c02638e8651537989b8862ff9c9cb91b8d956ea06"
         }
     """  # noqa: E501
