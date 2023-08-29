@@ -344,6 +344,7 @@ func (d Device) checkUpdatesPeriodically() {
 			metadata := map[string]string{
 				"rdfm.hardware.devtype": devType,
 				"rdfm.software.version": swVer,
+				"rdfm.hardware.macaddr": d.macAddr,
 			}
 			serializedMetadata, err := json.Marshal(metadata)
 			if err != nil {
