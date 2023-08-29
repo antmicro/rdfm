@@ -10,7 +10,7 @@ import server
 from api.v1.common import api_error
 import models.device
 import models.group
-
+from api.v1.schemas import DeviceMetaSchema
 
 update_blueprint: Blueprint = Blueprint("rdfm-server-updates", __name__)
 
@@ -52,6 +52,7 @@ def check_for_update():
 
         POST /api/v1/update/check HTTP/1.1
         Accept: application/json, text/javascript
+        Content-Type: application/json
 
         {
             "rdfm.software.version": "v0.0.1",
@@ -80,14 +81,14 @@ def check_for_update():
         }
     """
     try:
+        errors = DeviceMetaSchema().validate({
+            "metadata": request.json
+        })
+        if len(errors) > 0:
+            return api_error(f"schema validation failed: {errors}", 400)
+
         device_meta = request.json
         print("Device metadata:", device_meta)
-        if models.package.META_DEVICE_TYPE not in device_meta:
-            return api_error("metadata is missing a device type", 400)
-        if models.package.META_SOFT_VER not in device_meta:
-            return api_error("metadata is missing a software version", 400)
-        if models.package.META_MAC_ADDRESS not in device_meta:
-            return api_error("metadata is missing a MAC address", 400)
         softver = device_meta[models.package.META_SOFT_VER]
         devtype = device_meta[models.package.META_DEVICE_TYPE]
         hwmac = device_meta[models.package.META_MAC_ADDRESS]

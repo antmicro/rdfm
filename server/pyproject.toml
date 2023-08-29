@@ -25,6 +25,7 @@ types-pyjwt = "^1.7.1"
 pytest = "^7.4.0"
 pexpect = "^4.8.0"
 requests = "^2.31.0"
+marshmallow = "^3.20.1"
 
 [tool.poetry.group.test.dependencies]
 mypy = "^1.4.0"
