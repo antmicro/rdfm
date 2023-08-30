@@ -252,6 +252,11 @@ def fetch_package(identifier: int):
 def delete_package(identifier: int):
     """ Delete the specified package
 
+    Deletes the specified package from the server and from the
+    underlying storage.
+    The package can only be deleted if it's not assigned to any
+    group.
+
     :param identifier: package identifier
     :status 200: no error
     :status 401: user did not provide authorization data,
@@ -259,6 +264,8 @@ def delete_package(identifier: int):
     :status 403: user was authorized, but did not have permission
                  to delete packages
     :status 404: specified package does not exist
+    :status 409: package is assigned to a group and cannot
+                 be deleted
 
 
     **Example Request**
@@ -278,8 +285,10 @@ def delete_package(identifier: int):
         if package is None:
             return api_error("specified package does not exist", 404)
 
+        # The delete may fail because the package is assigned to a group
         if not server.instance._packages_db.delete(identifier):
-            return api_error("delete failed", 500)
+            return api_error("delete failed, the package is assigned to at least one group",
+                             409)
 
         driver = storage.driver_by_name(package.driver)
         if driver is None:

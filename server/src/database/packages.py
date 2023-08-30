@@ -9,6 +9,7 @@ from sqlalchemy import create_engine, select, update, delete, desc
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy.schema import MetaData
+from sqlalchemy.exc import IntegrityError
 
 
 class PackagesDB:
@@ -116,6 +117,6 @@ class PackagesDB:
                 session.execute(stmt)
                 session.commit()
                 return True
-        except Exception as e:
-            print("Package deletion failed:", repr(e))
+        except IntegrityError as e:
+            # Constraint failed, the package is assigned to an existing group
             return False
