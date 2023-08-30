@@ -43,6 +43,8 @@ poetry build && poetry install && poetry run python -m rdfm_mgmt_server -no_ssl
 
 This launches the RDFM Management Server with no encryption, listening on `localhost`/`127.0.0.1`. By default, the device communication socket is listening on port `1234`, while the HTTP API is exposed on port `5000`.
 
+When server is in debug mode (`app.run(debug=True, ...)` is set) every HTTP request received and response to it are printed to STDOUT.
+
 ## Setting up a Dockerized development environment
 
 The RDFM server can also be deployed using a Docker container.

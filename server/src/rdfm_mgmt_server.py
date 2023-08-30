@@ -64,6 +64,8 @@ if __name__ == '__main__':
                         dest='create_mocks',
                         help="""insert mock data into the
                             database for running tests""")
+    parser.add_argument('-debug', action='store_true',
+                        help='launch server in debug mode')
     args = parser.parse_args()
 
     server.instance = server.Server(args.hostname, args.port,
@@ -78,8 +80,9 @@ if __name__ == '__main__':
     if args.encrypted:
         app.config['UPLOAD_FOLDER'] = args.cache_dir
         app.run(host=args.hostname, port=args.http_port,
-                debug=True, use_reloader=False,
+                debug=args.debug, use_reloader=False,
                 ssl_context=(args.cert, args.key))
+    
     else:
         app.run(host=args.hostname, port=args.http_port,
-                debug=True, use_reloader=False)
+                debug=args.debug, use_reloader=False)
