@@ -20,6 +20,7 @@ def list_groups(config: rdfm.config.Config, args) -> Optional[str]:
         print(f"\tCreated at: {group.created}")
         print(f"\tDevices assigned: {group.devices} | {len(group.devices)} devices")
         print(f"\tAssigned packages: {group.packages}")
+        print(f"\tUpdate policy: '{group.policy}'")
         print("\tGroup metadata:")
         for k, v in group.metadata.items():
             print(f"\t\t{k}: {v}")
