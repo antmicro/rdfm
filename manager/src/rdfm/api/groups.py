@@ -43,12 +43,12 @@ def delete(config: rdfm.config.Config, id: int) -> Optional[str]:
     return wrap_api_error(response, "Deleting group failed")
 
 
-def assign(config: rdfm.config.Config, group: int, package: Optional[int]) -> Optional[str]:
+def assign(config: rdfm.config.Config, group: int, packages: List[int]) -> Optional[str]:
     response = requests.post(rdfm.api.escape(config, f"/api/v1/groups/{group}/package"),
                              cert=config.ca_cert,
                              auth=config.authorizer,
                              json={
-                                 "package_id": package
+                                 "packages": packages
                              })
     if response.status_code == 409:
         return ("Assigning package failed: there was a conflict during the operation,"

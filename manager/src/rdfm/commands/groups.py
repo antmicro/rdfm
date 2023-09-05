@@ -19,7 +19,7 @@ def list_groups(config: rdfm.config.Config, args) -> Optional[str]:
         print(f"Group #{group.id}")
         print(f"\tCreated at: {group.created}")
         print(f"\tDevices assigned: {group.devices} | {len(group.devices)} devices")
-        print(f"\tAssigned package: {'<none>' if group.package_id is None else group.package_id}")
+        print(f"\tAssigned packages: {group.packages}")
         print("\tGroup metadata:")
         for k, v in group.metadata.items():
             print(f"\t\t{k}: {v}")
@@ -45,11 +45,12 @@ def delete_group(config: rdfm.config.Config, args) -> Optional[str]:
 
 
 def assign_package(config: rdfm.config.Config, args) -> Optional[str]:
-    """ CLI entrypoint - assigning a package to a group
+    """ CLI entrypoint - assigning packages to a group
     """
+    packages = [] if args.package_id is None else [ int(x) for x in args.package_id ]
     return rdfm.api.groups.assign(config,
                                   args.group_id,
-                                  None if args.package_id == "null" else args.package_id)
+                                  packages)
 
 
 def modify_devices(config: rdfm.config.Config, args) -> Optional[str]:
@@ -94,12 +95,13 @@ def add_groups_parser(parser: argparse._SubParsersAction):
     delete.add_argument('--group-id', type=str, required=True,
                         help='group identifier')
 
-    assign = sub.add_parser('assign-package', help='assign a package to a group')
+    assign = sub.add_parser('assign-package', help='assign packages to a group')
     assign.set_defaults(func=assign_package)
     assign.add_argument('--group-id', type=str, required=True,
                         help='group identifier')
-    assign.add_argument('--package-id', type=str, required=True,
-                        help='package identifier, or `null`')
+    assign.add_argument('--package-id', type=str, action='append',
+                        help='package identifiers to assign, which will replace all previous assignments.'
+                             ' Can be provided multiple times (or ignored entirely to clear all assignments)')
 
     modify = sub.add_parser('modify-devices', help='modify devices belonging to a group')
     modify.set_defaults(func=modify_devices)
