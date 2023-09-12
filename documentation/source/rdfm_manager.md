@@ -4,9 +4,26 @@
 
 The RDFM Manager (`rdfm-mgmt`) utility allows authorized users to manage resources exposed by the RDFM Management Server.
 
-## Building
+## Installation
 
-To build `rdfm-mgmt`, you must have Python 3 installed, along with the `Poetry` dependency manager.
+The prefered mode of installation for `rdfm-mgmt` is via `pipx`.
+To install `rdfm-mgmt`, run the following commands:
+
+```
+cd manager/
+pipx install .
+```
+
+This will install the `rdfm-mgmt` utility and its dependencies for the current user within a virtual environment located at `/home/<user>/.local/pipx/venv`.
+The `rdfm-mgmt` executable will be placed in `/home/<user>/.local/bin/` and should be immediately accessible from the shell.
+Depending on the current system configuration, adding the above directory to the `PATH` may be required.
+
+## Building the wheel
+
+For installation instructions, see the [Installation section](#installation).
+Building the wheel is not required in this case.
+
+To build the `rdfm-mgmt` wheel, you must have Python 3 installed, along with the `Poetry` dependency manager.
 
 Building the wheel can be done as follows:
 
@@ -15,81 +32,97 @@ cd manager/
 poetry build
 ```
 
-## Running
-
-To run the `rdfm-mgmt` utility, run the following commands:
-
-```
-cd manager/
-poetry build
-poetry install
-poetry run python -m rdfm_mgmt_client username
-```
-
-## Encrypting communication
-
-To use encrypted communication between all parties you must generate proper certificates. For development purposes, refer to the `server/tests/certgen.sh` script as an example of certificate generation.
-
-You can turn off encrypted communication between the server and client by passing the `no_ssl` argument to **both parties**.
-
 ## Usage
 
-List connected devices:
+For more detailed information, see the help messages associated with each subcommand:
 
 ```
-LIST
+$ rdfm-mgmt -h
+usage: rdfm-mgmt
+
+RDFM Manager utility
+
+options:
+  -h, --help            show this help message and exit
+  -url URL              URL to the RDFM Management Server (default: http://127.0.0.1:5000/)
+  -cert CERT            path to the server CA certificate used for establishing an HTTPS connection (default: ./certs/CA.crt)
+
+available commands:
+  {devices,packages,groups}
+    devices             device management
+    packages            package management
+    groups              group management
 ```
 
-Fetch information about device:
+### Listing available resources
+
+Listing devices (currently unsupported due to API limitations):
 
 ```
-REQ device_name info
+rdfm-mgmt devices list
 ```
 
-Request a device to upload new metadata:
+Listing packages:
 
 ```
-REQ device_name update
+rdfm-mgmt packages list
 ```
 
-Request a **proxy** connection with a device:
+Listing groups:
 
 ```
-REQ device_name proxy
+rdfm-mgmt groups list
 ```
 
-**File transfer**:
-
-Upload file to device:
+### Uploading packages
 
 ```
-REQ device_name upload file_path src_file_path
+rdfm-mgmt packages upload \
+    --path file.img \
+    --version "v0" \
+    --device "x86_64"
 ```
 
-Where `file_path` indicates the path on the device, `src_file_path` indicates the file to upload.
-
-Download file from device:
+### Deleting packages
 
 ```
-REQ device_name download file_path
+rdfm-mgmt packages delete --package-id <package>
 ```
 
-**Connecting to the device**:
-
-If the proxy request was succesful, a message with port to connect to will be sent
-to the user.
-To connect just use these (or similiar) programs:
-
-**Encrypted:**
-
-```openssl s_client -CAfile certs/CA.crt -quiet -connect SERVER_ADDR:PORT```
-
-**Not encrypted:**
-
-```nc SERVER_ADDR PORT```
-
-Exit client:
+### Creating groups
 
 ```
-exit
+rdfm-mgmt groups create --name "Group #1" --description "A very long description of the group"
+```
+
+### Deleting groups
+
+```
+rdfm-mgmt groups delete --group-id <group>
+```
+
+### Assign package to a group
+
+```
+rdfm-mgmt groups assign-package --group-id <group> --package-id <package>
+```
+
+### Remove package assignment from a group
+
+```
+rdfm-mgmt groups assign-package --group-id <group> --package-id null
+```
+
+### Assign devices to a group
+
+Adding devices:
+
+```
+rdfm-mgmt groups modify-devices --group-id <group> --add <device>
+```
+
+Removing devices:
+
+```
+rdfm-mgmt groups modify-devices --group-id <group> --remove <device>
 ```
