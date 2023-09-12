@@ -19,9 +19,18 @@ The server exposes a management and device API that is used by management softwa
 
 ## Building
 
-To build the server, you must have Python 3 installed, along with the `Poetry` dependency manager.
+Note: It is recommended to use the [Dockerized development environment](#setting-up-a-dockerized-development-environment), to ensure the correct Python version is installed. The server requires a relatively modern version of Python, which may not be readily available on all distributions.
 
-Building the wheel can be done as follows:
+To build the server, you must have Python 3.11 installed, along with the `Poetry` dependency manager.
+
+First, clone the RDFM repository:
+
+```
+git clone https://github.com/antmicro/rdfm.git
+cd rdfm/
+```
+
+Next, building the wheel can be done as follows:
 
 ```
 cd server/
@@ -31,6 +40,7 @@ poetry build
 ## Setting up a development environment
 
 This section pertains only to the development setup. **This should not be used for production deployments!**
+For this section, it is assumed that you have cloned the RDFM repository already.
 
 The server utilizes the Poetry tool to manage project dependencies.
 You can run a development RDFM Management Server by running the following commands:
@@ -46,6 +56,8 @@ This launches the RDFM Management Server with no encryption, listening on `local
 When server is in debug mode (`app.run(debug=True, ...)` is set) every HTTP request received and response to it are printed to STDOUT.
 
 ## Setting up a Dockerized development environment
+
+For this section, it is assumed that you have cloned the RDFM repository already.
 
 The RDFM server can also be deployed using a Docker container.
 A `Dockerfile` is provided in the `server/deploy/` directory that builds a container suitable for running the server.

@@ -6,8 +6,19 @@ The RDFM Manager (`rdfm-mgmt`) utility allows authorized users to manage resourc
 
 ## Installation
 
+Before proceeding, make sure that you have installed Python (at least version 3.11) and the `pipx` utility:
+- **Debian (Bookworm)** - run `sudo apt update && sudo apt install pipx`
+- **Arch** - `sudo pacman -S python-pipx`
+
 The prefered mode of installation for `rdfm-mgmt` is via `pipx`.
-To install `rdfm-mgmt`, run the following commands:
+To install `rdfm-mgmt`, you must first clone the RDFM repository:
+
+```
+git clone https://github.com/antmicro/rdfm.git
+cd rdfm/
+```
+
+Afterwards, run the following commands:
 
 ```
 cd manager/
