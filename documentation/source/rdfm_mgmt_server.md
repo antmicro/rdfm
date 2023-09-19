@@ -81,14 +81,17 @@ services:
       - RDFM_API_PORT=5000
       - RDFM_DEVICE_PORT=1234
       - RDFM_DISABLE_ENCRYPTION=1
+      - RDFM_LOCAL_PACKAGE_DIR=/packages/
     ports:
       - "1234:1234"
       - "5000:5000"
     volumes:
       - db:/database/
+      - pkgs:/packages/
 
 volumes:
   db:
+  pkgs:
 ```
 
 The server can then be started using the following command:
@@ -107,3 +110,4 @@ Configuration of the RDFM server can be changed by using the following environme
 - `RDFM_DISABLE_ENCRYPTION` - disables encryption of device-server protocol data and usage of HTTPS in the API routes
 - `RDFM_SERVER_CERT` - when using encryption, path to the server's certificate. The certificate can be stored on a Docker volume mounted to the container. For reference on generating the certificate/key pairs, see the `server/tests/certgen.sh` script.
 - `RDFM_SERVER_KEY` - when using encryption, path to the server's private key. Additionally, the above also applies here.
+- `RDFM_LOCAL_PACKAGE_DIR` - specifies a path (local for the server) to a directory where the packages are stored

@@ -42,6 +42,9 @@ server_args="${server_args} -port ${RDFM_DEVICE_PORT}"
 require_variable RDFM_DB_CONNSTRING
 server_args="${server_args} -database ${RDFM_DB_CONNSTRING}"
 
+require_variable RDFM_LOCAL_PACKAGE_DIR
+server_args="${server_args} -local_package_dir ${RDFM_LOCAL_PACKAGE_DIR}"
+
 if [ ${_missing_variables} == 1 ]; then
 	echo "Cannot start server, missing required environment variables"
 	exit 1

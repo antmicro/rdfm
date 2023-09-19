@@ -9,12 +9,15 @@ services:
       - RDFM_API_PORT=5000
       - RDFM_DEVICE_PORT=1234
       - RDFM_DISABLE_ENCRYPTION=1
+      - RDFM_LOCAL_PACKAGE_DIR=/packages/
     ports:
       - "1234:1234"
       - "5000:5000"
     volumes:
       - db:/database/
+      - pkgs:/packages/
 
 volumes:
   db:
+  pkgs:
 

@@ -12,28 +12,27 @@ from database.devices import DevicesDB
 from database.packages import PackagesDB
 from database.groups import GroupsDB
 import database.db
+import configuration
 
 CONNECTION_TRIES = 2
 
 
 class Server:
-    def __init__(self, hostname: str, port: int,
-                 encrypted: bool, cert: str, cert_key: str,
-                 db_conn: str, jwt_secret: str):
-        self._hostname: str = hostname
-        self._port: int = port
+    def __init__(self, config: configuration.ServerConfig):
+        self._hostname: str = config.hostname
+        self._port: int = config.port
 
-        self.encrypted = encrypted
-        self.cert: str = cert
-        self.cert_key: str = cert_key
+        self.encrypted = config.encrypted
+        self.cert: str = config.cert
+        self.cert_key: str = config.key
 
-        self.jwt_secret = jwt_secret
+        self.jwt_secret = config.jwt_secret
 
         self.proxy_connections: list[Proxy] = []
 
         self.server_socket: socket.socket = create_listening_socket(
-            hostname,
-            port,
+            config.hostname,
+            config.port,
             self.encrypted,
             self.cert,
             self.cert_key)
@@ -43,7 +42,7 @@ class Server:
         self.clients: dict[socket.socket, Client] = {}
         self.connected_devices: dict[str, Device] = {}
 
-        self.db = database.db.create(db_conn)
+        self.db = database.db.create(config.database)
         self._devices_db: DevicesDB = DevicesDB(self.db)
         self._packages_db: PackagesDB = PackagesDB(self.db)
         self._groups_db: GroupsDB = GroupsDB(self.db)

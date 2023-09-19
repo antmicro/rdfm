@@ -6,6 +6,7 @@ from flask import (
 from threading import Thread
 import server
 import api.v1
+import configuration
 
 app = Flask(__name__)
 app.register_blueprint(api.v1.create_routes())
@@ -37,8 +38,18 @@ def after_request_func(response):
 if __name__ == '__main__':
     import argparse
 
+    config = configuration.ServerConfig()
+
     parser = argparse.ArgumentParser(
         description='rdfm-mgmt-shell server instance.')
+    # Note: all configuration variables should be stored in the
+    # in the `configuration.ServerConfig` struct, to allow for
+    # alternate configuration storage methods (file, CLI, etc.).
+    # For simplicity, the arguments from the CLI are parsed directly
+    # into the config struct above.
+    # This requires that the names of the configuration variables match
+    # the CLI argument name. Use `dest='<name>'` in calls to `add_argument`
+    # for cases where this is not desirable.
     parser.add_argument('-hostname', type=str, default='127.0.0.1',
                         help='ip addr or domain name of the host')
     parser.add_argument('-port', metavar='p', type=int, default=1234,
@@ -56,6 +67,9 @@ if __name__ == '__main__':
                         help='database connection string')
     parser.add_argument('-cache_dir', type=str, default='server_file_cache',
                         help='file transfer cache directory')
+    parser.add_argument('-local_package_dir', type=str, dest='package_dir',
+                        default='/tmp/.rdfm-local-storage/',
+                        help='package storage directory')
     parser.add_argument('-jwt_secret', type=str,
                         default=os.environ['JWT_SECRET'],
                         help="""JWT secret key, if not provided it will
@@ -66,23 +80,20 @@ if __name__ == '__main__':
                             database for running tests""")
     parser.add_argument('-debug', action='store_true',
                         help='launch server in debug mode')
-    args = parser.parse_args()
+    args = parser.parse_args(namespace=config)
 
-    server.instance = server.Server(args.hostname, args.port,
-                                    args.encrypted, args.cert, args.key,
-                                    args.database, args.jwt_secret)
-    if args.create_mocks:
+    server.instance = server.Server(config)
+    if config.create_mocks:
         server.instance.create_mock_data()
 
     t = Thread(target=server.instance.run, daemon=True)
     t.start()
 
-    if args.encrypted:
-        app.config['UPLOAD_FOLDER'] = args.cache_dir
-        app.run(host=args.hostname, port=args.http_port,
-                debug=args.debug, use_reloader=False,
-                ssl_context=(args.cert, args.key))
-    
+    app.config['RDFM_CONFIG'] = config
+    if config.encrypted:
+        app.run(host=config.hostname, port=config.http_port,
+                debug=config.debug, use_reloader=False,
+                ssl_context=(config.cert, config.key))
     else:
-        app.run(host=args.hostname, port=args.http_port,
-                debug=args.debug, use_reloader=False)
+        app.run(host=config.hostname, port=config.http_port,
+                debug=config.debug, use_reloader=False)

@@ -4,18 +4,19 @@ from flask import (
     Response,
     abort,
     send_from_directory,
-    Blueprint
+    Blueprint,
+    current_app
 )
 from threading import Thread
 from server import Server
 import storage
-from storage.local import LOCAL_STORAGE_PATH
 import hashlib
 import traceback
 import datetime
 import models.package
 import tempfile
 import server
+import configuration
 from api.v1.common import api_error
 
 
@@ -159,7 +160,8 @@ def upload_package():
         if "file" not in request.files:
             return api_error("missing package file", 400)
 
-        driver = storage.driver_by_name(driver_name)
+        conf: configuration.ServerConfig = current_app.config['RDFM_CONFIG']
+        driver = storage.driver_by_name(driver_name, conf)
         if driver is None:
             return api_error("invalid storage driver", 500)
 
@@ -293,7 +295,8 @@ def delete_package(identifier: int):
             return api_error("delete failed, the package is assigned to at least one group",
                              409)
 
-        driver = storage.driver_by_name(package.driver)
+        conf: configuration.ServerConfig = current_app.config['RDFM_CONFIG']
+        driver = storage.driver_by_name(package.driver, conf)
         if driver is None:
             return api_error("delete failed", 500)
         driver.delete(package.info)
@@ -317,4 +320,5 @@ def fetch_local_package(name: str):
     :status 200: no error
     :status 404: specified package does not exist
     """
-    return send_from_directory(LOCAL_STORAGE_PATH, name)
+    conf: configuration.ServerConfig = current_app.config['RDFM_CONFIG']
+    return send_from_directory(conf.package_dir, name)

@@ -1,7 +1,8 @@
 from typing import Optional
 from flask import (
     request,
-    Blueprint
+    Blueprint,
+    current_app
 )
 import storage
 import traceback
@@ -10,6 +11,7 @@ import server
 from api.v1.common import api_error
 import models.device
 import models.group
+import configuration
 from api.v1.schemas import DeviceMetaSchema
 
 update_blueprint: Blueprint = Blueprint("rdfm-server-updates", __name__)
@@ -131,7 +133,8 @@ def check_for_update():
         # values other than the device type or package version
 
         print("Found new matching package:", package)
-        driver = storage.driver_by_name(package.driver)
+        conf: configuration.ServerConfig = current_app.config['RDFM_CONFIG']
+        driver = storage.driver_by_name(package.driver, conf)
         if driver is None:
             return api_error("invalid storage driver", 500)
 

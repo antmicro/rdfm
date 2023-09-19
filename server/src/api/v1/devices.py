@@ -25,6 +25,7 @@ from file_transfer import (
 )
 from typing import Optional
 import server
+import configuration
 
 
 devices_blueprint: Blueprint = Blueprint("rdfm-server-devices", __name__)
@@ -96,8 +97,9 @@ def upload() -> str:
                 'message': 'File upload cancelled'
             }).model_dump_json()
 
+        conf: configuration.ServerConfig = current_app.config['RDFM_CONFIG']
         res: Optional[Alert] = upload_file(request, filename,
-                                           current_app.config['UPLOAD_FOLDER'],
+                                           conf.cache_dir,
                                            server.instance.file_transfers)
         if res:
             return res.model_dump_json()
@@ -123,7 +125,8 @@ def upload() -> str:
 
 @devices_blueprint.route('/download/<filename>', methods=['GET'])  # Device endpoint
 def download(filename):
-    res = download_file(filename, current_app.config['UPLOAD_FOLDER'],
+    conf: configuration.ServerConfig = current_app.config['RDFM_CONFIG']
+    res = download_file(filename, conf.cache_dir,
                         server.instance.file_transfers)
     if isinstance(res, Request):
         return res.model_dump_json()
@@ -161,8 +164,9 @@ def upload_device(device_name) -> str:
                 device.required_capabilities['download']}
         ).model_dump_json()
 
+    conf: configuration.ServerConfig = current_app.config['RDFM_CONFIG']
     upload_res: Optional[Alert] = upload_file(request, filename,
-                                              current_app.config['UPLOAD_FOLDER'],
+                                              conf.cache_dir,
                                               server.instance.file_transfers)
     if upload_res:
         return upload_res.model_dump_json()
@@ -216,7 +220,8 @@ def download_device(device_name) -> str | Response:
         file_path=request.form['file_path']
     ))
 
-    download_res = download_file(filename, current_app.config['UPLOAD_FOLDER'],
+    conf: configuration.ServerConfig = current_app.config['RDFM_CONFIG']
+    download_res = download_file(filename, conf.cache_dir,
                                  server.instance.file_transfers)
     if isinstance(download_res, Request):
         return download_res.model_dump_json()
