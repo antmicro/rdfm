@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from flask import (
     request,
     Blueprint,
@@ -15,7 +15,9 @@ import configuration
 from rdfm.schema.v1.updates import UpdateCheckRequest
 from rdfm.schema.v1.updates import META_SOFT_VER, META_MAC_ADDRESS, META_DEVICE_TYPE
 from marshmallow import ValidationError
-
+from models.package import Package
+from update.resolver import PackageResolver
+import update.policy
 
 update_blueprint: Blueprint = Blueprint("rdfm-server-updates", __name__)
 
@@ -113,28 +115,34 @@ def check_for_update():
             # Because of DB constraints, this should never happen
             return api_error("device-assigned group does not exist", 500)
 
-        # Device is in a group, but no package was assigned
-        if group.package_id is None:
+        policy = update.policy.create(group.policy)
+        if policy is None:
+            # Should never happen as modifying the policy to an invalid value
+            # should be prevented
+            return api_error("invalid group policy", 500)
+
+        packages: List[Package] = server.instance._groups_db.fetch_assigned_data(group.id)
+        # Device is in a group, but no packages were assigned
+        if len(packages) == 0:
             return {}, 204
 
-        package: Optional[models.package.Package] = server.instance._packages_db.fetch_one(group.package_id)
-        if package is None:
-            # Because of DB constraints, this should never happen
-            return api_error("group-assigned package does not exist", 500)
-
-        # Check if the package is actually compatible with the device
+        # Collect just the package metadata for the package resolver.
+        # Make sure the order of the metadata matches the order of packages
+        # in the list above.
         # Note: watch out, package.metadata is an SQLAlchemy field, our meta is
-        #       stored in `package.info`
-        if package.info[META_DEVICE_TYPE] != devtype:
-            return {}, 204
-        # Currently installed version is the latest assigned
-        if package.info[META_SOFT_VER] == softver:
+        # stored in `package.info`
+        package_meta = [ pkg.info for pkg in packages ]
+        resolver = PackageResolver(device_meta,
+                                   package_meta,
+                                   policy)
+        index = resolver.resolve()
+        if index is None:
+            # No updates are available
             return {}, 204
 
         # A candidate package was found
-        # Here, we could also check extra requirements
-        # For example, the package depends on some certain metadata
-        # values other than the device type or package version
+        package = packages[index]
+        print("Found matching next package:", package.info)
 
         print("Found new matching package:", package)
         conf: configuration.ServerConfig = current_app.config['RDFM_CONFIG']
