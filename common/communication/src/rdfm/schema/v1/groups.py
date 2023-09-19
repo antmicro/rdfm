@@ -23,11 +23,13 @@ class Group():
     devices: list[int] = field(metadata={
         "required": True,
     })
-    package_id: Optional[int] = field(metadata={
+    packages: list[int] = field(metadata={
         "required": True,
-        "allow_none": True
     })
     metadata: dict[str, Any] = field(metadata={
+        "required": True,
+    })
+    policy: str = field(metadata={
         "required": True,
     })
     Schema: ClassVar[Type[marshmallow.Schema]] = marshmallow.Schema
@@ -50,7 +52,17 @@ class AssignDeviceRequest():
 class AssignPackageRequest():
     """ Represents a group package assignment request
     """
-    package_id: int = field(metadata={
+    packages: list[int] = field(metadata={
+        "required": True
+    })
+    Schema: ClassVar[Type[marshmallow.Schema]] = marshmallow.Schema
+
+
+@marshmallow_dataclass.dataclass
+class AssignPolicyRequest():
+    """ Represents a group policy assignment request
+    """
+    policy: str = field(metadata={
         "required": True
     })
     Schema: ClassVar[Type[marshmallow.Schema]] = marshmallow.Schema

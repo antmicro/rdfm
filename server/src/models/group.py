@@ -16,5 +16,12 @@ class Group(Base):
 
     id: Mapped[int] = mapped_column(primary_key = True, autoincrement = True)
     created: Mapped[datetime.datetime] = mapped_column(DateTime)
-    package_id: Mapped[Optional[int]] = mapped_column(ForeignKey(models.package.Package.id, ondelete="RESTRICT"))
     info: Mapped[dict[str, Any]] = mapped_column(JSON)
+    policy: Mapped[str] = mapped_column(Text)
+
+
+class GroupPackageAssignment(Base):
+    __tablename__ = "groups_pkgs"
+
+    group_id: Mapped[int] = mapped_column(ForeignKey(Group.id, ondelete="RESTRICT"), primary_key=True)
+    package_id: Mapped[int] = mapped_column(ForeignKey(models.package.Package.id, ondelete="RESTRICT"), primary_key=True)

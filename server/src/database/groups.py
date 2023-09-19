@@ -6,6 +6,7 @@ from sqlalchemy.schema import MetaData
 from sqlalchemy.exc import IntegrityError
 import models.group
 import models.device
+import models.package
 
 class GroupsDB:
     """ Wrapper class for managing group data and device-group assignment
@@ -144,12 +145,12 @@ class GroupsDB:
             return None
 
 
-    def modify_package(self, group: int, package: Optional[int]) -> Optional[str]:
+    def modify_package(self, group: int, packages: List[int]) -> Optional[str]:
         """ Modify package assignment of the specified group
 
         Args:
             group: group identifier
-            package: package identifier to assign to the group.
+            packages: list of package identifiers to assign to the group.
                      If None, package assignment is instead removed from the group
 
         Returns:
@@ -159,16 +160,64 @@ class GroupsDB:
         try:
             with Session(self.engine) as session:
                 stmt = (
-                    update(models.group.Group)
-                    .values(package_id = package)
-                    .where(models.group.Group.id == group)
+                    delete(models.group.GroupPackageAssignment)
+                    .where(models.group.GroupPackageAssignment.group_id == group)
                 )
-                res = session.execute(stmt)
-                if res.rowcount != 1:
-                    session.rollback()
-                    return "conflict while assigning package, the group may not exist anymore"
+                session.execute(stmt)
 
+                def make_assignment(group, package):
+                    assignment = models.group.GroupPackageAssignment()
+                    assignment.group_id = group
+                    assignment.package_id = package
+                    return assignment
+
+                session.add_all([ make_assignment(group, pkg) for pkg in packages])
                 session.commit()
                 return None
         except IntegrityError as e:
             return "conflict while assigning package, the package may not exist anymore"
+
+
+    def fetch_assigned_packages(self, group: int) -> List[int]:
+        """ Fetches a list of package identifiers assigned to this group
+
+        Args:
+            group: group identifier
+        """
+        with Session(self.engine) as session:
+            return session.scalars(
+                select(models.group.GroupPackageAssignment.package_id)
+                .where(models.group.GroupPackageAssignment.group_id == group)
+            ).all()
+
+
+    def fetch_assigned_data(self, group: int) -> List[models.package.Package]:
+        """ Fetches a list of packages assigned to this group.
+
+        Args:
+            group: group identifier
+        """
+        with Session(self.engine) as session:
+            return session.scalars(
+                session.query(models.package.Package)
+                .select_from(models.group.GroupPackageAssignment)
+                .where(models.group.GroupPackageAssignment.group_id == group)
+                .join(models.package.Package)
+            ).all()
+
+
+    def update_policy(self, group: int, policy: str):
+        """ Updates the group update policy
+
+        Args:
+            group: group identifier
+            policy: group update policy string to set
+        """
+        with Session(self.engine) as session:
+            stmt = (
+                update(models.group.Group)
+                .values(policy = policy)
+                .where(models.group.Group.id == group)
+            )
+            session.execute(stmt)
+            session.commit()
