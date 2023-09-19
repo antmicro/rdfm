@@ -114,14 +114,22 @@ rdfm-mgmt groups delete --group-id <group>
 
 ### Assign package to a group
 
+Assigning one package:
+
 ```
 rdfm-mgmt groups assign-package --group-id <group> --package-id <package>
 ```
 
-### Remove package assignment from a group
+Assigning many packages:
 
 ```
-rdfm-mgmt groups assign-package --group-id <group> --package-id null
+rdfm-mgmt groups assign-package --group-id <group> --package-id <package1> --package-id <package2>
+```
+
+Clearing package assignments:
+
+```
+rdfm-mgmt groups assign-package --group-id <group>
 ```
 
 ### Assign devices to a group
@@ -136,4 +144,10 @@ Removing devices:
 
 ```
 rdfm-mgmt groups modify-devices --group-id <group> --remove <device>
+```
+
+### Setting a group's target version
+
+```
+rdfm-mgmt groups target-version --group-id <group> --version <version-identifier>
 ```
