@@ -75,3 +75,17 @@ def assign_device(config: rdfm.config.Config,
         except:
             return "Assigning device failed: a conflict has occured"
     return wrap_api_error(response, "Assigning device failed")
+
+
+def set_policy(config: rdfm.config.Config,
+               group: int,
+               policy: str) -> Optional[str]:
+    response = requests.post(rdfm.api.escape(config, f"/api/v1/groups/{group}/policy"),
+                             cert=config.ca_cert,
+                             auth=config.authorizer,
+                             json={
+                                 "policy": policy,
+                             })
+    return wrap_api_error(response, "Updating group policy failed")
+
+

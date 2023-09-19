@@ -69,6 +69,16 @@ def modify_devices(config: rdfm.config.Config, args) -> Optional[str]:
                                          removals)
 
 
+def set_target(config: rdfm.config.Config, args) -> Optional[str]:
+    """ CLI entrypoint - setting a target version for the group
+
+    Internally, this adds the `exact_match,...` policy to the group, but for
+    simple use cases the user shouldn't need to mess with them manually.
+    """
+    policy = f"exact_match,{args.version}"
+    return rdfm.api.groups.set_policy(config, args.group_id, policy)
+
+
 def add_groups_parser(parser: argparse._SubParsersAction):
     """ Create a parser for the `groups` CLI command tree within
         the given subparser.
@@ -95,6 +105,13 @@ def add_groups_parser(parser: argparse._SubParsersAction):
     delete.set_defaults(func=delete_group)
     delete.add_argument('--group-id', type=str, required=True,
                         help='group identifier')
+
+    target = sub.add_parser('target-version', help='set the target version the group should be updated to')
+    target.set_defaults(func=set_target)
+    target.add_argument('--group-id', type=str, required=True,
+                        help='group identifier')
+    target.add_argument('--version', type=str, required=True,
+                        help='version identifier')
 
     assign = sub.add_parser('assign-package', help='assign packages to a group')
     assign.set_defaults(func=assign_package)
