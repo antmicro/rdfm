@@ -196,6 +196,39 @@ test-group-api:
       - merge_requests
       - main
 
+test-server-update-policies:
+  extends: .build
+  stage: local-tests
+  script:
+    - cd server
+    - pytest tests/test-update-policies.py
+  only:
+    refs:
+      - merge_requests
+      - main
+
+test-server-update-resolver:
+  extends: .build
+  stage: local-tests
+  script:
+    - cd server
+    - pytest tests/test-update-resolver.py
+  only:
+    refs:
+      - merge_requests
+      - main
+
+test-server-update-api:
+  extends: .build
+  stage: local-tests
+  script:
+    - cd server
+    - pytest tests/test-update-checker.py
+  only:
+    refs:
+      - merge_requests
+      - main
+
 # ===== rdfm-client ===== #
 
 .rdfm-client:
