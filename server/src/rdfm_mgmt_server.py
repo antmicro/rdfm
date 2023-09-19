@@ -62,7 +62,7 @@ if __name__ == '__main__':
                         help='server cert file')
     parser.add_argument('-key', type=str, default='./certs/SERVER.key',
                         help="""server cert key file""")
-    parser.add_argument('-database', metavar='db', type=str,
+    parser.add_argument('-database', metavar='db', type=str, dest='db_conn',
                         default='sqlite:///devices.db',
                         help='database connection string')
     parser.add_argument('-cache_dir', type=str, default='server_file_cache',

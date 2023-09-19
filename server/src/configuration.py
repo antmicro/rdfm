@@ -27,7 +27,7 @@ class ServerConfig():
     key: str
 
     """ Database connection string """
-    database: str
+    db_conn: str
 
     """ Path to the file transfer cache directory """
     cache_dir: str

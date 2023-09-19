@@ -42,7 +42,7 @@ class Server:
         self.clients: dict[socket.socket, Client] = {}
         self.connected_devices: dict[str, Device] = {}
 
-        self.db = database.db.create(config.database)
+        self.db = database.db.create(config.db_conn)
         self._devices_db: DevicesDB = DevicesDB(self.db)
         self._packages_db: PackagesDB = PackagesDB(self.db)
         self._groups_db: GroupsDB = GroupsDB(self.db)
