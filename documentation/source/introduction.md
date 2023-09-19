@@ -10,3 +10,4 @@ This manual describes the main components of RDFM. It is divided into the follow
 - RDFM Manager utility - instruction manual for the `rdfm-mgmt` utility, which allows management of devices connected to the RDFM server
 - RDFM Management Server - build instructions and deployment manual for the RDFM Management Server
 - RDFM Server API Reference - comprehensive reference of the HTTP APIs exposed by the RDFM Management Server
+- RDFM OTA Manual - introduces key concepts of the RDFM OTA system and explains it's basic operation principles
