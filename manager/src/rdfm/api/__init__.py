@@ -3,6 +3,8 @@ from http.client import responses
 import rdfm.config
 import urllib.parse
 import requests
+from rdfm.schema.v1.error import ApiError
+
 
 def escape(config: rdfm.config.Config, path: str) -> str:
     """ Wrapper to properly escape the path part of a constructed API URL
@@ -41,7 +43,8 @@ def wrap_api_error(response: requests.Response, prefix: str) -> Optional[str]:
             msg = "Resource not found"
         case 500:
             try:
-                msg = f'Internal server error (server says: {response.json()["error"]})'
+                error: ApiError = ApiError.Schema().load(response.json())
+                msg = f'Internal server error (server says: {error})'
             except:
                 msg = "Internal server error (unknown)"
         case _:

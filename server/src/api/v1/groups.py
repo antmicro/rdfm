@@ -13,9 +13,26 @@ import server
 from api.v1.common import api_error
 import models.group
 import models.device
+from rdfm.schema.v1.groups import (Group,
+                                   AssignDeviceRequest,
+                                   AssignPackageRequest)
+from api.v1.middleware import deserialize_schema
 
 
 groups_blueprint: Blueprint = Blueprint("rdfm-server-groups", __name__)
+
+
+def model_to_schema(group: models.group.Group) -> Group:
+    """ Convert a database group model to a schema model.
+
+    As we have to fetch the device list, this can't be done using just a simple
+    mapping between the fields.
+    """
+    return Group(id=group.id,
+                 created=group.created,
+                 package_id=group.package_id,
+                 devices=[ device.id for device in server.instance._groups_db.fetch_assigned(group.id) ],
+                 metadata=group.info)
 
 
 @groups_blueprint.route('/api/v1/groups')
@@ -60,15 +77,7 @@ def fetch_all():
     """
     try:
         groups: List[models.group.Group] = server.instance._groups_db.fetch_all()
-        return [
-            {
-                "id": group.id,
-                "created": group.created,
-                "package_id": group.package_id,
-                "devices": [ device.id for device in server.instance._groups_db.fetch_assigned(group.id) ],
-                "metadata": group.info
-            } for group in groups
-        ]
+        return Group.Schema().dumps([ model_to_schema(group) for group in groups ], many=True)
     except Exception as e:
         traceback.print_exc()
         print("Exception during group fetch:", repr(e))
@@ -119,13 +128,7 @@ def fetch_one(identifier: int):
         if group is None:
             return api_error("group does not exist", 404)
 
-        return {
-            "id": group.id,
-            "created": group.created,
-            "package_id": group.package_id,
-            "devices": [ str(device.id) for device in server.instance._groups_db.fetch_assigned(group.id) ],
-            "metadata": group.info
-        }, 200
+        return Group.Schema().dumps(model_to_schema(group)), 200
     except Exception as e:
         traceback.print_exc()
         print("Exception during group fetch:", repr(e))
@@ -177,7 +180,8 @@ def delete_one(identifier: int):
 
 
 @groups_blueprint.route('/api/v1/groups/<int:identifier>/devices', methods=['PATCH'])
-def change_assigned(identifier: int):
+@deserialize_schema(schema_dataclass=AssignDeviceRequest, key='instructions')
+def change_assigned(identifier: int, instructions: AssignDeviceRequest):
     """ Modify the list of devices assigned to a group
 
     This endpoint allows modifying the list of devices assigned to the group,
@@ -238,11 +242,9 @@ def change_assigned(identifier: int):
         if group is None:
             return api_error("group does not exist", 404)
 
-        instructions = request.json
-        additions: List[int] = instructions["add"]
-        removals: List[int] = instructions["remove"]
-
-        err = server.instance._groups_db.modify_assignment(identifier, additions, removals)
+        err = server.instance._groups_db.modify_assignment(identifier,
+                                                           instructions.add,
+                                                           instructions.remove)
         if err is not None:
             return api_error(err, 409)
         return {}, 200
@@ -303,13 +305,7 @@ def create():
         group.info = metadata
         server.instance._groups_db.create(group)
 
-        return {
-            "id": group.id,
-            "created": group.created,
-            "package_id": group.package_id,
-            "devices": [],
-            "metadata": group.info
-        }, 200
+        return Group.Schema().dumps(model_to_schema(group)), 200
     except Exception as e:
         traceback.print_exc()
         print("Exception during group creation:", repr(e))
@@ -317,7 +313,8 @@ def create():
 
 
 @groups_blueprint.route('/api/v1/groups/<int:identifier>/package', methods=['POST'])
-def assign_package(identifier: int):
+@deserialize_schema(schema_dataclass=AssignPackageRequest, key='package')
+def assign_package(identifier: int, package: AssignPackageRequest):
     """ Assign a package to a specific group
 
     :param identifier: group identifier
@@ -352,8 +349,7 @@ def assign_package(identifier: int):
         HTTP/1.1 200 OK
     """
     try:
-        payload = request.json
-        package_id: Optional[int] = payload["package_id"]
+        package_id: Optional[int] = package.package_id
         if package_id is not None:
             if server.instance._packages_db.fetch_one(package_id) is None:
                 return api_error("package does not exist", 404)

@@ -6,39 +6,8 @@ from typing import List, Any, Optional, Callable
 from types import SimpleNamespace
 from rdfm.api import wrap_api_error
 from marshmallow import Schema, fields, post_load
-
-
-class Group():
-    id: int
-    created: datetime.datetime
-    devices: list[int]
-    package_id: Optional[int]
-    metadata: dict[str, Any]
-
-    def __init__(self, id, created, devices, package_id, metadata):
-        self.id = id
-        self.created = created
-        self.devices = devices
-        self.package_id = package_id
-        self.metadata = metadata
-
-
-class GroupSchema(Schema):
-    """ Group schema, as returned by the API
-    """
-    id = fields.Int(required=True)
-    created = fields.DateTime(required=True, format="rfc")
-    devices = fields.List(fields.Int,
-                          required=True)
-    package_id = fields.Int(required=True,
-                            allow_none=True)
-    metadata = fields.Dict(keys=fields.Str(),
-                           values=fields.Str(),
-                           required=True)
-
-    @post_load
-    def make_group(self, data, **kwargs):
-        return Group(**data)
+from rdfm.schema.v1.groups import Group
+from rdfm.schema.v1.error import ApiError
 
 
 def fetch_all(config: rdfm.config.Config) -> List[Group]:
@@ -48,7 +17,7 @@ def fetch_all(config: rdfm.config.Config) -> List[Group]:
     if response.status_code != 200:
         raise RuntimeError(f"Server returned unexpected status code {response.status_code}")
 
-    groups: List[Group] = GroupSchema(many=True).load(response.json())
+    groups: List[Group] = Group.Schema(many=True).load(response.json())
     return groups
 
 
@@ -101,7 +70,8 @@ def assign_device(config: rdfm.config.Config,
 
     if response.status_code == 409:
         try:
-            return f'Assigning device failed: {response.json()["error"]}'
+            error: ApiError = ApiError.Schema().load(response.json())
+            return f'Assigning device failed: {error.error}'
         except:
             return "Assigning device failed: a conflict has occured"
     return wrap_api_error(response, "Assigning device failed")

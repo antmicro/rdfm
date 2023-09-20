@@ -12,7 +12,10 @@ from api.v1.common import api_error
 import models.device
 import models.group
 import configuration
-from api.v1.schemas import DeviceMetaSchema
+from rdfm.schema.v1.updates import UpdateCheckRequest
+from rdfm.schema.v1.updates import META_SOFT_VER, META_MAC_ADDRESS, META_DEVICE_TYPE
+from marshmallow import ValidationError
+
 
 update_blueprint: Blueprint = Blueprint("rdfm-server-updates", __name__)
 
@@ -83,17 +86,18 @@ def check_for_update():
         }
     """
     try:
-        errors = DeviceMetaSchema().validate({
-            "metadata": request.json
-        })
-        if len(errors) > 0:
-            return api_error(f"schema validation failed: {errors}", 400)
+        try:
+            update_request: UpdateCheckRequest = UpdateCheckRequest.Schema().load({
+                "metadata": request.json,
+            })
+        except ValidationError as e:
+            return api_error(f"schema validation failed: {e.messages}", 400)
 
-        device_meta = request.json
+        device_meta = update_request.metadata
         print("Device metadata:", device_meta)
-        softver = device_meta[models.package.META_SOFT_VER]
-        devtype = device_meta[models.package.META_DEVICE_TYPE]
-        hwmac = device_meta[models.package.META_MAC_ADDRESS]
+        softver = device_meta[META_SOFT_VER]
+        devtype = device_meta[META_DEVICE_TYPE]
+        hwmac = device_meta[META_MAC_ADDRESS]
 
         device: Optional[models.device.Device] = server.instance._devices_db.get_device_data(hwmac)
         if device is None:
@@ -121,10 +125,10 @@ def check_for_update():
         # Check if the package is actually compatible with the device
         # Note: watch out, package.metadata is an SQLAlchemy field, our meta is
         #       stored in `package.info`
-        if package.info[models.package.META_DEVICE_TYPE] != devtype:
+        if package.info[META_DEVICE_TYPE] != devtype:
             return {}, 204
         # Currently installed version is the latest assigned
-        if package.info[models.package.META_SOFT_VER] == softver:
+        if package.info[META_SOFT_VER] == softver:
             return {}, 204
 
         # A candidate package was found

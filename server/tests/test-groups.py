@@ -34,7 +34,7 @@ def test_groups(process: subprocess.Popen):
     # i.e empty database
     resp = requests.get(GROUPS_ENDPOINT)
     assert resp.status_code == 200, "fetching all groups works"
-    assert resp.content == b"[]\n", "empty database returns no groups"
+    assert resp.content == b"[]", "empty database returns no groups"
 
     # Creating a group
     test_meta = {
@@ -67,7 +67,7 @@ def test_groups(process: subprocess.Popen):
     })
     assert resp.status_code == 200, "modified device assignment successfully"
     resp  = requests.get(f"{GROUPS_ENDPOINT}/{test_group['id']}").json()
-    assert str(DUMMY_DEVICE_ID) in resp["devices"], "device ID appears in fetched group information"
+    assert DUMMY_DEVICE_ID in resp["devices"], "device ID appears in fetched group information"
 
     # Trying to assign a second time should return an error
     resp = requests.patch(f"{GROUPS_ENDPOINT}/{test_group['id']}/devices", json={
@@ -87,5 +87,5 @@ def test_groups(process: subprocess.Popen):
     })
     assert resp.status_code == 200, "removing devices from group works"
     resp  = requests.get(f"{GROUPS_ENDPOINT}/{test_group['id']}").json()
-    assert str(DUMMY_DEVICE_ID) not in resp["devices"], "device ID no longer appears in fetched group information"
+    assert DUMMY_DEVICE_ID not in resp["devices"], "device ID no longer appears in fetched group information"
 

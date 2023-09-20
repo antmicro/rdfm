@@ -6,40 +6,7 @@ import rdfm.config
 from rdfm.api import wrap_api_error
 from typing import List, Any, Optional, Callable
 from types import SimpleNamespace
-from marshmallow import Schema, fields, post_load
-
-
-class Package():
-    id: int
-    created: datetime.datetime
-    sha256: str
-    driver: str
-    metadata: dict[str, Any]
-
-    def __init__(self, id, created, sha256, driver, metadata):
-        self.id = id
-        self.created = created
-        self.sha256 = sha256
-        self.driver = driver
-        self.metadata = metadata
-
-
-class PackageSchema(Schema):
-    """ Package schema, as returned by the API
-    """
-    id = fields.Int(required=True)
-    created = fields.DateTime(required=True, format="rfc")
-    sha256 = fields.Str(required=True)
-    driver = fields.Str(required=True)
-    # FIXME: `values` should be fields.Str(), `Raw` is a workaround
-    #        for the server returning non-string values
-    metadata = fields.Dict(keys=fields.Str(),
-                           values=fields.Raw(),
-                           required=True)
-
-    @post_load
-    def make_package(self, data, **kwargs):
-        return Package(**data)
+from rdfm.schema.v1.packages import Package
 
 
 def fetch_all(config: rdfm.config.Config) -> List[Package]:
@@ -49,7 +16,7 @@ def fetch_all(config: rdfm.config.Config) -> List[Package]:
     if response.status_code != 200:
         raise RuntimeError(f"Server returned unexpected status code {response.status_code}")
 
-    packages: List[Package] = PackageSchema(many=True).load(response.json())
+    packages: List[Package] = Package.Schema(many=True).load(response.json())
     return packages
 
 

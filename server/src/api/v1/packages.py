@@ -18,6 +18,7 @@ import tempfile
 import server
 import configuration
 from api.v1.common import api_error
+from rdfm.schema.v1.packages import Package
 
 
 packages_blueprint: Blueprint = Blueprint("rdfm-server-packages", __name__)
@@ -31,6 +32,16 @@ def metadata_contains_reserved_keys(metadata: dict[str, str]) -> bool:
         key.startswith("rdfm.storage.")
         for key in metadata
     ])
+
+
+def model_to_schema(package: models.package.Package) -> Package:
+    """ Convert a database model to the schema model
+    """
+    return Package(id=package.id,
+                   created=package.created,
+                   sha256=package.sha256,
+                   driver=package.driver,
+                   metadata=package.info)
 
 
 @packages_blueprint.route('/api/v1/packages')
@@ -80,15 +91,7 @@ def fetch_packages():
     """  # noqa: E501
     try:
         packages = server.instance._packages_db.fetch_all()
-        return [
-            {
-                "id": package.id,
-                "created": package.created,
-                "sha256": package.sha256,
-                "metadata": package.info,
-                "driver": package.driver
-            } for package in packages
-        ]
+        return Package.Schema().dumps([ model_to_schema(package) for package in packages ], many=True)
     except Exception as e:
         traceback.print_exc()
         print("Exception during package fetch:", repr(e))
@@ -240,13 +243,7 @@ def fetch_package(identifier: int):
         if pkg is None:
             return api_error("specified package does not exist", 404)
 
-        return {
-            "id": pkg.id,
-            "created": pkg.created,
-            "sha256": pkg.sha256,
-            "driver": pkg.driver,
-            "metadata": pkg.info
-        }, 200
+        return Package.Schema().dumps(model_to_schema(pkg)), 200
     except Exception as e:
         traceback.print_exc()
         print("Exception during package fetch:", repr(e))

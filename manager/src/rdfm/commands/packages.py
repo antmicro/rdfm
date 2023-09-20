@@ -5,10 +5,7 @@ import rdfm.config
 import rdfm.helpers
 import progressbar
 import os.path
-
-
-META_KEY_SOFTVER = "rdfm.software.version"
-META_KEY_DEVTYPE = "rdfm.hardware.devtype"
+from rdfm.schema.v1.updates import META_SOFT_VER, META_DEVICE_TYPE
 
 
 def list_packages(config: rdfm.config.Config, args) -> Optional[str]:
@@ -55,8 +52,8 @@ def upload_package(config: rdfm.config.Config, args) -> Optional[str]:
     version = args.version
     device = args.device
     metadata = {} if args.metadata is None else rdfm.helpers.split_metadata([ x for x in args.metadata])
-    metadata[META_KEY_SOFTVER] = version
-    metadata[META_KEY_DEVTYPE] = device
+    metadata[META_SOFT_VER] = version
+    metadata[META_DEVICE_TYPE] = device
 
     # Setup the progress bar
     widgets = [

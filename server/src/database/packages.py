@@ -10,6 +10,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy.schema import MetaData
 from sqlalchemy.exc import IntegrityError
+from rdfm.schema.v1.updates import META_DEVICE_TYPE
 
 
 class PackagesDB:
@@ -89,7 +90,7 @@ class PackagesDB:
             with Session(self.engine) as session:
                 stmt = (
                     select(models.package.Package)
-                    .where(models.package.Package.info[models.package.META_DEVICE_TYPE].as_string() == devtype)
+                    .where(models.package.Package.info[META_DEVICE_TYPE].as_string() == devtype)
                     .order_by(desc(models.package.Package.created))
                 )
                 packages = session.scalars(stmt)

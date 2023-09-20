@@ -1,5 +1,6 @@
 """ This module contains common helpers to be used in API v1 routes
 """
+from rdfm.schema.v1.error import ApiError
 
 
 def api_error(error_str: str, code: int):
@@ -9,6 +10,4 @@ def api_error(error_str: str, code: int):
         error_str: Brief explanation of an error returned in the response
         code: HTTP status code to return
     """
-    return {
-        "error": error_str
-    }, code
+    return ApiError.Schema().dumps(ApiError(error=error_str)), code
