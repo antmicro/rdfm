@@ -7,10 +7,13 @@ readme = "README.md"
 packages = [
     { include = "rdfm_mgmt_communication.py", from = "src" },
     { include = "request_models.py", from = "src" },
+    { include = "rdfm/**/*.py", from = "src" },
 ]
 
 [tool.poetry.dependencies]
 python = "^3.10"
+marshmallow = "^3.20.1"
+marshmallow-dataclass = "^8.5.14"
 
 [tool.poetry.group.test.dependencies]
 mypy = "^1.4.0"
