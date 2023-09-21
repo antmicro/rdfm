@@ -246,7 +246,10 @@ def create_listening_socket(hostname: str, port: int = 0,
         context.load_cert_chain(crt, key)
         new_socket = context.wrap_socket(new_socket, server_side=True)
 
-    new_socket.bind((hostname, port))
+    try:
+        new_socket.bind((hostname, port))
+    except OSError as e:
+        raise RuntimeError(f"Could not bind device socket on {hostname}, port {port}: {e}")
     new_socket.listen()
     return new_socket
 

@@ -82,13 +82,18 @@ if __name__ == '__main__':
                         help='launch server in debug mode')
     args = parser.parse_args(namespace=config)
 
-    server.instance = server.Server(config)
-    if config.create_mocks:
-        server.instance.create_mock_data()
+    print("Starting the RDFM device socket listener...")
+    try:
+        server.instance = server.Server(config)
+        if config.create_mocks:
+            server.instance.create_mock_data()
+        t = Thread(target=server.instance.run, daemon=True)
+        t.start()
+    except Exception as e:
+        print("Failed to start RDFM device socket listener:", e)
+        exit(1)
 
-    t = Thread(target=server.instance.run, daemon=True)
-    t.start()
-
+    print("Starting the RDFM HTTP API...")
     app.config['RDFM_CONFIG'] = config
     if config.encrypted:
         app.run(host=config.hostname, port=config.http_port,
