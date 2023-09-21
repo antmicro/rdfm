@@ -24,6 +24,9 @@ VERSION = $(shell git describe --tags --dirty --exact-match 2>/dev/null || git r
 GO_LDFLAGS = \
 	-ldflags "-X github.com/antmicro/rdfm/conf.Version=$(VERSION)"
 
+BUILDER_IMAGE_TAG = antmicro/rdfm-client-builder:latest
+DEMO_CLIENT_TAG = antmicro/rdfm-linux-demo-client:latest
+
 ifeq ($(V),1)
 BUILDV = -v
 endif
@@ -41,6 +44,12 @@ build:
 	$(GO) build $(GO_LDFLAGS) $(BUILDV) $(BUILDTAGS)
 
 rdfm: build
+
+docker-builder:
+	docker build -f Dockerfile -t $(BUILDER_IMAGE_TAG) .
+
+docker-demo-client: docker-builder
+	docker build -f Dockerfile.demo-client -t $(DEMO_CLIENT_TAG) .
 
 install: install-bin \
 	install-conf
@@ -72,6 +81,8 @@ test:
 	$(GO) test $(BUILDV) $(PKGS)
 
 .PHONY: build
+.PHONY: docker-builder
+.PHONY: docker-demo-client
 .PHONY: clean
 .PHONY: test
 .PHONY: install

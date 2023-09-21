@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  demo-client:
+    image: antmicro/rdfm-linux-demo-client:latest
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      # Device type reported to the server
+      RDFM_CLIENT_DEVTYPE: x86_64
+      # Example: plain HTTP server connection
+      RDFM_CLIENT_SERVER_URL: http://127.0.0.1:5000/
+      # Example: HTTPS server connection
+      # Remember to update the URL to use HTTPS!
+      # RDFM_CLIENT_SERVER_URL: https://127.0.0.1:5000/
+      # RDFM_CLIENT_SERVER_CERT: /var/lib/rdfm/CA.crt
+    volumes:
+      # Simulate a persistent "partition" for the configuration
+      - data:/var/lib/rdfm/
+
+volumes:
+  data:

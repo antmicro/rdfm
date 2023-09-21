@@ -55,6 +55,32 @@ cd data/devices/linux-client
 make
 ```
 
+## Testing server-device integration with a demo Linux device client
+
+For development purposes, it's often necessary to test server integration with an existing device client.
+To do this, it is possible to use the [RDFM Linux device client](rdfm_linux_device_client.md), without having to build a compatible system image utilizing the Yocto [meta-rdfm layer](https://github.com/antmicro/meta-antmicro/tree/master/meta-rdfm).
+First, build the demo container image:
+
+```
+cd devices/linux-client/
+make docker-demo-client
+```
+
+You can then start a demo Linux client by running the following:
+```
+docker-compose -f docker-compose.demo.yml up
+```
+
+If required, the following environment variables can be changed in the above `docker-compose.demo.yml` file:
+
+- `RDFM_CLIENT_SERVER_URL` - URL to the RDFM Management Server, defaults to `http://127.0.0.1:5000/`.
+- `RDFM_CLIENT_SERVER_CERT` **(optional)** - path (within the container) to the CA certificate to use for verification of the connection to the RDFM server. When this variable is set, the server URL must also be updated to use HTTPS instead of HTTP.
+- `RDFM_CLIENT_DEVTYPE` - device type that will be advertised to the RDFM server; used for determining package compatibility, defaults to `x86_64`.
+- `RDFM_CLIENT_PART_A`, `RDFM_CLIENT_PART_B` **(optional)** - specifies path (within the container) to the rootfs A/B partitions that updates will be installed to. They do not need to be specified for basic integration testing; any updates that are installed will go to `/dev/zero` by default.
+
+The demo client will automatically connect to the specified RDFM server and fetch any available packages.
+To manage the device and update deployment, you can use the [RDFM Manager utility](rdfm_manager.md).
+
 ## Developer Guide
 
 ### Running tests

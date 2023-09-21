@@ -1,0 +1,9 @@
+FROM antmicro/rdfm-client-builder:latest
+
+# Copy all sources
+COPY . /rdfm-client/
+WORKDIR /rdfm-client/
+# Install the RDFM client
+RUN make install
+
+CMD [ "/rdfm-client/scripts/test-docker/docker-entrypoint.sh" ]
