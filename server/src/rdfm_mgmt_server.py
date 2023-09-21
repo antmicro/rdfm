@@ -39,6 +39,8 @@ if __name__ == '__main__':
     import argparse
 
     config = configuration.ServerConfig()
+    if not configuration.parse_from_environment(config):
+        exit(1)
 
     parser = argparse.ArgumentParser(
         description='RDFM management server instance.')
@@ -70,10 +72,6 @@ if __name__ == '__main__':
     parser.add_argument('--local-package-dir', type=str, dest='package_dir',
                         default='/tmp/.rdfm-local-storage/',
                         help='package storage directory')
-    parser.add_argument('--jwt-secret', type=str,
-                        default=os.environ['JWT_SECRET'],
-                        help="""JWT secret key, if not provided it will
-                            be read from $JWT_SECRET env var""")
     parser.add_argument('--test-mocks', action='store_true',
                         dest='create_mocks',
                         help="""insert mock data into the
