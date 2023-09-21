@@ -55,8 +55,8 @@ RDFM Manager utility
 
 options:
   -h, --help            show this help message and exit
-  -url URL              URL to the RDFM Management Server (default: http://127.0.0.1:5000/)
-  -cert CERT            path to the server CA certificate used for establishing an HTTPS connection (default: ./certs/CA.crt)
+  --url URL             URL to the RDFM Management Server (default: http://127.0.0.1:5000/)
+  --cert CERT           path to the server CA certificate used for establishing an HTTPS connection (default: ./certs/CA.crt)
 
 available commands:
   {devices,packages,groups}

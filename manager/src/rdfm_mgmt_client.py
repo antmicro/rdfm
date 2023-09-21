@@ -200,19 +200,19 @@ if __name__ == '__main__':
         usage="""Documentation and list of commands:
         https://github.com/antmicro/rdfm/docs
         To exit just input "exit".""")
-    parser.add_argument('-hostname', type=str, default='127.0.0.1',
+    parser.add_argument('--hostname', type=str, default='127.0.0.1',
                         help='ip addr or domain name of the server')
-    parser.add_argument('-files_url', type=str,
+    parser.add_argument('--files-url', type=str,
                         default='https://127.0.0.1:5000/',
                         help='url of file transfer api')
-    parser.add_argument('-port', metavar='p', type=int, default=1234,
+    parser.add_argument('--port', metavar='p', type=int, default=1234,
                         help='listening port on the server')
     parser.add_argument('name', type=str,
                         help="""client name for identification,
                                 without whitespaces""")
-    parser.add_argument('-no_ssl', action='store_true',
+    parser.add_argument('--no-ssl', action='store_true',
                         help='turn off encryption')
-    parser.add_argument('-cert', metavar='c', type=str,
+    parser.add_argument('--cert', metavar='c', type=str,
                         default='./certs/CA.crt',
                         help="""CA cert file""")
     args = parser.parse_args()

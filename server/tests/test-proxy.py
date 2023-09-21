@@ -2,11 +2,11 @@ import pexpect
 import time
 
 def not_encrypted_proxy():
-    child_server = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_server -debug -no_ssl 2>&1 | tee proxy-noenc-server.log"')
+    child_server = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_server --debug --no-ssl 2>&1 | tee proxy-noenc-server.log"')
     child_server.expect("Listening for connections on 127.0.0.1:1234...")
 
     time.sleep(5)
-    child_user = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_client u -no_ssl 2>&1 | tee proxy-noenc-manager.log""')
+    child_user = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_client u --no-ssl 2>&1 | tee proxy-noenc-manager.log""')
     child_device = pexpect.spawn(
         'bash -c "./devices/linux-client/rdfm daemonize --name d1 --no-ssl --no-jwt-auth 2>&1 | tee proxy-noenc-device.log"'
     )
@@ -30,7 +30,7 @@ def not_encrypted_proxy():
     print("Not encrypted proxy test passed!")
 
 def encrypted_proxy():
-    child_server = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_server -debug 2>&1 | tee proxy-enc-server.log"')
+    child_server = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_server --debug 2>&1 | tee proxy-enc-server.log"')
     child_server.expect("Listening for connections on 127.0.0.1:1234...")
 
     time.sleep(5)
@@ -56,11 +56,11 @@ def encrypted_proxy():
     print("Encrypted proxy test passed!")
 
 def two_proxies():
-    child_server = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_server -debug -no_ssl 2>&1 | tee 2proxy-server.log"')
+    child_server = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_server --debug --no-ssl 2>&1 | tee 2proxy-server.log"')
     child_server.expect("Listening for connections on 127.0.0.1:1234...")
 
     time.sleep(5)
-    child_user = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_client u -no_ssl 2>&1 | tee 2proxy-manager.log"')
+    child_user = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_client u --no-ssl 2>&1 | tee 2proxy-manager.log"')
     child_device = pexpect.spawn(
         'bash -c "./devices/linux-client/rdfm daemonize --name d1 --no-ssl --no-jwt-auth 2>&1 | tee 2proxy-manager.log"'
     )

@@ -41,7 +41,7 @@ if __name__ == '__main__':
     config = configuration.ServerConfig()
 
     parser = argparse.ArgumentParser(
-        description='rdfm-mgmt-shell server instance.')
+        description='RDFM management server instance.')
     # Note: all configuration variables should be stored in the
     # in the `configuration.ServerConfig` struct, to allow for
     # alternate configuration storage methods (file, CLI, etc.).
@@ -50,35 +50,35 @@ if __name__ == '__main__':
     # This requires that the names of the configuration variables match
     # the CLI argument name. Use `dest='<name>'` in calls to `add_argument`
     # for cases where this is not desirable.
-    parser.add_argument('-hostname', type=str, default='127.0.0.1',
+    parser.add_argument('--hostname', type=str, default='127.0.0.1',
                         help='ip addr or domain name of the host')
-    parser.add_argument('-port', metavar='p', type=int, default=1234,
+    parser.add_argument('--port', metavar='p', type=int, default=1234,
                         help='listening port')
-    parser.add_argument('-http_port', metavar='hp', type=int, default=5000,
+    parser.add_argument('--http-port', metavar='hp', type=int, default=5000,
                         help='listening port')
-    parser.add_argument('-no_ssl', action='store_false', dest='encrypted',
+    parser.add_argument('--no-ssl', action='store_false', dest='encrypted',
                         help='turn off encryption')
-    parser.add_argument('-cert', type=str, default='./certs/SERVER.crt',
+    parser.add_argument('--cert', type=str, default='./certs/SERVER.crt',
                         help='server cert file')
-    parser.add_argument('-key', type=str, default='./certs/SERVER.key',
+    parser.add_argument('--key', type=str, default='./certs/SERVER.key',
                         help="""server cert key file""")
-    parser.add_argument('-database', metavar='db', type=str, dest='db_conn',
+    parser.add_argument('--database', metavar='db', type=str, dest='db_conn',
                         default='sqlite:///devices.db',
                         help='database connection string')
-    parser.add_argument('-cache_dir', type=str, default='server_file_cache',
+    parser.add_argument('--cache-dir', type=str, default='server_file_cache',
                         help='file transfer cache directory')
-    parser.add_argument('-local_package_dir', type=str, dest='package_dir',
+    parser.add_argument('--local-package-dir', type=str, dest='package_dir',
                         default='/tmp/.rdfm-local-storage/',
                         help='package storage directory')
-    parser.add_argument('-jwt_secret', type=str,
+    parser.add_argument('--jwt-secret', type=str,
                         default=os.environ['JWT_SECRET'],
                         help="""JWT secret key, if not provided it will
                             be read from $JWT_SECRET env var""")
-    parser.add_argument('-test_mocks', action='store_true',
+    parser.add_argument('--test-mocks', action='store_true',
                         dest='create_mocks',
                         help="""insert mock data into the
                             database for running tests""")
-    parser.add_argument('-debug', action='store_true',
+    parser.add_argument('--debug', action='store_true',
                         help='launch server in debug mode')
     args = parser.parse_args(namespace=config)
 

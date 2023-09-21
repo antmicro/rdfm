@@ -2,7 +2,7 @@ import pexpect
 import time
 
 
-child_server = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_server -debug 2>&1 | tee metadata-server.log"')
+child_server = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_server --debug 2>&1 | tee metadata-server.log"')
 child_server.expect("Listening for connections on 127.0.0.1:1234...")
 
 child_user = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_client u 2>&1 | tee metadata-manager.log"')

@@ -48,7 +48,7 @@ You can run a development RDFM Management Server by running the following comman
 ```bash
 cd server/
 export JWT_SECRET="THISISATESTDEVELOPMENTSECRET123"
-poetry build && poetry install && poetry run python -m rdfm_mgmt_server -no_ssl
+poetry build && poetry install && poetry run python -m rdfm_mgmt_server --no-ssl
 ```
 
 This launches the RDFM Management Server with no encryption, listening on `localhost`/`127.0.0.1`. By default, the device communication socket is listening on port `1234`, while the HTTP API is exposed on port `5000`.

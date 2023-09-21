@@ -16,9 +16,9 @@ def main():
         usage='rdfm-mgmt',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('-url', type=str, default='http://127.0.0.1:5000/',
+    parser.add_argument('--url', type=str, default='http://127.0.0.1:5000/',
                         help='URL to the RDFM Server')
-    parser.add_argument('-cert', type=str, default='./certs/CA.crt',
+    parser.add_argument('--cert', type=str, default='./certs/CA.crt',
                         help='path to the server CA certificate used for establishing an HTTPS connection')
 
     subparsers = parser.add_subparsers(required=True,
