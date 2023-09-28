@@ -29,6 +29,38 @@ This will install the `rdfm-mgmt` utility and its dependencies for the current u
 The `rdfm-mgmt` executable will be placed in `/home/<user>/.local/bin/` and should be immediately accessible from the shell.
 Depending on the current system configuration, adding the above directory to the `PATH` may be required.
 
+## Configuration
+
+Additional RDFM Manager configuration is stored in the current user's `$HOME` directory, in the `$HOME/.config/rdfm-mgmt/config.json` file.
+By default, RDFM Manager will add authentication data to all requests made to the RDFM server, which requires configuration of an authorization server and client credentials for use with the OAuth2 `Client Credentials` flow.
+If authentication was disabled on the server-side, you can disable it in the manager as well by passing the `--no-api-auth` CLI flag like so:
+
+```
+rdfm-mgmt --no-api-auth groups list
+```
+
+An example configuration file is shown below.
+In this case, the [Keycloak authorization server](https://www.keycloak.org/) was used:
+
+```json
+{
+        "auth_url": "http://keycloak:8080/realms/master/protocol/openid-connect/token",
+        "client_id": "rdfm-client",
+        "client_secret": "RDSwDyUMOT7UXxMqMmq2Y4vQ1ezxqobi"
+}
+```
+
+Explanation of each required configuration field is shown below:
+- `auth_url` - URL to the authorization server's [token endpoint](https://swagger.io/docs/specification/authentication/openid-connect-discovery/)
+- `client_id` - Client ID to use for authentication using OAuth2 Client Credentials flow
+- `client_secret` - Client secret to use for authentication using OAuth2 Client Credentials flow
+
+:::{note}
+If you're also setting up the server, please note that the above client credentials are **NOT** the same as the server's Token Introspection credentials.
+Each user of ``rdfm-mgmt`` should receive different credentials and be assigned scopes based on their allowed access level.
+:::
+
+
 ## Building the wheel
 
 For installation instructions, see the [Installation section](#installation).
@@ -57,6 +89,7 @@ options:
   -h, --help            show this help message and exit
   --url URL             URL to the RDFM Management Server (default: http://127.0.0.1:5000/)
   --cert CERT           path to the server CA certificate used for establishing an HTTPS connection (default: ./certs/CA.crt)
+  --no-api-auth         disable OAuth2 authentication for API requests (default: False)
 
 available commands:
   {devices,packages,groups}

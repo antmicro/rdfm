@@ -282,3 +282,8 @@ After saving the client, go to the `Credentials` tab found under the client deta
 Make sure the authenticator used is `Client Id and Secret`, and copy the `Client secret`.
 
 Finally, assign the required scope to the client: under the `Client scopes` tab, click `Add client scope` and select one of the two RDFM scopes: read-only `rdfm_admin_ro` or read-write `rdfm_admin_rw`.
+
+:::{note}
+The newly-created client will now have access to the RDFM API.
+To configure `rdfm-mgmt` to use this client, follow the [Configuration section](rdfm_manager.md#configuration) of the RDFM manager manual.
+:::

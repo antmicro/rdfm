@@ -8,6 +8,8 @@ import rdfm.config
 import rdfm.commands.devices
 import rdfm.commands.packages
 import rdfm.commands.groups
+from authlib.integrations.requests_client import OAuthError
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -20,6 +22,10 @@ def main():
                         help='URL to the RDFM Server')
     parser.add_argument('--cert', type=str, default='./certs/CA.crt',
                         help='path to the server CA certificate used for establishing an HTTPS connection')
+    parser.add_argument('--no-api-auth', default=False,
+                        action='store_true',
+                        dest='disable_api_auth',
+                        help='disable OAuth2 authentication for API requests')
 
     subparsers = parser.add_subparsers(required=True,
                                        title='available commands')
@@ -41,14 +47,18 @@ def main():
         config.ca_cert = args.cert
     else:
         config.ca_cert = None
-    config.authorizer = rdfm.api.auth.DefaultAuth()
+    config.disable_api_auth = args.disable_api_auth
 
-    # Dispatch to the correct handler
-    # We should pass the following arguments to the handler:
-    #   - Config structure
-    #   - parsed arguments from `argparser`
-    # The handler optionally returns a string with a friendly user message
+
     try:
+        rdfm.config.load_auth_from_file(config)
+        config.authorizer = rdfm.api.auth.create_authorizer(config)
+
+        # Dispatch to the correct handler
+        # We should pass the following arguments to the handler:
+        #   - Config structure
+        #   - parsed arguments from `argparser`
+        # The handler optionally returns a string with a friendly user message
         ret = args.func(config, args)
         if ret is not None:
             print("rdfm-mgmt:", ret)
@@ -58,6 +68,13 @@ def main():
         exit(1)
     except requests.Timeout as e:
         print("rdfm-mgmt: Server request timed out:", e)
+        exit(1)
+    except OAuthError as e:
+        print("rdfm-mgmt: Invalid credentials were supplied for authorization, please check configuration.")
+        print("OAuth error occurred:", e)
+        exit(1)
+    except RuntimeError as e:
+        print("rdfm-mgmt:", e)
         exit(1)
     except Exception:
         traceback.print_exc()

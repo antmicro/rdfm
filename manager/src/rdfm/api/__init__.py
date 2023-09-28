@@ -38,7 +38,10 @@ def wrap_api_error(response: requests.Response, prefix: str) -> Optional[str]:
         case 401:
             msg = "Unauthorized to access the server"
         case 403:
-            msg = "Unauthorized to perform the specified operation"
+            msg = ("Unauthorized to perform the specified operation. "
+                   "Your credentials do not have sufficient privileges "
+                   "(most likely, trying to access read-write APIs using "
+                   "a read-only user)")
         case 404:
             msg = "Resource not found"
         case 500:
