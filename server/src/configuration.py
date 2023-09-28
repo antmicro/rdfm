@@ -16,6 +16,10 @@ ENV_S3_BUCKET = "RDFM_S3_BUCKET"
 """
 ALLOWED_STORAGE_DRIVERS = ["local", "s3"]
 
+ENV_OAUTH_URL = "RDFM_OAUTH_URL"
+ENV_OAUTH_CLIENT_ID = "RDFM_OAUTH_CLIENT_ID"
+ENV_OAUTH_CLIENT_SECRET = "RDFM_OAUTH_CLIENT_SEC"
+
 
 class ServerConfig():
     """ Server configuration
@@ -80,6 +84,31 @@ class ServerConfig():
     """ Bucket name for storing packages on S3
     """
     s3_bucket_name: Optional[str]
+
+    """ Should API auth be disabled?
+        WARNING: This disables ALL authentication on the exposed API.
+        DO NOT USE OUTSIDE A DEVELOPMENT ENVIRONMENT!
+    """
+    disable_api_auth: bool
+
+    """ URL to an RFC 7662-compatible OAuth2 Token Introspection endpoint.
+        This is used to validate tokens from requests coming to the server API.
+    """
+    token_introspection_url: str
+
+    """ When authentication is required to access token introspection,
+        this defines the client_id that will be attached in the
+        basic authorization header when making an introspection
+        request.
+    """
+    token_introspection_client_id: str
+
+    """ When authentication is required to access token introspection,
+        this defines the client_secret that will be attached in the
+        basic authorization header when making an introspection
+        request.
+    """
+    token_introspection_client_secret: str
 
     """ (DEBUG FLAG) Instruct the server to create mock data in the
         database when starting. DO NOT USE, for testing purposes only!
@@ -151,4 +180,20 @@ def parse_from_environment(config: ServerConfig) -> bool:
         config.s3_bucket_name = try_get_env(ENV_S3_BUCKET, "S3 Bucket name")
         if None in [config.s3_access_key_id, config.s3_secret_access_key, config.s3_bucket_name]:
             return False
+
+    # Token Introspection variables are only required when running
+    # with authentication enabled.
+    if not config.disable_api_auth:
+        oauth_url = try_get_env(ENV_OAUTH_URL, "RFC 7662 Token Introspection endpoint")
+        oauth_client_id = try_get_env(ENV_OAUTH_CLIENT_ID,
+                                    "OAuth2 client_id to authenticate introspection requests")
+        oauth_client_secret = try_get_env(ENV_OAUTH_CLIENT_SECRET,
+                                        "OAuth2 client_secret to authenticate introspection requests")
+        if None in [oauth_url, oauth_client_id, oauth_client_secret]:
+            return False
+
+        config.token_introspection_url = oauth_url
+        config.token_introspection_client_id = oauth_client_id
+        config.token_introspection_client_secret = oauth_client_secret
+
     return True

@@ -39,8 +39,6 @@ if __name__ == '__main__':
     import argparse
 
     config = configuration.ServerConfig()
-    if not configuration.parse_from_environment(config):
-        exit(1)
 
     parser = argparse.ArgumentParser(
         description='RDFM management server instance.')
@@ -72,6 +70,9 @@ if __name__ == '__main__':
     parser.add_argument('--local-package-dir', type=str, dest='package_dir',
                         default='/tmp/.rdfm-local-storage/',
                         help='package storage directory')
+    parser.add_argument('--no-api-auth', action='store_true',
+                        dest='disable_api_auth',
+                        help="disable API authentication")
     parser.add_argument('--test-mocks', action='store_true',
                         dest='create_mocks',
                         help="""insert mock data into the
@@ -79,6 +80,11 @@ if __name__ == '__main__':
     parser.add_argument('--debug', action='store_true',
                         help='launch server in debug mode')
     args = parser.parse_args(namespace=config)
+
+    # Environment parsing must come after the CLI flags,
+    # as some environment variables depend on certain options.
+    if not configuration.parse_from_environment(config):
+        exit(1)
 
     print("Starting the RDFM device socket listener...")
     try:

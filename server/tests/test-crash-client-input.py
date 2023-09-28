@@ -2,7 +2,7 @@ import pexpect
 import time
 import sys
 
-child_server = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_server --debug --no-ssl 2>&1 | tee crash-server.log"')
+child_server = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_server --debug --no-ssl --no-api-auth 2>&1 | tee crash-server.log"')
 time.sleep(3)
 child_user = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_client u --no-ssl 2>&1 | tee crash-manager.log"')
 

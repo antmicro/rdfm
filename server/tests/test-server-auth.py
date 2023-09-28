@@ -74,7 +74,7 @@ def process():
         os.remove(DBPATH)
 
     print("Starting server..")
-    process = subprocess.Popen(["python3", "-m", "rdfm_mgmt_server", "--debug", "--no-ssl", "--database", f"sqlite:///{DBPATH}"])
+    process = subprocess.Popen(["python3", "-m", "rdfm_mgmt_server", "--debug", "--no-ssl", "--no-api-auth", "--database", f"sqlite:///{DBPATH}"])
     time.sleep(5)
 
     yield process

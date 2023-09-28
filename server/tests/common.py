@@ -69,7 +69,7 @@ def process():
         os.remove(DBPATH)
 
     print("Starting server..")
-    process = subprocess.Popen(["python3", "-m", "rdfm_mgmt_server", "--no-ssl", "--test-mocks", "--database", f"sqlite:///{DBPATH}"])
+    process = subprocess.Popen(["python3", "-m", "rdfm_mgmt_server", "--no-ssl", "--no-api-auth", "--test-mocks", "--database", f"sqlite:///{DBPATH}"])
     assert wait_for_api(SERVER_WAIT_TIMEOUT, SERVER), "server has started successfully"
 
     yield process

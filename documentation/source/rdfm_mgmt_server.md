@@ -44,7 +44,7 @@ You can run a development RDFM Management Server by running the following comman
 ```bash
 cd server/
 export JWT_SECRET="THISISATESTDEVELOPMENTSECRET123"
-poetry build && poetry install && poetry run python -m rdfm_mgmt_server --no-ssl --local-package-dir ./packages/
+poetry build && poetry install && poetry run python -m rdfm_mgmt_server --no-ssl --no-api-auth --local-package-dir ./packages/
 ```
 
 This launches the RDFM Management Server with no encryption, listening on `localhost`/`127.0.0.1`. By default, the device communication socket is listening on port `1234`, while the HTTP API is exposed on port `5000`.
@@ -77,6 +77,7 @@ services:
       - RDFM_API_PORT=5000
       - RDFM_DEVICE_PORT=1234
       - RDFM_DISABLE_ENCRYPTION=1
+      - RDFM_DISABLE_API_AUTH=1
       - RDFM_LOCAL_PACKAGE_DIR=/packages/
     ports:
       - "1234:1234"
@@ -108,6 +109,10 @@ Configuration of the RDFM server can be changed by using the following environme
 - `RDFM_SERVER_KEY` - when using encryption, path to the server's private key. Additionally, the above also applies here.
 - `RDFM_LOCAL_PACKAGE_DIR` - specifies a path (local for the server) to a directory where the packages are stored
 - `RDFM_STORAGE_DRIVER` - storage driver to use for storing artifacts. Accepted values: `local` (default), `s3`.
+- `RDFM_DISABLE_API_AUTH` - disables request authentication on the exposed API routes. **WARNING: This is a development flag only! Do not use in production!** This causes all API methods to be freely accessible, without any access control in place!
+- `RDFM_OAUTH_URL` - specifies the URL to an authorization server endpoint compatible with the RFC 7662 OAuth2 Token Introspection extension. This endpoint is used to authorize access to the RDFM server based on tokens provided in requests made by API users.
+- `RDFM_OAUTH_CLIENT_ID` - if the authorization server endpoint provided in `RDFM_OAUTH_URL` requires the RDFM server to authenticate, this variable defines the OAuth2 `client_id` used for authentication.
+- `RDFM_OAUTH_CLIENT_SEC` -  if the authorization server endpoint provided in `RDFM_OAUTH_URL` requires the RDFM server to authenticate, this variable defines the OAuth2 `client_secret` used for authentication.
 
 ## Configuring package storage location
 

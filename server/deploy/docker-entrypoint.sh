@@ -17,6 +17,9 @@ encrypted=1
 if [ -n "${RDFM_DISABLE_ENCRYPTION}" ]; then
 	encrypted=0
 fi
+if [ -n "${RDFM_DISABLE_API_AUTH}" ]; then
+	server_args="${server_args} --no-api-auth"
+fi
 
 if [ ${encrypted} == 1 ]; then
 	require_variable RDFM_SERVER_CERT

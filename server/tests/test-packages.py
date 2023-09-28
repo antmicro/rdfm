@@ -11,7 +11,7 @@ SERVER = "http://127.0.0.1:5000/"
 PACKAGES_ENDPOINT = f"{SERVER}/api/v1/packages"
 TESTING_PACKAGE_SIZE = 1024
 
-process = subprocess.Popen(["python3", "-m", "rdfm_mgmt_server", "--debug", "--no-ssl"])
+process = subprocess.Popen(["python3", "-m", "rdfm_mgmt_server", "--debug", "--no-ssl", "--no-api-auth"])
 time.sleep(5)
 
 try:

@@ -7,7 +7,7 @@ import requests
 time.sleep(3)
 cache_dir = 'server_file_cache'
 
-child_server = pexpect.spawn(f'bash -c "python3 -m rdfm_mgmt_server --debug --cache-dir {cache_dir} 2>&1 | tee filetx-server.log"')
+child_server = pexpect.spawn(f'bash -c "python3 -m rdfm_mgmt_server --debug --no-api-auth --cache-dir {cache_dir} 2>&1 | tee filetx-server.log"')
 #print('Cache directory:', os.system(f'find / -name "{cache_dir}" -type d'))
 child_server.expect_exact('Running on https://127.0.0.1:5000')
 

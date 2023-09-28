@@ -2,7 +2,7 @@ import pexpect
 import time
 
 def default_arguments():    
-    child_server = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_server 2>&1 | tee arg-def-server.log"')
+    child_server = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_server --no-api-auth 2>&1 | tee arg-def-server.log"')
     child_server.expect('Listening for connections on 127.0.0.1:1234...')
 
     child_user = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_client u 2>&1 | tee arg-def-manager.log""')
@@ -14,7 +14,7 @@ def default_arguments():
     print('Default arguments test passed!')
 
 def with_arguments(hostname, port):    
-    child_server = pexpect.spawn(f'bash -c "python3 -m rdfm_mgmt_server --debug --hostname {hostname} --port {port} 2>&1 | tee arg-server.log"')
+    child_server = pexpect.spawn(f'bash -c "python3 -m rdfm_mgmt_server --debug --no-api-auth --hostname {hostname} --port {port} 2>&1 | tee arg-server.log"')
     child_server.expect(f'Listening for connections on {hostname}:{port}...')
 
     child_user = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_client u 2>&1 | tee arg-manager-failing.log""')

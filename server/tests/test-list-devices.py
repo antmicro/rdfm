@@ -11,7 +11,7 @@ time.sleep(3)
 
 print(os.listdir(os.path.join(os.getcwd(), "./devices/linux-client")))
 
-child_server = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_server --debug 2>&1 | tee list-server.log"')
+child_server = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_server --debug --no-api-auth 2>&1 | tee list-server.log"')
 child_server.expect_exact("Running on https://127.0.0.1:5000")
 
 child_user = pexpect.spawn('bash -c "python3 -m rdfm_mgmt_client u 2>&1 | tee list-manager.log"')
