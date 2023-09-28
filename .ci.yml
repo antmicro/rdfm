@@ -251,6 +251,28 @@ test-server-s3-storage:
       - merge_requests
       - main
 
+test-server-management-auth:
+  extends: .build
+  stage: local-tests
+  script:
+    - cd server
+    - pytest tests/test-server-management-auth.py
+  only:
+    refs:
+      - merge_requests
+      - main
+
+test-server-route-correctness:
+  extends: .build
+  stage: local-tests
+  script:
+    - cd server
+    - pytest tests/test-server-route-correctness.py
+  only:
+    refs:
+      - merge_requests
+      - main
+
 # ===== rdfm-client ===== #
 
 .rdfm-client:
