@@ -1,6 +1,7 @@
 import datetime
 import traceback
 from typing import List, Optional
+from api.v1.middleware import management_read_only_api, management_read_write_api
 from flask import (
     Flask,
     request,
@@ -39,6 +40,7 @@ def model_to_schema(group: models.group.Group) -> Group:
 
 
 @groups_blueprint.route('/api/v1/groups')
+@management_read_only_api
 def fetch_all():
     """ Fetch all groups
 
@@ -90,6 +92,7 @@ def fetch_all():
 
 
 @groups_blueprint.route('/api/v1/groups/<int:identifier>')
+@management_read_only_api
 def fetch_one(identifier: int):
     """ Fetch information about a group
 
@@ -143,6 +146,7 @@ def fetch_one(identifier: int):
 
 
 @groups_blueprint.route('/api/v1/groups/<int:identifier>', methods=['DELETE'])
+@management_read_write_api
 def delete_one(identifier: int):
     """ Delete a group
 
@@ -187,6 +191,7 @@ def delete_one(identifier: int):
 
 
 @groups_blueprint.route('/api/v1/groups/<int:identifier>/devices', methods=['PATCH'])
+@management_read_write_api
 @deserialize_schema(schema_dataclass=AssignDeviceRequest, key='instructions')
 def change_assigned(identifier: int, instructions: AssignDeviceRequest):
     """ Modify the list of devices assigned to a group
@@ -262,6 +267,7 @@ def change_assigned(identifier: int, instructions: AssignDeviceRequest):
 
 
 @groups_blueprint.route('/api/v1/groups', methods=['POST'])
+@management_read_write_api
 def create():
     """ Create a new group
 
@@ -322,6 +328,7 @@ def create():
 
 
 @groups_blueprint.route('/api/v1/groups/<int:identifier>/package', methods=['POST'])
+@management_read_write_api
 @deserialize_schema(schema_dataclass=AssignPackageRequest, key='assignment')
 def assign_package(identifier: int, assignment: AssignPackageRequest):
     """ Assign a package to a specific group
@@ -374,6 +381,7 @@ def assign_package(identifier: int, assignment: AssignPackageRequest):
 
 
 @groups_blueprint.route('/api/v1/groups/<int:identifier>/policy', methods=['POST'])
+@management_read_write_api
 @deserialize_schema(schema_dataclass=AssignPolicyRequest, key='policy_request')
 def update_policy(identifier: int, policy_request: AssignPolicyRequest):
     """ Change the update policy of the group

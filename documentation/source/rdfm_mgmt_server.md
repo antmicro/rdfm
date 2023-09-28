@@ -149,3 +149,27 @@ Then, run the following:
 ```
 docker-compose -f server/deploy/docker-compose.minio.yml up
 ```
+
+## Configuring API authentication
+
+### Basic configuration
+
+The above development setup does not provide any authentication for the RDFM API.
+This is helpful for development or debugging purposes, however **under no circumstance should this be used in production deployments, as it exposes the entire API with no restrictions in place**.
+
+By default, the RDFM server requires configuration of an external authorization server to handle token creation and scope management.
+To be compatible with RDFM Management Server, the authentication server **MUST** support the OAuth2 Token Introspection extension ([RFC 7662](https://datatracker.ietf.org/doc/html/rfc7662)).
+
+The authorization server is configured using the following environment variables:
+- `RDFM_OAUTH_URL` - specifies the URL to the Token Introspection endpoint of the authorization server.
+- `RDFM_OAUTH_CLIENT_ID` - specifies the client identifier to use for authenticating the RDFM server to the authorization server.
+- `RDFM_OAUTH_CLIENT_SEC` - specifies the client secret to use for authenticating the RDFM server to the authorization server.
+
+For accessing the management API, the RDFM server does not issue any tokens itself.
+This task is delegated to the authorization server that is used in conjunction with RDFM.
+The following scopes are used for controlling access to different methods of the RDFM API:
+- `rdfm_admin_ro` - read-only access to the API (fetching devices, groups, packages)
+- `rdfm_admin_rw` - complete administrative access to the API with modification rights
+
+Refer to the [RDFM Server API Reference chapter](api.rst) for a breakdown of the scopes required for accessing each API method.
+

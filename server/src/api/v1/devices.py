@@ -30,12 +30,14 @@ import traceback
 import models.device
 import json
 from api.v1.common import api_error
+from api.v1.middleware import management_read_only_api, management_read_write_api
 
 
 devices_blueprint: Blueprint = Blueprint("rdfm-server-devices", __name__)
 
 
 @devices_blueprint.route('/')
+@management_read_only_api
 def index():
     response = server.instance.handle_request(ListRequest())
     assert response is not None
@@ -43,6 +45,7 @@ def index():
 
 
 @devices_blueprint.route('/device/<device_name>', methods=['GET'])
+@management_read_only_api
 def device_metadata(device_name: str):
     response = server.instance.handle_request(
         InfoDeviceRequest(device_name=device_name)  # type: ignore
@@ -52,6 +55,7 @@ def device_metadata(device_name: str):
 
 
 @devices_blueprint.route('/device/<device_name>/update')
+@management_read_write_api
 def device_update(device_name: str):
     response = server.instance.handle_request(
         UpdateDeviceRequest(device_name=device_name)  # type: ignore
@@ -61,6 +65,7 @@ def device_update(device_name: str):
 
 
 @devices_blueprint.route('/device/<device_name>/proxy')
+@management_read_write_api
 def device_proxy(device_name: str):
     response = server.instance.handle_request(
         ProxyDeviceRequest(device_name=device_name)  # type: ignore
@@ -70,6 +75,7 @@ def device_proxy(device_name: str):
 
 
 @devices_blueprint.route('/upload', methods=['POST'])  # Device endpoint
+@management_read_write_api
 def upload() -> str:
     try:
         decoded = jwt.decode(request.form['jwt'], server.instance.jwt_secret,
@@ -128,6 +134,7 @@ def upload() -> str:
 
 
 @devices_blueprint.route('/download/<filename>', methods=['GET'])  # Device endpoint
+@management_read_write_api
 def download(filename):
     conf: configuration.ServerConfig = current_app.config['RDFM_CONFIG']
     res = download_file(filename, conf.cache_dir,
@@ -138,6 +145,7 @@ def download(filename):
 
 
 @devices_blueprint.route('/device/<device_name>/upload', methods=['POST'])  # User endpoint
+@management_read_write_api
 def upload_device(device_name) -> str:
     # Check that device is connected
     if device_name not in server.instance.connected_devices:
@@ -189,6 +197,7 @@ def upload_device(device_name) -> str:
 
 @devices_blueprint.route('/device/<device_name>/download',  # User endpoint
            methods=['GET'])
+@management_read_write_api
 def download_device(device_name) -> str | Response:
     # Check that device is connected
     if device_name not in server.instance.connected_devices:
@@ -233,6 +242,7 @@ def download_device(device_name) -> str | Response:
 
 
 @devices_blueprint.route('/api/v1/devices')
+@management_read_only_api
 def fetch_all():
     """ Fetch a list of devices registered on the server
 
@@ -301,6 +311,7 @@ def fetch_all():
 
 
 @devices_blueprint.route('/api/v1/devices/<int:identifier>')
+@management_read_only_api
 def fetch_one(identifier: int):
     """ Fetch information about a single device given by the identifier
 

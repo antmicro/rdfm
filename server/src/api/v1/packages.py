@@ -1,3 +1,4 @@
+from api.v1.middleware import management_read_only_api, management_read_write_api
 from flask import (
     Flask,
     request,
@@ -45,6 +46,7 @@ def model_to_schema(package: models.package.Package) -> Package:
 
 
 @packages_blueprint.route('/api/v1/packages')
+@management_read_only_api
 def fetch_packages():
     """ Fetch a list of packages uploaded to the server
 
@@ -99,6 +101,7 @@ def fetch_packages():
 
 
 @packages_blueprint.route('/api/v1/packages', methods=['POST'])
+@management_read_write_api
 def upload_package():
     """ Upload an update package.
 
@@ -193,6 +196,7 @@ def upload_package():
 
 
 @packages_blueprint.route('/api/v1/packages/<int:identifier>', methods=['GET'])
+@management_read_only_api
 def fetch_package(identifier: int):
     """ Fetch information about a single package given by the specified ID
 
@@ -250,6 +254,7 @@ def fetch_package(identifier: int):
 
 
 @packages_blueprint.route('/api/v1/packages/<int:identifier>', methods=['DELETE'])
+@management_read_write_api
 def delete_package(identifier: int):
     """ Delete the specified package
 

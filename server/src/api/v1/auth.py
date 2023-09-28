@@ -1,6 +1,7 @@
 import json
 import traceback
-from api.v1.middleware import deserialize_schema
+from api.v1.middleware import (deserialize_schema, public_api,
+                               management_read_only_api, management_read_write_api)
 import auth.device
 import models.device
 import models.registration
@@ -16,6 +17,7 @@ DEVICE_SIGNATURE_HEADER = "X-RDFM-Device-Signature"
 
 
 @auth_blueprint.route('/api/v1/auth/device', methods=['POST'])
+@public_api
 @deserialize_schema(schema_dataclass=AuthRegisterRequest, key='register_request')
 def check_in(register_request: AuthRegisterRequest):
     """ Device authorization endpoint
@@ -105,6 +107,7 @@ def check_in(register_request: AuthRegisterRequest):
 
 
 @auth_blueprint.route('/api/v1/auth/pending')
+@management_read_only_api
 def fetch_registrations():
     """ Fetch all pending registrations
 
@@ -168,6 +171,7 @@ def fetch_registrations():
 
 
 @auth_blueprint.route('/api/v1/auth/register', methods=['POST'])
+@management_read_write_api
 def set_registration():
     """ Accept registration request
 
