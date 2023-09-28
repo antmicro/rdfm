@@ -173,3 +173,112 @@ The following scopes are used for controlling access to different methods of the
 
 Refer to the [RDFM Server API Reference chapter](api.rst) for a breakdown of the scopes required for accessing each API method.
 
+### API authentication using Keycloak
+
+#### Running the services
+
+An example `docker-compose` file that can be used to run the RDFM server using [Keycloak Identity and Access Management server](https://www.keycloak.org/) as an authorization server is provided below, and in the `server/deploy/docker-compose.keycloak.development.yml` file.
+
+```yaml
+services:
+  rdfm-server:
+    image: antmicro/rdfm-server:latest
+    restart: unless-stopped
+    environment:
+      - RDFM_JWT_SECRET=<REPLACE_WITH_CUSTOM_JWT_SECRET>
+      - RDFM_DB_CONNSTRING=sqlite:////database/development.db
+      - RDFM_HOSTNAME=rdfm-server
+      - RDFM_API_PORT=5000
+      - RDFM_DEVICE_PORT=1234
+      - RDFM_DISABLE_ENCRYPTION=1
+      - RDFM_LOCAL_PACKAGE_DIR=/packages/
+      - RDFM_OAUTH_URL=http://keycloak:8080/realms/master/protocol/openid-connect/token/introspect
+      - RDFM_OAUTH_CLIENT_ID=rdfm-server-introspection
+      - RDFM_OAUTH_CLIENT_SEC=<REPLACE_WITH_RDFM_INTROSPECTION_SECRET>
+    networks:
+      - rdfm
+    ports:
+      - "1234:1234"
+      - "5000:5000"
+    volumes:
+      - db:/database/
+      - pkgs:/packages/
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:22.0.1
+    restart: unless-stopped
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    networks:
+      - rdfm
+    ports:
+      - "8080:8080"
+    command:
+      - start-dev
+    volumes:
+      - keycloak:/opt/keycloak/data/
+
+volumes:
+  db:
+  pkgs:
+  keycloak:
+
+networks:
+  rdfm:
+```
+
+Before running the above services, you must first build the RDFM server container by running the following from the RDFM repository root folder:
+
+```
+docker build -f server/deploy/Dockerfile -t antmicro/rdfm-server:latest .
+```
+
+You can then run the services by running:
+
+```
+docker-compose -f server/deploy/docker-compose.keycloak.development.yml up
+```
+
+#### Keycloak configuration
+
+Further configuration on the Keycloak server is required before any requests are successfully authenticated.
+First, navigate to the Keycloak Administration Console found at `http://localhost:8080/` and login with the initial credentials provided in Keycloak's configuration above (by default: `admin`/`admin`).
+
+Next, go to **Clients** and press **Create client**.
+This client is required for the RDFM server to perform token validation.
+The following settings must be set when configuring the client:
+- **Client ID** - must match `RDFM_OAUTH_CLIENT_ID` provided in the RDFM server configuration, can be anything (for example: `rdfm-server-introspection`)
+- **Client Authentication** - set to `On`
+- **Authentication flow** - select only `Service accounts roles`
+
+After saving the client, go to the `Credentials` tab found under the client details.
+Make sure the authenticator used is `Client Id and Secret`, and copy the `Client secret`.
+This secret must be configured in the RDFM server under the `RDFM_OAUTH_CLIENT_SEC` environment variable.
+
+:::{note}
+After changing the `docker-compose` variables, remember to restart the services (by pressing `Ctrl+C` and re-running the `docker-compose up` command).
+:::
+
+Additionally, you must create proper client scopes to define which users have access to the read-only and read-write parts of the RDFM API.
+To do this, navigate to the `Client scopes` tab and select `Create client scope`.
+Create two separate scopes with the following names; the rest of the settings can be left as default (if required, you may also add a description to the scope):
+- `rdfm_admin_ro`
+- `rdfm_admin_rw`
+
+After restarting the services, the RDFM server will now validate requests against the Keycloak server.
+
+#### Adding an API user
+
+First, navigate to the Keycloak Administration Console found at `http://localhost:8080/` and login with the initial credentials provided in Keycloak's configuration above (by default: `admin`/`admin`).
+
+Next, go to **Clients** and press **Create client**.
+This client will represent a user of the RDFM API.
+The following settings must be set when configuring the client:
+- **Client Authentication** - set to `On`
+- **Authentication flow** - select only `Service accounts roles`
+
+After saving the client, go to the `Credentials` tab found under the client details.
+Make sure the authenticator used is `Client Id and Secret`, and copy the `Client secret`.
+
+Finally, assign the required scope to the client: under the `Client scopes` tab, click `Add client scope` and select one of the two RDFM scopes: read-only `rdfm_admin_ro` or read-write `rdfm_admin_rw`.
