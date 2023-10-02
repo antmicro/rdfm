@@ -9,10 +9,6 @@ It also handles package upload and management, deploy group management and other
 
 Currently, to simplify development, the RDFM Management Server utilizes SQLite for storing server data. The database is stored in the `devices.db` file. This will be expanded in the future to allow using the typical DBMS backends instead.
 
-## Storage backend
-
-Uploading packages is done by utilizing a storage backend. In the near future, more backends will be added that will allow storing packages in configurable bucket storage (such as S3 or GCP). For development purposes, a local storage backend is available that stores all uploaded packages to a temporary file under `/tmp/.rdfm-local-storage/` folder.
-
 ## REST API
 
 The server exposes a management and device API that is used by management software and end devices. A comprehensive list of all API endpoints is available in the [RDFM Server API Reference chapter](api.rst).
@@ -48,7 +44,7 @@ You can run a development RDFM Management Server by running the following comman
 ```bash
 cd server/
 export JWT_SECRET="THISISATESTDEVELOPMENTSECRET123"
-poetry build && poetry install && poetry run python -m rdfm_mgmt_server --no-ssl
+poetry build && poetry install && poetry run python -m rdfm_mgmt_server --no-ssl --local-package-dir ./packages/
 ```
 
 This launches the RDFM Management Server with no encryption, listening on `localhost`/`127.0.0.1`. By default, the device communication socket is listening on port `1234`, while the HTTP API is exposed on port `5000`.
@@ -111,3 +107,40 @@ Configuration of the RDFM server can be changed by using the following environme
 - `RDFM_SERVER_CERT` - when using encryption, path to the server's certificate. The certificate can be stored on a Docker volume mounted to the container. For reference on generating the certificate/key pairs, see the `server/tests/certgen.sh` script.
 - `RDFM_SERVER_KEY` - when using encryption, path to the server's private key. Additionally, the above also applies here.
 - `RDFM_LOCAL_PACKAGE_DIR` - specifies a path (local for the server) to a directory where the packages are stored
+- `RDFM_STORAGE_DRIVER` - storage driver to use for storing artifacts. Accepted values: `local` (default), `s3`.
+
+## Configuring package storage location
+
+### Storing packages locally
+
+By default (when not using one of the above deployment setups), the server stores all uploaded packages to a temporary folder under `/tmp/.rdfm-local-storage/`.
+To persist package data, configuration of an upload folder is required.
+This can be done by using the `RDFM_LOCAL_PACKAGE_DIR` environment variable (in the Dockerized deployment), which should contain a path to the desired upload folder.
+
+:::{warning}
+This storage method should NOT be used for production deployments!
+The performance of the built-in file server is severely limited and provides NO caching, which will negatively affect the update speed for all devices even when a few of them try downloading an update package at the same time.
+It is recommended to use a dedicated storage solution such as S3 to store packages.
+:::
+
+### Storing packages on S3-compatible storage
+
+The RDFM server can also store package data on S3 and other S3 API-compatible object storage servers.
+The following environment variables allow changing the configuration of the S3 integration:
+- `RDFM_S3_BUCKET` - name of the bucket to upload the packages to
+- `RDFM_S3_ACCESS_KEY_ID` - Access Key ID to access the specified bucket
+- `RDFM_S3_ACCESS_SECRET_KEY` - Secret Access Key to access the specified bucket
+Additionally, when using S3 storage, the environment variable `RDFM_STORAGE_DRIVER` must be set to `s3`.
+
+An example reference setup utilizing the MinIO Object Storage server is provided in the `server/deploy/docker-compose.minio.yml` file.
+To run it, first build the RDFM server container like in the above setup guides:
+
+```bash
+docker build -f server/deploy/Dockerfile -t antmicro/rdfm-server:latest .
+```
+
+Then, run the following:
+
+```
+docker-compose -f server/deploy/docker-compose.minio.yml up
+```
