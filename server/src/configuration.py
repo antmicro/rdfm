@@ -4,6 +4,17 @@ import os
 
 """ Name of the environment variable providing the JWT secret """
 ENV_TOKEN_NAME = "JWT_SECRET"
+""" Configuration for the storage type """
+ENV_STORAGE_DRIVER = "RDFM_STORAGE_DRIVER"
+""" S3-specific environment variables """
+ENV_S3_URL = "RDFM_S3_URL"
+ENV_S3_ACCESS_KEY_ID = "RDFM_S3_ACCESS_KEY_ID"
+ENV_S3_SECRET_ACCESS_KEY = "RDFM_S3_ACCESS_SECRET_KEY"
+ENV_S3_BUCKET = "RDFM_S3_BUCKET"
+""" List of valid storage types for packages that the server supports.
+    These values should match the ones found in`storage.driver_by_name`.
+"""
+ALLOWED_STORAGE_DRIVERS = ["local", "s3"]
 
 
 class ServerConfig():
@@ -46,6 +57,29 @@ class ServerConfig():
         package driver
     """
     package_dir: str
+
+    """ Storage driver to use
+    """
+    storage_driver: str
+
+    """ Override the default S3 endpoint URL
+
+    This allows to override the default S3 endpoint when using an alternate
+    S3-compatible object storage (for example, MinIO).
+    """
+    s3_url: Optional[str]
+
+    """ Access Key ID for storing packages on S3
+    """
+    s3_access_key_id: Optional[str]
+
+    """ Secret Access Key for storing packages on S3
+    """
+    s3_secret_access_key: Optional[str]
+
+    """ Bucket name for storing packages on S3
+    """
+    s3_bucket_name: Optional[str]
 
     """ (DEBUG FLAG) Instruct the server to create mock data in the
         database when starting. DO NOT USE, for testing purposes only!
@@ -101,6 +135,20 @@ def parse_from_environment(config: ServerConfig) -> bool:
     jwt_secret = try_get_env(ENV_TOKEN_NAME, "JWT secret key")
     if jwt_secret is None:
         return False
-
     config.jwt_secret = jwt_secret
+
+    config.storage_driver = os.environ.get(ENV_STORAGE_DRIVER, "local")
+    if config.storage_driver not in ALLOWED_STORAGE_DRIVERS:
+        print("Invalid storage driver: got", config.storage_driver,
+              " expected one of:", ALLOWED_STORAGE_DRIVERS)
+        return False
+
+    if config.storage_driver == "s3":
+        config.s3_url = os.environ.get(ENV_S3_URL, None)
+
+        config.s3_access_key_id = try_get_env(ENV_S3_ACCESS_KEY_ID, "S3 Access Key ID")
+        config.s3_secret_access_key = try_get_env(ENV_S3_SECRET_ACCESS_KEY, "S3 Secret Access Key")
+        config.s3_bucket_name = try_get_env(ENV_S3_BUCKET, "S3 Bucket name")
+        if None in [config.s3_access_key_id, config.s3_secret_access_key, config.s3_bucket_name]:
+            return False
     return True

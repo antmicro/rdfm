@@ -153,8 +153,8 @@ def upload_package():
         Content-Type: application/json
     """  # noqa: E501
     try:
-        # TODO: Allow changing this from the configuration
-        driver_name = "local"
+        conf: configuration.ServerConfig = current_app.config['RDFM_CONFIG']
+        driver_name = conf.storage_driver
 
         meta = request.form.to_dict()
         if metadata_contains_reserved_keys(meta):
@@ -163,7 +163,6 @@ def upload_package():
         if "file" not in request.files:
             return api_error("missing package file", 400)
 
-        conf: configuration.ServerConfig = current_app.config['RDFM_CONFIG']
         driver = storage.driver_by_name(driver_name, conf)
         if driver is None:
             return api_error("invalid storage driver", 500)
