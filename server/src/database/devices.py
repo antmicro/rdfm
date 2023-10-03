@@ -3,7 +3,7 @@ import time
 import os
 import json
 import datetime
-from typing import Optional
+from typing import Optional, List
 from rdfm_mgmt_communication import Device
 import models.device
 from sqlalchemy import create_engine, select, update
@@ -79,3 +79,48 @@ class DevicesDB:
 
             session.add(db_device)
             session.commit()
+
+
+    def fetch_all(self) -> List[models.device.Device]:
+        """ Fetch a list of all devices found in the database
+        """
+        with Session(self.engine) as session:
+            return session.scalars(
+                select(models.device.Device)
+            ).all()
+
+
+    def fetch_one(self, identifier: int) -> models.device.Device:
+        """ Fetch data of the device with a given identifier
+        """
+        with Session(self.engine) as session:
+            return session.scalar(
+                select(models.device.Device)
+                .where(models.device.Device.id == identifier)
+            )
+
+
+    def insert(self, device: models.device.Device):
+        """ Add a device to the database
+
+        The passed device model is updated with the new device identifier
+        """
+        with Session(self.engine) as session:
+            session.add(device)
+            session.commit()
+            session.refresh(device)
+
+
+    def update_key(self, mac: str, public_key: str):
+        """ Update the public key of the device specified by
+            the given MAC address.
+        """
+        with Session(self.engine) as session:
+            stmt = (
+                update(models.device.Device)
+                .values(public_key=public_key)
+                .where(models.device.Device.mac_address == mac)
+            )
+            session.execute(stmt)
+            session.commit()
+

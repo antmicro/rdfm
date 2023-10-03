@@ -23,9 +23,13 @@ from file_transfer import (
     upload_file,
     download_file,
 )
-from typing import Optional
+from typing import Optional, List
 import server
 import configuration
+import traceback
+import models.device
+import json
+from api.v1.common import api_error
 
 
 devices_blueprint: Blueprint = Blueprint("rdfm-server-devices", __name__)
@@ -226,3 +230,139 @@ def download_device(device_name) -> str | Response:
     if isinstance(download_res, Request):
         return download_res.model_dump_json()
     return download_res
+
+
+@devices_blueprint.route('/api/v1/devices')
+def fetch_all():
+    """ Fetch a list of devices registered on the server
+
+    :status 200: no error
+    :status 401: user did not provide authorization data,
+                 or the authorization has expired
+
+    :>jsonarr integer id: device identifier
+    :>jsonarr string last_access: datetime of last access to the server (RFC822)
+    :>jsonarr string name: device-reported user friendly name
+    :>jsonarr string mac_addr: device-reported MAC address
+    :>jsonarr optional[integer] group: group identifier of assigned group
+    :>jsonarr dict[str, str] metadata: device metadata (key/value pairs)
+    :>jsonarr dict[str, bool] capabilities: device RDFM client capabilities
+
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        GET /api/v1/devices HTTP/1.1
+        Accept: application/json, text/javascript
+
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+
+        [
+          {
+            "capabilities": {
+              "exec_cmds": false,
+              "file_transfer": true,
+              "shell_connect": true
+            },
+            "group": 1,
+            "id": 1,
+            "last_access": null,
+            "mac_address": "loopback",
+            "metadata": {},
+            "name": "dummy_device"
+          }
+        ]
+    """  # noqa: E501
+    try:
+        devices: List[models.device.Device] = server.instance._devices_db.fetch_all()
+        return [
+            {
+                "id": dev.id,
+                "last_access": dev.last_access,
+                "name": dev.name,
+                "mac_address": dev.mac_address,
+                "capabilities": json.loads(dev.capabilities),
+                "metadata": json.loads(dev.device_metadata),
+                "public_key": dev.public_key,
+                "group": dev.group
+            } for dev in devices
+        ]
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception during device fetch:", repr(e))
+        return api_error("device fetching failed", 500)
+
+
+@devices_blueprint.route('/api/v1/devices/<int:identifier>')
+def fetch_one(identifier: int):
+    """ Fetch information about a single device given by the identifier
+
+    :status 200: no error
+    :status 401: user did not provide authorization data,
+                 or the authorization has expired
+    :status 404: device with the specified identifier does not exist
+
+    :>json integer id: device identifier
+    :>json string last_access: datetime of last access to the server (RFC822)
+    :>json string name: device-reported user friendly name
+    :>json string mac_addr: device-reported MAC address
+    :>json optional[integer] group: group identifier of assigned group
+    :>json dict[str, str] metadata: device metadata (key/value pairs)
+    :>json dict[str, bool] capabilities: device RDFM client capabilities
+
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        GET /api/v1/devices/1 HTTP/1.1
+        Accept: application/json, text/javascript
+
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+
+        {
+          "capabilities": {
+            "exec_cmds": false,
+            "file_transfer": true,
+            "shell_connect": true
+          },
+          "group": 1,
+          "id": 1,
+          "last_access": null,
+          "mac_address": "loopback",
+          "metadata": {},
+          "name": "dummy_device"
+        }
+    """  # noqa: E501
+    try:
+        dev: Optional[models.device.Device] = server.instance._devices_db.fetch_one(identifier)
+        if dev is None:
+            return api_error("device does not exist", 404)
+
+        return {
+                "id": dev.id,
+                "last_access": dev.last_access,
+                "name": dev.name,
+                "mac_address": dev.mac_address,
+                "capabilities": json.loads(dev.capabilities),
+                "metadata": json.loads(dev.device_metadata),
+                "group": dev.group,
+                "public_key": dev.public_key,
+        }
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception during device fetch:", repr(e))
+        return api_error("device fetching failed", 500)

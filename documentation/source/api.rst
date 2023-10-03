@@ -26,3 +26,10 @@ Update API
    :undoc-static:
    :order: path
 
+Device Management API
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autoflask:: rdfm_mgmt_server:app
+   :modules: api.v1.devices
+   :undoc-static:
+   :order: path

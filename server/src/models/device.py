@@ -1,7 +1,7 @@
 from typing import List
 from typing import Optional
 from sqlalchemy import ForeignKey
-from sqlalchemy import String, Text, Integer, DateTime
+from sqlalchemy import String, Text, Integer, DateTime, Boolean
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
@@ -20,4 +20,5 @@ class Device(Base):
     mac_address: Mapped[str] = mapped_column(Text)
     capabilities: Mapped[str] = mapped_column(Text)
     device_metadata: Mapped[str] = mapped_column(Text)
+    public_key: Mapped[Optional[str]] = mapped_column(Text)
     group: Mapped[Optional[int]] = mapped_column(ForeignKey(models.group.Group.id, ondelete="RESTRICT"))
