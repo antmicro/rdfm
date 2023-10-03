@@ -3,6 +3,7 @@ import pytest
 from typing import Optional
 from common import (GROUPS_ENDPOINT, UPDATES_ENDPOINT,
                           process,
+                          create_fake_device_token,
                           group_assign_packages, group_change_policy,
                           package_create_dummy,
                           update_check)
@@ -104,6 +105,8 @@ def test_package_accessible(prepare_simple_sequential):
         META_SOFT_VER: "v0",
         META_DEV_TYPE: "dummy",
         META_MAC_ADDR: DUMMY_DEVICE_MAC
+    }, headers={
+        "Authorization": f"Bearer token={create_fake_device_token()}",
     })
     assert response.status_code == 200, "the update check should succeed"
 

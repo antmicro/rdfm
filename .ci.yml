@@ -229,6 +229,17 @@ test-server-update-api:
       - merge_requests
       - main
 
+test-server-device-auth-api:
+  extends: .build
+  stage: local-tests
+  script:
+    - cd server
+    - pytest tests/test-server-auth.py
+  only:
+    refs:
+      - merge_requests
+      - main
+
 # ===== rdfm-client ===== #
 
 .rdfm-client:

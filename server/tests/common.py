@@ -5,6 +5,9 @@ import urllib.parse
 from typing import Optional
 import pytest
 import requests
+import jwt
+from auth.device import DeviceToken, DEVICE_JWT_ALGO
+
 
 # Which path to use for probing by default
 PROBE_PATH_DEFAULT = "/api/v1/packages"
@@ -75,6 +78,18 @@ def process():
     process.kill()
 
 
+def create_fake_device_token():
+    """ Creates a fake device token to use for mocking device authentication
+        during API tests
+    """
+    token = DeviceToken()
+    token.created_at = int(time.time())
+    token.expires = 600
+    token.device_id = "00:00:00:00:00:00"
+    secret = os.environ['JWT_SECRET']
+    return jwt.encode(token.to_dict(), secret, algorithm=DEVICE_JWT_ALGO)
+
+
 def package_create_dummy(meta: dict[str, str]):
     """ Create a package with the specified metadata and dummy content.
     """
@@ -99,7 +114,9 @@ def group_assign_packages(gid: int, ids: list[int]):
 def update_check(meta: dict[str, str]) -> Optional[int]:
     """ Simulate an update check of a device with metadata `meta`.
     """
-    response = requests.post(UPDATES_ENDPOINT, json=meta)
+    response = requests.post(UPDATES_ENDPOINT, json=meta, headers={
+        "Authorization": f"Bearer token={create_fake_device_token()}",
+    })
     assert response.status_code in [200, 204], "update check should return a successful status code"
     match response.status_code:
         case 200:
