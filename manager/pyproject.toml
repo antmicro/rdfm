@@ -19,6 +19,7 @@ types-requests = "^2.31.0.2"
 requests-toolbelt = "^1.0.0"
 progressbar2 = "^4.2.0"
 marshmallow = "^3.20.1"
+marshmallow-dataclass = "^8.5.14"
 
 [tool.poetry.group.test.dependencies]
 mypy = "^1.4.0"

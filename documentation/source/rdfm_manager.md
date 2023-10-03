@@ -67,11 +67,18 @@ available commands:
 
 ### Listing available resources
 
-Listing devices (currently unsupported due to API limitations):
+Listing devices:
 
 ```
 rdfm-mgmt devices list
 ```
+
+Listing registration requests:
+
+```
+rdfm-mgmt devices pending
+```
+
 
 Listing packages:
 
@@ -151,3 +158,11 @@ rdfm-mgmt groups modify-devices --group-id <group> --remove <device>
 ```
 rdfm-mgmt groups target-version --group-id <group> --version <version-identifier>
 ```
+
+### Authorizing a device
+
+```
+rdfm-mgmt devices auth <mac-address>
+```
+
+You can then select the registration for this device to authorize.
