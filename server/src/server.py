@@ -11,6 +11,7 @@ from proxy import Proxy
 from database.devices import DevicesDB
 from database.packages import PackagesDB
 from database.groups import GroupsDB
+from database.registrations import RegistrationsDB
 import database.db
 import configuration
 
@@ -46,6 +47,7 @@ class Server:
         self._devices_db: DevicesDB = DevicesDB(self.db)
         self._packages_db: PackagesDB = PackagesDB(self.db)
         self._groups_db: GroupsDB = GroupsDB(self.db)
+        self._registrations_db: RegistrationsDB = RegistrationsDB(self.db)
 
         # filename in server cache -> transfer object
         self.file_transfers: dict[str, FileTransfer] = {}

@@ -9,6 +9,7 @@ from models.base import Base
 # Import all models below
 import models.device
 import models.package
+import models.registration
 
 def create(connstring: str) -> Engine:
     """ Creates a connection to the database used to store server data
