@@ -18,6 +18,8 @@ from marshmallow import ValidationError
 from models.package import Package
 from update.resolver import PackageResolver
 import update.policy
+from api.v1.middleware import device_api
+from auth.device import DeviceToken
 
 update_blueprint: Blueprint = Blueprint("rdfm-server-updates", __name__)
 
@@ -26,7 +28,8 @@ LINK_EXPIRY_TIME = 3600
 
 
 @update_blueprint.route('/api/v1/update/check', methods=['POST'])
-def check_for_update():
+@device_api
+def check_for_update(device_token: DeviceToken):
     """ Check for available updates
 
     Device clients must call this endpoint with their associated metadata.

@@ -4,6 +4,11 @@ from marshmallow import ValidationError
 import marshmallow_dataclass
 from flask import request
 from api.v1.common import api_error
+import functools
+from auth.device import decode_and_verify_token
+from api.v1.common import api_error
+from auth.device import DeviceToken
+from flask import request
 
 
 def deserialize_schema(schema_dataclass: type, key: str = 'payload'):
@@ -51,3 +56,29 @@ def deserialize_schema(schema_dataclass: type, key: str = 'payload'):
 
     return _deserialize
 
+
+def device_api(f):
+    """ Decorator for device APIs
+
+    This decorator verifies whether an incoming request contains a valid
+    device token. If no token was provided, or an invalid/expired one
+    was given, the request handling will immediately terminate by
+    returning an API error and 401 Unauthorized status code.
+    """
+    @functools.wraps(f)
+    def _device_api(*args, **kwargs):
+        auth = request.authorization
+        if auth is None:
+            return api_error("no Authorization header was provided", 401)
+        if auth.type != "bearer":
+            return api_error("invalid authorization - expected authorization type Bearer", 401)
+        if "token" not in auth:
+            return api_error("invalid authorization - missing field: token")
+
+        token = decode_and_verify_token(auth["token"])
+        if token is None:
+            return api_error("invalid token was provided", 401)
+
+        kwargs["device_token"] = token
+        return f(*args, **kwargs)
+    return _device_api
