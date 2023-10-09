@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+            android:title="@string/app_name">
+        <EditTextPreference
+            android:key="ota_server_address"
+            android:title="server address"
+            android:defaultValue="http://192.168.1.109:8000"/>
+        <EditTextPreference
+            android:inputType="number"
+            android:key="update_check_interval_in_seconds"
+            android:title="update check interval (seconds)"
+            android:defaultValue="86400"/>
+    </PreferenceCategory>
+
+</PreferenceScreen>
