@@ -36,10 +36,10 @@ class LocalStorage():
         return True
 
 
-    """Makes a direct HTTP link to the specified package with given expiration time
+    """Makes a direct HTTP URL to the specified package with given expiration time
        Expiration is in seconds.
     """
-    def generate_link(self, metadata: dict[str, str], expiry: int) -> str:
+    def generate_url(self, metadata: dict[str, str], expiry: int) -> str:
         schema = "http"
         port = self.config.http_port
         if self.config.encrypted:

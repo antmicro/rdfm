@@ -153,7 +153,7 @@ def check_for_update(device_token: DeviceToken):
         if driver is None:
             return api_error("invalid storage driver", 500)
 
-        link = driver.generate_link(package.info, LINK_EXPIRY_TIME)
+        link = driver.generate_url(package.info, LINK_EXPIRY_TIME)
         print("Link:", link)
 
         return {

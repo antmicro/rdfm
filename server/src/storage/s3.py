@@ -59,8 +59,8 @@ class S3Storage():
             return False
 
 
-    def generate_link(self, metadata: dict[str, str], expiry: int) -> str:
-        """ Generate a signed link to the package specified by `metadata`
+    def generate_url(self, metadata: dict[str, str], expiry: int) -> str:
+        """ Generate a signed URL to the package specified by `metadata`
         """
         try:
             # This shouldn't happen

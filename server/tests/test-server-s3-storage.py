@@ -98,7 +98,7 @@ def generate_link_to_dummy(upload_dummy: dict[str, str],
     from storage.s3 import S3Storage
     create_driver: S3Storage = create_driver
 
-    return create_driver.generate_link(upload_dummy, TEST_EXPIRY_TIME)
+    return create_driver.generate_url(upload_dummy, TEST_EXPIRY_TIME)
 
 
 @pytest.fixture
