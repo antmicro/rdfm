@@ -1,0 +1,54 @@
+name: Generate and publish docs
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 3"
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install and configure Poetry
+        uses: snok/install-poetry@v1
+
+      - name: Install RDFM server in venv
+        run: |
+          poetry -C server/ install
+
+      - name: Build RDFM documentation
+        run: |
+          poetry -C server/ run .github/scripts/build-docs.sh
+
+      - name: "Upload artifact: Sphinx HTML and PDF"
+        uses: actions/upload-artifact@v3
+        with:
+          name: Documentation
+          path: documentation/build/html
+
+      - name: Deploy
+        if: github.ref == 'refs/heads/main'
+        run: |
+          sudo chown -R $(whoami) documentation
+          cd documentation/build/html
+          touch .nojekyll
+          git init
+          cp ../../../.git/config ./.git/config
+          git add .
+          git config --local user.email "push@gha"
+          git config --local user.name "GHA"
+          git commit -am "update ${{ github.sha }}"
+          git push -u origin +HEAD:gh-pages
+          rm -rf .git
