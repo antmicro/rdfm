@@ -1,6 +1,6 @@
 # RDFM manager utility (`rdfm-mgmt`)
 
-This folder contains sources for the `rdfm-mgmt` utility. For a more comprehensive overview of available functionality, consult the RDFM documentation.
+This folder contains sources for the `rdfm-mgmt` utility. For a more comprehensive overview of available functionality, consult the [RDFM documentation](https://antmicro.github.io/rdfm).
 
 ## License
 

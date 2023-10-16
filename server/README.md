@@ -1,6 +1,6 @@
 # RDFM Management Server
 
-This directory contains sources for the RDFM Management Server. For a more comprehensive overview of available functionality and set-up instructions, consult the RDFM documentation.
+This directory contains sources for the RDFM Management Server. For a more comprehensive overview of available functionality and set-up instructions, consult the [RDFM documentation](https://antmicro.github.io/rdfm).
 
 ## License
 

@@ -16,7 +16,7 @@ It is structured as follows:
 - `tools/` - tools used by RDFM components
 - `common/` - common libraries used by RDFM components
 
-For more details, see the individual README files in the above directories and the RDFM documentation pages.
+For more details, see the individual README files in the above directories and the [RDFM documentation](https://antmicro.github.io/rdfm) pages.
 
 ## License
 
