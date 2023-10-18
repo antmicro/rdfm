@@ -236,6 +236,8 @@ def set_registration():
                 # Key change
                 print("Device with identifier:", mac, "is changing key", flush=True)
                 server.instance._devices_db.update_key(mac, public_key)
+                server.instance._devices_db.update_metadata(mac, registration.info)
+                server.instance._devices_db.update_timestamp(mac, registration.last_appeared)
             else:
                 # Shouldn't happen
                 print("Registration for identical public key - should never happen", flush=True)

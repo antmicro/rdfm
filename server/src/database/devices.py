@@ -54,19 +54,19 @@ class DevicesDB:
             return session.scalar(stmt)
 
 
-    def update_timestamp(self, name: str, mac_address: str):
+    def update_timestamp(self, mac_address: str, timestamp: datetime.datetime):
         """Update device's last healthcheck time in database
         """
         with Session(self.engine) as session:
             stmt = (
                 update(models.device.Device)
-                    .values(last_accessed=datetime.datetime.now())
-                    .where(models.device.Device.name == name)
+                    .values(last_access=timestamp)
                     .where(models.device.Device.mac_address == mac_address)
             )
             session.execute(stmt)
+            session.commit()
 
-        
+
     def insert_device(self, device: Device):
         """Add device to database
         """

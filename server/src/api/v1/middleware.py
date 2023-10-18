@@ -1,3 +1,4 @@
+import datetime
 import inspect
 import functools
 from marshmallow import ValidationError
@@ -19,6 +20,7 @@ from api.v1.common import api_error
 from flask import request, current_app
 from authlib.integrations.requests_client import OAuth2Session
 from authlib.oauth2.rfc6749.util import scope_to_list
+import server
 
 
 """ Read-write administrator scope """
@@ -193,6 +195,12 @@ def device_api(f):
         token = decode_and_verify_token(auth["token"])
         if token is None:
             return api_error("invalid token was provided", 401)
+
+        # Update the last accessed timestamp for this device
+        try:
+            server.instance._devices_db.update_timestamp(token.device_id, datetime.datetime.utcnow())
+        except Exception as e:
+            print(f"Failed to update timestamp for device {token.device_id}, exception: {e}", flush=True)
 
         kwargs["device_token"] = token
         return f(*args, **kwargs)
