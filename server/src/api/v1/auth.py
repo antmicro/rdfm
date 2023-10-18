@@ -94,6 +94,13 @@ def check_in(register_request: AuthRegisterRequest):
             token, data = auth.device.try_acquire_token(register_request.public_key,
                                                         register_request.metadata)
 
+            # Update the device's metadata on the server
+            try:
+                server.instance._devices_db.update_metadata(data.device_id,
+                                                            register_request.metadata)
+            except Exception as e:
+                print(f"Failed to update metadata for device {data.device_id}, exception: {e}", flush=True)
+
             return {
                 "token": token,
                 "expires": data.expires

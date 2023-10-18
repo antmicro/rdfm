@@ -124,3 +124,15 @@ class DevicesDB:
             session.execute(stmt)
             session.commit()
 
+
+    def update_metadata(self, mac_address: str, metadata: dict[str, str]):
+        """ Update the metadata of the given device.
+        """
+        with Session(self.engine) as session:
+            stmt = (
+                update(models.device.Device)
+                .values(device_metadata=json.dumps(metadata))
+                .where(models.device.Device.mac_address == mac_address)
+            )
+            session.execute(stmt)
+            session.commit()
