@@ -5,10 +5,11 @@ import requests
 import subprocess
 import pytest
 import base64
-from typing import Any
+from typing import Any, Optional
 from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
 from Crypto.Signature.pkcs1_15 import PKCS115_SigScheme
+from common import UPDATES_ENDPOINT
 
 
 SERVER = "http://127.0.0.1:5000/"
@@ -21,6 +22,8 @@ METADATA = {
     "rdfm.hardware.devtype": "dummy",
     "rdfm.hardware.macaddr": "00:00:00:00:00:00"
 }
+TEST_METADATA_CACHING_KEY="rdfm.software.version"
+TEST_METADATA_CACHING_EXPECTED_VALUE="this_was_modified"
 
 
 def make_signature(key_pair, payload_bytes):
@@ -55,9 +58,12 @@ class SimpleDevice():
     signature: str
 
 
-    def __init__(self, metadata) -> None:
+    def __init__(self, metadata, key: Optional[RSA.RsaKey] = None) -> None:
         self.metadata = metadata
-        self.key_pair = RSA.generate(bits=2048)
+        if key is None:
+            self.key_pair = RSA.generate(bits=2048)
+        else:
+            self.key_pair = key
         self.request = make_authentication_request(self.metadata, self.key_pair)
         # The signature must be calculated on the raw bytes
         # No further modification of `payload` allowed!
@@ -113,6 +119,26 @@ def submit_authorization():
 
 
 @pytest.fixture
+def submit_authorization_with_modified_version():
+    """ Submit a valid authentication request to the server, but modify one of the
+        metadata fields to simulate an update.
+
+    This is meant to be used in conjunction with `submit_authorization` to test
+    server metadata caching.
+    """
+    new_metadata = test_device.metadata.copy()
+    new_metadata[TEST_METADATA_CACHING_KEY] = TEST_METADATA_CACHING_EXPECTED_VALUE
+    modified_device = SimpleDevice(new_metadata, test_device.key_pair)
+    response = requests.post(AUTH,
+                             data=modified_device.request_bytes,
+                             headers={
+                                 "Content-Type": "application/json",
+                                 "X-RDFM-Device-Signature": modified_device.signature,
+                             })
+    return response
+
+
+@pytest.fixture
 def approve_device():
     """ Approve the device's registration request
     """
@@ -161,6 +187,28 @@ def change_registered_device_key(submit_and_approve):
                                  "X-RDFM-Device-Signature": new_device.signature,
                              })
     return new_device, response
+
+
+@pytest.fixture
+def make_dummy_authenticated_request(submit_authorization):
+    """ Make a dummy authenticated request to a device API endpoint.
+
+    Used for testing the "Last accessed" timestamp available in the device API.
+    """
+    assert submit_authorization.status_code == 200, "the device should receive a successful authentication response"
+    token = submit_authorization.json()["token"]
+
+    # Intentionally sleep for a second
+    # This is to make sure the timestamp actually changes
+    time.sleep(1)
+
+    # We don't care about the result, the timestamp should be updated
+    # on any usage of the token.
+    response = requests.post(UPDATES_ENDPOINT, json=test_device.metadata,
+                             headers={
+                                 "Authorization": f"Bearer token={token}"
+                             })
+    assert response.status_code != 401, "the request should have been authenticated"
 
 
 def test_signature_missing(process):
@@ -279,6 +327,30 @@ def test_auth_after_approval(process, submit_and_approve, submit_authorization):
     """
     assert submit_authorization.status_code == 200, "the device should receive a successful authentication response"
     assert "token" in submit_authorization.json(), "the authentication response should contain an app token"
+
+
+def test_device_metadata_change(process,
+                                submit_and_approve,
+                                submit_authorization_with_modified_version,
+                                list_devices):
+    """ This tests if the server properly updates the server-side stored device metadata
+    """
+    assert submit_authorization_with_modified_version.status_code == 200, "the device should receive a successful authentication response"
+    assert list_devices[0]["metadata"][TEST_METADATA_CACHING_KEY] == TEST_METADATA_CACHING_EXPECTED_VALUE, "the metadata should have been updated on the server"
+
+
+def test_device_last_access_tracking(process,
+                                     submit_and_approve,
+                                     list_devices,
+                                     make_dummy_authenticated_request):
+    """ This tests if the last access timestamp is properly updated on requests to the device API.
+    """
+    # Can't re-use the list_devices fixture again (as the value is cached)
+    response = requests.get(f"{SERVER}/api/v1/devices")
+    assert response.status_code == 200, "devices should have been fetched successfully"
+    devices = response.json()
+
+    assert list_devices[0]["last_access"] != devices[0]["last_access"], "last access timestamp should have changed after making a request"
 
 
 def test_device_token_verification_none(process):
