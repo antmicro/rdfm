@@ -59,7 +59,7 @@ public class HttpClient {
     public void registerRequest(String bspVersion, String devType, String macAddress,
                                   String serverAddress, Utils utils) {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        String key = KeyUtils.getPublicKey();
+        String key = KeyUtils.getPublicKey(utils.mContext);
         Log.d(TAG, "Public key: " + key);
 
         try {
@@ -73,7 +73,7 @@ public class HttpClient {
                     .put("timestamp", timestamp.getTime())
                     .toString();
             byte[] requestBytes = reqJSON.getBytes(StandardCharsets.UTF_8);
-            String signature = KeyUtils.signData(reqJSON);
+            String signature = KeyUtils.signData(utils.mContext, reqJSON);
 
             RequestBody reqBody = RequestBody.create(requestBytes, JSON);
             try {
