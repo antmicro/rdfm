@@ -22,6 +22,9 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     kotlin-stdlib-jdk7-1.6.10 \
     kotlin-stdlib-jdk8-1.6.10 \
     conscrypt-openjdk-uber-2.5.2 \
+    bcpkix-jdk18on-1.76 \
+    bcprov-jdk18on-1.76 \
+    bcutil-jdk18on-1.76 \
 
 include $(BUILD_PACKAGE)
 
@@ -38,5 +41,8 @@ LOCAL_PREBUILT_STATIC_JAVA_LIBRARIES := \
     kotlin-stdlib-jdk7-1.6.10:libs/kotlin-stdlib-jdk7-1.6.10.jar \
     kotlin-stdlib-jdk8-1.6.10:libs/kotlin-stdlib-jdk8-1.6.10.jar \
     conscrypt-openjdk-uber-2.5.2:libs/conscrypt-openjdk-uber-2.5.2.jar \
+    bcpkix-jdk18on-1.76:libs/bcpkix-jdk18on-1.76.jar \
+    bcprov-jdk18on-1.76:libs/bcprov-jdk18on-1.76.jar \
+    bcutil-jdk18on-1.76:libs/bcutil-jdk18on-1.76.jar \
 
 include $(BUILD_MULTI_PREBUILT)
