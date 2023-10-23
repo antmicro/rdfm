@@ -4,14 +4,14 @@
     <PreferenceCategory
             android:title="@string/app_name">
         <EditTextPreference
-            android:key="ota_server_address"
+            android:key="@string/preference_ota_server_address_key"
             android:title="server address"
-            android:defaultValue="http://192.168.1.109:8000"/>
+            android:defaultValue="@string/default_rdfm_server_address" />
         <EditTextPreference
             android:inputType="number"
-            android:key="update_check_interval_in_seconds"
+            android:key="@string/preference_update_check_interval_key"
             android:title="update check interval (seconds)"
-            android:defaultValue="86400"/>
+            android:defaultValue="@string/default_update_check_interval_seconds" />
     </PreferenceCategory>
 
 </PreferenceScreen>

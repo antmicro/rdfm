@@ -14,6 +14,8 @@ import android.os.UpdateEngine;
 import android.util.Log;
 import android.widget.TextView;
 
+import androidx.preference.PreferenceManager;
+
 import com.antmicro.update.rdfm.utilities.SysUtils;
 
 import java.util.Calendar;
@@ -37,6 +39,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = this;
+        PreferenceManager.setDefaultValues(mContext, R.xml.shared_preference, false);
         setContentView(R.layout.main_layout);
         this.mTextViewBuild = findViewById(R.id.textViewBuild);
         this.mTextViewAddress = findViewById(R.id.textViewUrlAddress);

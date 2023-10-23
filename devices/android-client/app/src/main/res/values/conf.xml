@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<!--
+    This is an example overlay configuration file for the RDFM app.
+    To modify the default server address, you can do:
+
+        <string name="default_rdfm_server_address">http://rdfm.example.local:6000/</string>
+
+    Likewise, overlaying the default update check interval can be done similarly:
+
+        <string name="default_update_check_interval_seconds">240</string>
+
+    NOTE: These settings are only used during the app's first startup. To change them afterwards,
+    you must delete the existing configuration file.
+-->
+</resources>

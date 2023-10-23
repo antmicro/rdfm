@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">rdfm</string>
     <string name="preference_file_key">shared_preference</string>
-    <string name="ota_server_address">ota_server_address</string>
-    <string name="update_check_interval_in_seconds">update_check_interval_in_seconds</string>
+    <string name="preference_ota_server_address_key">ota_server_address</string>
+    <string name="preference_update_check_interval_key">update_check_interval_in_seconds</string>
     <string name="unknown">Unknown</string>
 </resources>

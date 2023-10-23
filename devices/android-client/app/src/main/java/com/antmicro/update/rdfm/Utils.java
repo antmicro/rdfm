@@ -40,18 +40,16 @@ public class Utils {
     }
 
     public String getServerAddress(Context mContext) {
-        PreferenceManager.setDefaultValues(mContext, R.xml.shared_preference, false);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-        String pref_key = mContext.getResources().getString(R.string.ota_server_address);
-        return prefs.getString(pref_key, null);
+        String pref_key = mContext.getResources().getString(R.string.preference_ota_server_address_key);
+        String default_value = mContext.getResources().getString(R.string.default_rdfm_server_address);
+        return prefs.getString(pref_key, default_value);
     }
 
     public int getUpdateIntervalSeconds() {
-        PreferenceManager.setDefaultValues(mContext, R.xml.shared_preference, false);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-        String pref_key = mContext.getResources().getString(R.string.update_check_interval_in_seconds);
-        // The actual default is set in shared_preference.xml, but pass some sane values in here as well
-        // if the configuration is missing this value.
-        return Integer.parseInt(prefs.getString(pref_key, "600"));
+        String pref_key = mContext.getResources().getString(R.string.preference_update_check_interval_key);
+        String default_value = mContext.getResources().getString(R.string.default_update_check_interval_seconds);
+        return Integer.parseInt(prefs.getString(pref_key, default_value));
     }
 }

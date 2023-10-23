@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    WARNING: This must be the first file in this folder (sorted alphabetically).
+    This file contains default values for all configuration options.
+    These settings can be modified by creating a `conf.xml` file that configures
+    the desired options. See the example `conf.xml` file for details.
+-->
+<resources>
+    <string name="default_rdfm_server_address">http://rdfm.example.local:5000/</string>
+    <string name="default_update_check_interval_seconds">86400</string>
+</resources>
