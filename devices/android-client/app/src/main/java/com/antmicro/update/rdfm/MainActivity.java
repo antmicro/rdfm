@@ -18,8 +18,6 @@ import androidx.preference.PreferenceManager;
 
 import com.antmicro.update.rdfm.utilities.SysUtils;
 
-import java.util.Calendar;
-
 public class MainActivity extends Activity {
 
     private static final String TAG = "MainActivity";
@@ -60,9 +58,7 @@ public class MainActivity extends Activity {
         BroadcastReceiver startUpdateReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                Log.d(TAG, "Start system update");
-                mUpdateManager.bind();
-                httpClient.checkUpdate(buildVersion, serverAddress, utils, mUpdateManager);
+                onStartUpdateIntent();
             }
         };
         registerReceiver(startUpdateReceiver, new IntentFilter(startUpdateIntent));
@@ -73,6 +69,16 @@ public class MainActivity extends Activity {
     protected void onPause() {
        this.mUpdateManager.unbind();
        super.onPause();
+    }
+
+    private void onStartUpdateIntent() {
+        Log.d(TAG, "Start system update");
+        try {
+            mUpdateManager.bind();
+            httpClient.checkUpdate(buildVersion, serverAddress, utils, mUpdateManager);
+        } catch (RuntimeException e) {
+            Log.e(TAG, "Update failed with exception:", e);
+        }
     }
 
     private void setUpdateAlarm() {
