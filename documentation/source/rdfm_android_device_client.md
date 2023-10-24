@@ -57,19 +57,35 @@ You can extract the values from the [package metadata file](https://source.andro
 The application will automatically start on system boot.
 Available configuration options are shown below.
 
-### Changing the default server address
+### Build-time app configuration
 
-You can change the default RDFM server address the app will connect to in the `app/src/main/res/xml/shared_preference.xml` file.
-An example is shown below:
+The default build-time configuration can be modified by providing a custom `conf.xml` file in the `app/src/main/res/values/` folder, similar to the one shown below:
 
 ```xml
-<!-- ... -->
-        <EditTextPreference
-            android:key="ota_server_address"
-            android:title="server address"
-            android:defaultValue="https://rdfm.example.com/"/>
-<!-- ... -->
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<!--
+    This is an example overlay configuration file for the RDFM app.
+    To modify the default server address, you can do:
+
+        <string name="default_rdfm_server_address">http://rdfm.example.local:6000/</string>
+
+    Likewise, overlaying the default update check interval can be done similarly:
+
+        <string name="default_update_check_interval_seconds">240</string>
+
+    NOTE: These settings are only used during the app's first startup. To change them afterwards,
+    you must delete the existing configuration file.
+-->
+</resources>
 ```
+
+This build-time configuration is applied **only once, at first startup of the app**, as the main use case for this is first-time configuration for newly provisioned devices.
+Modifying it afterwards (for example, via an update containing a new version of the RDFM app) will not result in the change of existing configuration.
+
+### Runtime app configuration
+
+It is possible to change the app's configuration at runtime by simply starting the RDFM app from the drawer and selecting `Settings` from the context menu.
 
 ### Update check interval
 
