@@ -144,49 +144,44 @@ public class HttpClient {
             // FIXME: Handle token expiration properly, currently we just resend the registration on every server request
             //        and use one token per request.
             deviceToken = null;
-            client.newCall(request).enqueue(new Callback() {
-                @Override public void onFailure(Call call, IOException e) {
-                    e.printStackTrace();
-                }
 
-                @Override public void onResponse(Call call, Response response) throws IOException {
-                    try (ResponseBody responseBody = response.body()) {
-                        switch (response.code()) {
-                            case 200:
-                                Log.d(TAG, "Update is available");
-                                String body = responseBody.string();
-                                String packageUri = getResponseParam(body, "uri");
-                                String checksum =  getResponseParam(body, "sha256");
-                                String otaPackageName = Paths.get(
-                                        new URI(packageUri).getPath()).getFileName().toString();
-                                boolean readyToUpdate = downloadPackage(packageUri, checksum, otaPackageName);
-                                if (readyToUpdate) {
-                                    mUpdateManager.applyUpdate(otaPackageName);
-                                } else {
-                                    Log.d(TAG, "TODO: Retry to download package");
-                                }
-                                break;
-                            case 204:
-                                Log.d(TAG, "No updates are available");
-                                break;
-                            case 400:
-                                Log.d(TAG, "Missing device metadata");
-                                break;
-                            case 401:
-                                Log.d(TAG, "Device not authorized - the token has expired");
-                                deviceToken = null;
-                                break;
-                            default:
-                                Log.d(TAG, "Unexpected code " + response);
+            try (Response response = client.newCall(request).execute()) {
+                try (ResponseBody responseBody = response.body()) {
+                    switch (response.code()) {
+                        case 200:
+                            Log.d(TAG, "Update is available");
+                            String body = responseBody.string();
+                            String packageUri = getResponseParam(body, "uri");
+                            String checksum =  getResponseParam(body, "sha256");
+                            String otaPackageName = Paths.get(
+                                    new URI(packageUri).getPath()).getFileName().toString();
+                            boolean readyToUpdate = downloadPackage(packageUri, checksum, otaPackageName);
+                            if (readyToUpdate) {
+                                mUpdateManager.applyUpdate(otaPackageName);
+                            } else {
+                                Log.d(TAG, "TODO: Retry to download package");
+                            }
+                            break;
+                        case 204:
+                            Log.d(TAG, "No updates are available");
+                            break;
+                        case 400:
+                            Log.d(TAG, "Missing device metadata");
+                            break;
+                        case 401:
+                            Log.d(TAG, "Device not authorized - the token has expired");
+                            deviceToken = null;
+                            break;
+                        default:
+                            Log.d(TAG, "Unexpected code " + response);
 
-                        }
-                    } catch (URISyntaxException e) {
-                        throw new RuntimeException(e);
                     }
+                } catch (URISyntaxException e) {
+                    throw new RuntimeException("Could not construct package URI", e);
                 }
-            });
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e);
+            }
+        } catch (RuntimeException | IOException e) {
+            throw new RuntimeException("Failed to check for updates", e);
         }
     }
 

@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class UpdateManager {
 
@@ -29,6 +31,8 @@ public class UpdateManager {
     private final UpdateData mUpdateData = new UpdateData();
     private final UpdateManager.UpdateEngineCallbackImpl
             mUpdateEngineCallback = new UpdateManager.UpdateEngineCallbackImpl();
+    private final AtomicInteger mCurrentEngineState = new AtomicInteger();
+    private final AtomicBoolean mGotStateUpdateOnce = new AtomicBoolean(false);
 
     class UpdateEngineCallbackImpl extends UpdateEngineCallback {
         @Override
@@ -77,8 +81,25 @@ public class UpdateManager {
     }
 
     private void onStatusUpdate(int status, float percent) {
-        Log.d(TAG, String.format("Update status: %s, progress: %.2f",
-                UpdateEngineStatuses.getStatusText(status), percent));
+        Log.d(TAG, String.format("Update status: %s, progress: %.2f%%",
+                UpdateEngineStatuses.getStatusText(status), percent * 100.0f));
+
+        mCurrentEngineState.set(status);
+        // This is the first status update received from the UpdateEngine
+        if(!mGotStateUpdateOnce.get()) {
+            handleUpdateEngineInitialState(status);
+        }
+        mGotStateUpdateOnce.set(true);
+    }
+
+    private void handleUpdateEngineInitialState(int status) {
+        Log.d(TAG, "Initial state received from UpdateEngine: " +  UpdateEngineStatuses.getStatusText(status));
+        if(status == UpdateEngine.UpdateStatusConstants.UPDATED_NEED_REBOOT) {
+            Log.w(TAG, "UpdateEngine is reporting that a reboot is required.");
+            Log.w(TAG, "Either an update was performed outside RDFM, or the application crashed during a previous update.");
+            Log.w(TAG, "Forcing a reboot.");
+            rebootAfterUpdate();
+        }
     }
 
     public void bind() {
@@ -87,6 +108,10 @@ public class UpdateManager {
 
     public void unbind() {
         this.mUpdateEngine.unbind();
+    }
+
+    public boolean canSafelyCheckForUpdates() {
+        return mCurrentEngineState.get() == UpdateEngine.UpdateStatusConstants.IDLE;
     }
 
     public void applyUpdate(String otaName) {

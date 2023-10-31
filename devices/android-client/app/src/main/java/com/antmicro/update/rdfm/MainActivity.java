@@ -18,6 +18,8 @@ import androidx.preference.PreferenceManager;
 
 import com.antmicro.update.rdfm.utilities.SysUtils;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 public class MainActivity extends Activity {
 
     private static final String TAG = "MainActivity";
@@ -32,6 +34,7 @@ public class MainActivity extends Activity {
     private TextView mTextViewAddress;
     private String serverAddress;
     private String buildVersion;
+    private ReentrantLock updaterLock;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +50,7 @@ public class MainActivity extends Activity {
         Log.d(TAG, "OTA server address: " + serverAddress);
         this.mTextViewBuild.setText(buildVersion);
         this.mTextViewAddress.setText(serverAddress);
+        updaterLock = new ReentrantLock();
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -58,26 +62,38 @@ public class MainActivity extends Activity {
         BroadcastReceiver startUpdateReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                onStartUpdateIntent();
+                // Handle update check in a separate thread
+                new Thread(() -> onStartUpdateIntent()).start();
             }
         };
         registerReceiver(startUpdateReceiver, new IntentFilter(startUpdateIntent));
         this.setUpdateAlarm();
+        this.mUpdateManager.bind();
     }
 
     @Override
     protected void onPause() {
-       this.mUpdateManager.unbind();
-       super.onPause();
+        this.mUpdateManager.unbind();
+        super.onPause();
     }
 
     private void onStartUpdateIntent() {
+        if(!mUpdateManager.canSafelyCheckForUpdates()) {
+            Log.i(TAG, "An update is already being installed - skipping update check");
+            return;
+        }
+        if(!updaterLock.tryLock()) {
+            Log.i(TAG, "An update check is already in progress - skipping update check");
+            return;
+        }
+
         Log.d(TAG, "Start system update");
         try {
-            mUpdateManager.bind();
             httpClient.checkUpdate(buildVersion, serverAddress, utils, mUpdateManager);
         } catch (RuntimeException e) {
             Log.e(TAG, "Update failed with exception:", e);
+        } finally {
+            updaterLock.unlock();
         }
     }
 
