@@ -2,7 +2,14 @@ package daemon
 
 import (
 	"bytes"
+	"crypto"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
@@ -29,6 +36,7 @@ import (
 const HEADER_LEN = 10
 const MSG_RECV_TIMEOUT_INTERVALS = 10
 const MSG_RECV_INTERVAL_S = 1
+const RSA_DEVICE_KEY_SIZE = 4096
 
 type AuthToken struct {
 	value string
@@ -46,6 +54,7 @@ type Device struct {
 	macAddr      string
 	rdfmCtx      *app.RDFM
 	authToken    *AuthToken
+	deviceToken  string
 }
 
 func recv(s net.Conn) ([]byte, error) {
@@ -117,6 +126,7 @@ func (d Device) send(msg requests.Request) error {
 }
 
 func (d *Device) startClient() error {
+	d.authenticateDeviceWithServer()
 	d.checkUpdatesPeriodically()
 	err := d.communicationLoop()
 	if err != nil {
@@ -402,6 +412,113 @@ func (d *Device) updateMetadata() error {
 	return nil
 }
 
+func (d Device) getKeys() (*rsa.PrivateKey, string) {
+	privateKey, err := rsa.GenerateKey(rand.Reader, RSA_DEVICE_KEY_SIZE)
+	if err != nil {
+	    return nil, ""
+	}
+	publicKey := privateKey.PublicKey
+	publicKeyBytes, err := x509.MarshalPKIXPublicKey(&publicKey)
+	if err != nil {
+	    return nil, ""
+	}
+	publicKeyBlock := pem.Block{
+	    Type:    "PUBLIC KEY",
+	    Headers: nil,
+	    Bytes:   publicKeyBytes,
+	}
+	publicKeyPem := string(pem.EncodeToMemory(&publicKeyBlock))
+
+	return privateKey, publicKeyPem
+}
+
+func (d *Device) authenticateDeviceWithServer() {
+
+	privateKey, publicKeyString := d.getKeys()
+	if len(publicKeyString) == 0 {
+		log.Println("Failed to get device key. Authentication impossible")
+		return
+	}
+	devType, err := d.rdfmCtx.GetCurrentDeviceType()
+	if err != nil {
+		log.Println("Error getting current device type", err)
+		return
+	}
+	swVer, err := d.rdfmCtx.GetCurrentArtifactName()
+	if err != nil {
+		log.Println("Error getting current software version", err)
+		return
+	}
+
+	log.Println("Device authentication...")
+	metadata := map[string]string{
+		"rdfm.hardware.devtype": devType,
+		"rdfm.software.version": swVer,
+		"rdfm.hardware.macaddr": d.macAddr,
+	}
+	msg := map[string]interface{}{
+		"metadata":   metadata,
+		"public_key": publicKeyString,
+		"timestamp":  time.Now().Unix(),
+	}
+	serializedMsg, err := json.Marshal(msg)
+	if err != nil {
+		log.Println("Failed to serialize metadata", err)
+		return
+	}
+
+	// Prepare signature
+	hash := sha256.Sum256(serializedMsg)
+	signature, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA256, hash[:])
+	if err != nil {
+		log.Println("Failed to sign auth request", err)
+		return
+	}
+	signatureB64 := base64.StdEncoding.EncodeToString([]byte(signature))
+
+	endpoint := fmt.Sprintf("%s/api/v1/auth/device",
+		d.rdfmCtx.RdfmConfig.ServerURL)
+auth_loop:
+	for {
+		req, _ := http.NewRequest("POST", endpoint, bytes.NewBuffer(serializedMsg))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json, text/javascript")
+		req.Header.Add("X-RDFM-Device-Signature", signatureB64)
+		client := &http.Client{}
+		res, err := client.Do(req)
+
+		if err != nil {
+			log.Println("Failed to send authentication request", err)
+			return
+		}
+		defer res.Body.Close()
+
+		switch res.StatusCode {
+		case 200:
+			log.Println("Device authorized")
+			var response map[string]interface{}
+			body, err := io.ReadAll(res.Body)
+			err = json.Unmarshal(body, &response)
+			if err != nil {
+				log.Println("Failed to deserialize package metadata", err)
+				return
+			}
+			d.deviceToken = response["token"].(string)
+			log.Println("Authorization token expires in", response["expires"], "seconds")
+			break auth_loop
+		case 400:
+			log.Println("Invalid message schema or signature")
+		case 401:
+			auth_duration := time.Duration(d.rdfmCtx.RdfmConfig.RetryPollIntervalSeconds) * time.Second
+			log.Println("Device hasn't been authorized by the administrator.")
+			log.Println("Next authorization attempt in", auth_duration)
+			time.Sleep(time.Duration(auth_duration))
+		default:
+			log.Println("Unexpected status code from the server:", res.StatusCode)
+		}
+	}
+}
+
 func (d Device) checkUpdatesPeriodically() {
 	devType, err := d.rdfmCtx.GetCurrentDeviceType()
 	if err != nil {
@@ -430,9 +547,13 @@ func (d Device) checkUpdatesPeriodically() {
 			}
 			endpoint := fmt.Sprintf("%s/api/v1/update/check",
 				d.rdfmCtx.RdfmConfig.ServerURL)
-			res, err := http.Post(endpoint, "application/json",
+			req, _ := http.NewRequest("POST", endpoint,
 				bytes.NewBuffer(serializedMetadata),
 			)
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Add("Authorization", "Bearer token="+d.deviceToken)
+			client := &http.Client{}
+			res, err := client.Do(req)
 			if err != nil {
 				log.Println("Failed to check updates from ", err)
 				return
@@ -468,6 +589,8 @@ func (d Device) checkUpdatesPeriodically() {
 				log.Println("Device metadata is missing device type and/or software version")
 			case 401:
 				log.Println("Device did not provide authorization data, or the authorization has expired")
+				d.authenticateDeviceWithServer()
+				continue
 			}
 			update_duration := time.Duration(d.rdfmCtx.RdfmConfig.UpdatePollIntervalSeconds) * time.Second
 			log.Printf("Next update check in %s\n", update_duration)

@@ -12,6 +12,7 @@ import (
 )
 
 const DEFAULT_UPDATE_POLL_INTERVAL_S = 15 * 60
+const DEFAULT_RETRY_POLL_INTERVAL_S = 60
 
 type RDFMConfig struct {
 	// Path to the device type file
@@ -61,6 +62,7 @@ func LoadConfig(mainConfigFile string, overlayConfigFile string) (*RDFMConfig, *
 	var menderConfig conf.MenderConfig
 	rdfmConfig := RDFMConfig{
 		UpdatePollIntervalSeconds: DEFAULT_UPDATE_POLL_INTERVAL_S,
+		RetryPollIntervalSeconds:  DEFAULT_RETRY_POLL_INTERVAL_S,
 	}
 
 	// Load Mender config
