@@ -11,6 +11,8 @@ from auth.device import DeviceToken, DEVICE_JWT_ALGO
 
 # Which path to use for probing by default
 PROBE_PATH_DEFAULT = "/api/v1/packages"
+# Which status code should be considered a successful response
+PROBE_SUCCESS_STATUS = 200
 # Path to the DB file to use for tests
 DBPATH = "test-db.db"
 # Server URL
@@ -26,9 +28,10 @@ UPDATES_ENDPOINT = f"{SERVER}/api/v1/update/check"
 
 def wait_for_api(timeout: int,
                  server_url: str,
-                 probe_path: str = PROBE_PATH_DEFAULT) -> bool:
+                 probe_path: str = PROBE_PATH_DEFAULT,
+                 success_status: int = PROBE_SUCCESS_STATUS) -> bool:
     """ Wait for the API to become accessible by probing one of
-        the endpoints until a 200 status code is returned.
+        the endpoints until the specified status code is returned.
 
     Args:
         timeout: how long to wait for, in seconds
@@ -52,7 +55,7 @@ def wait_for_api(timeout: int,
         last = now
         try:
             resp = requests.get(probe_url)
-            if resp.status_code == 200:
+            if resp.status_code == success_status:
                 return True
             time.sleep(0.1)
         except:

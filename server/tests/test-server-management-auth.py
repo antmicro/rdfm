@@ -8,6 +8,7 @@ from mocks.oauth2_token_introspection import (start_token_mock,
                                               configure_token_mock,
                                               MockConfig)
 from api.v1.middleware import SCOPE_READ_ONLY, SCOPE_READ_WRITE
+from common import SERVER_WAIT_TIMEOUT, wait_for_api
 
 
 SERVER = "http://127.0.0.1:5000/"
@@ -41,7 +42,7 @@ def process(configure_token_mock):
         "python3", "-m", "rdfm_mgmt_server",
         "--debug", "--no-ssl", "--test-mocks", "--database", f"sqlite:///{DBPATH}"
     ], env=new_env)
-    time.sleep(1.2)
+    assert wait_for_api(SERVER_WAIT_TIMEOUT, SERVER, success_status=401), "server has started successfully"
 
     yield process
 
