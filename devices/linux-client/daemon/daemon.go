@@ -412,24 +412,64 @@ func (d *Device) updateMetadata() error {
 	return nil
 }
 
-func (d Device) getKeys() (*rsa.PrivateKey, string) {
-	privateKey, err := rsa.GenerateKey(rand.Reader, RSA_DEVICE_KEY_SIZE)
-	if err != nil {
-	    return nil, ""
-	}
+func getPublicKey(privateKey *rsa.PrivateKey) []byte {
 	publicKey := privateKey.PublicKey
-	publicKeyBytes, err := x509.MarshalPKIXPublicKey(&publicKey)
-	if err != nil {
-	    return nil, ""
-	}
+	publicKeyBytes := x509.MarshalPKCS1PublicKey(&publicKey)
 	publicKeyBlock := pem.Block{
-	    Type:    "PUBLIC KEY",
-	    Headers: nil,
-	    Bytes:   publicKeyBytes,
+		Type:    "PUBLIC KEY",
+		Headers: nil,
+		Bytes:   publicKeyBytes,
 	}
-	publicKeyPem := string(pem.EncodeToMemory(&publicKeyBlock))
+	return pem.EncodeToMemory(&publicKeyBlock)
+}
 
-	return privateKey, publicKeyPem
+func (d Device) getKeys() (*rsa.PrivateKey, string) {
+	var publicKeyPem []byte
+	var privateKey *rsa.PrivateKey
+	keyFileName := app.RdfmRSAKeysPath
+
+	// Read key from file
+	privateKeyPem, err := os.ReadFile(keyFileName)
+	if err != nil || len(privateKeyPem) == 0 {
+		log.Println("Can't read keys from the file")
+		log.Println("Generating keys...")
+
+		// Generate the keys
+		privateKey, err = rsa.GenerateKey(rand.Reader, RSA_DEVICE_KEY_SIZE)
+		if err != nil {
+			return nil, ""
+		}
+		publicKeyPem = getPublicKey(privateKey)
+		log.Println("Keys generated")
+
+		// Write keys to a file
+		privateKeyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
+		privateKeyBlock := pem.Block{
+			Type:    "PRIVATE KEY",
+			Headers: nil,
+			Bytes:   privateKeyBytes,
+		}
+		privateKeyPem := pem.EncodeToMemory(&privateKeyBlock)
+		err = os.WriteFile(keyFileName, privateKeyPem, 0600)
+		if err != nil {
+			log.Println("Can't write key to the file")
+		} else {
+			log.Println("Keys written to a file")
+		}
+	} else {
+		// Get private key
+		privateKeyBlock, _ := pem.Decode(privateKeyPem)
+		if privateKeyBlock == nil || privateKeyBlock.Type != "PRIVATE KEY" {
+			log.Println("Failed to decode PEM block containing private key")
+		}
+		privateKey, err = x509.ParsePKCS1PrivateKey(privateKeyBlock.Bytes)
+		if err != nil {
+			log.Println("Failed to parse private key bytes")
+		}
+		// Get public key
+		publicKeyPem = getPublicKey(privateKey)
+	}
+	return privateKey, string(publicKeyPem)
 }
 
 func (d *Device) authenticateDeviceWithServer() {

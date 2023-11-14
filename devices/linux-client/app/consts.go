@@ -12,6 +12,7 @@ const (
 	RdfmTokenFilename        = "token.json"
 	RdfmArtifactInfoFilename = "artifact_info"
 	RdfmProvidesInfoFilename = "provides_info"
+	RdfmRSAKeysFilename      = "rsa.pem"
 )
 
 var (
@@ -21,4 +22,5 @@ var (
 	RdfmArtifactInfoPath  = path.Join(RdfmConfigDirectory, RdfmArtifactInfoFilename)
 	RdfmProvidesInfoPath  = path.Join(RdfmConfigDirectory, RdfmProvidesInfoFilename)
 	RdfmTokenPath         = path.Join(RdfmTokenDirectory, RdfmTokenFilename)
+	RdfmRSAKeysPath       = path.Join(RdfmDataDirectory, RdfmRSAKeysFilename)
 )
