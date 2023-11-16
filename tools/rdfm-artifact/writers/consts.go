@@ -1,10 +1,13 @@
 package writers
 
 const (
-	rdfmArtifactVersion   = 3
-	rdfmArtifactFormat    = "rdfm"
-	rdfmArtifactDeltaType = "rootfs-image"
+	rdfmArtifactVersion         = 3
+	rdfmArtifactFormat          = "rdfm"
+	rdfmRootfsArtifactDeltaType = "rootfs-image"
 
 	rdfmRootfsProvidesChecksum = "rootfs-image.checksum"
 	rdfmRootfsProvidesVersion  = "rootfs-image.version"
+
+	rdfmZephyrProvidesChecksum = "zephyr-image.checksum"
+	rdfmZephyrProvidesVersion  = "zephyr-image.version"
 )

@@ -59,6 +59,13 @@ func makeCommands() []cli.Command {
 					Flags:  makeDeltaRootfsFlags(),
 					Action: writeDeltaRootfs,
 				},
+				{
+					Name:        "zephyr-image",
+					Usage:       "Create a full Zephyr MCUboot image artifact",
+					Description: "Creates a non-delta artifact containing the complete Zephyr MCUboot image to be installed on a target device",
+					Flags:       makeFullZephyrFlags(),
+					Action:      writeFullZephyr,
+				},
 			},
 		},
 	}

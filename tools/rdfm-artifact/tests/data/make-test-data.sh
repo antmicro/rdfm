@@ -22,6 +22,21 @@ if [ ! -f ./dummy-rootfs.img ]; then
 	echo "WARNING: The tests WILL fail if you do not do this!"
 fi
 
+if [ ! -f ./dummy-zephyr.img -o ! -f ./dummy-zephyr.invalid.img ]; then
+	DUMMYSIZE="25600"
+	BLOCKSIZE="512"
+
+	# Create a dummy invalid "zephyr binary"
+	dd if=/dev/random of=dummy-zephyr.invalid.img bs=$BLOCKSIZE count=$(( DUMMYSIZE / BLOCKSIZE ))
+
+	# Create a dummy valid "zephyr binary"
+	# Prepend valid magic bytes (in little endian order) to invalid binary
+	printf '\x3d\xb8\xf3\x96' | cat - dummy-zephyr.invalid.img > dummy-zephyr.img
+
+	# Set valid image version to 0.1.2+3
+	printf '\x00\x01\x02\x00\x03\x00\x00\x00' | dd of=dummy-zephyr.img bs=1 seek=20 count=8 conv=notrunc
+fi
+
 rdfm-artifact write rootfs-image \
 	--file "dummy-rootfs.img" \
 	--artifact-name "dummy-artifact" \

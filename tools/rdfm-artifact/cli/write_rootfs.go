@@ -49,7 +49,7 @@ func writeFullRootfs(c *cli.Context) error {
 	artifactName, artifactGroup := parseArtifactName(c), parseArtifactGroup(c)
 	compatArtifacts, compatDevices, compatGroups := parseArtifactCompatibleArtifacts(c), parseArtifactCompatibleDevices(c), parseArtifactCompatibleGroups(c)
 
-	writer := writers.NewArtifactWriter(outputPath)
+	writer := writers.NewRootfsArtifactWriter(outputPath)
 	writer.WithArtifactProvides(artifactName, artifactGroup)
 	writer.WithArtifactDepends(compatArtifacts, compatDevices, compatGroups)
 	writer.WithPayloadProvides(payloadProvides)
