@@ -126,7 +126,6 @@ func (d Device) send(msg requests.Request) error {
 }
 
 func (d *Device) startClient() error {
-	d.authenticateDeviceWithServer()
 	d.checkUpdatesPeriodically()
 	err := d.communicationLoop()
 	if err != nil {
@@ -573,6 +572,10 @@ func (d Device) checkUpdatesPeriodically() {
 
 	go func() {
 		for {
+			if len(d.deviceToken) == 0 {
+				d.authenticateDeviceWithServer()
+			}
+
 			log.Println("Checking updates...")
 			metadata := map[string]string{
 				"rdfm.hardware.devtype": devType,
