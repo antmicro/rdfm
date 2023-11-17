@@ -36,7 +36,8 @@ class Device():
         "format": "rfc"
     })
     public_key: str = field(metadata={
-        "required": True
+        "required": True,
+        "allow_none": True
     })
 
 
