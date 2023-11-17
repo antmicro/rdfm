@@ -96,6 +96,11 @@ class CapabilityReport(Request):
     method: Literal['capability_report'] = 'capability_report'
     capabilities: dict[str, bool]
 
+class DeviceAttachToManager(Request):
+    method: Literal['shell_attach'] = 'shell_attach'
+    mac_addr: str
+    uuid: str
+
 class Container(BaseModel):
     """container holds a list of models to enable parsing from json"""
     data: Union[
@@ -115,4 +120,5 @@ class Container(BaseModel):
         Alert,
         Metadata,
         CapabilityReport,
+        DeviceAttachToManager
     ]

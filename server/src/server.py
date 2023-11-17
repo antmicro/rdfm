@@ -14,7 +14,7 @@ from database.groups import GroupsDB
 from database.registrations import RegistrationsDB
 import database.db
 import configuration
-from device_mgmt.containers import RemoteDevices
+from device_mgmt.containers import RemoteDevices, ShellSessions
 
 
 CONNECTION_TRIES = 2
@@ -51,6 +51,7 @@ class Server:
         self._groups_db: GroupsDB = GroupsDB(self.db)
         self._registrations_db: RegistrationsDB = RegistrationsDB(self.db)
         self.remote_devices = RemoteDevices()
+        self.shell_sessions = ShellSessions()
 
         # filename in server cache -> transfer object
         self.file_transfers: dict[str, FileTransfer] = {}
