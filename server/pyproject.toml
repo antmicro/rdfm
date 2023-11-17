@@ -31,6 +31,7 @@ pycryptodome = "^3.18.0"
 boto3 = "^1.28.57"
 moto = "^4.2.4"
 authlib = "==1.2.1"
+simple-websocket = "^1.0.0"
 
 [tool.poetry.group.test.dependencies]
 mypy = "^1.4.0"
