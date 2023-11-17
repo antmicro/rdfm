@@ -2,25 +2,26 @@ import datetime
 import inspect
 import functools
 from marshmallow import ValidationError
-import marshmallow_dataclass
 from flask import request
 from api.v1.common import api_error
 import functools
-from auth.device import decode_and_verify_token
+from auth.device import decode_and_verify_token, DeviceToken
 from api.v1.common import api_error
-from auth.device import DeviceToken
 from flask import request
-import time
-import jwt
-import traceback
 import configuration
 import requests
-from typing import Callable, Optional, Any
+from typing import Callable, Optional
 from api.v1.common import api_error
 from flask import request, current_app
 from authlib.integrations.requests_client import OAuth2Session
 from authlib.oauth2.rfc6749.util import scope_to_list
 import server
+import functools
+import inspect
+from simple_websocket import Server, ConnectionClosed
+from flask import request, Response
+from rdfm.ws import WebSocketException
+from device_mgmt.helpers import WS_PING_INTERVAL
 
 
 """ Read-write administrator scope """
@@ -54,6 +55,13 @@ DOCS_PUBLIC_API_TEXT = f"""
 DOCS_DEVICE_API_TEXT = f"""
 .. warning:: Accessing this endpoint requires providing a device token.
 """
+
+""" WebSocket routes
+"""
+DOCS_WEBSOCKET_ROUTE = f"""
+.. note:: This is a WebSocket route.
+"""
+
 
 
 def __add_scope_docs(function, text: str):
@@ -259,6 +267,72 @@ def __management_api(scope_check_callback: Callable[[list[str]], bool]):
             return f(*args, **kwargs)
         return __management_api_impl
     return _management_api_impl
+
+
+def upgrade_to_websocket(f):
+    """ Upgrade a request to WebSocket.
+
+    This decorator upgrades an incoming request to a WebSocket.
+    The connected socket is passed in as `ws` kwarg to the wrapped
+    function.
+
+    On return from the decorated function, the WebSocket connection
+    will be closed with the normal disconnection status (1000).
+    Additionally, all exceptions of type `WebSocketException` thrown
+    by the function will be caught here, which allows customizing
+    the WebSocket disconnection status code and message.
+
+    The function that is to be decorated should register it's route
+    with the Flask app/blueprint like so:
+
+        @example_blueprint.route('/my/websocket/route', websocket=True)
+
+    The registration decorator must appear before this one. This has
+    the added benefit of being able to reject requests at the initial
+    handshake, for example:
+
+        @example_blueprint.route('/my/websocket/route', websocket=True)
+        @<a decorator that checks for Authorization header>
+        @upgrade_to_websocket
+        def my_route():
+            pass
+    """
+    __add_scope_docs(f, DOCS_WEBSOCKET_ROUTE)
+
+    @functools.wraps(f)
+    def __upgrade(*args, **kwargs):
+        spec = inspect.getfullargspec(f)
+        if 'ws' in kwargs:
+            raise RuntimeError("upgrade_to_websocket decorator was used, but the wrapped route function "
+                                f"<{f.__name__}> "
+                                f"is already receiving an argument with the name 'ws'")
+        if 'ws' not in spec.args:
+            raise KeyError("upgrade_to_websocket decorator was used, but the wrapped route function "
+                            f"<{f.__name__}> "
+                            "does not accept the WebSocket client parameter "
+                            f"(missing function argument 'ws' of type simple_websocket.Client)")
+
+        ws = Server.accept(request.environ, ping_interval=WS_PING_INTERVAL)
+        exception: WebSocketException = None
+
+        kwargs['ws'] = ws
+        try:
+            f(*args, **kwargs)
+            ws.close()
+        except WebSocketException as e:
+            try:
+                ws.close(reason=e.status_code, message=e.message)
+            except:
+                pass
+        except ConnectionClosed:
+            pass
+
+        # TODO: This was verified to work with Werkzeug. Other WSGI servers
+        # may use a different way of returning a response from the route, so
+        # this would have to be adapted in the future.
+        return Response()
+
+    return __upgrade
 
 
 def management_read_only_api(f):
