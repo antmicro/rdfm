@@ -92,6 +92,10 @@ class Alert(Request):
 class Metadata(BaseModel):
     metadata: dict
 
+class CapabilityReport(Request):
+    method: Literal['capability_report'] = 'capability_report'
+    capabilities: dict[str, bool]
+
 class Container(BaseModel):
     """container holds a list of models to enable parsing from json"""
     data: Union[
@@ -109,5 +113,6 @@ class Container(BaseModel):
         DownloadRequest,
         AuthTokenRequest,
         Alert,
-        Metadata
+        Metadata,
+        CapabilityReport,
     ]
