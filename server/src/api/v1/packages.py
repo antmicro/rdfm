@@ -179,7 +179,7 @@ def upload_package():
             sha256 = hashlib.file_digest(f, 'sha256').hexdigest()
 
         package = models.package.Package()
-        package.created = datetime.datetime.now()
+        package.created = datetime.datetime.utcnow()
         package.info = meta
         package.driver = driver_name
         package.sha256 = sha256

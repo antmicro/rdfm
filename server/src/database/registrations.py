@@ -43,7 +43,7 @@ class RegistrationsDB:
             reg.mac_address = mac
             reg.public_key = public_key
             reg.info = metadata
-            reg.last_appeared = datetime.datetime.now()
+            reg.last_appeared = datetime.datetime.utcnow()
             session.merge(reg)
             session.commit()
 
