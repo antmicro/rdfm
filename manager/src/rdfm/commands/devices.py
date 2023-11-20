@@ -3,6 +3,7 @@ import rdfm.config
 import requests
 import rdfm.api.devices
 from typing import List, Optional
+from rdfm.helpers import utc_to_local
 
 
 def list_devices(config: rdfm.config.Config, args):
@@ -20,7 +21,7 @@ def list_devices(config: rdfm.config.Config, args):
         print("\tMetadata:")
         for k, v in device.metadata.items():
             print(f"\t\t{k}: {v}")
-        print(f"\tLast accessed: {device.last_access}")
+        print(f"\tLast accessed: {utc_to_local(device.last_access)}")
         print(f"\tAssigned to group: {'<none>' if device.group is None else device.group}")
         print(f"\tPublic key: {device.public_key}")
         print()
@@ -35,7 +36,7 @@ def list_pending_devices(config: rdfm.config.Config, args):
         print("Request:")
         print(f"\tMAC address: {request.mac_address}")
         print(f"\tPublic key: {request.public_key}")
-        print(f"\tLast appeared on: {request.last_appeared}")
+        print(f"\tLast appeared on: {utc_to_local(request.last_appeared)}")
         print(f"\tMetadata:")
         for k, v in request.metadata.items():
             print(f"\t\t{k}: {v}")
@@ -55,7 +56,7 @@ def auth_device(config: rdfm.config.Config, args) -> Optional[str]:
         print(f"Request {idx}:")
         print(f"\tMAC address: {request.mac_address}")
         print(f"\tPublic key: {request.public_key}")
-        print(f"\tLast appeared on: {request.last_appeared}")
+        print(f"\tLast appeared on: {utc_to_local(request.last_appeared)}")
         print(f"\tMetadata:")
         for k, v in request.metadata.items():
             print(f"\t\t{k}: {v}")

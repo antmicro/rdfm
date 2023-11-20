@@ -3,6 +3,7 @@ import argparse
 import rdfm.helpers
 import rdfm.config
 import rdfm.api.groups
+from rdfm.helpers import utc_to_local
 
 
 META_GROUP_NAME = "rdfm.group.name"
@@ -17,7 +18,7 @@ def list_groups(config: rdfm.config.Config, args) -> Optional[str]:
     print("Device groups:")
     for group in groups:
         print(f"Group #{group.id}")
-        print(f"\tCreated at: {group.created}")
+        print(f"\tCreated at: {utc_to_local(group.created)}")
         print(f"\tDevices assigned: {group.devices} | {len(group.devices)} devices")
         print(f"\tAssigned packages: {group.packages}")
         print(f"\tUpdate policy: '{group.policy}'")

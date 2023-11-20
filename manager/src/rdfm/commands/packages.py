@@ -6,6 +6,7 @@ import rdfm.helpers
 import progressbar
 import os.path
 from rdfm.schema.v1.updates import META_SOFT_VER, META_DEVICE_TYPE
+from rdfm.helpers import utc_to_local
 
 
 def list_packages(config: rdfm.config.Config, args) -> Optional[str]:
@@ -16,7 +17,7 @@ def list_packages(config: rdfm.config.Config, args) -> Optional[str]:
     print("Available packages:")
     for pkg in packages:
         print(f"Package ID: #{pkg.id}")
-        print(f"\tUploaded on: {pkg.created}")
+        print(f"\tUploaded on: {utc_to_local(pkg.created)}")
         print(f"\tSHA-256: {pkg.sha256}")
         print(f"\tStorage driver: {pkg.driver}")
         print("\tMetadata:")
