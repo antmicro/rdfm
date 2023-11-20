@@ -31,9 +31,23 @@ import models.device
 import json
 from api.v1.common import api_error
 from api.v1.middleware import management_read_only_api, management_read_write_api
+from rdfm.schema.v1.devices import Device
 
 
 devices_blueprint: Blueprint = Blueprint("rdfm-server-devices", __name__)
+
+
+def model_to_schema(device: models.device.Device) -> Device:
+    """ Convert a database model to the schema model
+    """
+    return Device(id=device.id,
+                  last_access=device.last_access,
+                  name=device.name,
+                  mac_address=device.mac_address,
+                  capabilities=json.loads(device.capabilities),
+                  metadata=json.loads(device.device_metadata),
+                  public_key=device.public_key,
+                  group=device.group)
 
 
 @devices_blueprint.route('/')
@@ -292,18 +306,7 @@ def fetch_all():
     """  # noqa: E501
     try:
         devices: List[models.device.Device] = server.instance._devices_db.fetch_all()
-        return [
-            {
-                "id": dev.id,
-                "last_access": dev.last_access,
-                "name": dev.name,
-                "mac_address": dev.mac_address,
-                "capabilities": json.loads(dev.capabilities),
-                "metadata": json.loads(dev.device_metadata),
-                "public_key": dev.public_key,
-                "group": dev.group
-            } for dev in devices
-        ]
+        return Device.Schema().dumps([ model_to_schema(device) for device in devices ], many=True), 200
     except Exception as e:
         traceback.print_exc()
         print("Exception during device fetch:", repr(e))
@@ -363,16 +366,7 @@ def fetch_one(identifier: int):
         if dev is None:
             return api_error("device does not exist", 404)
 
-        return {
-                "id": dev.id,
-                "last_access": dev.last_access,
-                "name": dev.name,
-                "mac_address": dev.mac_address,
-                "capabilities": json.loads(dev.capabilities),
-                "metadata": json.loads(dev.device_metadata),
-                "group": dev.group,
-                "public_key": dev.public_key,
-        }
+        return Device.Schema().dumps(model_to_schema(dev)), 200
     except Exception as e:
         traceback.print_exc()
         print("Exception during device fetch:", repr(e))

@@ -9,6 +9,61 @@ from rdfm.schema.validators import Contains
 
 
 @marshmallow_dataclass.dataclass
+class Device():
+    """ Represents the data of a device
+    """
+    id: int = field(metadata={
+        "required": True
+    })
+    name: str = field(metadata={
+        "required": True
+    })
+    mac_address: str = field(metadata={
+        "required": True
+    })
+    capabilities: dict[str, bool] = field(metadata={
+        "required": True
+    })
+    metadata: dict[str, str] = field(metadata={
+        "required": True
+    })
+    group: Optional[int] = field(metadata={
+        "required": True,
+        "allow_none": True
+    })
+    last_access: Optional[datetime.datetime] = field(metadata={
+        "required": True,
+        "allow_none": True,
+        "format": "rfc",
+    })
+    public_key: str = field(metadata={
+        "required": True,
+        "allow_none": True
+    })
+    Schema: ClassVar[Type[marshmallow.Schema]] = marshmallow.Schema
+
+
+@marshmallow_dataclass.dataclass
+class Registration():
+    """ Represents a registration request
+    """
+    mac_address: str = field(metadata={
+        "required": True
+    })
+    public_key: str = field(metadata={
+        "required": True
+    })
+    metadata: dict[str, str] = field(metadata={
+        "required": True
+    })
+    last_appeared: datetime.datetime = field(metadata={
+        "required": True,
+        "format": "rfc",
+    })
+    Schema: ClassVar[Type[marshmallow.Schema]] = marshmallow.Schema
+
+
+@marshmallow_dataclass.dataclass
 class AuthRegisterRequest():
     """ Represents a device registration request
     """

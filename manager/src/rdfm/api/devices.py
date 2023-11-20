@@ -5,63 +5,7 @@ from dataclasses import dataclass, field
 from rdfm.api import wrap_api_error
 from typing import List, Any, Optional, Callable
 import marshmallow_dataclass
-
-
-@dataclass
-class Device():
-    """ Represents the data of a device
-    """
-    id: int = field(metadata={
-        "required": True
-    })
-    name: str = field(metadata={
-        "required": True
-    })
-    mac_address: str = field(metadata={
-        "required": True
-    })
-    capabilities: dict[str, bool] = field(metadata={
-        "required": True
-    })
-    metadata: dict[str, str] = field(metadata={
-        "required": True
-    })
-    group: Optional[int] = field(metadata={
-        "required": True,
-        "allow_none": True
-    })
-    last_access: Optional[datetime.datetime] = field(metadata={
-        "required": True,
-        "allow_none": True,
-        "format": "rfc"
-    })
-    public_key: str = field(metadata={
-        "required": True,
-        "allow_none": True
-    })
-
-
-@dataclass
-class Registration():
-    """ Represents a registration request
-    """
-    mac_address: str = field(metadata={
-        "required": True
-    })
-    public_key: str = field(metadata={
-        "required": True
-    })
-    metadata: dict[str, str] = field(metadata={
-        "required": True
-    })
-    last_appeared: datetime.datetime = field(metadata={
-        "required": True,
-        "format": "rfc"
-    })
-
-
-DeviceSchema = marshmallow_dataclass.class_schema(Device)
-RegistrationSchema = marshmallow_dataclass.class_schema(Registration)
+from rdfm.schema.v1.devices import Device, Registration
 
 
 def fetch_all(config: rdfm.config.Config) -> List[Device]:
@@ -71,7 +15,7 @@ def fetch_all(config: rdfm.config.Config) -> List[Device]:
     if response.status_code != 200:
         raise RuntimeError(f"Server returned unexpected status code {response.status_code}")
 
-    groups: List[Device] = DeviceSchema(many=True).load(response.json())
+    groups: List[Device] = Device.Schema(many=True).load(response.json())
     return groups
 
 
@@ -82,7 +26,7 @@ def fetch_registrations(config: rdfm.config.Config) -> List[Registration]:
     if response.status_code != 200:
         raise RuntimeError(f"Server returned unexpected status code {response.status_code}")
 
-    registrations: List[Device] = RegistrationSchema(many=True).load(response.json())
+    registrations: List[Device] = Registration.Schema(many=True).load(response.json())
     return registrations
 
 
