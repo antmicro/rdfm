@@ -51,7 +51,7 @@ def check_for_update(device_token: DeviceToken):
     :<jsonarr string `...`: other device metadata
 
     :>json integer id: package identifier
-    :>json string created: creation date
+    :>json string created: UTC creation date (RFC822)
     :>json string sha256: sha256 of the uploaded package
     :>json string uri: generated URI for downloading the package
 

@@ -265,7 +265,7 @@ def fetch_all():
                  or the authorization has expired
 
     :>jsonarr integer id: device identifier
-    :>jsonarr string last_access: datetime of last access to the server (RFC822)
+    :>jsonarr string last_access: UTC datetime of last access to the server (RFC822)
     :>jsonarr string name: device-reported user friendly name
     :>jsonarr string mac_addr: device-reported MAC address
     :>jsonarr optional[integer] group: group identifier of assigned group
@@ -324,7 +324,7 @@ def fetch_one(identifier: int):
     :status 404: device with the specified identifier does not exist
 
     :>json integer id: device identifier
-    :>json string last_access: datetime of last access to the server (RFC822)
+    :>json string last_access: UTC datetime of last access to the server (RFC822)
     :>json string name: device-reported user friendly name
     :>json string mac_addr: device-reported MAC address
     :>json optional[integer] group: group identifier of assigned group

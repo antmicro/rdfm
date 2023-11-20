@@ -55,7 +55,7 @@ def fetch_packages():
                  or the authorization has expired
 
     :>jsonarr integer id: package identifier
-    :>jsonarr string created: creation date
+    :>jsonarr string created: UTC creation date (RFC822)
     :>jsonarr string sha256: sha256 of the uploaded package
     :>jsonarr string driver: storage driver used to store the package
     :>jsonarr dict[str, str] metadata: package metadata (key/value pairs)
@@ -207,7 +207,7 @@ def fetch_package(identifier: int):
     :status 404: specified package does not exist
 
     :>json integer id: package identifier
-    :>json string created: creation date
+    :>json string created: UTC creation date (RFC822)
     :>json string sha256: sha256 of the uploaded package
     :>json string driver: storage driver used to store the package
     :>json dict[str, str] metadata: package metadata (simple key/value pairs)

@@ -49,7 +49,7 @@ def fetch_all():
                  or the authorization has expired
 
     :>jsonarr integer id: group identifier
-    :>jsonarr string created: creation date
+    :>jsonarr string created: UTC creation date (RFC822)
     :>jsonarr array[integer] packages: currently assigned package identifiers
     :>jsonarr array[integer] devices: currently assigned device identifiers
     :>jsonarr dict[str, str] metadata: group metadata
@@ -103,7 +103,7 @@ def fetch_one(identifier: int):
     :status 404: group does not exist
 
     :>json integer id: group identifier
-    :>json string created: creation date
+    :>json string created: UTC creation date (RFC822)
     :>json array[integer] packages: currently assigned package identifiers
     :>json array[integer] devices: currently assigned device identifiers
     :>json dict[str, str] metadata: group metadata
