@@ -296,6 +296,12 @@ func (d *Device) handleRequest(request requests.Request) (requests.Request, erro
 		} else {
 			log.Println("Uploaded file", r.FilePath)
 		}
+	case requests.Alert:
+		for key, val := range r.Alert {
+			log.Printf("Server sent %s: %s", key, val)
+		}
+	default:
+		log.Printf("Unsupported request: %s", r)
 	}
 
 	return nil, nil
