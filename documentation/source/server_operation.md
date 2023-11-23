@@ -59,3 +59,53 @@ The device client **MUST** verify the hash of the package as described in the up
 Additionally, the device client **MUST** verify whether the package contents look sane before attempting to install it.
 The server shall never return a package that is not of the same device type as the one advertised by the client.
 However, the server itself currently imposes **no limitations** on the binary contents of the packages themselves.
+
+## Management WebSocket
+
+If supported, the device may also connect to a device management WebSocket.
+This provides additional management functionality of registered devices, such as reverse shell and file transfer.
+To connect to the WebSocket, a device token is required to be provided in the `Authorization` header of the WebSocket handshake.
+The format of the header is exactly the same as in other device routes and is described [in the API Reference chapter](api.rst#api-authentication).
+
+The general management flow is as follows:
+1. Device connects to the management WebSocket: `/api/v1/devices/ws`
+1. Device sends a `CapabilityReport` message indicating the capabilities it supports
+1. Device reads incoming management messages from the server and handles them accordingly
+1. Device may also send messages to the server to notify of certain situations
+
+### RDFM Management Protocol
+
+The management protocol is message-oriented and all messages are expected to be sent in WebSocket text mode.
+Each message is a JSON object in the form:
+```json
+{
+    "method": "<method_name>",
+    "arg0": "...",
+    "arg1": {"...": "..."},
+    "...": "..."
+}
+```
+
+The type of message sent is identified by the `method` field.
+The rest of the object fields are unspecified and depend on the specific message type.
+Schema for messages used by the server can be found in `common/communication/src/request_models.py`.
+On error during handling of a request, the server may return a custom WebSocket status code.
+A list of status codes used by the server can be found in `common/communication/src/rdfm/ws.py`.
+
+### Capabilities
+
+A capability indicates what management functionality is supported by a device.
+The device should report its capabilities using the `CapabilityReport` message immediately after connecting to the server.
+By default it is assumed that the device does not provide any capabilities.
+
+#### Capability - `shell`
+
+This capability indicates that a device supports spawning a reverse shell.
+The following methods must be supported by the device:
+- `shell_attach`
+
+A device with the `shell` capability should react to `shell_attach` messages by connecting to a shell WebSocket at `/api/v1/devices/<shell_attach.mac_addr>/shell/attach/<shell_attach.uuid>`.
+This establishes a connection between the requesting manager and the device.
+This WebSocket can then be used to stream the contents of the shell session and receive user input.
+The format of messages sent over this endpoint is implementation defined.
+However, generally the shell output/input are simply sent as binary WebSocket messages containing the standard output/input as raw bytes.
