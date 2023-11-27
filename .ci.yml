@@ -273,6 +273,17 @@ test-server-route-correctness:
       - merge_requests
       - main
 
+test-manager:
+  extends: .build
+  stage: local-tests
+  script:
+    - cd server
+    - pytest tests/test-manager.py
+  only:
+    refs:
+      - merge_requests
+      - main
+
 # ===== rdfm-client ===== #
 
 .rdfm-client:
