@@ -8,4 +8,5 @@
 <resources>
     <string name="default_rdfm_server_address">http://rdfm.example.local:5000/</string>
     <string name="default_update_check_interval_seconds">86400</string>
+    <string name="default_max_shell_count">2</string>
 </resources>

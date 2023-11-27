@@ -3,5 +3,6 @@
     <string name="preference_file_key">shared_preference</string>
     <string name="preference_ota_server_address_key">ota_server_address</string>
     <string name="preference_update_check_interval_key">update_check_interval_in_seconds</string>
+    <string name="preference_max_shell_count">max_shell_count</string>
     <string name="unknown">Unknown</string>
 </resources>

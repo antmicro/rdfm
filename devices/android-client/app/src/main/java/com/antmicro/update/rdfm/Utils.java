@@ -53,4 +53,10 @@ public class Utils {
         return Integer.parseInt(prefs.getString(pref_key, default_value));
     }
 
+    public int getMaxShellCount() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+        String pref_key = mContext.getResources().getString(R.string.preference_max_shell_count);
+        String default_value = mContext.getResources().getString(R.string.default_max_shell_count);
+        return Integer.parseInt(prefs.getString(pref_key, default_value));
+    }
 }

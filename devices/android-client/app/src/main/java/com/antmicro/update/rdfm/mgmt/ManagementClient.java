@@ -22,8 +22,8 @@ import okio.ByteString;
 
 public final class ManagementClient extends WebSocketListener {
     private static final String TAG = "ManagementWS";
-    private static final int MAX_SHELL_COUNT = 1;
     private final String mServerAddress;
+    private final int mMaxShellCount;
     private final IDeviceTokenProvider mTokenProvider;
     private final Object mClosed = new Object();
     private final AtomicInteger mShellCount = new AtomicInteger(0);
@@ -33,6 +33,7 @@ public final class ManagementClient extends WebSocketListener {
         // Strip the protocol from the server URL
         mServerAddress = utils.getServerAddress()
                 .replaceAll("http(s?)(\\:\\/\\/)", "");
+        mMaxShellCount = utils.getMaxShellCount();
         mTokenProvider = tokenProvider;
         mWsClient = new OkHttpClient.Builder()
                 .connectTimeout(5, TimeUnit.SECONDS)
@@ -80,6 +81,28 @@ public final class ManagementClient extends WebSocketListener {
 
             @Override
             public void onShellAttach(String macAddress, String uuid) {
+                String token;
+                try {
+                    token = mTokenProvider.fetchDeviceToken();
+                } catch (DeviceUnauthorizedException | ServerConnectionException e) {
+                    Log.w(TAG, "Cannot connect reverse shell WebSocket - device unauthorized");
+                    return;
+                }
+
+                if (mShellCount.incrementAndGet() > mMaxShellCount) {
+                    Log.w(TAG, "Ignoring shell attach request - maximum shell count reached");
+                    mShellCount.decrementAndGet();
+                    return;
+                }
+
+                new Thread(() -> {
+                    try {
+                        ReverseShell shell = new ReverseShell(mServerAddress, token, uuid, macAddress);
+                        shell.run();
+                    } finally {
+                        mShellCount.decrementAndGet();
+                    }
+                }).start();
             }
         }).parse(json);
     }
