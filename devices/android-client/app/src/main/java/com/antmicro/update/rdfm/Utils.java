@@ -39,7 +39,7 @@ public class Utils {
         mContext = appContext;
     }
 
-    public String getServerAddress(Context mContext) {
+    public String getServerAddress() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
         String pref_key = mContext.getResources().getString(R.string.preference_ota_server_address_key);
         String default_value = mContext.getResources().getString(R.string.default_rdfm_server_address);
@@ -52,4 +52,5 @@ public class Utils {
         String default_value = mContext.getResources().getString(R.string.default_update_check_interval_seconds);
         return Integer.parseInt(prefs.getString(pref_key, default_value));
     }
+
 }

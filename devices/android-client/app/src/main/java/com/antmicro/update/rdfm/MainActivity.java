@@ -17,6 +17,7 @@ import android.widget.TextView;
 import androidx.preference.PreferenceManager;
 
 import com.antmicro.update.rdfm.mgmt.AuthorizationProvider;
+import com.antmicro.update.rdfm.mgmt.ManagementClient;
 import com.antmicro.update.rdfm.utilities.SysUtils;
 
 import java.util.concurrent.locks.ReentrantLock;
@@ -37,6 +38,7 @@ public class MainActivity extends Activity {
     private String buildVersion;
     private ReentrantLock updaterLock;
     private AuthorizationProvider mDeviceAuthorizationProvider;
+    private ManagementClient mWsClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,7 +50,7 @@ public class MainActivity extends Activity {
         this.mTextViewAddress = findViewById(R.id.textViewUrlAddress);
         buildVersion = SysUtils.getBuildVersion();
         Log.d(TAG, "Build version: " + buildVersion);
-        serverAddress = utils.getServerAddress(mContext);
+        serverAddress = utils.getServerAddress();
         Log.d(TAG, "OTA server address: " + serverAddress);
         this.mTextViewBuild.setText(buildVersion);
         this.mTextViewAddress.setText(serverAddress);
@@ -58,6 +60,7 @@ public class MainActivity extends Activity {
         String macAddress = SysUtils.findDeviceMAC();
         mDeviceAuthorizationProvider = new AuthorizationProvider(buildVersion, devType, macAddress, serverAddress, this);
         mHttpClient = new HttpClient(otaPackagePath, mDeviceAuthorizationProvider);
+        mWsClient = new ManagementClient(utils, mDeviceAuthorizationProvider);
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
