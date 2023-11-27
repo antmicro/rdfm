@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import androidx.preference.PreferenceManager;
 
+import com.antmicro.update.rdfm.mgmt.AuthorizationProvider;
 import com.antmicro.update.rdfm.utilities.SysUtils;
 
 import java.util.concurrent.locks.ReentrantLock;
@@ -26,7 +27,7 @@ public class MainActivity extends Activity {
     private static final String startUpdateIntent = "com.antmicro.update.rdfm.startUpdate";
     static final String otaPackagePath = "/data/ota_package";
     private Context mContext;
-    private final HttpClient httpClient = new HttpClient(otaPackagePath);
+    private HttpClient mHttpClient;
     private final Utils utils = new Utils(this);
     private final UpdateManager mUpdateManager = new UpdateManager(
             new UpdateEngine(), otaPackagePath, this);
@@ -35,6 +36,7 @@ public class MainActivity extends Activity {
     private String serverAddress;
     private String buildVersion;
     private ReentrantLock updaterLock;
+    private AuthorizationProvider mDeviceAuthorizationProvider;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +53,11 @@ public class MainActivity extends Activity {
         this.mTextViewBuild.setText(buildVersion);
         this.mTextViewAddress.setText(serverAddress);
         updaterLock = new ReentrantLock();
+
+        String devType = SysUtils.getDeviceType();
+        String macAddress = SysUtils.findDeviceMAC();
+        mDeviceAuthorizationProvider = new AuthorizationProvider(buildVersion, devType, macAddress, serverAddress, this);
+        mHttpClient = new HttpClient(otaPackagePath, mDeviceAuthorizationProvider);
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -89,7 +96,7 @@ public class MainActivity extends Activity {
 
         Log.d(TAG, "Start system update");
         try {
-            httpClient.checkUpdate(buildVersion, serverAddress, utils, mUpdateManager);
+            mHttpClient.checkUpdate(buildVersion, serverAddress, utils, mUpdateManager);
         } catch (RuntimeException e) {
             Log.e(TAG, "Update failed with exception:", e);
         } finally {

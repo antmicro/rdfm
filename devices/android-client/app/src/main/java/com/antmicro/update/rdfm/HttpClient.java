@@ -2,6 +2,10 @@ package com.antmicro.update.rdfm;
 
 import android.util.Log;
 
+import com.antmicro.update.rdfm.exceptions.DeviceUnauthorizedException;
+import com.antmicro.update.rdfm.exceptions.ServerConnectionException;
+import com.antmicro.update.rdfm.mgmt.IDeviceTokenProvider;
+import com.antmicro.update.rdfm.mgmt.ManagementClient;
 import com.antmicro.update.rdfm.utilities.KeyUtils;
 import com.antmicro.update.rdfm.utilities.SysUtils;
 
@@ -42,9 +46,9 @@ public class HttpClient {
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
     private final OkHttpClient client;
     private final String otaPackagePath;
-    private String deviceToken;
+    private IDeviceTokenProvider mTokenProvider;
 
-    public HttpClient(String otaPackagesPath) {
+    public HttpClient(String otaPackagesPath, IDeviceTokenProvider tokenProvider) {
         final int timeout = 500;
         otaPackagePath = otaPackagesPath;
         HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
@@ -53,63 +57,7 @@ public class HttpClient {
                 .addInterceptor(loggingInterceptor)
                 .readTimeout(timeout, TimeUnit.MILLISECONDS)
                 .build();
-        deviceToken = null;
-    }
-
-    public void registerRequest(String bspVersion, String devType, String macAddress,
-                                  String serverAddress, Utils utils) {
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        String key = KeyUtils.getPublicKey(utils.mContext);
-        Log.d(TAG, "Public key: " + key);
-
-        try {
-            JSONObject devParamsJSON = new JSONObject()
-                    .put("rdfm.hardware.devtype", devType)
-                    .put("rdfm.software.version", bspVersion)
-                    .put("rdfm.hardware.macaddr", macAddress);
-            String reqJSON = new JSONObject()
-                    .put("metadata", devParamsJSON)
-                    .put("public_key", key)
-                    .put("timestamp", timestamp.getTime())
-                    .toString();
-            byte[] requestBytes = reqJSON.getBytes(StandardCharsets.UTF_8);
-            String signature = KeyUtils.signData(utils.mContext, reqJSON);
-
-            RequestBody reqBody = RequestBody.create(requestBytes, JSON);
-            try {
-                Request request = new Request.Builder()
-                        .url(serverAddress + "/api/v1/auth/device")
-                        .addHeader("X-RDFM-Device-Signature", signature)
-                        .post(reqBody)
-                        .build();
-                try (Response response = client.newCall(request).execute()) {
-                    switch (response.code()) {
-                        case 200:
-                            Log.d(TAG, "Device authorized");
-                            String body = response.body().string();
-                            String token = getResponseParam(body, "token");
-                            String expires = getResponseParam(body, "expires");
-
-                            Log.d(TAG, "Token expires in " + expires + " seconds");
-                            deviceToken = token;
-
-                            break;
-                        case 401:
-                            Log.d(TAG, "Wait until the server administration accepts your request.");
-                            break;
-                        default:
-                            Log.d(TAG, "Unexpected status code in register response: " + response.code());
-                            break;
-                    }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            } catch (RuntimeException e) {
-                throw new RuntimeException(e);
-            }
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
+        mTokenProvider = tokenProvider;
     }
 
     public void checkUpdate(String bspVersion, String serverAddress, Utils utils,
@@ -126,24 +74,20 @@ public class HttpClient {
         String reqData = new JSONObject(devParams).toString();
         RequestBody reqBody = RequestBody.create(reqData, JSON);
 
-        if(deviceToken == null) {
-            Log.d(TAG, "No device token available - resending registration data");
-            registerRequest(bspVersion, devType, macAddress, serverAddress, utils);
-            if(deviceToken == null) {
-                Log.d(TAG, "Device was not authorized - cannot check for updates");
-                return;
-            }
+        String token;
+        try {
+            token = mTokenProvider.fetchDeviceToken();
+        } catch (DeviceUnauthorizedException | ServerConnectionException e) {
+            Log.w(TAG, "Cannot check for updates, device unauthorized");
+            return;
         }
 
         try {
             Request request = new Request.Builder()
                     .url(serverAddress + "/api/v1/update/check")
-                    .addHeader("Authorization", "Bearer token=" + deviceToken)
+                    .addHeader("Authorization", "Bearer token=" + token)
                     .post(reqBody)
                     .build();
-            // FIXME: Handle token expiration properly, currently we just resend the registration on every server request
-            //        and use one token per request.
-            deviceToken = null;
 
             try (Response response = client.newCall(request).execute()) {
                 try (ResponseBody responseBody = response.body()) {
@@ -170,7 +114,6 @@ public class HttpClient {
                             break;
                         case 401:
                             Log.d(TAG, "Device not authorized - the token has expired");
-                            deviceToken = null;
                             break;
                         default:
                             Log.d(TAG, "Unexpected code " + response);
