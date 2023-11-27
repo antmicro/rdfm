@@ -118,11 +118,6 @@ func makeCommands() []*libcli.Command {
 					Usage: "Capabilities config file",
 					Value: "capabilities.toml",
 				},
-				&libcli.BoolFlag{
-					Name:  "no-jwt-auth",
-					Usage: "Turn off authorization with JWT",
-					Value: false,
-				},
 			},
 		},
 	}

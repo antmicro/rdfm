@@ -19,8 +19,6 @@ type RDFMConfig struct {
 	DeviceTypeFile string `json:",omitempty"`
 	// Path to the overlay config file
 	OverlayConfigFile string `json:",omitempty"`
-	// Path to auth token file
-	AuthTokenFile string `json:",omitempty"`
 
 	// Poll interval for checking for new updates
 	UpdatePollIntervalSeconds int `json:",omitempty"`

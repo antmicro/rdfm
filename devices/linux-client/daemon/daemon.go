@@ -37,12 +37,6 @@ const MSG_RECV_TIMEOUT_INTERVALS = 10
 const MSG_RECV_INTERVAL_S = 1
 const RSA_DEVICE_KEY_SIZE = 4096
 
-type AuthToken struct {
-	value string
-	// Path to file where auth token is saved
-	file string
-}
-
 type Device struct {
 	name         string
 	fileMetadata string
@@ -52,7 +46,6 @@ type Device struct {
 	caps         capabilities.DeviceCapabilities
 	macAddr      string
 	rdfmCtx      *app.RDFM
-	authToken    *AuthToken
 	deviceToken  string
 }
 
@@ -270,7 +263,7 @@ func (d *Device) handleRequest(request requests.Request) (requests.Request, erro
 
 		body := &bytes.Buffer{}
 		writer := multipart.NewWriter(body)
-		writer.WriteField("jwt", d.authToken.value)
+		writer.WriteField("jwt", d.deviceToken)
 		writer.WriteField("file_path", r.FilePath)
 
 		file, err := os.Open(r.FilePath)

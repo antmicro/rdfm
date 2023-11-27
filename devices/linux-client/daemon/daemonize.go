@@ -33,7 +33,6 @@ func Daemonize(c *libcli.Context) error {
 		metadata:     nil,
 		caps:         caps,
 		rdfmCtx:      ctx,
-		authToken:    &AuthToken{},
 	}
 
 	err = device.connect()
