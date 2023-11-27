@@ -170,6 +170,17 @@ func (d *Device) connect() error {
 	if err != nil {
 		return err
 	}
+
+	// Send capabilities
+	err = d.send(requests.CapabilityReport{
+		Method:       "capability_report",
+		Capabilities: d.caps,
+	})
+	if err != nil {
+		log.Println("Failed to send device capabilities to the server")
+		return err
+	}
+
 	return nil
 }
 

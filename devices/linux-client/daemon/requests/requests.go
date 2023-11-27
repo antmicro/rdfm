@@ -39,6 +39,15 @@ func CanHandleRequest(req Request, c capabilities.DeviceCapabilities) bool {
 	}
 }
 
+type CapabilityReport struct {
+	Method       string                          `json:"method"`
+	Capabilities capabilities.DeviceCapabilities `json:"capabilities"`
+}
+
+func (r CapabilityReport) method() string {
+	return r.Method
+}
+
 type Proxy struct {
 	Method string `json:"method"`
 	Port   uint16 `json:"port"`

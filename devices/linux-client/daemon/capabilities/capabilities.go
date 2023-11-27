@@ -7,14 +7,14 @@ import (
 )
 
 type DeviceCapabilities struct {
-	ShellConnect bool `json:"shell_connect" mapstructure:"shell_connect"`
+	ShellConnect bool `json:"shell"         mapstructure:"shell"`
 	FileTransfer bool `json:"file_transfer" mapstructure:"file_transfer"`
 	ExecCmds     bool `json:"exec_cmds"     mapstructure:"exec_cmds"`
 }
 
 func LoadCapabilities(path string) (caps DeviceCapabilities, err error) {
 	viper.SetConfigFile(path)
-	viper.SetDefault("shell_connect", true)
+	viper.SetDefault("shell", true)
 	viper.SetDefault("file_transfer", true)
 	viper.SetDefault("exec_cmds", false)
 
