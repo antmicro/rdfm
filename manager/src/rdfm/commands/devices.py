@@ -1,9 +1,15 @@
 import argparse
+import sys
 import rdfm.config
+from rdfm.reverse_shell import ReverseShell
 import requests
 import rdfm.api.devices
 from typing import List, Optional
 from rdfm.helpers import utc_to_local
+import simple_websocket
+import urllib
+import urllib.parse
+from rdfm.api.auth import make_rdfm_auth_header
 
 
 def list_devices(config: rdfm.config.Config, args):
@@ -87,7 +93,21 @@ def deauth_device(config: rdfm.config.Config, args):
 def shell_to_device(config: rdfm.config.Config, args):
     """ CLI entrypoint - shell to a device
     """
-    print("Shell to devices unimplemented")
+    # Note: Debug prints here target stderr instead of stdout.
+    # This is to make it easier to use the shell as part of a
+    # pipeline. This way, device output is separated from
+    # rdfm-mgmt output.
+    device = args.device_id
+    print(f"Connecting to device {device}...", file=sys.stderr)
+
+    # Fetch token from authorization server to append to
+    # the WS handshake. The request is just a dummy object.
+    r: requests.Request = requests.Request()
+    config.authorizer(r)
+    auth_header: Optional[str] = r.headers.get("Authorization", None)
+
+    shell = ReverseShell(config.server_url, device, auth_header)
+    shell.run()
 
 
 def add_devices_parser(parser: argparse._SubParsersAction):

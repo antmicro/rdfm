@@ -39,3 +39,10 @@ def utc_to_local(utc: datetime.datetime) -> datetime.datetime:
     # Convert to the target timezone
     local_tz = tz.tzlocal()
     return utc.astimezone(local_tz)
+
+
+def replace_http_schema_with_ws(server_url: str):
+    """ Replaces HTTP schema from the given URL with a WebSocket schema
+    """
+    return server_url.replace("http://", "ws://").replace("https://", "wss://")
+
