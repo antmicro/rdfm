@@ -10,6 +10,7 @@ from Crypto.Signature.pkcs1_15 import PKCS115_SigScheme
 from models.device import Device
 from rdfm.schema.v1.updates import META_MAC_ADDRESS
 import server
+from auth.token import DeviceToken
 
 
 """ JWT expiration time (in seconds) """
@@ -17,26 +18,6 @@ DEVICE_JWT_EXPIRY = 300
 """ Algorithm in call to jwt.{encode,decode} to use. """
 DEVICE_JWT_ALGO = "HS256"
 
-
-class DeviceToken():
-    """ Represents data stored inside the device JWT token
-    """
-    device_id: str
-    created_at: int
-    expires: int
-
-
-    def __init__(self, **kwargs) -> None:
-        for key in kwargs:
-            setattr(self, key, kwargs[key])
-
-
-    def to_dict(self) -> dict[str, typing.Any]:
-        return vars(self)
-
-
-    def from_dict(dict: dict[str, typing.Any]) -> "DeviceToken":
-        return DeviceToken(**dict)
 
 
 def verify_signature(body: bytes,
