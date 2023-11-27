@@ -34,6 +34,8 @@ def utc_to_local(utc: datetime.datetime) -> datetime.datetime:
     The server returns all datetime values implicitly in UTC. This is
     a helper to convert the UTC datetime to local for user display.
     """
+    if utc is None:
+        return None
     # Apply timezone information for UTC to the datetime
     utc = utc.replace(tzinfo=datetime.UTC)
     # Convert to the target timezone
