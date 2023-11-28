@@ -11,7 +11,7 @@ from rdfm.schema.v1.packages import Package
 
 def fetch_all(config: rdfm.config.Config) -> List[Package]:
     response = requests.get(rdfm.api.escape(config, "/api/v1/packages"),
-                            cert=config.ca_cert,
+                            verify=config.ca_cert,
                             auth=config.authorizer)
     if response.status_code != 200:
         raise RuntimeError(f"Server returned unexpected status code {response.status_code}")
@@ -51,7 +51,7 @@ def upload(config: rdfm.config.Config,
     monitor = requests_toolbelt.MultipartEncoderMonitor(encoder,
                                                         lambda monitor: progress(monitor.bytes_read, monitor.len))
     response = requests.post(rdfm.api.escape(config, "/api/v1/packages"),
-                             cert=config.ca_cert,
+                             verify=config.ca_cert,
                              auth=config.authorizer,
                              data=monitor,
                              headers={'Content-Type': monitor.content_type})
@@ -68,7 +68,7 @@ def delete(config: rdfm.config.Config, package_id: int) -> Optional[str]:
         user-friendly error string if the process failed
     """
     response = requests.delete(rdfm.api.escape(config, f"/api/v1/packages/{package_id}"),
-                               cert=config.ca_cert,
+                               verify=config.ca_cert,
                                auth=config.authorizer)
     if response.status_code == 409:
         return "Deleting package failed: Package is assigned to at least one group and cannot be removed"

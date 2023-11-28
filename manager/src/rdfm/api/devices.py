@@ -10,7 +10,7 @@ from rdfm.schema.v1.devices import Device, Registration
 
 def fetch_all(config: rdfm.config.Config) -> List[Device]:
     response = requests.get(rdfm.api.escape(config, "/api/v1/devices"),
-                            cert=config.ca_cert,
+                            verify=config.ca_cert,
                             auth=config.authorizer)
     if response.status_code != 200:
         raise RuntimeError(f"Server returned unexpected status code {response.status_code}")
@@ -21,7 +21,7 @@ def fetch_all(config: rdfm.config.Config) -> List[Device]:
 
 def fetch_registrations(config: rdfm.config.Config) -> List[Registration]:
     response = requests.get(rdfm.api.escape(config, "/api/v1/auth/pending"),
-                            cert=config.ca_cert,
+                            verify=config.ca_cert,
                             auth=config.authorizer)
     if response.status_code != 200:
         raise RuntimeError(f"Server returned unexpected status code {response.status_code}")
@@ -38,6 +38,6 @@ def approve(config: rdfm.config.Config,
                                 "mac_address": mac,
                                 "public_key": public_key
                              },
-                             cert=config.ca_cert,
+                             verify=config.ca_cert,
                              auth=config.authorizer)
     return wrap_api_error(response, "Approving device failed")

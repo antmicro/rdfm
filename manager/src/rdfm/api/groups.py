@@ -12,7 +12,7 @@ from rdfm.schema.v1.error import ApiError
 
 def fetch_all(config: rdfm.config.Config) -> List[Group]:
     response = requests.get(rdfm.api.escape(config, "/api/v1/groups"),
-                            cert=config.ca_cert,
+                            verify=config.ca_cert,
                             auth=config.authorizer)
     if response.status_code != 200:
         raise RuntimeError(f"Server returned unexpected status code {response.status_code}")
@@ -23,7 +23,7 @@ def fetch_all(config: rdfm.config.Config) -> List[Group]:
 
 def create(config: rdfm.config.Config, metadata: dict[str, Any]) -> Optional[str]:
     response = requests.post(rdfm.api.escape(config, "/api/v1/groups"),
-                             cert=config.ca_cert,
+                             verify=config.ca_cert,
                              auth=config.authorizer,
                              json=metadata)
     if response.status_code == 200:
@@ -36,7 +36,7 @@ def create(config: rdfm.config.Config, metadata: dict[str, Any]) -> Optional[str
 
 def delete(config: rdfm.config.Config, id: int) -> Optional[str]:
     response = requests.delete(rdfm.api.escape(config, f"/api/v1/groups/{id}"),
-                               cert=config.ca_cert,
+                               verify=config.ca_cert,
                                auth=config.authorizer)
     if response.status_code == 409:
         return "Deleting group failed: some devices are still assigned to the group, deletion is impossible"
@@ -45,7 +45,7 @@ def delete(config: rdfm.config.Config, id: int) -> Optional[str]:
 
 def assign(config: rdfm.config.Config, group: int, packages: List[int]) -> Optional[str]:
     response = requests.post(rdfm.api.escape(config, f"/api/v1/groups/{group}/package"),
-                             cert=config.ca_cert,
+                             verify=config.ca_cert,
                              auth=config.authorizer,
                              json={
                                  "packages": packages
@@ -61,7 +61,7 @@ def assign_device(config: rdfm.config.Config,
                   insertions: List[str],
                   removals: List[str]) -> Optional[str]:
     response = requests.patch(rdfm.api.escape(config, f"/api/v1/groups/{group}/devices"),
-                              cert=config.ca_cert,
+                              verify=config.ca_cert,
                               auth=config.authorizer,
                               json={
                                   "add": insertions,
@@ -81,7 +81,7 @@ def set_policy(config: rdfm.config.Config,
                group: int,
                policy: str) -> Optional[str]:
     response = requests.post(rdfm.api.escape(config, f"/api/v1/groups/{group}/policy"),
-                             cert=config.ca_cert,
+                             verify=config.ca_cert,
                              auth=config.authorizer,
                              json={
                                  "policy": policy,
