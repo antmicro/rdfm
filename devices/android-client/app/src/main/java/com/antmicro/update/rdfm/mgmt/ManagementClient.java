@@ -7,7 +7,7 @@ import androidx.annotation.NonNull;
 import com.antmicro.update.rdfm.Utils;
 import com.antmicro.update.rdfm.exceptions.DeviceUnauthorizedException;
 import com.antmicro.update.rdfm.exceptions.ServerConnectionException;
-import com.antmicro.update.rdfm.utilities.SysUtils;
+import com.antmicro.update.rdfm.utilities.HttpUtils;
 
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
@@ -30,9 +30,7 @@ public final class ManagementClient extends WebSocketListener {
     private final OkHttpClient mWsClient;
 
     public ManagementClient(Utils utils, IDeviceTokenProvider tokenProvider) {
-        // Strip the protocol from the server URL
-        mServerAddress = utils.getServerAddress()
-                .replaceAll("http(s?)(\\:\\/\\/)", "");
+        mServerAddress = HttpUtils.replaceHttpSchemeWithWs(utils.getServerAddress());
         mMaxShellCount = utils.getMaxShellCount();
         mTokenProvider = tokenProvider;
         mWsClient = new OkHttpClient.Builder()
@@ -54,7 +52,7 @@ public final class ManagementClient extends WebSocketListener {
         }
 
         Request request = new Request.Builder()
-                .url("ws://" + mServerAddress + "/api/v1/devices/ws")
+                .url(mServerAddress + "/api/v1/devices/ws")
                 .header("Authorization", "Bearer token=" + token)
                 .build();
         mWsClient.newWebSocket(request, this);

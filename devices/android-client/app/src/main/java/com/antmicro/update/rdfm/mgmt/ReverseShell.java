@@ -38,7 +38,7 @@ public class ReverseShell {
         mDeviceToken = deviceToken;
         mShellUuid = shellUuid;
         mRequest = new Request.Builder()
-                .url("ws://" + mServerAddress + "/api/v1/devices/" + macAddress + "/shell/attach/" + shellUuid)
+                .url(mServerAddress + "/api/v1/devices/" + macAddress + "/shell/attach/" + shellUuid)
                 .header("Authorization", "Bearer token=" + mDeviceToken)
                 .build();
         mSemaphore = new Semaphore(0);
