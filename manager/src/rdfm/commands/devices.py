@@ -5,7 +5,7 @@ from rdfm.reverse_shell import ReverseShell
 import requests
 import rdfm.api.devices
 from typing import List, Optional
-from rdfm.helpers import utc_to_local
+from rdfm.helpers import utc_to_local, make_ssl_context_from_cert_file
 import simple_websocket
 import urllib
 import urllib.parse
@@ -106,7 +106,12 @@ def shell_to_device(config: rdfm.config.Config, args):
     config.authorizer(r)
     auth_header: Optional[str] = r.headers.get("Authorization", None)
 
-    shell = ReverseShell(config.server_url, device, auth_header)
+    # If required, override the CA chain used to verify the connection
+    ssl_context = None
+    if config.ca_cert is not None:
+        ssl_context = make_ssl_context_from_cert_file(config.ca_cert)
+
+    shell = ReverseShell(config.server_url, device, auth_header, ssl_context)
     shell.run()
 
 

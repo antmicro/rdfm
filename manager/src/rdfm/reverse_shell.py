@@ -1,4 +1,5 @@
 import signal
+import ssl
 import simple_websocket
 import threading
 import sys
@@ -64,7 +65,8 @@ class ReverseShell():
     closed: threading.Event
 
 
-    def __init__(self, server_url: str, device: str, auth_header: Optional[str] = None) -> None:
+    def __init__(self, server_url: str, device: str, auth_header: Optional[str] = None,
+                 ssl_context: Optional[ssl.SSLContext] = None) -> None:
         """ Initialize the reverse shell connection
 
         Connect to the device shell WebSocket and prepare worker threads.
@@ -75,6 +77,11 @@ class ReverseShell():
             device:      MAC address of the device to attach to
             auth_header: Optional Authorization header to attach to the WS
                          handshake request
+            ssl_context: Optional SSLContext to allow using a different
+                         set of validation certificates when connecting
+                         to the server (for example, the server is using
+                         self-signed certificates that cannot be validated
+                         using the regular platform trust chain).
         """
         extra_headers = None
         if auth_header is not None:
@@ -84,7 +91,8 @@ class ReverseShell():
 
         try:
             self.ws = simple_websocket.Client.connect(shell_ws_url(server_url, device),
-                                                      headers=extra_headers)
+                                                      headers=extra_headers,
+                                                      ssl_context=ssl_context)
         except simple_websocket.ConnectionError as e:
             raise RuntimeError(wrap_api_error(e, "WebSocket connection failed"))
 

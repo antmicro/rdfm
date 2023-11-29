@@ -2,6 +2,7 @@ from typing import Optional
 import requests
 import datetime
 from dateutil import tz
+import ssl
 
 
 def split_metadata(flags: list[str]) -> dict[str, str]:
@@ -47,4 +48,18 @@ def replace_http_schema_with_ws(server_url: str):
     """ Replaces HTTP schema from the given URL with a WebSocket schema
     """
     return server_url.replace("http://", "ws://").replace("https://", "wss://")
+
+
+def make_ssl_context_from_cert_file(ca_cert: str) -> ssl.SSLContext:
+    """ Create an SSLContext for connecting to the server
+
+    This is used when a custom validation certificate is passed to
+    validate the connection to the server.
+    """
+    context = ssl.SSLContext()
+    try:
+        context.load_verify_locations(cafile=ca_cert)
+    except Exception as e:
+        raise RuntimeError(f"Failed to load CA chain from file: {e}")
+    return context
 
