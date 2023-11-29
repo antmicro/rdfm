@@ -102,7 +102,7 @@ func (d *Device) startClient() error {
 	return nil
 }
 
-func (d *Device) connect(addr string) error {
+func (d *Device) connect() error {
 	var dialer websocket.Dialer
 	var scheme string
 
@@ -152,6 +152,12 @@ func (d *Device) connect(addr string) error {
 	}
 
 	// Open a WebSocket connection
+	var needPort = true
+	serverUrl := d.rdfmCtx.RdfmConfig.ServerURL
+	addr, err := netUtils.AddrWithOrWithoutPort(serverUrl, needPort)
+	if err != nil {
+		return err
+	}
 	u := url.URL{Scheme: scheme, Host: addr, Path: "/api/v1/devices/ws"}
 	log.Println("Connecting to", u.String())
 
@@ -201,7 +207,8 @@ func (d *Device) handleRequest(request requests.Request) (requests.Request, erro
 	log.Printf("Handling %T request...\n", request)
 	switch r := request.(type) {
 	case requests.Proxy:
-		addr, err := netUtils.AddrWithoutPort(d.ws.LocalAddr().String())
+		var needPort = false
+		addr, err := netUtils.AddrWithOrWithoutPort(d.ws.LocalAddr().String(), needPort)
 		if err != nil {
 			log.Println("Failed to get server's proxy address")
 			return nil, err

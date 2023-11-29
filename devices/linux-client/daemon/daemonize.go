@@ -2,7 +2,6 @@ package daemon
 
 import (
 	"log"
-	"fmt"
 
 	"github.com/antmicro/rdfm/app"
 	"github.com/antmicro/rdfm/daemon/capabilities"
@@ -10,8 +9,6 @@ import (
 )
 
 func Daemonize(c *libcli.Context) error {
-	host := c.String("host")
-	port := c.Int("port")
 	name := c.String("name")
 	fileMetadata := c.String("file-metadata")
 	notEncrypted := c.Bool("no-ssl")
@@ -39,7 +36,7 @@ func Daemonize(c *libcli.Context) error {
 		authToken:    &AuthToken{},
 	}
 
-	err = device.connect(fmt.Sprintf("%s:%d", host, port))
+	err = device.connect()
 	if err != nil {
 		log.Println(err)
 		return err

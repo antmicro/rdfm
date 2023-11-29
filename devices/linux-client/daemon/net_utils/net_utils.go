@@ -7,13 +7,21 @@ import (
 	"regexp"
 )
 
-func AddrWithoutPort(addr string) (string, error) {
-	re1 := regexp.MustCompile(`((\d+\.?)+)[:/].*?`)
-	result := re1.FindStringSubmatch(addr)
-	if len(result) < 2 {
-		return "", errors.New("Not a valid IPv4 addr")
+const SERVER_URL_PATTERN = "http(s)://127.0.0.1:5000"
+
+var urlMatchError = errors.New("Couldn't match the server URL with the pattern of: '" + SERVER_URL_PATTERN + "'")
+
+func AddrWithOrWithoutPort(addr string, withPort bool) (string, error) {
+	pattern := `(?:\d+\.){3}\d+`
+	if withPort {
+		pattern = pattern + `:\d+`
 	}
-	return result[1], nil
+	re := regexp.MustCompile(pattern)
+	result := re.FindStringSubmatch(addr)
+	if len(result) < 1 {
+		return "", urlMatchError
+	}
+	return result[0], nil
 }
 
 func GetMacAddr() (string, error) {
