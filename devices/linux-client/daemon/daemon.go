@@ -106,6 +106,13 @@ func (d *Device) connect(addr string) error {
 	var dialer websocket.Dialer
 	var scheme string
 
+	// Get MAC address
+	mac, err := netUtils.GetMacAddr()
+	if err != nil {
+		return err
+	}
+	d.macAddr = mac
+
 	// Get device token
 	d.authenticateDeviceWithServer()
 
@@ -152,13 +159,6 @@ func (d *Device) connect(addr string) error {
 	if err != nil {
 		log.Println("Failed to create WebSocket", err)
 		return err
-	}
-
-	ourMacAddr, err := netUtils.ConnectedMacAddr(d.ws)
-	if err != nil {
-		return err
-	} else {
-		log.Println("Our MAC addr:", ourMacAddr)
 	}
 	log.Println("WebSocket created")
 

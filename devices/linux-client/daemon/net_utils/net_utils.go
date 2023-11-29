@@ -5,8 +5,6 @@ import (
 	"log"
 	"net"
 	"regexp"
-
-	"github.com/gorilla/websocket"
 )
 
 func AddrWithoutPort(addr string) (string, error) {
@@ -18,29 +16,31 @@ func AddrWithoutPort(addr string) (string, error) {
 	return result[1], nil
 }
 
-func ConnectedMacAddr(conn *websocket.Conn) (string, error) {
-	connIp, err := AddrWithoutPort(conn.LocalAddr().String())
-	if err != nil {
-		return "", err
-	}
+func GetMacAddr() (string, error) {
+	var nifMAC string
 
-	interfaces, _ := net.Interfaces()
-	for _, inter := range interfaces {
-		if addrs, err := inter.Addrs(); err == nil {
-			for _, addr := range addrs {
-				interfaceIp, err := AddrWithoutPort(addr.String())
-				if err != nil {
-					return "", err
-				}
-				if interfaceIp == connIp {
-					log.Println("Found:", interfaceIp, connIp)
-					if inter.HardwareAddr.String() == "" {
-						return "loopback", nil
-					}
-					return inter.HardwareAddr.String(), nil
-				}
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		log.Println("Couldn't get network interface", err)
+		return "", err
+	} else if len(interfaces) == 0 {
+		return "", errors.New("No network interfaces available")
+	}
+	for _, nif := range interfaces {
+		nifMAC = nif.HardwareAddr.String()
+		nifName := nif.Name
+		nifAddrs, _ := nif.Addrs()
+		if nifMAC == "" {
+			continue
+		}
+		for _, a := range nifAddrs {
+			ipAddr, _, _ := net.ParseCIDR(a.String())
+			if !(ipAddr.IsLoopback() || ipAddr.IsLinkLocalMulticast() || ipAddr.IsLinkLocalUnicast()) {
+				log.Println("Using MAC address [ " + nifMAC + " ] from network interface '" + nifName + "' as device identifier")
+				return nifMAC, nil
 			}
 		}
+		return "", errors.New("Failed to get MAC address from a valid interface")
 	}
-	return "", errors.New("No matching interface found")
+	return "", errors.New("Failed to get MAC address")
 }
