@@ -287,3 +287,61 @@ Finally, assign the required scope to the client: under the `Client scopes` tab,
 The newly-created client will now have access to the RDFM API.
 To configure `rdfm-mgmt` to use this client, follow the [Configuration section](rdfm_manager.md#configuration) of the RDFM manager manual.
 :::
+
+## Configuring HTTPS
+
+For simple deployments, the server can expose an HTTPS API directly without requiring an additional reverse proxy.
+Configuration of the server's HTTPS can be done using the following environment variables:
+
+- `RDFM_SERVER_CERT` - path to the server's signed certificate
+- `RDFM_SERVER_KEY` - path to the server's private key
+
+Both of these files must be accessible within the server Docker container.
+
+### HTTPS demo deployment
+
+:::{warning}
+This demo deployment explicitly disables API authentication, and is only meant to be used as a reference on how to configure your particular deployment.
+:::
+
+An example HTTPS deployment can be found in the `server/deploy/docker-compose.https.development.yml` file.
+Before running it, you must execute the `tests/certgen.sh` in the `server/deploy/` directory:
+
+```bash
+cd server/deploy/
+../tests/certgen.sh
+```
+
+This script generates a root CA and an associated signed certificate to be used for running the server.
+The following files are generated:
+
+- `certs/CA.{crt,key}` - CA certificate/private key that is used as the root of trust
+- `certs/SERVER.{crt,key}` - signed certificate/private key used by the server
+
+To run the deployment, you must first build the RDFM server container by running the following from the RDFM repository root folder:
+
+```bash
+docker build -f server/deploy/Dockerfile -t antmicro/rdfm-server:latest .
+```
+
+You can then start the deployment by running:
+```bash
+docker-compose -f server/deploy/docker-compose.https.development.yml up
+```
+
+To verify the connection to the server, you must provide the CA certificate.
+For example, when using `curl` to access API methods:
+
+```bash
+curl --cacert server/deploy/certs/CA.crt https://127.0.0.1:5000/api/v1/devices
+```
+
+When using `rdfm-mgmt`:
+
+```bash
+rdfm-mgmt --url https://127.0.0.1:5000/     \
+          --cert server/deploy/certs/CA.crt \
+          --no-api-auth                     \
+          devices list
+```
+
