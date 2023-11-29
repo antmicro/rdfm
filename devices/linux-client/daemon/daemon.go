@@ -111,7 +111,10 @@ func (d *Device) connect() error {
 	d.macAddr = mac
 
 	// Get device token
-	d.authenticateDeviceWithServer()
+	err = d.authenticateDeviceWithServer()
+	if err != nil {
+		return err
+	}
 
 	authHeader := http.Header{
 		"Authorization": []string{"Bearer token=" + d.deviceToken},
@@ -401,22 +404,20 @@ func (d Device) getKeys() (*rsa.PrivateKey, string) {
 	return privateKey, string(publicKeyPem)
 }
 
-func (d *Device) authenticateDeviceWithServer() {
-
+func (d *Device) authenticateDeviceWithServer() error {
 	privateKey, publicKeyString := d.getKeys()
 	if len(publicKeyString) == 0 {
-		log.Println("Failed to get device key. Authentication impossible")
-		return
+		return errors.New("Failed to get device key. Authentication impossible")
 	}
 	devType, err := d.rdfmCtx.GetCurrentDeviceType()
 	if err != nil {
-		log.Println("Error getting current device type", err)
-		return
+		log.Println("Error getting current device type")
+		return err
 	}
 	swVer, err := d.rdfmCtx.GetCurrentArtifactName()
 	if err != nil {
-		log.Println("Error getting current software version", err)
-		return
+		log.Println("Error getting current software version")
+		return err
 	}
 
 	log.Println("Device authentication...")
@@ -433,7 +434,7 @@ func (d *Device) authenticateDeviceWithServer() {
 	serializedMsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Println("Failed to serialize metadata", err)
-		return
+		return err
 	}
 
 	// Prepare signature
@@ -441,13 +442,13 @@ func (d *Device) authenticateDeviceWithServer() {
 	signature, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA256, hash[:])
 	if err != nil {
 		log.Println("Failed to sign auth request", err)
-		return
+		return err
 	}
 	signatureB64 := base64.StdEncoding.EncodeToString([]byte(signature))
 
 	endpoint := fmt.Sprintf("%s/api/v1/auth/device",
 		d.rdfmCtx.RdfmConfig.ServerURL)
-auth_loop:
+
 	for {
 		req, _ := http.NewRequest("POST", endpoint, bytes.NewBuffer(serializedMsg))
 		req.Header.Set("Content-Type", "application/json")
@@ -458,7 +459,7 @@ auth_loop:
 
 		if err != nil {
 			log.Println("Failed to send authentication request", err)
-			return
+			return err
 		}
 		defer res.Body.Close()
 
@@ -470,11 +471,14 @@ auth_loop:
 			err = json.Unmarshal(body, &response)
 			if err != nil {
 				log.Println("Failed to deserialize package metadata", err)
-				return
+				return err
 			}
 			d.deviceToken = response["token"].(string)
 			log.Println("Authorization token expires in", response["expires"], "seconds")
-			break auth_loop
+			if len(d.deviceToken) == 0 {
+				return errors.New("Got empty authorization token")
+			}
+			return nil
 		case 400:
 			log.Println("Invalid message schema or signature")
 		case 401:
@@ -502,10 +506,6 @@ func (d Device) checkUpdatesPeriodically() {
 
 	go func() {
 		for {
-			if len(d.deviceToken) == 0 {
-				d.authenticateDeviceWithServer()
-			}
-
 			log.Println("Checking updates...")
 			metadata := map[string]string{
 				"rdfm.hardware.devtype": devType,
@@ -562,7 +562,10 @@ func (d Device) checkUpdatesPeriodically() {
 				log.Println("Device metadata is missing device type and/or software version")
 			case 401:
 				log.Println("Device did not provide authorization data, or the authorization has expired")
-				d.authenticateDeviceWithServer()
+				err := d.authenticateDeviceWithServer()
+				if err != nil {
+					log.Println("Failed to autheniticate with the server", err)
+				}
 				continue
 			}
 			update_duration := time.Duration(d.rdfmCtx.RdfmConfig.UpdatePollIntervalSeconds) * time.Second
