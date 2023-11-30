@@ -9,8 +9,6 @@ from urllib.parse import unquote
 # These endpoints should be excluded from all tests below
 ENDPOINT_EXCLUDE_GLOBAL = [
     "static", # Flask default route
-    "rdfm-server-api-v1.rdfm-server-packages.fetch_local_package",
-    "rdfm-server-api-v1.rdfm-server-updates.check_for_update",
 ]
 
 
@@ -53,9 +51,6 @@ def test_authorization_on_all_routes(endpoint, func):
 def test_docstrings_on_all_routes(endpoint, func):
     """ This verifies that all routes have a defined docstring.
     """
-    if endpoint.startswith('rdfm-server-api-v1.rdfm-server-devices.'):
-        pytest.skip("device API routes will be subject to a refactor")
-
     error_string = (f"route function {func.__name__} should have a docstring")
     assert hasattr(func, "__doc__"), error_string
     assert func.__doc__ is not None, error_string

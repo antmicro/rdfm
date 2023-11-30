@@ -20,6 +20,7 @@ import server
 import configuration
 from api.v1.common import api_error
 from rdfm.schema.v1.packages import Package
+from api.v1.middleware import public_api
 
 
 packages_blueprint: Blueprint = Blueprint("rdfm-server-packages", __name__)
@@ -310,6 +311,7 @@ def delete_package(identifier: int):
 
 
 @packages_blueprint.route('/local_storage/<name>')
+@public_api
 def fetch_local_package(name: str):
     """ Endpoint for exposing local package storage.
 
