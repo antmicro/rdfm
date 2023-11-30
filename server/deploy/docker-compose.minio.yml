@@ -7,7 +7,6 @@ services:
       - RDFM_DB_CONNSTRING=sqlite:////database/development.db
       - RDFM_HOSTNAME=rdfm-server
       - RDFM_API_PORT=5000
-      - RDFM_DEVICE_PORT=1234
       - RDFM_DISABLE_ENCRYPTION=1
       - RDFM_DISABLE_API_AUTH=1
       - RDFM_LOCAL_PACKAGE_DIR=/packages/
@@ -17,7 +16,6 @@ services:
       - RDFM_S3_ACCESS_KEY_ID=admin
       - RDFM_S3_ACCESS_SECRET_KEY=admin123
     ports:
-      - "1234:1234"
       - "5000:5000"
     volumes:
       - db:/database/

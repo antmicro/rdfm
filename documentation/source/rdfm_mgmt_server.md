@@ -75,12 +75,10 @@ services:
       - RDFM_DB_CONNSTRING=sqlite:////database/development.db
       - RDFM_HOSTNAME=rdfm-server
       - RDFM_API_PORT=5000
-      - RDFM_DEVICE_PORT=1234
       - RDFM_DISABLE_ENCRYPTION=1
       - RDFM_DISABLE_API_AUTH=1
       - RDFM_LOCAL_PACKAGE_DIR=/packages/
     ports:
-      - "1234:1234"
       - "5000:5000"
     volumes:
       - db:/database/
@@ -102,7 +100,6 @@ Configuration of the RDFM server can be changed by using the following environme
 - `RDFM_JWT_SECRET` - secret key used by the server when issuing JWT tokens, this value must be kept secret and not easily guessable (for example, a random hexadecimal string).
 - `RDFM_HOSTNAME` - hostname/IP address to listen on, when running the server in a container use the service name here (using above example, `rdfm-server`).
 - `RDFM_API_PORT` - HTTP API port
-- `RDFM_DEVICE_PORT` - device-server protocol port
 - `RDFM_DB_CONNSTRING` - database connection string, for examples please refer to: [SQLAlchemy - Backend-specific URLs](https://docs.sqlalchemy.org/en/20/core/engines.html#backend-specific-urls). Currently, only the SQLite and PostgreSQL engines were verified to work with RDFM (however: the PostgreSQL engine requires adding additional dependencies which are currently not part of the default server image, this may change in the future).
 - `RDFM_DISABLE_ENCRYPTION` - disables encryption of device-server protocol data and usage of HTTPS in the API routes
 - `RDFM_SERVER_CERT` - when using encryption, path to the server's certificate. The certificate can be stored on a Docker volume mounted to the container. For reference on generating the certificate/key pairs, see the `server/tests/certgen.sh` script.
@@ -189,7 +186,6 @@ services:
       - RDFM_DB_CONNSTRING=sqlite:////database/development.db
       - RDFM_HOSTNAME=rdfm-server
       - RDFM_API_PORT=5000
-      - RDFM_DEVICE_PORT=1234
       - RDFM_DISABLE_ENCRYPTION=1
       - RDFM_LOCAL_PACKAGE_DIR=/packages/
       - RDFM_OAUTH_URL=http://keycloak:8080/realms/master/protocol/openid-connect/token/introspect
@@ -198,7 +194,6 @@ services:
     networks:
       - rdfm
     ports:
-      - "1234:1234"
       - "5000:5000"
     volumes:
       - db:/database/

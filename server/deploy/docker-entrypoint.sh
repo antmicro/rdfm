@@ -39,9 +39,6 @@ server_args="${server_args} --hostname ${RDFM_HOSTNAME}"
 require_variable RDFM_API_PORT
 server_args="${server_args} --http-port ${RDFM_API_PORT}"
 
-require_variable RDFM_DEVICE_PORT
-server_args="${server_args} --port ${RDFM_DEVICE_PORT}"
-
 require_variable RDFM_DB_CONNSTRING
 server_args="${server_args} --database ${RDFM_DB_CONNSTRING}"
 
