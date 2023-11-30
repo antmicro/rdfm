@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
@@ -16,24 +17,22 @@ import (
 	"io/ioutil"
 	"log"
 	"mime/multipart"
-	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/antmicro/rdfm/app"
 	"github.com/antmicro/rdfm/daemon/capabilities"
 	"github.com/antmicro/rdfm/daemon/proxy"
+	"github.com/gorilla/websocket"
 
 	netUtils "github.com/antmicro/rdfm/daemon/net_utils"
 	packages "github.com/antmicro/rdfm/daemon/packages"
 	requests "github.com/antmicro/rdfm/daemon/requests"
 )
 
-const HEADER_LEN = 10
 const MSG_RECV_TIMEOUT_INTERVALS = 10
 const MSG_RECV_INTERVAL_S = 1
 const RSA_DEVICE_KEY_SIZE = 4096
@@ -48,7 +47,7 @@ type Device struct {
 	name         string
 	fileMetadata string
 	encryptProxy bool
-	socket       net.Conn
+	ws           *websocket.Conn
 	metadata     map[string]interface{}
 	caps         capabilities.DeviceCapabilities
 	macAddr      string
@@ -57,35 +56,12 @@ type Device struct {
 	deviceToken  string
 }
 
-func recv(s net.Conn) ([]byte, error) {
-	hdr, err := netUtils.RecvExactly(s, HEADER_LEN)
-
-	if err != nil {
-		log.Println("Error receiving header:", err)
-		return nil, err
-	}
-	msg_len, err := strconv.Atoi(strings.TrimSpace(string(hdr[:])))
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	msg, err := netUtils.RecvExactly(s, msg_len)
-	if err != nil {
-		if err != io.EOF {
-			log.Println("Error receiving msg:", err)
-			return nil, err
-		}
-	}
-	return msg, nil
-}
-
 func (d Device) recv() (requests.Request, error) {
 	var msg []byte
 	var err error
 
 	for i := 0; i < MSG_RECV_TIMEOUT_INTERVALS; i++ {
-		msg, err = recv(d.socket)
+		_, msg, err = d.ws.ReadMessage()
 		if err != nil {
 			return nil, err
 		}
@@ -94,15 +70,10 @@ func (d Device) recv() (requests.Request, error) {
 		}
 		time.Sleep(MSG_RECV_INTERVAL_S * time.Second)
 	}
-	if len(msg) == 0 {
-		return nil, errors.New("server response timeout")
-	}
-
 	parsed, err := requests.Parse(string(msg[:]))
 	if err != nil {
 		return nil, err
 	}
-
 	return parsed, nil
 }
 
@@ -112,12 +83,7 @@ func (d Device) send(msg requests.Request) error {
 		log.Println(err)
 		return err
 	}
-
-	n, err := d.socket.Write([]byte(fmt.Sprintf("%10d%s", len(s_msg), s_msg)))
-	if n != HEADER_LEN+len(s_msg) {
-		log.Println(err)
-		return err
-	}
+	err = d.ws.WriteMessage(websocket.TextMessage, []byte(s_msg))
 	if err != nil {
 		log.Println(err)
 		return err
@@ -128,6 +94,7 @@ func (d Device) send(msg requests.Request) error {
 func (d *Device) startClient() error {
 	d.checkUpdatesPeriodically()
 	err := d.communicationLoop()
+	defer d.ws.Close()
 	if err != nil {
 		log.Println("Error running client", err)
 		return err
@@ -135,11 +102,73 @@ func (d *Device) startClient() error {
 	return nil
 }
 
+func (d *Device) connect(addr string) error {
+	var dialer websocket.Dialer
+	var scheme string
+
+	// Get device token
+	d.authenticateDeviceWithServer()
+
+	authHeader := http.Header{
+		"Authorization": []string{"Bearer token=" + d.deviceToken},
+	}
+
+	if d.encryptProxy {
+		cert, err := os.ReadFile(d.rdfmCtx.RdfmConfig.ServerCertificate)
+		if err != nil {
+			log.Fatal("Failed to read certificate file: ",
+				d.rdfmCtx.RdfmConfig.ServerCertificate, err)
+			return err
+		}
+		conf := &tls.Config{}
+		os.Setenv("SSL_CERT_DIR",
+			filepath.Dir(string(d.rdfmCtx.RdfmConfig.ServerCertificate)))
+		log.Printf("Set $SSL_CERT_DIR to \"%s\"\n",
+			os.Getenv("SSL_CERT_DIR"))
+		caCertPool := x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(cert)
+		conf = &tls.Config{
+			RootCAs: caCertPool,
+		}
+		if len(cert) < 1 {
+			return errors.New("Certificate empty")
+		}
+		scheme = "wss"
+		dialer = websocket.Dialer{
+			TLSClientConfig: conf,
+		}
+		log.Println("Creating WebSocket over TLS")
+	} else {
+		scheme = "ws"
+		dialer = *websocket.DefaultDialer
+		log.Println("Creating WebSocket")
+	}
+
+	// Open a WebSocket connection
+	u := url.URL{Scheme: scheme, Host: addr, Path: "/api/v1/devices/ws"}
+	log.Println("Connecting to", u.String())
+
+	d.ws, _, err = dialer.Dial(u.String(), authHeader)
+	if err != nil {
+		log.Println("Failed to create WebSocket", err)
+		return err
+	}
+
+	ourMacAddr, err := netUtils.ConnectedMacAddr(d.ws)
+	if err != nil {
+		return err
+	} else {
+		log.Println("Our MAC addr:", ourMacAddr)
+	}
+	log.Println("WebSocket created")
+
+	return nil
+}
+
 func (d *Device) communicationLoop() error {
 	for {
 		req, err := d.recv()
 		if err != nil {
-			log.Println(err)
 			return err
 		}
 		res, err := d.handleRequest(req)
@@ -158,129 +187,6 @@ func (d *Device) communicationLoop() error {
 	}
 }
 
-func (d *Device) loadAuthToken() error {
-	authToken, err := os.ReadFile(d.rdfmCtx.RdfmConfig.AuthTokenFile)
-	if len(authToken) > 0 {
-		log.Println("Found auth token: ", authToken)
-		if err == nil {
-			d.authToken = &AuthToken{
-				value: string(authToken),
-				file:  app.RdfmTokenPath,
-			}
-		}
-	} else {
-		log.Println("Auth token not found in path provided in config, ",
-			d.rdfmCtx.RdfmConfig.AuthTokenFile)
-		authToken, err = os.ReadFile(app.RdfmTokenPath)
-		if err != nil {
-			log.Println("Auth token not found in default path, ",
-				app.RdfmTokenPath)
-			return err
-		}
-		log.Println("Auth token found in default path")
-		d.authToken = &AuthToken{
-			value: string(authToken),
-			file:  app.RdfmTokenPath,
-		}
-	}
-	return nil
-}
-
-func (d *Device) connect(jwtAuth bool) error {
-	file, err := os.OpenFile(app.RdfmTokenPath, os.O_CREATE, 0600)
-	if err != nil {
-		return err
-	}
-	d.authToken = &AuthToken{
-		file:  file.Name(),
-		value: "",
-	}
-	if jwtAuth {
-		log.Println("Trying to connect using auth token")
-		if err := d.loadAuthToken(); err != nil {
-			log.Println("Error loading auth token, ", err)
-			if err != nil {
-				log.Println("Error creating file for auth token, ", d.authToken.file)
-				return err
-			}
-		}
-		// Try to auth using token
-		if d.authToken.value != "" {
-			log.Println("Token found, trying to auth...")
-			d.send(requests.Auth{
-				Method: "auth_token",
-				Jwt:    d.authToken.value,
-			})
-			res, err := d.recv()
-			if err != nil {
-				log.Println("Error sending token", err)
-			}
-
-			switch r := res.(type) {
-			case requests.Alert:
-				msg, present := r.Alert["message"]
-				if present {
-					log.Println(msg)
-					return nil
-				}
-				msg, present = r.Alert["error"]
-				if present {
-					log.Println("Failed to connect using token", msg)
-				}
-			default:
-				err = errors.New("unknown server response")
-				log.Println(err, res)
-				return err
-			}
-		} else {
-			log.Println("No AuthToken in configuration")
-		}
-	}
-
-	// JWT auth failed/no token
-	log.Println("Registering device...")
-	err = d.send(requests.Register{
-		Method: "register",
-		Client: requests.Client{
-			Name:         d.name,
-			Group:        requests.DeviceType,
-			Capabilities: d.caps,
-			MacAddress:   d.macAddr,
-		},
-	})
-	if err != nil {
-		log.Println("Error sending register request to server: ", err)
-		return err
-	}
-	res, err := d.recv()
-	if err != nil {
-		log.Println("Error receiving response to register request from server: ", err)
-		return err
-	}
-	switch r := res.(type) {
-	// Got JWT token from server
-	case requests.Auth:
-		d.authToken.value = r.Jwt
-		log.Println("Got auth token!")
-
-		err = os.WriteFile(d.authToken.file, []byte(r.Jwt), 0600)
-		if err != nil {
-			log.Println("Error saving auth token to file ", d.authToken.file)
-			return err
-		}
-	case requests.Alert:
-		log.Println(r.Alert)
-		return errors.New("registration refused")
-	default:
-		err = errors.New("received unknown response")
-		log.Println(err, res)
-		return err
-	}
-	log.Println("Connected to the server")
-
-	return nil
-}
-
 func (d *Device) handleRequest(request requests.Request) (requests.Request, error) {
 	if !requests.CanHandleRequest(request, d.caps) {
 		log.Println("cannot handle request")
@@ -295,7 +201,7 @@ func (d *Device) handleRequest(request requests.Request) (requests.Request, erro
 	log.Printf("Handling %T request...\n", request)
 	switch r := request.(type) {
 	case requests.Proxy:
-		addr, err := netUtils.AddrWithoutPort(d.socket.LocalAddr().String())
+		addr, err := netUtils.AddrWithoutPort(d.ws.LocalAddr().String())
 		if err != nil {
 			log.Println("Failed to get server's proxy address")
 			return nil, err

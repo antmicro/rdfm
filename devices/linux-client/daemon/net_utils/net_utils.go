@@ -2,11 +2,11 @@ package netUtils
 
 import (
 	"errors"
-	"fmt"
-	"io"
 	"log"
 	"net"
 	"regexp"
+
+	"github.com/gorilla/websocket"
 )
 
 func AddrWithoutPort(addr string) (string, error) {
@@ -18,7 +18,7 @@ func AddrWithoutPort(addr string) (string, error) {
 	return result[1], nil
 }
 
-func ConnectedMacAddr(conn net.Conn) (string, error) {
+func ConnectedMacAddr(conn *websocket.Conn) (string, error) {
 	connIp, err := AddrWithoutPort(conn.LocalAddr().String())
 	if err != nil {
 		return "", err
@@ -43,18 +43,4 @@ func ConnectedMacAddr(conn net.Conn) (string, error) {
 		}
 	}
 	return "", errors.New("No matching interface found")
-}
-
-func RecvExactly(s net.Conn, n int) ([]byte, error) {
-	buf := make([]byte, 0, n)
-	for n > 0 {
-		tmp_buf := make([]byte, n)
-		bytes_read, err := io.ReadFull(s, tmp_buf)
-		if err != nil {
-			return nil, fmt.Errorf("socket read error: %w", err)
-		}
-		buf = append(buf, tmp_buf...)
-		n -= bytes_read
-	}
-	return buf, nil
 }
