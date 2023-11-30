@@ -108,11 +108,6 @@ func makeCommands() []*libcli.Command {
 					Usage: "File containing device metadata",
 					Value: "tests/testdata.json",
 				},
-				&libcli.BoolFlag{
-					Name:  "no-ssl",
-					Usage: "Turn off encryption",
-					Value: false,
-				},
 				&libcli.StringFlag{
 					Name:  "config",
 					Usage: "Capabilities config file",

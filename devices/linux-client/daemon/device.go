@@ -139,14 +139,11 @@ func (d *Device) connect() error {
 	}
 	d.macAddr = mac
 
-	// Get device token
-	err = d.authenticateDeviceWithServer()
+	// Check whether we should encrypt connection
+	serverUrl := d.rdfmCtx.RdfmConfig.ServerURL
+	d.encryptProxy, err = netUtils.ShouldEncryptProxy(serverUrl)
 	if err != nil {
 		return err
-	}
-
-	authHeader := http.Header{
-		"Authorization": []string{"Bearer token=" + d.deviceToken},
 	}
 
 	if d.encryptProxy {
@@ -180,9 +177,17 @@ func (d *Device) connect() error {
 		log.Println("Creating WebSocket")
 	}
 
+	// Get device token
+	err = d.authenticateDeviceWithServer()
+	if err != nil {
+		return err
+	}
+	authHeader := http.Header{
+		"Authorization": []string{"Bearer token=" + d.deviceToken},
+	}
+
 	// Open a WebSocket connection
 	var needPort = true
-	serverUrl := d.rdfmCtx.RdfmConfig.ServerURL
 	addr, err := netUtils.HostWithOrWithoutPort(serverUrl, needPort)
 	if err != nil {
 		return err

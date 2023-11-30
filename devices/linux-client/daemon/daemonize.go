@@ -11,7 +11,6 @@ import (
 func Daemonize(c *libcli.Context) error {
 	name := c.String("name")
 	fileMetadata := c.String("file-metadata")
-	notEncrypted := c.Bool("no-ssl")
 	config := c.String("config")
 
 	ctx, err := app.NewRdfmContext()
@@ -29,7 +28,6 @@ func Daemonize(c *libcli.Context) error {
 	device := Device{
 		name:         name,
 		fileMetadata: fileMetadata,
-		encryptProxy: !notEncrypted,
 		metadata:     nil,
 		caps:         caps,
 		rdfmCtx:      ctx,

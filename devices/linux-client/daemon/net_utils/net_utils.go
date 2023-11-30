@@ -21,6 +21,23 @@ func HostWithOrWithoutPort(addr string, withPort bool) (string, error) {
 	return host.Host, nil
 }
 
+func ShouldEncryptProxy(addr string) (bool, error) {
+	pattern := `http`
+	re := regexp.MustCompile(pattern)
+	result := re.FindStringSubmatch(addr)
+	if len(result) < 1 {
+		return false, errors.New("Couldn't match the protocol in server URL - expecting 'http' or 'https'")
+	} else {
+		pattern = `https`
+		re = regexp.MustCompile(pattern)
+		result = re.FindStringSubmatch(addr)
+		if len(result) > 0 {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func GetMacAddr() (string, error) {
 	var nifMAC string
 
