@@ -86,15 +86,12 @@ if __name__ == '__main__':
     if not configuration.parse_from_environment(config):
         exit(1)
 
-    print("Starting the RDFM device socket listener...")
     try:
         server.instance = server.Server(config)
         if config.create_mocks:
             server.instance.create_mock_data()
-        t = Thread(target=server.instance.run, daemon=True)
-        t.start()
     except Exception as e:
-        print("Failed to start RDFM device socket listener:", e)
+        print("Failed to connect to the database:", e)
         exit(1)
 
     print("Starting the RDFM HTTP API...")

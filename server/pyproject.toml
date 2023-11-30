@@ -5,10 +5,7 @@ description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
 packages = [
-    { include = "rdfm_mgmt_server.py", from = "src" },
-    { include = "proxy.py", from = "src" },
-    { include = "server.py", from = "src" },
-    { include = "devices.py", from = "src/database" },
+    { include = "**/*.py", from = "src/" },
 ]
 
 [tool.poetry.dependencies]
