@@ -47,7 +47,8 @@ export JWT_SECRET="THISISATESTDEVELOPMENTSECRET123"
 poetry build && poetry install && poetry run python -m rdfm_mgmt_server --no-ssl --no-api-auth --local-package-dir ./packages/
 ```
 
-This launches the RDFM Management Server with no encryption, listening on `localhost`/`127.0.0.1`. By default, the device communication socket is listening on port `1234`, while the HTTP API is exposed on port `5000`.
+This launches the RDFM Management Server with no encryption, listening on `localhost`/`127.0.0.1`.
+By default, the HTTP API is exposed on port `5000`.
 
 When server is in debug mode (`app.run(debug=True, ...)` is set) every HTTP request received and response to it are printed to STDOUT.
 

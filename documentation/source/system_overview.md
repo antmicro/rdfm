@@ -21,25 +21,23 @@ in the [RDFM Server API Reference](api.rst) chapter. The clients use this API to
 
 ## Device-server RDFM Protocol
 
-The devices also maintain a persistent connection to the RDFM Management Server by utilizing a custom JSON-based message protocol.
+The devices also maintain a persistent connection to the RDFM Management Server by utilizing JSON-based messages sent over a WebSocket route.
 This is used to securely expose additional management functionality without directly exposing device ports to the Internet.
 
 Each message sent using the RDFM protocol is structured as follows:
 
 ```text
-0        10                         10+h
-+---------+----------------------------+
-| HEADER  | utf-8 encoded JSON message |
-+---------+----------------------------+
+0                            h
++----------------------------+
+| utf-8 encoded JSON message |
++----------------------------+
 ```
 
-The header is a 10-bytes UTF-8 encoded number representing the total length in bytes of the following message being sent.
-
-The message is a UTF-8 encoded JSON object. Request and response messages are distinguished by the mandatory ``'method'`` field.
+The message is a UTF-8 encoded JSON object, where each message is distinguished by the mandatory ``'method'`` field.
 
 An example request sent to the server may look like:
 
-``{'method': 'register', 'client': {'group': 'USER', 'name': 'testuser'}}``
+``{'method': 'capability_report', 'capabilities': {'shell': True}}``
 
 A response from the server may look like:
 
