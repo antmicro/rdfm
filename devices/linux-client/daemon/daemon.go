@@ -85,8 +85,12 @@ func (d Device) send(msg requests.Request) error {
 }
 
 func (d *Device) startClient() error {
+	var err error
 	d.checkUpdatesPeriodically()
-	err := d.communicationLoop()
+	// Communication loop
+	for err == nil {
+		err = d.communicationCycle()
+	}
 	defer d.ws.Close()
 	if err != nil {
 		log.Println("Error running client", err)
@@ -161,29 +165,32 @@ func (d *Device) connect() error {
 	}
 	log.Println("WebSocket created")
 
+	// Get a response from the server
+	err = d.communicationCycle()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func (d *Device) communicationLoop() error {
-	for {
-		req, err := d.recv()
-		if err != nil {
-			return err
-		}
-		res, err := d.handleRequest(req)
+func (d *Device) communicationCycle() error {
+	req, err := d.recv()
+	if err != nil {
+		return err
+	}
+	res, err := d.handleRequest(req)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	if res != nil {
+		err := d.send(res)
 		if err != nil {
 			log.Println(err)
 			return err
 		}
-
-		if res != nil {
-			err := d.send(res)
-			if err != nil {
-				log.Println(err)
-				return err
-			}
-		}
 	}
+	return nil
 }
 
 func (d *Device) handleRequest(request requests.Request) (requests.Request, error) {
