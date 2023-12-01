@@ -38,6 +38,11 @@ mma rdfm
 ```
 The resulting signed APK is in `out/target/product/<product-name>/system/app/rdfm/rdfm.apk`.
 
+### Using HTTPS for server requests
+
+The default Android system CA certificates are used when validating the certificate presented by the server.
+If the RDFM server that is configured in the app uses a certificate that is signed by a custom Certificate Authority, the CA certificate must be added to the system roots.
+
 ## System versioning
 
 The app performs update check requests to the configured RDFM server.
@@ -87,10 +92,12 @@ Modifying it afterwards (for example, via an update containing a new version of 
 
 It is possible to change the app's configuration at runtime by simply starting the RDFM app from the drawer and selecting `Settings` from the context menu.
 
-### Update check interval
+### Configuration options
 
-Currently, the app has a hardcoded update check interval of 4 minutes.
-This will be extended in the future to allow configuring it in a similar way as shown above in the server address case.
+The following configuration options are available:
+- RDFM server URL (`http`/`https` scheme)
+- Update check interval (in seconds)
+- Maximum amount of concurrent shell sessions (set to `0` to disable reverse shell functionality)
 
 ## Development
 
