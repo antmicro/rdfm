@@ -4,24 +4,21 @@ import (
 	"errors"
 	"log"
 	"net"
+	"net/url"
 	"regexp"
 )
 
-const SERVER_URL_PATTERN = "http(s)://127.0.0.1:5000"
-
-var urlMatchError = errors.New("Couldn't match the server URL with the pattern of: '" + SERVER_URL_PATTERN + "'")
-
-func AddrWithOrWithoutPort(addr string, withPort bool) (string, error) {
-	pattern := `(?:\d+\.){3}\d+`
-	if withPort {
-		pattern = pattern + `:\d+`
+func HostWithOrWithoutPort(addr string, withPort bool) (string, error) {
+	host, err := url.Parse(addr)
+	if err != nil {
+		return "", err
 	}
-	re := regexp.MustCompile(pattern)
-	result := re.FindStringSubmatch(addr)
-	if len(result) < 1 {
-		return "", urlMatchError
+	if !withPort {
+		re := regexp.MustCompile(`:\d+`)
+		result := re.Split(host.Host, -1)
+		return result[0], nil
 	}
-	return result[0], nil
+	return host.Host, nil
 }
 
 func GetMacAddr() (string, error) {

@@ -154,7 +154,7 @@ func (d *Device) connect() error {
 	// Open a WebSocket connection
 	var needPort = true
 	serverUrl := d.rdfmCtx.RdfmConfig.ServerURL
-	addr, err := netUtils.AddrWithOrWithoutPort(serverUrl, needPort)
+	addr, err := netUtils.HostWithOrWithoutPort(serverUrl, needPort)
 	if err != nil {
 		return err
 	}
@@ -222,7 +222,7 @@ func (d *Device) handleRequest(request requests.Request) (requests.Request, erro
 	switch r := request.(type) {
 	case requests.Proxy:
 		var needPort = false
-		addr, err := netUtils.AddrWithOrWithoutPort(d.ws.LocalAddr().String(), needPort)
+		addr, err := netUtils.HostWithOrWithoutPort(d.ws.LocalAddr().String(), needPort)
 		if err != nil {
 			log.Println("Failed to get server's proxy address")
 			return nil, err
