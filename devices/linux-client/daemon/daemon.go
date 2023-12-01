@@ -14,9 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
-	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
@@ -25,7 +23,6 @@ import (
 
 	"github.com/antmicro/rdfm/app"
 	"github.com/antmicro/rdfm/daemon/capabilities"
-	"github.com/antmicro/rdfm/daemon/proxy"
 	"github.com/gorilla/websocket"
 
 	netUtils "github.com/antmicro/rdfm/daemon/net_utils"
@@ -220,139 +217,19 @@ func (d *Device) handleRequest(msg []byte) (requests.Request, error) {
 		return nil, err
 	}
 
-	if !requests.CanHandleRequest(request, d.caps) {
-		log.Println("cannot handle request")
-		res := requests.Alert{
-			Alert: map[string]interface{}{
-				"error": "Device cannot handle request",
-			},
-		}
-		return res, nil
-	}
-
 	switch r := request.(type) {
-	case requests.Proxy:
-		var needPort = false
-		addr, err := netUtils.HostWithOrWithoutPort(d.ws.LocalAddr().String(), needPort)
-		if err != nil {
-			log.Println("Failed to get server's proxy address")
-			return nil, err
-		}
-		if d.encryptProxy {
-			go proxy.ConnectReverseEncrypted(addr, r.Port,
-				d.rdfmCtx.RdfmConfig.ServerCertificate)
-		} else {
-			go proxy.ConnectReverseUnencrypted(addr, r.Port)
-		}
-
-	case requests.Update:
-		err := d.updateMetadata()
-		if err != nil {
-			log.Println("Failed to update metadata", err)
-			return nil, err
-		}
-		metadata, err := json.Marshal(d.metadata)
-		if err != nil {
-			log.Println("Error serializing metadata", err)
-			return nil, err
-		}
-
-		log.Println("Sending metadata", string(metadata[:]))
-
-		return requests.Metadata{
-			Method:   "metadata",
-			Metadata: d.metadata,
-		}, nil
-	case requests.Download:
-		// Download to device
-		log.Println("Received download request of file ", r.FilePath)
-		log.Println("Downloading file from ", r.Url)
-
-		out, err := os.Create(r.FilePath)
-		if err != nil {
-			log.Printf("Failed to create output file %s\n", r.FilePath)
-			return nil, err
-		}
-		defer out.Close()
-		resp, err := http.Get(r.Url)
-		if err != nil {
-			log.Println("Failed to get file from url", err)
-			return nil, err
-		}
-		defer resp.Body.Close()
-		_, err = io.Copy(out, resp.Body)
-		if err != nil {
-			err := fmt.Errorf("failed to save file %w", err)
-			return nil, err
-		}
-		log.Println("Downloaded file")
-	case requests.Upload:
-		// Upload from device
-		log.Printf("Received upload request of file %s", r.FilePath)
-		endpoint := fmt.Sprintf("%s/upload", d.rdfmCtx.RdfmConfig.ServerURL)
-		log.Println("Uploading file to ", endpoint)
-		fileSent := false
-
-		body := &bytes.Buffer{}
-		writer := multipart.NewWriter(body)
-		writer.WriteField("jwt", d.deviceToken)
-		writer.WriteField("file_path", r.FilePath)
-
-		file, err := os.Open(r.FilePath)
-		if err != nil {
-			log.Println("Failed to open file", err)
-			writer.WriteField("error", "Failed to open file")
-		} else {
-			fileContents, err := ioutil.ReadAll(file)
-			if err != nil {
-				log.Println("Failed to read file", err)
-				writer.WriteField("error", "Failed to read file")
-			} else {
-				part, err := writer.CreateFormFile("file", filepath.Base(r.FilePath))
-				if err != nil {
-					log.Println("Failed to create form file", err)
-				}
-				part.Write(fileContents)
-				fileSent = true
-			}
-		}
-		file.Close()
-		writer.Close()
-
-		req, _ := http.NewRequest("POST", endpoint, body)
-		req.Header.Add("Content-Type", writer.FormDataContentType())
-		client := &http.Client{}
-		_, err = client.Do(req)
-		if err != nil || !fileSent {
-			log.Println("Failed to upload file", r.FilePath, err)
-		} else {
-			log.Println("Uploaded file", r.FilePath)
-		}
 	case requests.Alert:
 		for key, val := range r.Alert {
 			log.Printf("Server sent %s: %s", key, val)
 		}
+	//case requests.DeviceAttachToManager:
+	// TODO: Handle shell_attach
 	default:
 		log.Printf("Request '%s' is unsupported", requestName)
+		response := requests.CantHandleRequest()
+		return response, nil
 	}
-
 	return nil, nil
-}
-
-func (d *Device) updateMetadata() error {
-	metadata, err := os.ReadFile(d.fileMetadata)
-	if err != nil {
-		log.Println("Unable to read metadata from file:",
-			d.fileMetadata, err)
-		return err
-	}
-	err = json.Unmarshal(metadata, &d.metadata)
-	if err != nil {
-		log.Println("Unable to parse read metadata", err)
-		return err
-	}
-	log.Println("Read metadata from", d.fileMetadata)
-	return nil
 }
 
 func getPublicKey(privateKey *rsa.PrivateKey) []byte {
