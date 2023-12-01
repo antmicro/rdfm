@@ -49,7 +49,7 @@ type Device struct {
 	deviceToken  string
 }
 
-func (d Device) recv() (requests.Request, error) {
+func (d Device) recv() ([]byte, error) {
 	var msg []byte
 	var err error
 
@@ -63,11 +63,7 @@ func (d Device) recv() (requests.Request, error) {
 		}
 		time.Sleep(MSG_RECV_INTERVAL_S * time.Second)
 	}
-	parsed, err := requests.Parse(string(msg[:]))
-	if err != nil {
-		return nil, err
-	}
-	return parsed, nil
+	return msg, nil
 }
 
 func (d Device) send(msg requests.Request) error {
@@ -188,11 +184,11 @@ func (d *Device) connect() error {
 }
 
 func (d *Device) communicationCycle() error {
-	req, err := d.recv()
+	msg, err := d.recv()
 	if err != nil {
 		return err
 	}
-	res, err := d.handleRequest(req)
+	res, err := d.handleRequest(msg)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -207,7 +203,23 @@ func (d *Device) communicationCycle() error {
 	return nil
 }
 
-func (d *Device) handleRequest(request requests.Request) (requests.Request, error) {
+func (d *Device) handleRequest(msg []byte) (requests.Request, error) {
+	var msgMap map[string]interface{}
+
+	err := json.Unmarshal(msg, &msgMap)
+	if err != nil {
+		log.Println("Failed to deserialize request", err)
+		return nil, err
+	}
+	requestName := msgMap["method"]
+
+	log.Printf("Handling '%s' request...\n", requestName)
+
+	request, err := requests.Parse(string(msg[:]))
+	if err != nil {
+		return nil, err
+	}
+
 	if !requests.CanHandleRequest(request, d.caps) {
 		log.Println("cannot handle request")
 		res := requests.Alert{
@@ -218,7 +230,6 @@ func (d *Device) handleRequest(request requests.Request) (requests.Request, erro
 		return res, nil
 	}
 
-	log.Printf("Handling %T request...\n", request)
 	switch r := request.(type) {
 	case requests.Proxy:
 		var needPort = false
@@ -322,7 +333,7 @@ func (d *Device) handleRequest(request requests.Request) (requests.Request, erro
 			log.Printf("Server sent %s: %s", key, val)
 		}
 	default:
-		log.Printf("Unsupported request: %s", r)
+		log.Printf("Request '%s' is unsupported", requestName)
 	}
 
 	return nil, nil
