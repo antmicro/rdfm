@@ -45,7 +45,9 @@ func (d *Device) checkUpdatesPeriodically() {
 			)
 			req.Header.Set("Content-Type", "application/json")
 			req.Header.Add("Authorization", "Bearer token="+d.deviceToken)
-			client := &http.Client{}
+
+			var client *http.Client
+			client = &http.Client{Transport: d.httpTransport}
 			res, err := client.Do(req)
 			if err != nil {
 				log.Println("Failed to check updates from ", err)

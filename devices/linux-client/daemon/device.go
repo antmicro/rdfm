@@ -34,15 +34,15 @@ const MSG_RECV_INTERVAL_S = 1
 const RSA_DEVICE_KEY_SIZE = 4096
 
 type Device struct {
-	name         string
-	fileMetadata string
-	encryptProxy bool
-	ws           *websocket.Conn
-	metadata     map[string]interface{}
-	caps         capabilities.DeviceCapabilities
-	macAddr      string
-	rdfmCtx      *app.RDFM
-	deviceToken  string
+	name          string
+	fileMetadata  string
+	ws            *websocket.Conn
+	metadata      map[string]interface{}
+	caps          capabilities.DeviceCapabilities
+	macAddr       string
+	rdfmCtx       *app.RDFM
+	deviceToken   string
+	httpTransport *http.Transport
 }
 
 func (d Device) recv() ([]byte, error) {
@@ -141,12 +141,12 @@ func (d *Device) connect() error {
 
 	// Check whether we should encrypt connection
 	serverUrl := d.rdfmCtx.RdfmConfig.ServerURL
-	d.encryptProxy, err = netUtils.ShouldEncryptProxy(serverUrl)
+	encrypt, err := netUtils.ShouldEncryptProxy(serverUrl)
 	if err != nil {
 		return err
 	}
 
-	if d.encryptProxy {
+	if encrypt {
 		cert, err := os.ReadFile(d.rdfmCtx.RdfmConfig.ServerCertificate)
 		if err != nil {
 			log.Fatal("Failed to read certificate file: ",
@@ -160,18 +160,20 @@ func (d *Device) connect() error {
 			os.Getenv("SSL_CERT_DIR"))
 		caCertPool := x509.NewCertPool()
 		caCertPool.AppendCertsFromPEM(cert)
-		conf = &tls.Config{
-			RootCAs: caCertPool,
-		}
 		if len(cert) < 1 {
 			return errors.New("Certificate empty")
 		}
+		conf = &tls.Config{
+			RootCAs: caCertPool,
+		}
+		d.httpTransport = &http.Transport{TLSClientConfig: conf}
 		scheme = "wss"
 		dialer = websocket.Dialer{
 			TLSClientConfig: conf,
 		}
 		log.Println("Creating WebSocket over TLS")
 	} else {
+		d.httpTransport = &http.Transport{}
 		scheme = "ws"
 		dialer = *websocket.DefaultDialer
 		log.Println("Creating WebSocket")
@@ -335,7 +337,9 @@ func (d *Device) authenticateDeviceWithServer() error {
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json, text/javascript")
 		req.Header.Add("X-RDFM-Device-Signature", signatureB64)
-		client := &http.Client{}
+
+		var client *http.Client
+		client = &http.Client{Transport: d.httpTransport}
 		res, err := client.Do(req)
 
 		if err != nil {
