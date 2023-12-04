@@ -40,11 +40,16 @@ func Daemonize(c *libcli.Context) error {
 		log.Println(err)
 		return err
 	}
-	err = device.startClient()
-	if err != nil {
-		log.Println(err)
-		return err
+
+	device.checkUpdatesPeriodically()
+
+	// Communication loop
+	for err == nil {
+		err = device.communicationCycle()
 	}
-	log.Println("Daemon exited")
-	return nil
+
+	device.disconnect()
+
+	log.Println("Daemon exited with code:", err)
+	return err
 }
