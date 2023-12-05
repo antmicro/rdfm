@@ -1,6 +1,7 @@
 package capabilities
 
 import (
+	"encoding/json"
 	"log"
 
 	"github.com/spf13/viper"
@@ -23,7 +24,9 @@ func LoadCapabilities(path string) (caps DeviceCapabilities, err error) {
 		log.Println("Loaded device capabilities")
 	}
 
+	capsMap, _ := json.Marshal(viper.AllSettings())
+	log.Printf("Device capabilities: %s", capsMap)
+
 	err = viper.Unmarshal(&caps)
-	log.Println(caps)
 	return caps, err
 }
