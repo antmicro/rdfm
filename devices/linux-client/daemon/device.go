@@ -62,13 +62,13 @@ func (d Device) recv() ([]byte, error) {
 	return msg, nil
 }
 
-func (d Device) send(msg requests.Request) error {
-	s_msg, err := json.Marshal(msg)
+func (d Device) send(req requests.Request) error {
+	msg, err := json.Marshal(req)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-	err = d.ws.WriteMessage(websocket.TextMessage, []byte(s_msg))
+	err = d.ws.WriteMessage(websocket.TextMessage, []byte(msg))
 	if err != nil {
 		log.Println(err)
 		return err
