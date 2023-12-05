@@ -81,23 +81,6 @@ func makeCommands() []*libcli.Command {
 			Action: daemon.Daemonize,
 			Flags: []libcli.Flag{
 				&libcli.StringFlag{
-					Name:  "host",
-					Usage: "IP address or domain name of the server",
-					Value: "127.0.0.1",
-				},
-				&libcli.IntFlag{
-					Name:    "port",
-					Aliases: []string{"p"},
-					Usage:   "Listening port on the server",
-					Value:   1234,
-					Action: func(ctx *libcli.Context, v int) error {
-						if v >= 65536 || v < 0 {
-							return fmt.Errorf("flag port value %v out of range[0-65535]", v)
-						}
-						return nil
-					},
-				},
-				&libcli.StringFlag{
 					Name:    "name",
 					Aliases: []string{"n"},
 					Usage:   "Name for identification",
