@@ -53,13 +53,13 @@ func (d *Device) checkUpdatesPeriodically() {
 				log.Println("Failed to check updates from ", err)
 				return
 			}
+			defer res.Body.Close()
 
 			switch res.StatusCode {
 			case 200:
 				log.Println("An update is available")
 				var pkg packages.Package
 				bodyBytes, err := io.ReadAll(res.Body)
-				defer res.Body.Close()
 				if err != nil {
 					log.Println("Failed to get package metadata from response body", err)
 					return
