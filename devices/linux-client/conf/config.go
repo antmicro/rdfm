@@ -66,19 +66,21 @@ func LoadConfig(mainConfigFile string, overlayConfigFile string) (*RDFMConfig, *
 	// Load Mender config
 	loadErr := loadConfigFile(mainConfigFile, &menderConfig)
 	if loadErr != nil {
-		log.Println("Error reading main config: ", mainConfigFile, loadErr)
-	} else {
-		log.Println("Loaded main config", mainConfigFile)
+		log.Println("Error reading main config:", mainConfigFile)
+		log.Println(loadErr)
+		return nil, nil, loadErr
 	}
+	log.Println("Loaded main config", mainConfigFile)
 	log.Debugf("Loaded Mender configuration = %#v", menderConfig)
 
 	// Load RDFM config
 	loadErr = loadConfigFile(overlayConfigFile, &rdfmConfig)
 	if loadErr != nil {
-		log.Println("Error reading overlay config: ", overlayConfigFile, loadErr)
-	} else {
-		log.Println("Loaded overlay config", overlayConfigFile)
+		log.Println("Error reading overlay config:", overlayConfigFile)
+		log.Println(loadErr)
+		return nil, nil, loadErr
 	}
+	log.Println("Loaded overlay config", overlayConfigFile)
 	log.Debugf("Loaded RDFM configuration = %#v", rdfmConfig)
 
 	return &rdfmConfig, &menderConfig, nil
