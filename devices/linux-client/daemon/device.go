@@ -141,12 +141,18 @@ func (d *Device) connect() error {
 
 	// Check whether we should encrypt connection
 	serverUrl := d.rdfmCtx.RdfmConfig.ServerURL
+	if serverUrl == "" {
+		log.Fatalf("No server URL in %s!", app.RdfmOverlayConfigPath)
+	}
 	encrypt, err := netUtils.ShouldEncryptProxy(serverUrl)
 	if err != nil {
 		return err
 	}
 
 	if encrypt {
+		if d.rdfmCtx.RdfmConfig.ServerCertificate == "" {
+			log.Fatalf("No server certificate path in %s!", app.RdfmOverlayConfigPath)
+		}
 		cert, err := os.ReadFile(d.rdfmCtx.RdfmConfig.ServerCertificate)
 		if err != nil {
 			log.Fatal("Failed to read certificate file: ",
