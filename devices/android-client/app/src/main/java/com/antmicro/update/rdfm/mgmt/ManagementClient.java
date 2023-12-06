@@ -42,15 +42,8 @@ public final class ManagementClient extends WebSocketListener {
         new Thread(this::reconnectThread).start();
     }
 
-    private void connectToWs() {
-        String token;
-        try {
-            token = mTokenProvider.fetchDeviceToken();
-        } catch (DeviceUnauthorizedException | ServerConnectionException e) {
-            Log.w(TAG, "Cannot connect to management WebSocket - device unauthorized");
-            return;
-        }
-
+    private void connectToWs() throws DeviceUnauthorizedException, ServerConnectionException {
+        String token = mTokenProvider.fetchDeviceToken();
         Request request = new Request.Builder()
                 .url(mServerAddress + "/api/v1/devices/ws")
                 .header("Authorization", "Bearer token=" + token)
@@ -143,8 +136,11 @@ public final class ManagementClient extends WebSocketListener {
             // Connect to the WS
             try {
                 connectToWs();
-            } catch (Exception e) {
-                Log.e(TAG, "Exception when connecting to the management WebSocket", e);
+            } catch (ServerConnectionException e) {
+                Log.e(TAG, "Cannot connect to the management WebSocket - server connection failed");
+                continue;
+            } catch (DeviceUnauthorizedException e) {
+                Log.e(TAG, "Cannot connect to the management WebSocket - device unauthorized");
                 continue;
             }
 
