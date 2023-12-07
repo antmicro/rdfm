@@ -2,6 +2,9 @@ package daemon
 
 import (
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/antmicro/rdfm/app"
 	"github.com/antmicro/rdfm/daemon/capabilities"
@@ -38,6 +41,13 @@ func Daemonize(c *libcli.Context) error {
 		log.Println(err)
 		return err
 	}
+
+	channel := make(chan os.Signal)
+	signal.Notify(channel, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-channel
+		device.disconnect()
+	}()
 
 	device.checkUpdatesPeriodically()
 
