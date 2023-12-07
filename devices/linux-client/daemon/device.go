@@ -373,10 +373,10 @@ func (d *Device) authenticateDeviceWithServer() error {
 		case 400:
 			log.Println("Invalid message schema or signature")
 		case 401:
-			auth_duration := time.Duration(d.rdfmCtx.RdfmConfig.RetryPollIntervalSeconds) * time.Second
+			authDuration := time.Duration(d.rdfmCtx.RdfmConfig.RetryPollIntervalSeconds) * time.Second
 			log.Println("Device hasn't been authorized by the administrator.")
-			log.Println("Next authorization attempt in", auth_duration)
-			time.Sleep(time.Duration(auth_duration))
+			log.Println("Next authorization attempt in", authDuration)
+			time.Sleep(time.Duration(authDuration))
 		default:
 			log.Println("Unexpected status code from the server:", res.StatusCode)
 		}

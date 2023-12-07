@@ -90,9 +90,9 @@ func (d *Device) checkUpdatesPeriodically() {
 				}
 				continue
 			}
-			update_duration := time.Duration(d.rdfmCtx.RdfmConfig.UpdatePollIntervalSeconds) * time.Second
-			log.Printf("Next update check in %s\n", update_duration)
-			time.Sleep(time.Duration(update_duration))
+			updateDuration := time.Duration(d.rdfmCtx.RdfmConfig.UpdatePollIntervalSeconds) * time.Second
+			log.Printf("Next update check in %s\n", updateDuration)
+			time.Sleep(time.Duration(updateDuration))
 		}
 		log.Println("Stopped checking for updates")
 	}()
