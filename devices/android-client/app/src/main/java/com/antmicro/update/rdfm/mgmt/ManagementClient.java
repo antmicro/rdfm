@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import com.antmicro.update.rdfm.Utils;
 import com.antmicro.update.rdfm.exceptions.DeviceUnauthorizedException;
 import com.antmicro.update.rdfm.exceptions.ServerConnectionException;
+import com.antmicro.update.rdfm.utilities.BackoffCounter;
 import com.antmicro.update.rdfm.utilities.HttpUtils;
 
 import java.util.HashMap;
@@ -22,6 +23,8 @@ import okio.ByteString;
 
 public final class ManagementClient extends WebSocketListener {
     private static final String TAG = "ManagementWS";
+    private static final long MIN_RECONNECT_INTERVAL_MILLIS = 1_000;
+    private static final long MAX_RECONNECT_INTERVAL_MILLIS = 120_000;
     private final String mServerAddress;
     private final int mMaxShellCount;
     private final IDeviceTokenProvider mTokenProvider;
@@ -122,11 +125,15 @@ public final class ManagementClient extends WebSocketListener {
     }
 
     private void reconnectThread() {
+        BackoffCounter counter = new BackoffCounter(MIN_RECONNECT_INTERVAL_MILLIS, MAX_RECONNECT_INTERVAL_MILLIS);
         while (true) {
+            long sleepDurationMillis = counter.next();
+            Log.i(TAG, "Reconnecting in " + sleepDurationMillis + "ms..");
+
             // Delay until reconnection
             while (true) {
                 try {
-                    Thread.sleep(5000);
+                    Thread.sleep(sleepDurationMillis);
                     break;
                 } catch (InterruptedException e) {
                     // empty
