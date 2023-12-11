@@ -9,6 +9,7 @@ services:
       - RDFM_API_PORT=5000
       - RDFM_DISABLE_ENCRYPTION=1
       - RDFM_LOCAL_PACKAGE_DIR=/packages/
+      - RDFM_WSGI_SERVER=werkzeug
       - RDFM_OAUTH_URL=http://keycloak:8080/realms/master/protocol/openid-connect/token/introspect
       - RDFM_OAUTH_CLIENT_ID=rdfm-server-introspection
       - RDFM_OAUTH_CLIENT_SEC=qPsZzvAUtDVREjJyuyAEu3SDBQElATgX

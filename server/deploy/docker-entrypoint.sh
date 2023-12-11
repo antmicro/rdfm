@@ -51,5 +51,13 @@ if [ ${_missing_variables} == 1 ]; then
 fi
 
 echo "Starting RDFM Management Server.."
-exec poetry run \
-	python -m rdfm_mgmt_server ${server_args}
+
+wsgi_server="${RDFM_WSGI_SERVER:-gunicorn}"
+if [ "${wsgi_server}" == "werkzeug" ]; then
+	exec poetry run python -m rdfm_mgmt_server ${server_args}
+elif [ "${wsgi_server}" == "gunicorn" ]; then
+	exec poetry run gunicorn -k gevent 'rdfm_mgmt_server:setup_with_config_from_env()'
+else
+	echo "ERROR: Unsupported WSGI server: ${wsgi_server}"
+	exit 1
+fi
