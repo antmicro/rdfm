@@ -2,8 +2,13 @@ import inspect
 import urllib
 import pytest
 import werkzeug.routing
-from rdfm_mgmt_server import app
+from rdfm_mgmt_server import create_app
+import configuration
 from urllib.parse import unquote
+
+
+# Create a dummy app to access the routing map
+app = create_app(configuration.ServerConfig())
 
 
 # These endpoints should be excluded from all tests below

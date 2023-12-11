@@ -113,12 +113,12 @@ class ServerConfig():
     """ (DEBUG FLAG) Instruct the server to create mock data in the
         database when starting. DO NOT USE, for testing purposes only!
     """
-    create_mocks: bool
+    create_mocks: bool = False
 
     """ Enables server debug mode. This currently causes all requests
         to be logged to the server's stdout. DO NOT USE IN PRODUCTION!
     """
-    debug: bool
+    debug: bool = False
 
 
 def try_get_env(key: str,
