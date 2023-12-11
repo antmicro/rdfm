@@ -5,60 +5,23 @@
 The RDFM Management Server is a core part of the RDFM ecosystem. The server manages incoming device connections and grants authorization only to those which are allowed to check-in with the server.
 It also handles package upload and management, deploy group management and other crucial functionality required for robust and secure device Over-The-Air (OTA) updates along with allowing remote system management without exposing devices to the outside world.
 
-## Database backend
-
-Currently, to simplify development, the RDFM Management Server utilizes SQLite for storing server data. The database is stored in the `devices.db` file. This will be expanded in the future to allow using the typical DBMS backends instead.
-
 ## REST API
 
 The server exposes a management and device API that is used by management software and end devices. A comprehensive list of all API endpoints is available in the [RDFM Server API Reference chapter](api.rst).
 
-## Building
+## Setting up a Dockerized development environment
 
-Note: It is recommended to use the [Dockerized development environment](#setting-up-a-dockerized-development-environment), to ensure the correct Python version is installed. The server requires a relatively modern version of Python, which may not be readily available on all distributions.
+The preferred method for running the RDFM server is by using a Docker container.
+To set up a local development environment, first clone the RDFM repository:
 
-To build the server, you must have Python 3.11 installed, along with the `Poetry` dependency manager.
-
-First, clone the RDFM repository:
-
-```
+```bash
 git clone https://github.com/antmicro/rdfm.git
 cd rdfm/
 ```
 
-Next, building the wheel can be done as follows:
-
-```
-cd server/
-poetry build
-```
-
-## Setting up a development environment
-
-This section pertains only to the development setup. **This should not be used for production deployments!**
-For this section, it is assumed that you have cloned the RDFM repository already.
-
-The server utilizes the Poetry tool to manage project dependencies.
-You can run a development RDFM Management Server by running the following commands:
-
-```bash
-cd server/
-export JWT_SECRET="THISISATESTDEVELOPMENTSECRET123"
-poetry build && poetry install && poetry run python -m rdfm_mgmt_server --no-ssl --no-api-auth --local-package-dir ./packages/
-```
-
-This launches the RDFM Management Server with no encryption, listening on `localhost`/`127.0.0.1`.
-By default, the HTTP API is exposed on port `5000`.
-
-When server is in debug mode (`app.run(debug=True, ...)` is set) every HTTP request received and response to it are printed to STDOUT.
-
-## Setting up a Dockerized development environment
-
-For this section, it is assumed that you have cloned the RDFM repository already.
-
-The RDFM server can also be deployed using a Docker container.
 A `Dockerfile` is provided in the `server/deploy/` directory that builds a container suitable for running the server.
-To manually build the container image, run the following from the **RDFM repository root** folder:
+Currently, it is required to build the container image manually.
+To do this, run the following from the **cloned RDFM repository root** folder:
 
 ```bash
 docker build -f server/deploy/Dockerfile -t antmicro/rdfm-server:latest .
@@ -79,6 +42,7 @@ services:
       - RDFM_DISABLE_ENCRYPTION=1
       - RDFM_DISABLE_API_AUTH=1
       - RDFM_LOCAL_PACKAGE_DIR=/packages/
+      - RDFM_WSGI_SERVER=werkzeug
     ports:
       - "5000:5000"
     volumes:
@@ -96,21 +60,40 @@ The server can then be started using the following command:
 docker-compose -f server/deploy/docker-compose.development.yml up
 ```
 
+## Configuration via environment variables
+
 Configuration of the RDFM server can be changed by using the following environment variables:
 
 - `RDFM_JWT_SECRET` - secret key used by the server when issuing JWT tokens, this value must be kept secret and not easily guessable (for example, a random hexadecimal string).
-- `RDFM_HOSTNAME` - hostname/IP address to listen on, when running the server in a container use the service name here (using above example, `rdfm-server`).
-- `RDFM_API_PORT` - HTTP API port
 - `RDFM_DB_CONNSTRING` - database connection string, for examples please refer to: [SQLAlchemy - Backend-specific URLs](https://docs.sqlalchemy.org/en/20/core/engines.html#backend-specific-urls). Currently, only the SQLite and PostgreSQL engines were verified to work with RDFM (however: the PostgreSQL engine requires adding additional dependencies which are currently not part of the default server image, this may change in the future).
-- `RDFM_DISABLE_ENCRYPTION` - disables encryption of device-server protocol data and usage of HTTPS in the API routes
-- `RDFM_SERVER_CERT` - when using encryption, path to the server's certificate. The certificate can be stored on a Docker volume mounted to the container. For reference on generating the certificate/key pairs, see the `server/tests/certgen.sh` script.
-- `RDFM_SERVER_KEY` - when using encryption, path to the server's private key. Additionally, the above also applies here.
-- `RDFM_LOCAL_PACKAGE_DIR` - specifies a path (local for the server) to a directory where the packages are stored
-- `RDFM_STORAGE_DRIVER` - storage driver to use for storing artifacts. Accepted values: `local` (default), `s3`.
-- `RDFM_DISABLE_API_AUTH` - disables request authentication on the exposed API routes. **WARNING: This is a development flag only! Do not use in production!** This causes all API methods to be freely accessible, without any access control in place!
+
+Development configuration:
+
+- `RDFM_DISABLE_ENCRYPTION` - if set, disables the use of HTTPS, falling back to exposing the API over HTTP. This can only be used in production if an additional HTTPS reverse proxy is used in front of the RDFM server.
+- `RDFM_DISABLE_API_AUTH` - if set, disables request authentication on the exposed API routes. **WARNING: This is a development flag only! Do not use in production!** This causes all API methods to be freely accessible, without any access control in place!
+
+HTTP/WSGI configuration:
+
+- `RDFM_HOSTNAME` - hostname/IP address to listen on. This is additionally used for constructing package URLs when storing packages in a local directory.
+- `RDFM_API_PORT` - API port.
+- `RDFM_SERVER_CERT` - required when HTTPS is enabled; path to the server's certificate. The certificate can be stored on a Docker volume mounted to the container. For reference on generating the certificate/key pairs, see the `server/tests/certgen.sh` script.
+- `RDFM_SERVER_KEY` - required when HTTPS is enabled; path to the server's private key. Additionally, the above also applies here.
+- `RDFM_WSGI_SERVER` - WSGI server to use, this value should be left default. Accepted values: `gunicorn` (**default**, production-ready), `werkzeug` (recommended for development).
+- `RDFM_WSGI_MAX_CONNECTIONS` - (when using Gunicorn) maximum amount of connections available to the server worker. This value must be set to at minimum the amount of devices that are expected to be maintaining a persistent (via WebSocket) connection with the server. Default: `4000`.
+
+API OAuth2 configuration (must be present when `RDFM_DISABLE_API_AUTH` is omitted):
+
 - `RDFM_OAUTH_URL` - specifies the URL to an authorization server endpoint compatible with the RFC 7662 OAuth2 Token Introspection extension. This endpoint is used to authorize access to the RDFM server based on tokens provided in requests made by API users.
 - `RDFM_OAUTH_CLIENT_ID` - if the authorization server endpoint provided in `RDFM_OAUTH_URL` requires the RDFM server to authenticate, this variable defines the OAuth2 `client_id` used for authentication.
 - `RDFM_OAUTH_CLIENT_SEC` -  if the authorization server endpoint provided in `RDFM_OAUTH_URL` requires the RDFM server to authenticate, this variable defines the OAuth2 `client_secret` used for authentication.
+
+Package storage configuration:
+
+- `RDFM_STORAGE_DRIVER` - storage driver to use for storing artifacts. Accepted values: `local` (default), `s3`.
+- `RDFM_LOCAL_PACKAGE_DIR` - specifies a path (local for the server) to a directory where the packages are stored.
+- `RDFM_S3_BUCKET` - when using S3 storage, name of the bucket to upload the packages to.
+- `RDFM_S3_ACCESS_KEY_ID` - when using S3 storage, Access Key ID to access the specified bucket.
+- `RDFM_S3_ACCESS_SECRET_KEY` - when using S3 storage, Secret Access Key to access the specified bucket.
 
 ## Configuring package storage location
 
@@ -145,7 +128,7 @@ docker build -f server/deploy/Dockerfile -t antmicro/rdfm-server:latest .
 Then, run the following:
 
 ```
-docker-compose -f server/deploy/docker-compose.minio.yml up
+docker-compose -f server/deploy/docker-compose.minio.development.yml up
 ```
 
 ## Configuring API authentication
