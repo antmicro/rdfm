@@ -324,3 +324,66 @@ rdfm-mgmt --url https://127.0.0.1:5000/     \
           devices list
 ```
 
+
+## Production deployments
+
+### Production considerations
+
+The following is a list of considerations when deploying the RDFM server:
+
+1. HTTPS **must** be enabled; `RDFM_DISABLE_ENCRYPTION` **must not** be set (or the server is behind a dedicated reverse proxy that adds HTTPS on the edge).
+2. API authentication **must** be enabled; `RDFM_DISABLE_API_AUTH` **must not** be set.
+3. RDFM **must** use a production WSGI server; `RDFM_WSGI_SERVER` **must not** be set  to `werkzeug`.
+   When not provided, the server defaults to using a production-ready WSGI server (`gunicorn`).
+   The development server (`werkzeug`) does not provide sufficient performance to handle production workloads, and a high percentage of requests will be dropped under heavy load.
+4. RDFM **must** use a dedicated (S3) package storage location; the local directory driver does not provide adequate performance when compared to dedicated object storage.
+
+Refer to the above configuration chapters for how to configure each aspect of the RDFM server:
+
+1. [Configuring HTTPS](#configuring-https)
+2. [Configuring API authentication](#configuring-api-authentication)
+3. [Configuring the WSGI server](#configuration-via-environment-variables)
+4. [Configuring S3 package storage](#configuring-package-storage-location)
+
+A practical example of a deployment that includes all the above considerations can be found below, in the [Production example deployment](#production-example-deployment) section.
+
+### Production example deployment
+
+:::{warning}
+For simplicity, this example deployment has static credentials pre-configured pretty much everywhere, and as such should never be used directly as a production setup.
+At least the following secrets are pre-configured and would require changes:
+- S3 Access Key ID/Access Secret Key
+- rdfm-server JWT secret
+- Keycloak Administrator username/password
+- Keycloak Client: rdfm-server introspection Client ID/Secret
+- Keycloak Client: rdfm-mgmt admin user Client ID/Secret
+
+Additionally, the Keycloak server requires further configuration for production deployments.
+For more information, refer to the [Configuring Keycloak for production](https://www.keycloak.org/server/configuration-production) page in Keycloak documentation.
+:::
+
+A reference setup is provided in `server/deploy/docker-compose.production.yml` that can be used for customizing production server deployments.
+Prior to starting the deployment, you must generate a signed server certificate that will be used for establishing the HTTPS connection to the server.
+This can be done by either providing your own certificate, or by running the provided example certificate generation script:
+
+```bash
+cd server/deploy/
+../tests/certgen.sh
+```
+
+When using the `certgen.sh` script, the CA certificate found at `server/deploy/certs/CA.crt` can be used for validating the connection made to the server.
+
+Similarly to previous example deployments, it can be started by running the following command from the **RDFM monorepository root folder**:
+
+```bash
+docker-compose -f server/deploy/docker-compose.production.yml up
+```
+
+`rdfm-mgmt` configuration for this deployment can be found in `server/deploy/test-rdfm-mgmt-config.json`.
+After copying the configuration to `$HOME/.config/rdfm-mgmt/config.json`, you can access the server by running:
+
+```bash
+rdfm-mgmt --url https://127.0.0.1:5000/ --cert server/deploy/CA.crt \
+          devices list
+```
+
