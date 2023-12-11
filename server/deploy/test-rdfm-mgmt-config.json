@@ -1,0 +1,6 @@
+{
+	"auth_url": "http://keycloak:8080/realms/master/protocol/openid-connect/token",
+	"client_id": "rdfm-client",
+	"client_secret": "RDSwDyUMOT7UXxMqMmq2Y4vQ1ezxqobi"
+}
+

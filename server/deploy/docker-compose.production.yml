@@ -1,0 +1,83 @@
+services:
+  # An example of how a production deployment of RDFM could look like
+  # WARNING: DO NOT BLINDLY USE THIS COMPOSE FOR ACTUAL PRODUCTION DEPLOYMENTS!
+  # You must configure the secrets (RDFM JWT secret, S3 secret, Keycloak
+  # secrets for the introspection client) on your own.
+  # FAILURE TO DO SO WILL RESULT IN AN INSECURE DEPLOYMENT
+  rdfm-server:
+    image: antmicro/rdfm-server:latest
+    restart: unless-stopped
+    depends_on:
+      - keycloak
+      - minio
+    environment:
+      - RDFM_JWT_SECRET=d06b0ae464ba115c72b37e02d713a34f58396995b64075181aed795f653fd39b
+      - RDFM_DB_CONNSTRING=sqlite:////database/db.db
+      - RDFM_HOSTNAME=rdfm.example.local
+      - RDFM_API_PORT=5000
+      - RDFM_LOCAL_PACKAGE_DIR=/tmp/
+      # HTTPS configuration. Alternatively, a reverse proxy can be used in front of RDFM
+      - RDFM_SERVER_CERT=/certs/SERVER.crt
+      - RDFM_SERVER_KEY=/certs/SERVER.key
+      # OAuth2 configuration for API auth
+      - RDFM_OAUTH_URL=http://keycloak:8080/realms/master/protocol/openid-connect/token/introspect
+      - RDFM_OAUTH_CLIENT_ID=rdfm-server-introspection
+      - RDFM_OAUTH_CLIENT_SEC=qPsZzvAUtDVREjJyuyAEu3SDBQElATgX
+      # S3 configuration
+      - RDFM_STORAGE_DRIVER=s3
+      - RDFM_S3_URL=http://minio:9000/
+      - RDFM_S3_BUCKET=rdfm-packages
+      - RDFM_S3_ACCESS_KEY_ID=admin
+      - RDFM_S3_ACCESS_SECRET_KEY=admin123
+    networks:
+      - rdfm
+    ports:
+      - "5000:5000"
+    extra_hosts:
+      - "rdfm.example.local:0.0.0.0"
+    volumes:
+      - db:/database/
+      - ./certs:/certs
+
+  minio:
+    image: minio/minio:RELEASE.2021-04-22T15-44-28Z
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - rdfm
+    volumes:
+      - storage:/storage/
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=admin123
+    command: server /storage/
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:22.0.1
+    restart: unless-stopped
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    networks:
+      - rdfm
+    ports:
+      - "8080:8080"
+    command:
+      - start-dev
+      - "-Dkeycloak.migration.action=import"
+      - "-Dkeycloak.migration.provider=singleFile"
+      - "-Dkeycloak.migration.file=/import/test-rdfm-keycloak-realm.json"
+      - "-Dkeycloak.migration.strategy=IGNORE_EXISTING"
+    volumes:
+      - keycloak:/opt/keycloak/data/
+      - ./test-rdfm-keycloak-realm.json:/import/test-rdfm-keycloak-realm.json
+
+volumes:
+  db:
+  keycloak:
+  storage:
+
+networks:
+  rdfm:
