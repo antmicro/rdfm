@@ -327,10 +327,18 @@ def upgrade_to_websocket(f):
         except ConnectionClosed:
             pass
 
-        # TODO: This was verified to work with Werkzeug. Other WSGI servers
-        # may use a different way of returning a response from the route, so
-        # this would have to be adapted in the future.
-        return Response()
+        # Depending on the WSGI server used, we need to return a different
+        # value to indicate that the request was already handled.
+        class WebSocketResponse(Response):
+            def __call__(self, *args, **kwargs):
+                if ws.mode == 'gunicorn':
+                    raise StopIteration()
+                elif ws.mode == 'werkzeug':
+                    return super().__call__(*args, **kwargs)
+                else:
+                    return []
+
+        return WebSocketResponse()
 
     return __upgrade
 
