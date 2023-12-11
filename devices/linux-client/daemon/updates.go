@@ -85,24 +85,30 @@ func (d *Device) checkUpdate() error {
 	return nil
 }
 
-func (d *Device) checkUpdatesPeriodically() {
-	go func() {
-		for {
-			err := d.checkUpdate()
-			if err == NotAuthorizedError {
-				err = d.authenticateDeviceWithServer()
-				if err == nil {
-					continue
-				}
-				err = errors.New("Failed to autheniticate with the server: " + err.Error())
-			}
-			if err != nil {
-				log.Println("Update check failed:", err)
-			}
-			updateDuration := time.Duration(d.rdfmCtx.RdfmConfig.UpdatePollIntervalSeconds) * time.Second
-			log.Printf("Next update check in %s\n", updateDuration)
-			time.Sleep(time.Duration(updateDuration))
-		}
-		log.Println("Stopped checking for updates")
+func (d *Device) updateCheckerLoop() {
+	var err error
+
+	// Recover the goroutine if it panics
+	defer func() {
+		recoveryInfo("Updater loop")
+		d.updateCheckerLoop()
 	}()
+
+	for {
+		err = d.checkUpdate()
+		if err == NotAuthorizedError {
+			err = d.authenticateDeviceWithServer()
+			if err == nil {
+				continue
+			}
+			err = errors.New("Failed to autheniticate with the server: " + err.Error())
+		}
+		if err != nil {
+			log.Println("Update check failed:", err)
+		}
+		updateDuration := time.Duration(d.rdfmCtx.RdfmConfig.UpdatePollIntervalSeconds) * time.Second
+		log.Printf("Next update check in %s\n", updateDuration)
+		time.Sleep(time.Duration(updateDuration))
+	}
+	panic(err)
 }

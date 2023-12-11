@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/antmicro/rdfm/app"
@@ -42,19 +43,23 @@ func Daemonize(c *libcli.Context) error {
 		return err
 	}
 
+	var wg sync.WaitGroup
+	var wgNum = 2
+	wg.Add(wgNum)
+
 	channel := make(chan os.Signal)
 	signal.Notify(channel, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-channel
+		for i := 0; i < wgNum; i++ {
+			wg.Done()
+		}
 		device.disconnect()
 	}()
 
-	device.checkUpdatesPeriodically()
-
-	// Communication loop
-	for err == nil {
-		err = device.communicationCycle()
-	}
+	go device.updateCheckerLoop()
+	go device.managementWsLoop()
+	wg.Wait()
 
 	device.disconnect()
 

@@ -19,6 +19,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/antmicro/rdfm/app"
@@ -32,6 +33,8 @@ import (
 const MSG_RECV_TIMEOUT_INTERVALS = 10
 const MSG_RECV_INTERVAL_S = 1
 const RSA_DEVICE_KEY_SIZE = 4096
+
+var tokenMutex sync.Mutex
 
 type Device struct {
 	name          string
@@ -233,6 +236,32 @@ func (d *Device) disconnect() {
 	defer d.ws.Close()
 }
 
+func recoveryInfo(tag string) {
+	var info string
+	if r := recover(); r != nil {
+		info = fmt.Sprintf("panic error: %v", r)
+	} else {
+		info = "unexpected goroutine completion"
+	}
+	log.Println(tag, "recovery from", info)
+}
+
+func (d *Device) managementWsLoop() {
+	var err error
+
+	// Recover the goroutine if it panics
+	defer func() {
+		recoveryInfo("Management loop")
+		d.connect()
+		d.managementWsLoop()
+	}()
+
+	for err == nil {
+		err = d.communicationCycle()
+	}
+	panic(err)
+}
+
 func getPublicKey(privateKey *rsa.PrivateKey) []byte {
 	publicKey := privateKey.PublicKey
 	publicKeyBytes := x509.MarshalPKCS1PublicKey(&publicKey)
@@ -364,6 +393,8 @@ func (d *Device) authenticateDeviceWithServer() error {
 				log.Println("Failed to deserialize package metadata", err)
 				return err
 			}
+			tokenMutex.Lock()
+			defer tokenMutex.Unlock()
 			d.deviceToken = response["token"].(string)
 			log.Println("Authorization token expires in", response["expires"], "seconds")
 			if len(d.deviceToken) == 0 {
