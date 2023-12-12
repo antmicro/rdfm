@@ -33,6 +33,7 @@ import (
 const MSG_RECV_TIMEOUT_INTERVALS = 10
 const MSG_RECV_INTERVAL_S = 1
 const RSA_DEVICE_KEY_SIZE = 4096
+const MGMT_LOOP_RECOVERY_INTERVAL = 30
 
 var tokenMutex sync.Mutex
 
@@ -243,7 +244,7 @@ func (d *Device) managementWsLoop(done chan bool) {
 	// Recover the goroutine if it panics
 	defer func() {
 		if r := recover(); r != nil {
-			info = fmt.Sprintf("panic error: %v", r)
+			info = fmt.Sprintf("error: %v", r)
 		} else {
 			info = "unexpected goroutine completion"
 		}
@@ -253,6 +254,9 @@ func (d *Device) managementWsLoop(done chan bool) {
 		default:
 		}
 		log.Println("Management loop recovery from", info)
+		recoveryTime := MGMT_LOOP_RECOVERY_INTERVAL * time.Second
+		log.Println("Reconnecting to management WebSocket in", recoveryTime)
+		time.Sleep(recoveryTime)
 		d.connect()
 		d.managementWsLoop(done)
 	}()
