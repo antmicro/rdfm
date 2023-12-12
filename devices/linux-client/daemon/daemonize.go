@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -57,6 +58,10 @@ func Daemonize(c *libcli.Context) error {
 
 	device.disconnect()
 
-	log.Println("Daemon exited with code:", err)
+	exitInfo := "Daemon exited"
+	if err != nil {
+		exitInfo = exitInfo + fmt.Sprintf(" with error: %v", err)
+	}
+	log.Println(exitInfo)
 	return err
 }
