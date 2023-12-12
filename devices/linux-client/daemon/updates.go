@@ -13,6 +13,9 @@ import (
 	packages "github.com/antmicro/rdfm/daemon/packages"
 )
 
+const MIN_RETRY_INTERVAL = 1
+const MAX_RETRY_INTERVAL = 60
+
 var NotAuthorizedError = errors.New("Device did not provide authorization data, or the authorization has expired")
 
 func (d *Device) checkUpdate() error {
@@ -88,11 +91,12 @@ func (d *Device) checkUpdate() error {
 func (d *Device) updateCheckerLoop(done chan bool) {
 	var err error
 	var info string
+	var count int
 
 	// Recover the goroutine if it panics
 	defer func() {
 		if r := recover(); r != nil {
-			info = fmt.Sprintf("panic error: %v", r)
+			info = fmt.Sprintf("error: %v", r)
 		} else {
 			info = "unexpected goroutine completion"
 		}
@@ -108,8 +112,15 @@ func (d *Device) updateCheckerLoop(done chan bool) {
 	for {
 		err = d.checkUpdate()
 		if err == NotAuthorizedError {
+			log.Println(err)
 			err = d.authenticateDeviceWithServer()
 			if err == nil {
+				retryInterval := count * MIN_RETRY_INTERVAL
+				if retryInterval > MAX_RETRY_INTERVAL {
+					retryInterval = MAX_RETRY_INTERVAL
+				}
+				time.Sleep(time.Duration(retryInterval) * time.Second)
+				count = (count + 1) * 2
 				continue
 			}
 			err = errors.New("Failed to autheniticate with the server: " + err.Error())
@@ -120,6 +131,7 @@ func (d *Device) updateCheckerLoop(done chan bool) {
 		updateDuration := time.Duration(d.rdfmCtx.RdfmConfig.UpdatePollIntervalSeconds) * time.Second
 		log.Printf("Next update check in %s\n", updateDuration)
 		time.Sleep(time.Duration(updateDuration))
+		count = 0
 	}
 	panic(err)
 }
