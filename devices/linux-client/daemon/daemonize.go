@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 
 	"github.com/antmicro/rdfm/app"
@@ -43,23 +42,18 @@ func Daemonize(c *libcli.Context) error {
 		return err
 	}
 
-	var wg sync.WaitGroup
-	var wgNum = 2
-	wg.Add(wgNum)
-
+	done := make(chan bool, 1)
 	channel := make(chan os.Signal)
 	signal.Notify(channel, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		<-channel
-		for i := 0; i < wgNum; i++ {
-			wg.Done()
-		}
-		device.disconnect()
-	}()
 
-	go device.updateCheckerLoop()
-	go device.managementWsLoop()
-	wg.Wait()
+	go device.updateCheckerLoop(done)
+	go device.managementWsLoop(done)
+
+	<-channel
+	log.Println("Daemon killed")
+
+	done <- true
+	log.Println("Closing daemon...")
 
 	device.disconnect()
 

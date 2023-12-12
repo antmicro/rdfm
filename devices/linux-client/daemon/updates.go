@@ -85,13 +85,24 @@ func (d *Device) checkUpdate() error {
 	return nil
 }
 
-func (d *Device) updateCheckerLoop() {
+func (d *Device) updateCheckerLoop(done chan bool) {
 	var err error
+	var info string
 
 	// Recover the goroutine if it panics
 	defer func() {
-		recoveryInfo("Updater loop")
-		d.updateCheckerLoop()
+		if r := recover(); r != nil {
+			info = fmt.Sprintf("panic error: %v", r)
+		} else {
+			info = "unexpected goroutine completion"
+		}
+		select {
+		case <-done:
+			return
+		default:
+		}
+		log.Println("Updater loop recovery from", info)
+		d.updateCheckerLoop(done)
 	}()
 
 	for {

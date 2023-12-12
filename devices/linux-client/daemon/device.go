@@ -236,24 +236,25 @@ func (d *Device) disconnect() {
 	defer d.ws.Close()
 }
 
-func recoveryInfo(tag string) {
-	var info string
-	if r := recover(); r != nil {
-		info = fmt.Sprintf("panic error: %v", r)
-	} else {
-		info = "unexpected goroutine completion"
-	}
-	log.Println(tag, "recovery from", info)
-}
-
-func (d *Device) managementWsLoop() {
+func (d *Device) managementWsLoop(done chan bool) {
 	var err error
+	var info string
 
 	// Recover the goroutine if it panics
 	defer func() {
-		recoveryInfo("Management loop")
+		if r := recover(); r != nil {
+			info = fmt.Sprintf("panic error: %v", r)
+		} else {
+			info = "unexpected goroutine completion"
+		}
+		select {
+		case <-done:
+			return
+		default:
+		}
+		log.Println("Management loop recovery from", info)
 		d.connect()
-		d.managementWsLoop()
+		d.managementWsLoop(done)
 	}()
 
 	for err == nil {
