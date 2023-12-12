@@ -2,8 +2,10 @@ package com.antmicro.update.rdfm;
 
 import android.util.Log;
 
+import com.antmicro.update.rdfm.exceptions.DeviceInfoException;
 import com.antmicro.update.rdfm.exceptions.DeviceUnauthorizedException;
 import com.antmicro.update.rdfm.exceptions.ServerConnectionException;
+import com.antmicro.update.rdfm.mgmt.DeviceInfoProvider;
 import com.antmicro.update.rdfm.mgmt.IDeviceTokenProvider;
 import com.antmicro.update.rdfm.mgmt.ManagementClient;
 import com.antmicro.update.rdfm.utilities.KeyUtils;
@@ -60,18 +62,16 @@ public class HttpClient {
         mTokenProvider = tokenProvider;
     }
 
-    public void checkUpdate(String bspVersion, String serverAddress, Utils utils,
+    public void checkUpdate(DeviceInfoProvider deviceInfo, String serverAddress, Utils utils,
                             UpdateManager mUpdateManager) {
-        String macAddress = SysUtils.findDeviceMAC();
-        String devType = SysUtils.getDeviceType();
-        String serialNumber = SysUtils.getSerialNumber();
-        Log.d(TAG, "Device serial number: " + serialNumber);
-
-        Map<String, String> devParams = new HashMap<>();
-        devParams.put("rdfm.software.version", bspVersion);
-        devParams.put("rdfm.hardware.macaddr", macAddress);
-        devParams.put("rdfm.hardware.devtype", devType);
-        String reqData = new JSONObject(devParams).toString();
+        String reqData;
+        try {
+            reqData = new JSONObject(deviceInfo.toMap())
+                    .toString();
+        } catch (DeviceInfoException e) {
+            Log.w(TAG, "Cannot check for updates, could not get device metadata: " + e.getMessage());
+            return;
+        }
         RequestBody reqBody = RequestBody.create(reqData, JSON);
 
         String token;

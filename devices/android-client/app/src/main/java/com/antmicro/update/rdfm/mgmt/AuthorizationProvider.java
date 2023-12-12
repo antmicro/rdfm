@@ -3,6 +3,7 @@ package com.antmicro.update.rdfm.mgmt;
 import android.content.Context;
 import android.util.Log;
 
+import com.antmicro.update.rdfm.exceptions.DeviceInfoException;
 import com.antmicro.update.rdfm.exceptions.DeviceUnauthorizedException;
 import com.antmicro.update.rdfm.exceptions.ServerConnectionException;
 import com.antmicro.update.rdfm.utilities.KeyUtils;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -29,20 +31,15 @@ public class AuthorizationProvider implements IDeviceTokenProvider {
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
     private static final int READ_TIMEOUT_MS = 500;
     private static final long TOKEN_EXPIRATION_GRACE_PERIOD_MS = 5000;
-    private final String mSoftwareVersion;
-    private final String mDeviceType;
-    private final String mMacAddress;
     private final String mServerAddress;
     private final Context mContext;
     private final OkHttpClient mClient;
+    private final DeviceInfoProvider mDeviceInfo;
     private String mDeviceToken;
     private long mTokenExpiresAt;
 
-    public AuthorizationProvider(String bspVersion, String devType, String macAddress,
-                                 String serverAddress, Context context) {
-        mSoftwareVersion = bspVersion;
-        mDeviceType = devType;
-        mMacAddress = macAddress;
+    public AuthorizationProvider(DeviceInfoProvider deviceInfo, String serverAddress, Context context) {
+        mDeviceInfo = deviceInfo;
         mServerAddress = serverAddress;
         mContext = context;
         mDeviceToken = "";
@@ -62,10 +59,7 @@ public class AuthorizationProvider implements IDeviceTokenProvider {
         Log.d(TAG, "Public key: " + key);
 
         try {
-            JSONObject devParamsJSON = new JSONObject()
-                    .put("rdfm.hardware.devtype", mDeviceType)
-                    .put("rdfm.software.version", mSoftwareVersion)
-                    .put("rdfm.hardware.macaddr", mMacAddress);
+            JSONObject devParamsJSON = new JSONObject(mDeviceInfo.toMap());
             String reqJSON = new JSONObject()
                     .put("metadata", devParamsJSON)
                     .put("public_key", key)
@@ -115,7 +109,7 @@ public class AuthorizationProvider implements IDeviceTokenProvider {
                 Log.e(TAG, "Authorization request failed", e);
                 throw new ServerConnectionException("Failed to make authorization request");
             }
-        } catch (JSONException e) {
+        } catch (JSONException | DeviceInfoException e) {
             Log.e(TAG, "Authorization request failed", e);
             throw new ServerConnectionException("Failed to make authorization request");
         }

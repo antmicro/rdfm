@@ -17,6 +17,7 @@ import android.widget.TextView;
 import androidx.preference.PreferenceManager;
 
 import com.antmicro.update.rdfm.mgmt.AuthorizationProvider;
+import com.antmicro.update.rdfm.mgmt.DeviceInfoProvider;
 import com.antmicro.update.rdfm.mgmt.ManagementClient;
 import com.antmicro.update.rdfm.utilities.SysUtils;
 
@@ -35,8 +36,8 @@ public class MainActivity extends Activity {
     private TextView mTextViewBuild;
     private TextView mTextViewAddress;
     private String serverAddress;
-    private String buildVersion;
     private ReentrantLock updaterLock;
+    private DeviceInfoProvider mDeviceInfo = new DeviceInfoProvider();
     private AuthorizationProvider mDeviceAuthorizationProvider;
     private ManagementClient mWsClient;
 
@@ -48,17 +49,14 @@ public class MainActivity extends Activity {
         setContentView(R.layout.main_layout);
         this.mTextViewBuild = findViewById(R.id.textViewBuild);
         this.mTextViewAddress = findViewById(R.id.textViewUrlAddress);
-        buildVersion = SysUtils.getBuildVersion();
-        Log.d(TAG, "Build version: " + buildVersion);
+        Log.d(TAG, "Build version: " + mDeviceInfo.getSoftwareVersion());
         serverAddress = utils.getServerAddress();
         Log.d(TAG, "OTA server address: " + serverAddress);
-        this.mTextViewBuild.setText(buildVersion);
+        this.mTextViewBuild.setText(mDeviceInfo.getSoftwareVersion());
         this.mTextViewAddress.setText(serverAddress);
         updaterLock = new ReentrantLock();
 
-        String devType = SysUtils.getDeviceType();
-        String macAddress = SysUtils.findDeviceMAC();
-        mDeviceAuthorizationProvider = new AuthorizationProvider(buildVersion, devType, macAddress, serverAddress, this);
+        mDeviceAuthorizationProvider = new AuthorizationProvider(mDeviceInfo, serverAddress, this);
         mHttpClient = new HttpClient(otaPackagePath, mDeviceAuthorizationProvider);
         mWsClient = new ManagementClient(utils, mDeviceAuthorizationProvider);
 
@@ -99,7 +97,7 @@ public class MainActivity extends Activity {
 
         Log.d(TAG, "Start system update");
         try {
-            mHttpClient.checkUpdate(buildVersion, serverAddress, utils, mUpdateManager);
+            mHttpClient.checkUpdate(mDeviceInfo, serverAddress, utils, mUpdateManager);
         } catch (RuntimeException e) {
             Log.e(TAG, "Update failed with exception:", e);
         } finally {

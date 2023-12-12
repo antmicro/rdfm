@@ -75,9 +75,5 @@ public class SysUtils {
     public static String getDeviceType() {
         return Build.PRODUCT;
     }
-
-    public static String getSerialNumber() {
-        return getSystemProperties("ro.serialno");
-    }
-
+    
 }
