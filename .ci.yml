@@ -271,6 +271,7 @@ docs-build:
     - tar cf ../$CI_DOCS_ARCHIVE -C build/html/ .
   only:
     refs:
+      - merge_requests
       - main
   artifacts:
     paths:
