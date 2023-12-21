@@ -17,6 +17,7 @@ PROBE_SUCCESS_STATUS = 200
 DBPATH = "test-db.db"
 # Server URL
 SERVER = "http://127.0.0.1:5000/"
+SERVER_WS = "ws://127.0.0.1:5000/"
 # Server wait timeout, in seconds
 SERVER_WAIT_TIMEOUT = 5
 
@@ -24,6 +25,15 @@ SERVER_WAIT_TIMEOUT = 5
 GROUPS_ENDPOINT = f"{SERVER}/api/v1/groups"
 PACKAGES_ENDPOINT = f"{SERVER}/api/v1/packages"
 UPDATES_ENDPOINT = f"{SERVER}/api/v1/update/check"
+DEVICES_WS = f"{SERVER_WS}/api/v1/devices/ws"
+
+
+def manager_shell_ws(mac: str):
+    return f"{SERVER_WS}/api/v1/devices/{mac}/shell"
+
+
+def device_attach_shell_ws(mac: str, session: str):
+    return f"{manager_shell_ws(mac)}/attach/{session}"
 
 
 def wait_for_api(timeout: int,

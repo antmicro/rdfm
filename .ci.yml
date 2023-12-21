@@ -158,6 +158,17 @@ test-server-route-correctness:
       - merge_requests
       - main
 
+test-server-websocket:
+  extends: .build
+  stage: local-tests
+  script:
+    - cd server
+    - pytest tests/test-server-ws.py
+  only:
+    refs:
+      - merge_requests
+      - main
+
 test-manager:
   extends: .build
   stage: local-tests
