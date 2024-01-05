@@ -224,7 +224,7 @@ def set_registration():
 
         registration = server.instance._registrations_db.fetch_one(mac, public_key)
         if registration is None:
-            return api_error("specified registration does not exist", 400)
+            return api_error("specified registration does not exist", 404)
 
         # There is a registration for the specified device.
         # We have to handle two cases:
