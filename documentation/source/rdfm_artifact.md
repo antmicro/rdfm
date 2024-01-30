@@ -8,9 +8,11 @@ A basic RDFM artifact consists of a rootfs image, as well as its checksum, metad
 Additionally, `rdfm-artifact` allows for the generation of delta updates, which contain only the differences between two versions of an artifact rather than the entire artifact itself.
 This can be useful for reducing the size of updates and improving the efficiency of the deployment process.
 
+`rdfm-artifact` can also be used for generation of Zephyr MCUboot artifacts, which allows for updating embedded devices running Zephyr.
+
 ## Getting started
 
-In order to support robust updates and rollback, the RDFM Client requires proper partition layout and integration with the U-Boot bootloader. To make it easy to integrate the RDFM Client into your Yocto image-building project, it's recommended to use the [meta-rdfm](https://github.com/antmicro/meta-antmicro/tree/master/meta-rdfm) Yocto layer when building the BSPs.
+In order to support robust updates and rollback, the RDFM Client requires proper partition layout and a bootloader that supports A/B update scheme. To make it easy to integrate the RDFM Client into your Yocto image-building project, it's recommended to use the [meta-rdfm](https://github.com/antmicro/meta-antmicro/tree/master/meta-rdfm) Yocto layer when building the BSPs.
 
 ## Building from source
 
@@ -43,6 +45,7 @@ USAGE:
 COMMANDS:
    rootfs-image        Create a full rootfs image artifact
    delta-rootfs-image  Create a delta rootfs artifact
+   zephyr-image        Create a full Zephyr MCUboot image artifact
 
 OPTIONS:
    --help, -h  show help
@@ -74,6 +77,22 @@ rdfm-artifact write delta-rootfs-image \
     --base-artifact "base.rdfm" \
     --target-artifact "target.rdfm" \
     --output-path "base-to-target.rdfm"
+```
+
+### Creating a Zephyr MCUboot artifact
+
+To create a Zephyr MCUboot artifact, you'll have to have already created a Zephyr image with MCUboot support enabled.
+You should use the signed bin image (by default `zephyr.signed.bin`).
+Artifact version will be extracted from provided image.
+
+With this image, you can generate an artifact like so:
+
+```
+rdfm-artifact write zephyr-image \
+   --file "my-zephyr-image.signed.bin" \
+   --artifact-name "my-artifact-name" \
+   --device-type "my-device-type" \
+   --output-path "path-to-output.rdfm"
 ```
 
 ## Running tests
