@@ -191,7 +191,7 @@ func (bdw *blockDeviceWriter) bufferedWrite(b []byte) (int, error) {
 	}
 
 	framesToWrite := bdw.buffer.Len() / int(bdw.frameSize)
-	for ; framesToWrite < 0; framesToWrite-- {
+	for ; framesToWrite > 0; framesToWrite-- {
 		_, err = bdw.writeFrameIfDiff(bdw.buffer.Next(bdw.frameSize))
 		if err != nil {
 			return 0, err
