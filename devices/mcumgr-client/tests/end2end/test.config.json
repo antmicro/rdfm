@@ -1,0 +1,31 @@
+{
+    "server": "http://localhost:5000",
+    "key_dir": "keys",
+    "update_interval": "10m",
+    "retries": 3,
+    "devices": [
+        {
+            "name": "serial",
+            "id": "00:00:00:00:00:01",
+            "dev_type": "serial",
+            "key": "serial.key",
+            "transport": {
+                "type": "serial",
+                "device": "/tmp/uartDemo",
+                "mtu": 128,
+                "baud": 115200
+            }
+        },
+        {
+            "name": "udp",
+            "id": "00:00:00:00:00:02",
+            "dev_type": "udp",
+            "key": "udp.key",
+            "transport": {
+                "type": "udp",
+                "address": "192.0.2.1:1337"
+            }
+        }
+    ]
+}
+

@@ -1,0 +1,49 @@
+#include <mem.h>
+
+/delete-node/ &quadspi;
+
+&rng {
+	status = "okay";
+};
+
+&flash0 {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		boot_partition: partition@0 {
+			label = "mcuboot";
+			reg = <0x00000000 DT_SIZE_K(64)>;
+		};
+
+		slot0_partition: partition@40000 {
+			label = "image-0";
+			reg = <0x00040000 DT_SIZE_K(256)>;
+		};
+
+		slot1_partition: partition@80000 {
+			label = "image-1";
+			reg = <0x00080000 DT_SIZE_K(256)>;
+		};
+
+		scratch_partition: partition@c0000 {
+			label = "scratch";
+			reg = <0x000c0000 DT_SIZE_K(256)>;
+		};
+	};
+};
+
+/ {
+	aliases {
+		/delete-property/ spi-flash0;
+	};
+
+	chosen {
+		zephyr,flash = &flash0;
+		zephyr,flash-controller = &flash;
+		zephyr,boot-partition = &boot_partition;
+		zephyr,code-partition = &slot0_partition;
+		zephyr,uart-mcumgr = &usart1;
+	};
+};

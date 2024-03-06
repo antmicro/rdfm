@@ -233,6 +233,67 @@ test-rdfm-client-docker:
       - merge_requests
       - main
 
+# ===== rdfm-mcumgr-client ===== #
+
+.mcumgr-client:
+  <<: *ace
+  before_script:
+    # HACK: Currently CI ships Go 1.19, while the client needs 1.21+
+    - wget --quiet -O - "https://go.dev/dl/go1.21.4.linux-amd64.tar.gz" | tar xz
+
+build-mcumgr-client:
+  extends: .mcumgr-client
+  stage: build
+  script:
+    - export PATH=`pwd`/go/bin:$PATH
+    - make -C devices/mcumgr-client
+
+build-mcumgr-test-samples:
+  <<: *ace
+  variables:
+    SCALENODE_CPU: 4
+    SCALENODE_RAM: 8192
+    ZEPHYR_WORKSPACE: $CI_PROJECT_DIR/zephyr
+    ZEPHYR_BASE: $CI_PROJECT_DIR/zephyr/zephyr
+    ZEPHYR_SDK_INSTALL_DIR: $CI_PROJECT_DIR/zephyr/sdk
+  stage: build
+  before_script:
+    - apt update >/dev/null
+    - apt -qqy --no-install-recommends install cmake device-tree-compiler ninja-build >/dev/null
+  script:
+    - ./devices/mcumgr-client/tests/build/build_samples.sh
+    - ls -la ./devices/mcumgr-client/tests/out/
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - devices/mcumgr-client/tests/out
+
+test-mcumgr-client:
+  extends: .mcumgr-client
+  variables:
+    SCALENODE_RAM: 6144
+  dependencies:
+    - build-mcumgr-test-samples
+  stage: local-tests
+  script:
+    - export PATH=`pwd`/go/bin:$PATH
+    - apt update && apt -qqy --no-install-recommends install iproute2 git-lfs >/dev/null
+    # NOTE: Currently Renode is tracked using LFS since we're using
+    #       a custom build with support for STM32F764 flash controller.
+    #       When it lands, we can replace it with an official build
+    # - wget --quiet https://builds.renode.io/renode_1.14.0_amd64.deb
+    - git lfs pull && apt -qqy --no-install-recommends install ./devices/mcumgr-client/tests/prebuilt/renode*.deb >/dev/null
+    - pushd tools/rdfm-artifact && make && mv rdfm-artifact /usr/bin/ && popd
+    - pushd server && poetry build && poetry install && python -m build && pip3 install -e . && popd
+    - pushd manager && poetry build && poetry install && python -m build && pip3 install -e . && popd
+    - cd devices/mcumgr-client && make install
+    # Run the test
+    - ./tests/end2end/test.sh
+  only:
+    refs:
+      - merge_requests
+      - main
+
 # ===== rdfm-artifact ===== #
 
 .rdfm-artifact:
