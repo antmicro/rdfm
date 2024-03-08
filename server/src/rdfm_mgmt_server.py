@@ -101,6 +101,7 @@ def setup_with_config_from_env() -> Flask:
     config.db_conn = os.getenv('RDFM_DB_CONNSTRING')
     config.package_dir = os.getenv('RDFM_LOCAL_PACKAGE_DIR')
     config.disable_api_auth = True if 'RDFM_DISABLE_API_AUTH' in os.environ else False
+    config.encrypted = False if 'RDFM_DISABLE_ENCRYPTION' in os.environ else True
     if not configuration.parse_from_environment(config):
         raise RuntimeError("Parsing variables from the environment failed, cannot initialize app. "
                            "Please make sure all required environment variables are passed.")
