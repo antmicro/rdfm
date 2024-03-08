@@ -20,6 +20,9 @@ ENV_OAUTH_URL = "RDFM_OAUTH_URL"
 ENV_OAUTH_CLIENT_ID = "RDFM_OAUTH_CLIENT_ID"
 ENV_OAUTH_CLIENT_SECRET = "RDFM_OAUTH_CLIENT_SEC"
 
+ENV_HOSTNAME = "RDFM_HOSTNAME"
+ENV_API_PORT = "RDFM_API_PORT"
+
 
 class ServerConfig():
     """ Server configuration
@@ -165,6 +168,20 @@ def parse_from_environment(config: ServerConfig) -> bool:
     if jwt_secret is None:
         return False
     config.jwt_secret = jwt_secret
+
+    if not hasattr(config, "hostname"):
+        if (hostname := try_get_env(ENV_HOSTNAME, "Hostname")) is None:
+            return False
+        config.hostname = hostname
+
+    if not hasattr(config, "http_port"):
+        if (http_port := try_get_env(ENV_API_PORT, "HTTP API port")) is None:
+            return False
+        try:
+            config.http_port = int(http_port)
+        except ValueError:
+            print(f"Invalid port specified: {http_port}")
+            return False
 
     config.storage_driver = os.environ.get(ENV_STORAGE_DRIVER, "local")
     if config.storage_driver not in ALLOWED_STORAGE_DRIVERS:
