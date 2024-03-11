@@ -66,6 +66,13 @@ func makeCommands() []cli.Command {
 					Flags:       makeFullZephyrFlags(),
 					Action:      writeFullZephyr,
 				},
+				{
+					Name:        "zephyr-group-image",
+					Usage:       "Create a Zephyr MCUboot group image artifact",
+					Description: "Creates an artifact containing update images for Zephyr group devices",
+					Flags:       makeGroupFlags(),
+					Action:      writeGroupZephyr,
+				},
 			},
 		},
 	}

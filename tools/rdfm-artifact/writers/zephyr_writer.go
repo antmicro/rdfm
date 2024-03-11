@@ -2,7 +2,6 @@ package writers
 
 import (
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -38,11 +37,16 @@ func NewZephyrArtifactWriter(outputPath string) ZephyrArtifactWriter {
 }
 
 func (d *ZephyrArtifactWriter) WithFullZephyrPayload(pathToImage, version string) error {
-	if err := validateImageMagic(pathToImage); err != nil {
+	f, err := os.Open(pathToImage)
+	if err != nil {
 		return err
 	}
+	if err := validateImageMagic(f); err != nil {
+		return err
+	}
+	f.Close()
 
-	pathToImage, err := setupImageFile(pathToImage)
+	pathToImage, err = setupImageFile(pathToImage)
 	if err != nil {
 		return err
 	}
@@ -77,20 +81,17 @@ func (d *ZephyrArtifactWriter) WithFullZephyrPayload(pathToImage, version string
 	return nil
 }
 
-func validateImageMagic(pathToImage string) error {
-	file, err := os.Open(pathToImage)
-	if err != nil {
+func validateImageMagic(image io.ReadSeeker) error {
+	var val uint32
+	if _, err := image.Seek(0, 0); err != nil {
 		return err
 	}
-	defer file.Close()
-
-	var val uint32
-	if err := binary.Read(file, binary.LittleEndian, &val); err != nil {
+	if err := binary.Read(image, binary.LittleEndian, &val); err != nil {
 		return err
 	}
 
 	if val != IMAGE_MAGIC {
-		return errors.New(fmt.Sprintf("Bad image (incorrect magic value: expected 0x%x, found 0x%x)", IMAGE_MAGIC, val))
+		return fmt.Errorf("Bad image (incorrect magic value: expected 0x%x, found 0x%x)", IMAGE_MAGIC, val)
 	}
 
 	return nil

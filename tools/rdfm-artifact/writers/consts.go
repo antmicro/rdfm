@@ -10,4 +10,7 @@ const (
 
 	rdfmZephyrProvidesChecksum = "zephyr-image.checksum"
 	rdfmZephyrProvidesVersion  = "zephyr-image.version"
+
+	rdfmGroupProvidesTarget  = "zephyr-group-image.target"
+	rdfmGroupProvidesVersion = "zephyr-group-image.version"
 )
