@@ -22,7 +22,7 @@ if [ ! -f ./dummy-rootfs.img ]; then
 	echo "WARNING: The tests WILL fail if you do not do this!"
 fi
 
-if [ ! -f ./dummy-zephyr.img -o ! -f ./dummy-zephyr.invalid.img ]; then
+if [ ! -f ./dummy-zephyr.img ]; then
 	DUMMYSIZE="25600"
 	BLOCKSIZE="512"
 
@@ -33,8 +33,20 @@ if [ ! -f ./dummy-zephyr.img -o ! -f ./dummy-zephyr.invalid.img ]; then
 	# Prepend valid magic bytes (in little endian order) to invalid binary
 	printf '\x3d\xb8\xf3\x96' | cat - dummy-zephyr.invalid.img > dummy-zephyr.img
 
+	# Keep the valid image with random version for group artifact tests
+	cp dummy-zephyr.img dummy-group.invalid.img
+
 	# Set valid image version to 0.1.2+3
 	printf '\x00\x01\x02\x00\x03\x00\x00\x00' | dd of=dummy-zephyr.img bs=1 seek=20 count=8 conv=notrunc
+
+	# Create a second valid image for group artifact tests
+	# Overwrite a part of the copy to simulate different image
+	cp dummy-zephyr.img dummy-group.img
+	dd if=/dev/random of=dummy-group.img bs=$BLOCKSIZE seek=30 count=1 conv=notrunc
+
+	echo "WARNING: Zephyr images were regenerated"
+	echo "WARNING: You must change the hashes in the tests to match the generated images"
+	echo "WARNING: The tests WILL fail if do not do this!"
 fi
 
 rdfm-artifact write rootfs-image \
