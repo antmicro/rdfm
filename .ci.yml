@@ -13,13 +13,14 @@ variables:
 
 .build:
   <<: *ace
+  variables: 
+    JWT_SECRET: testsecret123123123
   before_script:
     - python -V
     - apt update && apt-get -y install make netcat-openbsd openssl telnet uuid-runtime xxd
     - cd server && poetry build && poetry install && python -m build && pip3 install -e . && cd ..
     - cd manager && poetry build && poetry install && python -m build && pip3 install -e . && cd ..
     - cd devices/linux-client && sudo make install && cd ../..
-    - export JWT_SECRET="testsecret123123123"
     - |
       if [[ $(losetup --list | wc -l) == 0 ]]; then
         dd if=/dev/zero of=blockfile bs=1M count=100
@@ -182,24 +183,19 @@ test-manager:
 
 # ===== rdfm-client ===== #
 
-.rdfm-client:
-  <<: *ace
-  before_script:
-    - export PATH=$HOME/go/bin/:$PATH
-    - cd devices/linux-client
-
 build-rdfm-client:
-  extends: .rdfm-client
+  <<: *ace
   stage: build
   script:
+    - cd devices/linux-client
     - make
 
 test-rdfm-client:
-  extends: .rdfm-client
+  <<: *ace
   stage: local-tests
   script:
     # Build and install rdfm-artifact, which is required for the tests
-    - cd ../../tools/rdfm-artifact && make && make install && cd ../../devices/linux-client
+    - cd tools/rdfm-artifact && make && make install && cd ../../devices/linux-client
     - make test
   only:
     refs:
@@ -207,11 +203,12 @@ test-rdfm-client:
       - main
 
 test-rdfm-client-docker:
-  extends: .rdfm-client
+  <<: *ace
   stage: local-tests
   script:
+    - export PATH=$HOME/go/bin/:$PATH
     # Build and install rdfm-artifact, which is required for the tests
-    - cd ../../tools/rdfm-artifact && make && make install && cd ../../devices/linux-client
+    - cd tools/rdfm-artifact && make && make install && cd ../../devices/linux-client
     # The tests are running in a Docker container, install and set up
     # the Docker daemon
     - apt update && apt -qq -y --no-install-recommends install docker.io cgroupfs-mount crun fuse-overlayfs pigz ca-certificates
@@ -242,18 +239,19 @@ test-rdfm-client-docker:
   <<: *ace
   before_script:
     - export PATH=$HOME/go/bin/:$PATH
-    - cd tools/rdfm-artifact
 
 build-rdfm-artifact:
   extends: .rdfm-artifact
   stage: build
   script:
+    - cd tools/rdfm-artifact
     - make
 
 test-rdfm-artifact:
   extends: .rdfm-artifact
   stage: local-tests
   script:
+    - cd tools/rdfm-artifact
     - make test
   only:
     refs:
@@ -274,8 +272,8 @@ docs-build:
     - pip3 install -r documentation/requirements.txt
     # Build and install the server
     - cd server/ && poetry build --verbose && poetry install --verbose && pip3 install --verbose -e . && cd ../
-    - cd documentation/
   script:
+    - cd documentation/
     - make html latexpdf
     - cp build/latex/*.pdf build/html/
     # Make sure the docs archive lands in the root of the repository
