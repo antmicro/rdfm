@@ -1,13 +1,14 @@
 import requests
 import pytest
-from typing import Optional
-from common import (GROUPS_ENDPOINT, UPDATES_ENDPOINT,
-                          process,
-                          create_fake_device_token,
-                          group_assign_packages, group_change_policy,
-                          package_create_dummy,
-                          update_check)
-
+from common import (
+        GROUPS_ENDPOINT,
+        UPDATES_ENDPOINT,
+        create_fake_device_token,
+        group_assign_packages,
+        group_change_policy,
+        package_create_dummy,
+        update_check,
+)
 
 # This should match the ID of any of the devices created
 # by the `-test_mocks` flag
@@ -35,6 +36,7 @@ def create_dummy_group(process):
 
     return gid
 
+
 """
     Simple sequential update scenario
 
@@ -42,6 +44,7 @@ def create_dummy_group(process):
     of sequential updates:
         v0 --> v1 --> v2 --> v3
 """
+
 
 @pytest.fixture
 def prepare_simple_sequential(create_dummy_group):
@@ -94,7 +97,7 @@ def test_simple_sequential(prepare_simple_sequential):
                 META_SOFT_VER: "v3",
                 META_DEV_TYPE: "dummy",
                 META_MAC_ADDR: DUMMY_DEVICE_MAC
-            }) == None, "device should be up-to-date"
+            }) is None, "device should be up-to-date"
 
 
 def test_package_accessible(prepare_simple_sequential):
@@ -111,7 +114,7 @@ def test_package_accessible(prepare_simple_sequential):
     assert response.status_code == 200, "the update check should succeed"
 
     package_data = response.json()
-    assert "uri" in package_data, "the response should contain a generated package URL"
+    assert "uri" in package_data, "the response should contain a generated package URL"     # noqa: E501
 
     url = package_data["uri"]
     response = requests.get(url)

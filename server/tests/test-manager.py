@@ -1,6 +1,5 @@
 import signal
 import subprocess
-from common import process
 import pytest
 import tempfile
 from typing import List, Tuple
@@ -32,17 +31,8 @@ def run_manager_command(rdfm_mgmt_args: List[str]) -> Tuple[str, int]:
     return (output.decode(), code)
 
 
-@pytest.fixture(autouse=True)
-def install_manager_to_venv():
-    """ Required for running rdfm-mgmt within it's own venv
-    """
-    process = subprocess.Popen(["poetry", "-C", "../manager/", "install"])
-    code: int = process.wait()
-    assert code == 0, "manager should be installed in the .venv"
-
-
 @pytest.fixture
-def create_dummy_group():
+def create_dummy_group(install_manager_to_venv):
     """ Create a dummy group
 
     The group's identifier is assumed to be #1, as we're spawning a new
@@ -55,7 +45,7 @@ def create_dummy_group():
 
 
 @pytest.fixture
-def upload_dummy_package():
+def upload_dummy_package(install_manager_to_venv):
     """ Upload a dummy package
 
     The package's identifier is assumed to be #1 for the exact same reason

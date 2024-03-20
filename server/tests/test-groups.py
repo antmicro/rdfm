@@ -1,13 +1,7 @@
-import pexpect
-import time
-import os
-import json
-import sys
 import requests
 import subprocess
-import pytest
 
-from common import (GROUPS_ENDPOINT, process)
+from common import (GROUPS_ENDPOINT)
 
 DUMMY_DEVICE_ID = 1
 GROUP_DEFAULT_PRIORITY = 25

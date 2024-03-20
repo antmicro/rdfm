@@ -1,12 +1,11 @@
 import time
 from typing import Any
-from common import (process,
-                    DEVICES_WS,
+from common import (DEVICES_WS,
                     manager_shell_ws, device_attach_shell_ws,
                     create_fake_device_token)
 import simple_websocket
 import pytest
-from rdfm.ws import receive_message, send_message, decode_json
+from rdfm.ws import receive_message, send_message
 from rdfm_mgmt_communication import CapabilityReport, DeviceAttachToManager
 
 
