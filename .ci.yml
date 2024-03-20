@@ -193,6 +193,24 @@ test-manager:
       - merge_requests
       - main
 
+test-server-stress:
+  extends: .build
+  stage: local-tests
+  variables:
+    SCALENODE_CPU: 8
+    SCALENODE_RAM: 32768
+  script:
+    - cd server
+    - poetry run pytest tests/test-stress.py -vs
+  only:
+    refs:
+      - merge_requests
+      - main
+  artifacts:
+    paths:
+      - server/tests/logs/*
+    when: always
+
 # ===== rdfm-client ===== #
 
 build-rdfm-client:
