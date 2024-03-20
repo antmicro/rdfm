@@ -1,12 +1,9 @@
 import os
-import subprocess
 import time
-import urllib.parse
-from typing import Optional
-import pytest
 import requests
 import jwt
-from auth.device import DeviceToken, DEVICE_JWT_ALGO
+import urllib.parse
+from typing import Optional
 
 
 # Which path to use for probing by default
@@ -22,10 +19,12 @@ SERVER_WS = "ws://127.0.0.1:5000/"
 SERVER_WAIT_TIMEOUT = 5
 
 # Commonly used endpoints
+AUTH_ENDPOINT = f"{SERVER}/api/v1/auth"
 GROUPS_ENDPOINT = f"{SERVER}/api/v2/groups"
 PACKAGES_ENDPOINT = f"{SERVER}/api/v1/packages"
 UPDATES_ENDPOINT = f"{SERVER}/api/v1/update/check"
-DEVICES_WS = f"{SERVER_WS}/api/v1/devices/ws"
+DEVICES_ENDPOINT = f"{SERVER}/api/v2/devices"
+DEVICES_WS = f"{SERVER}/api/v1/devices/ws"
 
 
 def manager_shell_ws(mac: str):
@@ -73,28 +72,11 @@ def wait_for_api(timeout: int,
     return False
 
 
-@pytest.fixture()
-def process():
-    """ Fixture to start the RDFM server
-    """
-
-    if os.path.isfile(DBPATH):
-        os.remove(DBPATH)
-
-    print("Starting server..")
-    process = subprocess.Popen(["python3", "-m", "rdfm_mgmt_server", "--no-ssl", "--no-api-auth", "--test-mocks", "--database", f"sqlite:///{DBPATH}"])
-    assert wait_for_api(SERVER_WAIT_TIMEOUT, SERVER), "server has started successfully"
-
-    yield process
-
-    print("Shutting down server..")
-    process.kill()
-
-
 def create_fake_device_token():
     """ Creates a fake device token to use for mocking device authentication
         during API tests
     """
+    from auth.device import DeviceToken, DEVICE_JWT_ALGO
     token = DeviceToken()
     token.created_at = int(time.time())
     token.expires = 600
@@ -102,18 +84,49 @@ def create_fake_device_token():
     secret = os.environ['JWT_SECRET']
     return jwt.encode(token.to_dict(), secret, algorithm=DEVICE_JWT_ALGO)
 
+def device_fetch_all() -> list[dict]:
+    """ Fetches all authorized devices.
+    """
+    response = requests.get(DEVICES_ENDPOINT)
+    assert response.status_code == 200, "fetching devices should succeed"
+    return response.json()
 
-def package_create_dummy(meta: dict[str, str]):
+
+def package_create_dummy(meta: dict[str, str], size: int = 1024):
     """ Create a package with the specified metadata and dummy content.
     """
     dummy_package = {
-        "file": ("file", b"\xff" * 1024)
+        "file": ("file", b"\xff" * size)
     }
     for k, v in meta.items():
         dummy_package[k] = (None, v)
     response = requests.post(PACKAGES_ENDPOINT, files=dummy_package)
     assert response.status_code == 200, "making a test package should succeed"
+    return response
 
+def package_fetch_all() -> list[dict]:
+    """ Fetches all packages.
+    """
+    response = requests.get(PACKAGES_ENDPOINT)
+    assert response.status_code == 200, "fetching package should succeed"
+    return response.json()
+
+def package_delete(pid: int):
+    """ Deletes package with `pid`.
+    """
+    response = requests.delete(f"{PACKAGES_ENDPOINT}/{pid}")
+    assert response.status_code == 200, "deleting package should succeed"
+
+
+def group_create(**metadata) -> dict:
+    """ Creates new group with `metadata`.
+    """
+    json_default_priority = {}
+    json_default_priority["metadata"] = metadata
+
+    response = requests.post(GROUPS_ENDPOINT, json=json_default_priority)
+    assert response.status_code == 200, "creating group should succeed"
+    return response.json()
 
 def group_assign_packages(gid: int, ids: list[int]):
     """ Assign the packages from `ids` to group `gid`.
@@ -123,6 +136,20 @@ def group_assign_packages(gid: int, ids: list[int]):
     })
     assert response.status_code == 200, "assigning packages should succeed"
 
+def group_assign_devices(gid: int, add: list[int] = None, remove: list[int] = None):
+    """ Adds or removes devices from group `gid`.
+    """
+    response = requests.patch(f"{GROUPS_ENDPOINT}/{gid}/devices", json={
+        "add": add if add else [],
+        "remove": remove if remove else [],
+    })
+    assert response.status_code == 200, "assigning devices should succeed"
+
+def group_delete(gid: int):
+    """ Deletes group `gid`.
+    """
+    response = requests.delete(f"{GROUPS_ENDPOINT}/{gid}")
+    assert response.status_code == 200, "deleting group should succeed"
 
 def update_check(meta: dict[str, str]) -> Optional[int]:
     """ Simulate an update check of a device with metadata `meta`.
@@ -145,4 +172,11 @@ def group_change_policy(gid: int, policy: str):
         "policy": policy
     })
     assert response.status_code == 200, "changing policy should succeed"
+
+def auth_pending() -> list[dict]:
+    """ Returns all pending devices.
+    """
+    response = requests.get(f"{AUTH_ENDPOINT}/pending")
+    assert response.status_code == 200, "changing policy should succeed"
+    return response.json()
 
