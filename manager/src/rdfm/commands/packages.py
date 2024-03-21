@@ -6,6 +6,7 @@ import rdfm.helpers
 import progressbar
 import os.path
 from rdfm.schema.v1.updates import META_SOFT_VER, META_DEVICE_TYPE
+from rdfm.schema.v1.packages import META_STORAGE_DIRECTORY
 from rdfm.helpers import utc_to_local
 
 
@@ -50,11 +51,19 @@ def upload_package(config: rdfm.config.Config, args) -> Optional[str]:
     if not os.path.isfile(filepath):
         return f"Uploading package failed: File {filepath} does not exist"
 
+
     version = args.version
     device = args.device
+    storage_directory = args.storage_directory
+    if args.version_directory:
+        storage_directory = version
     metadata = {} if args.metadata is None else rdfm.helpers.split_metadata([ x for x in args.metadata])
     metadata[META_SOFT_VER] = version
     metadata[META_DEVICE_TYPE] = device
+    # For backwards compatibility, only attach the storage directory metadata
+    # when the option is explicitly used.
+    if storage_directory:
+        metadata[META_STORAGE_DIRECTORY] = storage_directory
 
     # Setup the progress bar
     widgets = [
@@ -106,6 +115,15 @@ def add_packages_parser(parser: argparse._SubParsersAction):
                         help='device type compatible with the uploaded package')
     upload.add_argument('--metadata', type=str, action='append',
                         help='append extra metadata to the package, specified as key=value pairs')
+    directory_group = upload.add_mutually_exclusive_group(required=False)
+    directory_group.add_argument(
+        '--version-directory', action='store_true',
+        help='upload package to server-side storage directory named after its version'
+    )
+    directory_group.add_argument(
+        '--storage-directory', type=str,
+        help='(advance option) directory inside server-side storage where package will be placed'
+    )
 
     delete = sub.add_parser('delete', help='delete a package from the server')
     delete.set_defaults(func=delete_package)
