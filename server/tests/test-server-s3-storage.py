@@ -4,6 +4,7 @@ import boto3
 import urllib.parse
 from moto import mock_s3
 from configuration import ServerConfig
+from pathlib import PosixPath
 
 
 TEST_BUCKET_NAME = 'rdfm-packages'
@@ -72,20 +73,22 @@ def metadata():
     return TEST_PACKAGE_META.copy()
 
 
-@pytest.fixture
-def upload_dummy(create_driver,
-                 create_dummy_temp_file,
-                 metadata):
+@pytest.fixture(
+    scope="function",
+    params=[None, "/test", "test", "test/", "test/a/b", "test/../c", "../../../test", "test\\test"]
+)
+def upload_dummy(create_driver, create_dummy_temp_file, metadata, request):
     # The module must be imported after the `mock_s3` decorator
     # The self-assignment is only for type hints, as we can't
     # put the type in the arguments because the module hasn't
     # been imported yet
     from storage.s3 import S3Storage
     create_driver: S3Storage = create_driver
+    s3_dir = request.param
 
     boto3.client('s3').create_bucket(Bucket=TEST_BUCKET_NAME)
 
-    create_driver.upsert(metadata, create_dummy_temp_file)
+    create_driver.upsert(metadata, create_dummy_temp_file, s3_dir)
     return metadata
 
 
@@ -133,11 +136,11 @@ def test_package_uploaded_successfully(upload_dummy: dict[str, str],
 
     After upload, the test bucket should contain the uploaded package.
     """
-    from storage.s3 import META_S3_UUID
+    from storage.s3 import META_S3_UUID, META_S3_DIRECTORY
     # Extract the object name from the package metadata
-    object_name = upload_dummy[META_S3_UUID]
+    object_name = PosixPath(upload_dummy[META_S3_DIRECTORY]) / upload_dummy[META_S3_UUID]
 
-    assert object_name in list_test_bucket_contents, "the package should have been uploaded to the bucket successfully"
+    assert str(object_name) in list_test_bucket_contents, "the package should have been uploaded to the bucket successfully"
 
 
 def test_generate_package_link(generate_link_to_dummy):
