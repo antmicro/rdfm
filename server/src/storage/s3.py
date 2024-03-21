@@ -1,15 +1,15 @@
 import uuid
 import os
-import shutil
 import configuration
-import urllib.parse
 import boto3
 import boto3.session
 from botocore.exceptions import ClientError
+from pathlib import PosixPath
 
 
 META_S3_UUID = "rdfm.storage.s3.uuid"
 META_S3_SIZE = "rdfm.storage.s3.size"
+META_S3_DIRECTORY = "rdfm.storage.s3.directory"
 
 
 class S3Storage():
@@ -40,7 +40,12 @@ class S3Storage():
         self.client = boto3.client('s3', **kwargs)
 
 
-    def upsert(self, metadata: dict[str, str], package_path: str) -> bool:
+    def upsert(
+        self,
+        metadata: dict[str, str],
+        package_path: str,
+        bucket_directory: str | None = None,
+    ) -> bool:
         """ Updates the contents of the package specified by `metadata`
         """
         try:
@@ -49,10 +54,12 @@ class S3Storage():
             # Upload the file
             print("Uploading package with metadata:", metadata,
                   "object ID:", object_id, flush=True)
-            self.client.upload_file(package_path, self.bucket, object_id)
+            bucket_directory = (PosixPath("/") / (bucket_directory if bucket_directory else ".")).resolve()
+            self.client.upload_file(package_path, self.bucket, str(bucket_directory / object_id))
             # Finally, save metadata about the stored object
             metadata[META_S3_UUID] = object_id
             metadata[META_S3_SIZE] = os.path.getsize(package_path)
+            metadata[META_S3_DIRECTORY] = str(bucket_directory)
             return True
         except ClientError as e:
             print("Uploading package to bucket", self.bucket, "failed:", e, flush=True)
@@ -67,11 +74,12 @@ class S3Storage():
             object_id = metadata.get(META_S3_UUID, None)
             if object_id is None:
                 raise RuntimeError("Package does not have the required S3 storage metadata:", META_S3_UUID)
+            bucket_directory = PosixPath(metadata.get(META_S3_DIRECTORY, "/"))
 
             return self.client.generate_presigned_url('get_object',
                                                       Params={
                                                           'Bucket': self.bucket,
-                                                          'Key': object_id
+                                                          'Key': str(bucket_directory / object_id)
                                                       },
                                                       ExpiresIn=expiry)
         except ClientError as e:
@@ -88,9 +96,10 @@ class S3Storage():
             if object_id is None:
                 print("WARNING: Deleting a package that does not have S3 object metadata!", flush=True)
                 return
+            bucket_directory = PosixPath(metadata.get(META_S3_DIRECTORY, "/"))
 
             self.client.delete_object(Bucket=self.bucket,
-                                      Key=object_id)
+                                      Key=str(bucket_directory / object_id))
         except ClientError as e:
             print("Failed deleting package object from S3:", e, flush=True)
             raise
