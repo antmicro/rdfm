@@ -1,9 +1,9 @@
 import uuid
 import os
-import hashlib
 import shutil
 import configuration
 import urllib.parse
+from pathlib import Path, PosixPath
 
 """Local storage driver, used for debugging purposes
 """
@@ -22,17 +22,36 @@ class LocalStorage():
             rdfm.storage.<storage-driver-name>.<key>
        metadata keys.
     """
-    def upsert(self, metadata: dict[str, str], package_path: str) -> bool:
-        # Create the storage directory if it does not exist
-        if not os.path.isdir(self.config.package_dir):
-            os.mkdir(self.config.package_dir)
+    def upsert(
+        self,
+        metadata: dict[str, str],
+        package_path: str,
+        storage_directory: str | None = None,
+    ) -> bool:
         print("Local storage update package:", metadata, "path:", package_path)
+        if storage_directory is None:
+            storage_directory = "."
         store_name = str(uuid.uuid4())
-        destination_path = os.path.join(self.config.package_dir, store_name)
+        destination_path = (
+            Path(self.config.package_dir) / storage_directory / store_name
+        )
+        destination_path = destination_path.resolve()
+        storage_location = Path(self.config.package_dir).resolve()
+        if not destination_path.is_relative_to(storage_location):
+            print(
+                f"Destination path {destination_path} is not a subdirectory "
+                f"of the local storage ({self.config.package_dir})"
+            )
+            return False
+        # Create the storage directory
+        destination_path.parent.mkdir(exist_ok=True, parents=True)
         shutil.copy(package_path, destination_path)
 
         metadata["rdfm.storage.local.uuid"] = store_name
         metadata["rdfm.storage.local.length"] = os.path.getsize(destination_path)
+        metadata["rdfm.storage.local.directory"] = str(
+            destination_path.parent.relative_to(storage_location)
+        )
         return True
 
 
@@ -45,7 +64,10 @@ class LocalStorage():
         if self.config.encrypted:
             schema = "https"
         hostname = self.config.hostname
-        path = f"/local_storage/{metadata['rdfm.storage.local.uuid']}"
+        storage_path = PosixPath(
+            metadata.get('rdfm.storage.local.directory', '.')
+        ) / metadata['rdfm.storage.local.uuid']
+        path = f"/local_storage/{storage_path}"
         # Expiration time ignored, as local storage is just for debugging
         return urllib.parse.urljoin(f"{schema}://{hostname}:{port}",
                                     path)
@@ -55,5 +77,11 @@ class LocalStorage():
     """
     def delete(self, metadata: dict[str, str]):
         name = metadata["rdfm.storage.local.uuid"]
-        os.remove(os.path.join(self.config.package_dir, name))
+        os.remove(
+            str(
+                Path(self.config.package_dir)
+                / metadata.get('rdfm.storage.local.directory', '.')
+                / name
+            )
+        )
 
