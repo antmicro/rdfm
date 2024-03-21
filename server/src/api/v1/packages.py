@@ -8,8 +8,7 @@ from flask import (
     Blueprint,
     current_app
 )
-from threading import Thread
-from server import Server
+from pathlib import Path
 import storage
 import hashlib
 import traceback
@@ -21,6 +20,7 @@ import configuration
 from api.v1.common import api_error
 from rdfm.schema.v1.packages import Package
 from api.v1.middleware import public_api
+from rdfm.schema.v1.packages import META_STORAGE_DIRECTORY
 
 
 packages_blueprint: Blueprint = Blueprint("rdfm-server-packages", __name__)
@@ -161,6 +161,9 @@ def upload_package():
         driver_name = conf.storage_driver
 
         meta = request.form.to_dict()
+        storage_directory = None
+        if META_STORAGE_DIRECTORY in meta:
+            storage_directory = meta.pop(META_STORAGE_DIRECTORY)
         if metadata_contains_reserved_keys(meta):
             return api_error("provided metadata contains reserved key", 400)
 
@@ -174,7 +177,7 @@ def upload_package():
         sha256 = ""
         with tempfile.NamedTemporaryFile('wb+') as f:
             request.files["file"].save(f.name)
-            success = driver.upsert(meta, f.name)
+            success = driver.upsert(meta, f.name, storage_directory)
             if not success:
                 return api_error("could not store artifact", 500)
             sha256 = hashlib.file_digest(f, 'sha256').hexdigest()
@@ -310,7 +313,7 @@ def delete_package(identifier: int):
         return api_error("delete failed", 500)
 
 
-@packages_blueprint.route('/local_storage/<name>')
+@packages_blueprint.route('/local_storage/<path:name>')
 @public_api
 def fetch_local_package(name: str):
     """ Endpoint for exposing local package storage.
@@ -324,4 +327,8 @@ def fetch_local_package(name: str):
     :status 404: specified package does not exist
     """
     conf: configuration.ServerConfig = current_app.config['RDFM_CONFIG']
-    return send_from_directory(conf.package_dir, name)
+    storage_location = Path(conf.package_dir).resolve()
+    package = (storage_location / name).resolve()
+    if not package.is_relative_to(storage_location):
+        abort(404)
+    return send_from_directory(str(package.parent), str(package.name))
