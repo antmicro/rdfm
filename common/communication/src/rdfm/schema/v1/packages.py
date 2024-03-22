@@ -3,7 +3,8 @@ from dataclasses import field
 from typing import Any, ClassVar, Type
 import marshmallow
 import marshmallow_dataclass
-from marshmallow import fields
+
+META_STORAGE_DIRECTORY = "rdfm.storage.directory"
 
 
 @marshmallow_dataclass.dataclass
