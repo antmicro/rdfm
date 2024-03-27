@@ -1,44 +1,20 @@
-package com.antmicro.update.rdfm;
+package com.antmicro.update.rdfm.configuration;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Build;
-import android.os.Build.VERSION;
-import android.security.keystore.KeyGenParameterSpec;
-import android.security.keystore.KeyProperties;
-
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.KeyPairGenerator;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
-import java.security.Signature;
-import java.security.SignatureException;
-import java.security.UnrecoverableEntryException;
-import java.security.cert.CertificateException;
-import java.util.Base64;
-import java.util.Calendar;
-import java.util.Objects;
 
 import androidx.preference.PreferenceManager;
 
-public class Utils {
-    private final String TAG = "Utils";
-    private final String keyStoreAlias = "keyStore1";
-    Context mContext;
+import com.antmicro.update.rdfm.R;
 
-    public Utils(Context appContext) {
-        mContext = appContext;
+public class ConfigurationProvider implements IConfigurationProvider {
+    private final Context mContext;
+
+    public ConfigurationProvider(Context context) {
+        mContext = context;
     }
 
+    @Override
     public String getServerAddress() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
         String pref_key = mContext.getResources().getString(R.string.preference_ota_server_address_key);
@@ -46,6 +22,7 @@ public class Utils {
         return prefs.getString(pref_key, default_value);
     }
 
+    @Override
     public int getUpdateIntervalSeconds() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
         String pref_key = mContext.getResources().getString(R.string.preference_update_check_interval_key);
@@ -53,6 +30,7 @@ public class Utils {
         return Integer.parseInt(prefs.getString(pref_key, default_value));
     }
 
+    @Override
     public int getMaxShellCount() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
         String pref_key = mContext.getResources().getString(R.string.preference_max_shell_count);

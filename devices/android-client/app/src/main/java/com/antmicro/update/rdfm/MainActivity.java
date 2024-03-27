@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import androidx.preference.PreferenceManager;
 
+import com.antmicro.update.rdfm.configuration.ConfigurationProvider;
 import com.antmicro.update.rdfm.intents.ConfigurationIntentReceiver;
 import com.antmicro.update.rdfm.mgmt.AuthorizationProvider;
 import com.antmicro.update.rdfm.mgmt.DeviceInfoProvider;
@@ -31,13 +32,12 @@ public class MainActivity extends Activity {
     static final String otaPackagePath = "/data/ota_package";
     private Context mContext;
     private HttpClient mHttpClient;
-    private final Utils utils = new Utils(this);
     private final UpdateManager mUpdateManager = new UpdateManager(
             new UpdateEngine(), otaPackagePath, this);
     private TextView mTextViewBuild;
     private TextView mTextViewAddress;
-    private String serverAddress;
     private ReentrantLock updaterLock;
+    private final ConfigurationProvider mConfig = new ConfigurationProvider(this);
     private DeviceInfoProvider mDeviceInfo = new DeviceInfoProvider();
     private AuthorizationProvider mDeviceAuthorizationProvider;
     private ManagementClient mWsClient;
@@ -52,15 +52,14 @@ public class MainActivity extends Activity {
         this.mTextViewBuild = findViewById(R.id.textViewBuild);
         this.mTextViewAddress = findViewById(R.id.textViewUrlAddress);
         Log.d(TAG, "Build version: " + mDeviceInfo.getSoftwareVersion());
-        serverAddress = utils.getServerAddress();
-        Log.d(TAG, "OTA server address: " + serverAddress);
+        Log.d(TAG, "OTA server address: " + mConfig.getServerAddress());
         this.mTextViewBuild.setText(mDeviceInfo.getSoftwareVersion());
-        this.mTextViewAddress.setText(serverAddress);
+        this.mTextViewAddress.setText(mConfig.getServerAddress());
         updaterLock = new ReentrantLock();
 
-        mDeviceAuthorizationProvider = new AuthorizationProvider(mDeviceInfo, serverAddress, this);
+        mDeviceAuthorizationProvider = new AuthorizationProvider(mDeviceInfo, mConfig, this);
         mHttpClient = new HttpClient(otaPackagePath, mDeviceAuthorizationProvider);
-        mWsClient = new ManagementClient(utils, mDeviceAuthorizationProvider);
+        mWsClient = new ManagementClient(mConfig, mDeviceAuthorizationProvider);
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -100,7 +99,7 @@ public class MainActivity extends Activity {
 
         Log.d(TAG, "Start system update");
         try {
-            mHttpClient.checkUpdate(mDeviceInfo, serverAddress, utils, mUpdateManager);
+            mHttpClient.checkUpdate(mDeviceInfo, mConfig, mUpdateManager);
         } catch (RuntimeException e) {
             Log.e(TAG, "Update failed with exception:", e);
         } finally {
@@ -119,7 +118,7 @@ public class MainActivity extends Activity {
         startAlarm.setRepeating(
                 AlarmManager.ELAPSED_REALTIME_WAKEUP,
                 SystemClock.elapsedRealtime(),
-                utils.getUpdateIntervalSeconds() * 1000L,
+                mConfig.getUpdateIntervalSeconds() * 1000L,
                 pendingIntent);
     }
 }

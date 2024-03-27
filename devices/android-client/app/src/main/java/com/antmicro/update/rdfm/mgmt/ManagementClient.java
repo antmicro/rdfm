@@ -4,7 +4,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.antmicro.update.rdfm.Utils;
+import com.antmicro.update.rdfm.configuration.IConfigurationProvider;
 import com.antmicro.update.rdfm.exceptions.DeviceUnauthorizedException;
 import com.antmicro.update.rdfm.exceptions.ServerConnectionException;
 import com.antmicro.update.rdfm.utilities.BackoffCounter;
@@ -25,16 +25,16 @@ public final class ManagementClient extends WebSocketListener {
     private static final String TAG = "ManagementWS";
     private static final long MIN_RECONNECT_INTERVAL_MILLIS = 1_000;
     private static final long MAX_RECONNECT_INTERVAL_MILLIS = 120_000;
-    private final String mServerAddress;
-    private final int mMaxShellCount;
     private final IDeviceTokenProvider mTokenProvider;
+    private final IConfigurationProvider mConfig;
     private final Object mClosed = new Object();
     private final AtomicInteger mShellCount = new AtomicInteger(0);
     private final OkHttpClient mWsClient;
+    private String mServerAddress;
+    private int mMaxShellCount;
 
-    public ManagementClient(Utils utils, IDeviceTokenProvider tokenProvider) {
-        mServerAddress = HttpUtils.replaceHttpSchemeWithWs(utils.getServerAddress());
-        mMaxShellCount = utils.getMaxShellCount();
+    public ManagementClient(IConfigurationProvider config, IDeviceTokenProvider tokenProvider) {
+        mConfig = config;
         mTokenProvider = tokenProvider;
         mWsClient = new OkHttpClient.Builder()
                 .connectTimeout(5, TimeUnit.SECONDS)
@@ -46,6 +46,8 @@ public final class ManagementClient extends WebSocketListener {
     }
 
     private void connectToWs() throws DeviceUnauthorizedException, ServerConnectionException {
+        mServerAddress = HttpUtils.replaceHttpSchemeWithWs(mConfig.getServerAddress());
+        mMaxShellCount = mConfig.getMaxShellCount();
         String token = mTokenProvider.fetchDeviceToken();
         Request request = new Request.Builder()
                 .url(mServerAddress + "/api/v1/devices/ws")

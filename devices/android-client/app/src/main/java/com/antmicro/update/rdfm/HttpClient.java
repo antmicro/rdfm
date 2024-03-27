@@ -2,6 +2,7 @@ package com.antmicro.update.rdfm;
 
 import android.util.Log;
 
+import com.antmicro.update.rdfm.configuration.IConfigurationProvider;
 import com.antmicro.update.rdfm.exceptions.DeviceInfoException;
 import com.antmicro.update.rdfm.exceptions.DeviceUnauthorizedException;
 import com.antmicro.update.rdfm.exceptions.ServerConnectionException;
@@ -62,8 +63,7 @@ public class HttpClient {
         mTokenProvider = tokenProvider;
     }
 
-    public void checkUpdate(DeviceInfoProvider deviceInfo, String serverAddress, Utils utils,
-                            UpdateManager mUpdateManager) {
+    public void checkUpdate(DeviceInfoProvider deviceInfo, IConfigurationProvider config, UpdateManager mUpdateManager) {
         String reqData;
         try {
             reqData = new JSONObject(deviceInfo.toMap())
@@ -84,7 +84,7 @@ public class HttpClient {
 
         try {
             Request request = new Request.Builder()
-                    .url(serverAddress + "/api/v1/update/check")
+                    .url(config.getServerAddress() + "/api/v1/update/check")
                     .addHeader("Authorization", "Bearer token=" + token)
                     .post(reqBody)
                     .build();

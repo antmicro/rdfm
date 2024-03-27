@@ -3,6 +3,7 @@ package com.antmicro.update.rdfm.mgmt;
 import android.content.Context;
 import android.util.Log;
 
+import com.antmicro.update.rdfm.configuration.IConfigurationProvider;
 import com.antmicro.update.rdfm.exceptions.DeviceInfoException;
 import com.antmicro.update.rdfm.exceptions.DeviceUnauthorizedException;
 import com.antmicro.update.rdfm.exceptions.ServerConnectionException;
@@ -31,16 +32,16 @@ public class AuthorizationProvider implements IDeviceTokenProvider {
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
     private static final int READ_TIMEOUT_MS = 500;
     private static final long TOKEN_EXPIRATION_GRACE_PERIOD_MS = 5000;
-    private final String mServerAddress;
+    private final IConfigurationProvider mConfig;
     private final Context mContext;
     private final OkHttpClient mClient;
     private final DeviceInfoProvider mDeviceInfo;
     private String mDeviceToken;
     private long mTokenExpiresAt;
 
-    public AuthorizationProvider(DeviceInfoProvider deviceInfo, String serverAddress, Context context) {
+    public AuthorizationProvider(DeviceInfoProvider deviceInfo, IConfigurationProvider config, Context context) {
         mDeviceInfo = deviceInfo;
-        mServerAddress = serverAddress;
+        mConfig = config;
         mContext = context;
         mDeviceToken = "";
         mTokenExpiresAt = 0;
@@ -71,7 +72,7 @@ public class AuthorizationProvider implements IDeviceTokenProvider {
             RequestBody reqBody = RequestBody.create(requestBytes, JSON);
             try {
                 Request request = new Request.Builder()
-                        .url(mServerAddress + "/api/v1/auth/device")
+                        .url(mConfig.getServerAddress() + "/api/v1/auth/device")
                         .addHeader("X-RDFM-Device-Signature", signature)
                         .post(reqBody)
                         .build();
