@@ -19,6 +19,9 @@
     <uses-permission android:name="android.permission.REBOOT"
         tools:ignore="ProtectedPermissions" />
 
+    <!-- Required for getting and setting app configuration -->
+    <permission android:name="com.antmicro.update.rdfm.permission.CONFIGURATION" />
+
     <application
         android:requestLegacyExternalStorage="true"
         android:allowBackup="true"

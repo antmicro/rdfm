@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import androidx.preference.PreferenceManager;
 
+import com.antmicro.update.rdfm.intents.ConfigurationIntentReceiver;
 import com.antmicro.update.rdfm.mgmt.AuthorizationProvider;
 import com.antmicro.update.rdfm.mgmt.DeviceInfoProvider;
 import com.antmicro.update.rdfm.mgmt.ManagementClient;
@@ -40,6 +41,7 @@ public class MainActivity extends Activity {
     private DeviceInfoProvider mDeviceInfo = new DeviceInfoProvider();
     private AuthorizationProvider mDeviceAuthorizationProvider;
     private ManagementClient mWsClient;
+    private ConfigurationIntentReceiver mConfigReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +77,7 @@ public class MainActivity extends Activity {
             }
         };
         registerReceiver(startUpdateReceiver, new IntentFilter(startUpdateIntent));
+        mConfigReceiver = new ConfigurationIntentReceiver(this);
         this.setUpdateAlarm();
         this.mUpdateManager.bind();
     }
