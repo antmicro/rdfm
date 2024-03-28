@@ -1,8 +1,14 @@
 package com.antmicro.update.rdfm.utilities;
 
 import android.annotation.SuppressLint;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
 import android.util.Log;
+
+import com.antmicro.update.rdfm.MainActivity;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -14,6 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class SysUtils {
+    public static final int APP_RESTART_INTENT_MAGIC = 492738126;
     private static final String TAG = "SysUtils";
 
     public static String findDeviceMAC() {
@@ -75,5 +82,16 @@ public class SysUtils {
     public static String getDeviceType() {
         return Build.PRODUCT;
     }
-    
+
+    public static void restartApp(Context c) {
+        try {
+            Intent intent = new Intent(c, MainActivity.class);
+            PendingIntent pendingIntent = PendingIntent.getActivity(c, APP_RESTART_INTENT_MAGIC, intent, PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            AlarmManager mgr = (AlarmManager) c.getSystemService(Context.ALARM_SERVICE);
+            mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, pendingIntent);
+            System.exit(0);
+        } catch (Exception ex) {
+            Log.e(TAG, "Unable to restart application!");
+        }
+    }
 }

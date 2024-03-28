@@ -11,6 +11,8 @@ import android.util.Log;
 
 import androidx.preference.PreferenceManager;
 
+import com.antmicro.update.rdfm.utilities.SysUtils;
+
 import java.util.Map;
 import java.util.Set;
 
@@ -47,6 +49,7 @@ public class ConfigurationIntentReceiver extends BroadcastReceiver {
         Bundle bundle = intent.getExtras();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
+        boolean isModified = false;
         Map<String, ?> allPreferences = prefs.getAll();
         for (Map.Entry<String, ?> entry : allPreferences.entrySet()) {
             // Only modify preferences that already exist
@@ -56,6 +59,7 @@ public class ConfigurationIntentReceiver extends BroadcastReceiver {
                 Object value = bundle.get(key);
                 SharedPreferences.Editor edit = prefs.edit();
                 Log.d(TAG, "Configuration bundle: " + key + " : " + (value != null ? value.toString() : "NULL"));
+                isModified = true;
                 if (value instanceof String) {
                     edit.putString(key, (String) value);
                 } else if (value instanceof Boolean) {
@@ -67,10 +71,18 @@ public class ConfigurationIntentReceiver extends BroadcastReceiver {
                 } else if (value instanceof Long) {
                     edit.putLong(key, (Long) value);
                 } else if (value instanceof Set) {
+                    isModified = false;
                     Log.w(TAG, "SharedPreference values of Set<String> unsupported for config via intents");
                 }
-                edit.apply();
+                if (!edit.commit()) {
+                    throw new RuntimeException("Configuration commit failed!");
+                }
             }
+        }
+
+        if (isModified) {
+            Log.i(TAG, "RDFM app configuration has changed. Restarting the app...");
+            SysUtils.restartApp(context);
         }
     }
 
