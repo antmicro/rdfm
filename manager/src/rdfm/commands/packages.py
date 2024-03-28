@@ -122,7 +122,7 @@ def add_packages_parser(parser: argparse._SubParsersAction):
     )
     directory_group.add_argument(
         '--storage-directory', type=str,
-        help='(advance option) directory inside server-side storage where package will be placed'
+        help='(ADVANCED OPTION) directory inside server-side storage where package will be placed'
     )
 
     delete = sub.add_parser('delete', help='delete a package from the server')
