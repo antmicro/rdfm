@@ -110,9 +110,14 @@ def upload_package():
     Remaining key/value pairs in the form request are used as
     metadata for the artifact.
 
+    If required, an additional storage directory can be specified that
+    indicates the directory within server-side storage that the package
+    is placed in.
+
     :form file: binary contents of the package
     :form rdfm.software.version: required: software version of the package
     :form rdfm.hardware.devtype: required: compatible device type
+    :form rdfm.storage.directory: optional: storage directory specific to the current storage driver
     :form `...`: remaining package metadata
 
     :status 200: no error, package was uploaded
