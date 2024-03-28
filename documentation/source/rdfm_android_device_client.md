@@ -99,6 +99,50 @@ The following configuration options are available:
 - Update check interval (in seconds)
 - Maximum amount of concurrent shell sessions (set to `0` to disable reverse shell functionality)
 
+## Available intents
+
+### Update check intent
+
+This intent allows an external app to force perform an update check outside of the usual automatic update check interval.
+To do this, the app that wants to perform the update check must have the `com.antmicro.update.rdfm.permission.UPDATE_CHECK` permission defined in its `AndroidManifest.xml` file:
+
+```xml
+<uses-permission android:name="com.antmicro.update.rdfm.permission.UPDATE_CHECK" />
+```
+
+Afterwards, an update check can then be forced like so:
+```java
+Intent configIntent = new Intent("com.antmicro.update.rdfm.startUpdate");
+mContext.sendBroadcast(configIntent);
+```
+
+### External configuration via intents
+
+The app settings can also be configured via intents, for example in order to change between different deployment environments.
+To do this, the app that performs the configuring step must have the `com.antmicro.update.rdfm.permission.CONFIGURATION` permission defined in its `AndroidManifest.xml` file:
+```xml
+<uses-permission android:name="com.antmicro.update.rdfm.permission.CONFIGURATION" />
+```
+
+To configure the app, use the `com.antmicro.update.rdfm.configurationSet` intent and set extra values on the intent to the settings you wish to change.
+For example, to set the server address:
+```java
+Intent configIntent = new Intent("com.antmicro.update.rdfm.configurationSet");
+configIntent.putExtra("ota_server_address", "http://CUSTOM-OTA-ADDRESS/");
+mContext.sendBroadcast(configIntent);
+```
+
+The supported configuration key names can be found in the `res/values/strings.xml` file with the `preference_` prefix.
+
+Aside from setting the configuration, you can also fetch the current configuration of the app:
+```java
+Intent configIntent = new Intent("com.antmicro.update.rdfm.configurationGet");
+mContext.sendBroadcast(configIntent);
+
+// Now listen for `com.antmicro.update.rdfm.configurationResponse` broadcast intent
+// The intent's extras bundle will contain the configuration keys and values
+```
+
 ## Development
 
 The provided Gradle files can be used for development purposes, simply open the `devices/android-client` directory in Android Studio.
