@@ -19,6 +19,8 @@
     <uses-permission android:name="android.permission.REBOOT"
         tools:ignore="ProtectedPermissions" />
 
+    <!-- Required for performing update checks -->
+    <permission android:name="com.antmicro.update.rdfm.permission.UPDATE_CHECK" />
     <!-- Required for getting and setting app configuration -->
     <permission android:name="com.antmicro.update.rdfm.permission.CONFIGURATION" />
 

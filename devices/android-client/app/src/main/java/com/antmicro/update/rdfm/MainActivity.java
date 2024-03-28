@@ -29,6 +29,7 @@ public class MainActivity extends Activity {
 
     private static final String TAG = "MainActivity";
     private static final String startUpdateIntent = "com.antmicro.update.rdfm.startUpdate";
+    private static final String UPDATE_INTENT_PERMISSION = "com.antmicro.update.rdfm.permission.UPDATE_CHECK";
     static final String otaPackagePath = "/data/ota_package";
     private Context mContext;
     private HttpClient mHttpClient;
@@ -75,7 +76,7 @@ public class MainActivity extends Activity {
                 new Thread(() -> onStartUpdateIntent()).start();
             }
         };
-        registerReceiver(startUpdateReceiver, new IntentFilter(startUpdateIntent));
+        registerReceiver(startUpdateReceiver, new IntentFilter(startUpdateIntent), UPDATE_INTENT_PERMISSION, null);
         mConfigReceiver = new ConfigurationIntentReceiver(this);
         this.setUpdateAlarm();
         this.mUpdateManager.bind();
