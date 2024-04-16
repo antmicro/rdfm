@@ -5,6 +5,7 @@ import boto3
 import boto3.session
 from botocore.exceptions import ClientError
 from pathlib import PosixPath
+from botocore.config import Config
 
 
 META_S3_UUID = "rdfm.storage.s3.uuid"
@@ -36,6 +37,13 @@ class S3Storage():
         # Handle custom servers
         if config.s3_url is not None:
             kwargs["endpoint_url"] = config.s3_url
+
+        client_config = Config(
+                signature_version = 's3v4' if config.s3_use_v4_signature else None,
+                region_name = config.s3_region_name,
+        )
+
+        kwargs["config"] = client_config
 
         self.client = boto3.client('s3', **kwargs)
 

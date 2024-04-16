@@ -10,6 +10,8 @@ ENV_STORAGE_DRIVER = "RDFM_STORAGE_DRIVER"
 ENV_S3_URL = "RDFM_S3_URL"
 ENV_S3_ACCESS_KEY_ID = "RDFM_S3_ACCESS_KEY_ID"
 ENV_S3_SECRET_ACCESS_KEY = "RDFM_S3_ACCESS_SECRET_KEY"
+ENV_S3_USE_V4_SIGNATURE = "RDFM_S3_USE_V4_SIGNATURE"
+ENV_S3_REGION_NAME = "RDFM_S3_REGION_NAME"
 ENV_S3_BUCKET = "RDFM_S3_BUCKET"
 """ List of valid storage types for packages that the server supports.
     These values should match the ones found in`storage.driver_by_name`.
@@ -87,6 +89,14 @@ class ServerConfig():
     """ Bucket name for storing packages on S3
     """
     s3_bucket_name: Optional[str]
+
+    """ Should Signature Version 4 Authentication be used for S3 access?
+    """
+    s3_use_v4_signature: Optional[bool]
+
+    """ Name of the region in which the S3 bucket is located
+    """
+    s3_region_name: Optional[str]
 
     """ Should API auth be disabled?
         WARNING: This disables ALL authentication on the exposed API.
@@ -191,6 +201,8 @@ def parse_from_environment(config: ServerConfig) -> bool:
 
     if config.storage_driver == "s3":
         config.s3_url = os.environ.get(ENV_S3_URL, None)
+        config.s3_use_v4_signature = os.environ.get(ENV_S3_USE_V4_SIGNATURE, None)
+        config.s3_region_name = os.environ.get(ENV_S3_REGION_NAME, None)
 
         config.s3_access_key_id = try_get_env(ENV_S3_ACCESS_KEY_ID, "S3 Access Key ID")
         config.s3_secret_access_key = try_get_env(ENV_S3_SECRET_ACCESS_KEY, "S3 Secret Access Key")

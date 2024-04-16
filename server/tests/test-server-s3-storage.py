@@ -41,6 +41,8 @@ def create_server_configuration() -> ServerConfig:
     # The secrets don't matter, the bucket name is important however
     config.s3_access_key_id = 'DUMMY'
     config.s3_secret_access_key = 'DUMMY'
+    config.s3_region_name = 'DUMMY'
+    config.s3_use_v4_signature = False
     config.s3_bucket_name = TEST_BUCKET_NAME
     return config
 
