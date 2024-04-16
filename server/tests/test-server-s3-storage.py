@@ -4,7 +4,6 @@ import boto3
 import urllib.parse
 from moto import mock_s3
 from configuration import ServerConfig
-from pathlib import PosixPath
 
 
 TEST_BUCKET_NAME = 'rdfm-packages'
@@ -140,9 +139,12 @@ def test_package_uploaded_successfully(upload_dummy: dict[str, str],
     """
     from storage.s3 import META_S3_UUID, META_S3_DIRECTORY
     # Extract the object name from the package metadata
-    object_name = PosixPath(upload_dummy[META_S3_DIRECTORY]) / upload_dummy[META_S3_UUID]
+    if upload_dummy[META_S3_DIRECTORY] != "":
+        object_name = upload_dummy[META_S3_DIRECTORY] + "/" + upload_dummy[META_S3_UUID]
+    else:
+        object_name = upload_dummy[META_S3_UUID]
 
-    assert str(object_name) in list_test_bucket_contents, "the package should have been uploaded to the bucket successfully"
+    assert object_name in list_test_bucket_contents, "the package should have been uploaded to the bucket successfully"
 
 
 def test_generate_package_link(generate_link_to_dummy):
