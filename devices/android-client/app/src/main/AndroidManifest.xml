@@ -41,7 +41,9 @@
             </intent-filter>
         </receiver>
 
-        <activity android:name=".MainActivity" />
+        <activity
+            android:name=".MainActivity"
+            android:exported="true" />
         <activity android:name=".PreferenceActivity" />
 
         <service
