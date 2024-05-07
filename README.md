@@ -1,6 +1,6 @@
 # Remote Device Fleet Manager - RDFM
 
-Copyright (c) 2023 [Antmicro](https://www.antmicro.com)
+Copyright (c) 2023 - 2024 [Antmicro](https://www.antmicro.com)
 
 Remote Device Fleet Manager (RDFM) is an open source Over-the-Air (OTA) software updater and fleet manager for embedded devices.
 
