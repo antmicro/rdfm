@@ -38,6 +38,7 @@ type DeviceConfig struct {
 	DevType        string `mapstructure:"dev_type"`
 	Key            string
 	UpdateInterval *time.Duration `mapstructure:"update_interval,omitempty"`
+	SelfConfirm    bool           `mapstructure:"self_confirm,omitempty"`
 	Transport      TransportConfig
 }
 
