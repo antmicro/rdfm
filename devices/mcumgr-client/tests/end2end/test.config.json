@@ -9,6 +9,7 @@
       "id": "00:00:00:00:00:01",
       "dev_type": "serial",
       "key": "serial.key",
+      "self_confirm": true,
       "transport": {
         "type": "serial",
         "device": "/tmp/uartDemo1",
@@ -47,6 +48,7 @@
         {
           "name": "udp1",
           "device": "udp-gr",
+          "self_confirm": true,
           "transport": {
             "type": "udp",
             "address": "192.0.2.3:1337"

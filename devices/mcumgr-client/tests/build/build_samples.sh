@@ -9,7 +9,7 @@ zephyr_version="v3.5.0"
 
 serial_board="nrf52840dk_nrf52840"
 udp_board="stm32f746g_disco"
-udp_overlay="$this_dir/stm32f7.overlay"
+udp_overlay="$this_dir/boards/$udp_board.overlay"
 
 key_file="$this_dir/key.pem"
 
@@ -57,7 +57,7 @@ build_smp_sample() {
     west build \
         -d $1 \
         -b "$2" \
-        "$ZEPHYR_BASE/samples/subsys/mgmt/mcumgr/smp_svr" \
+        "$this_dir" \
         -- \
             -DEXTRA_CONF_FILE="overlay-$1.conf" \
             -DCONFIG_MCUBOOT_SIGNATURE_KEY_FILE="\"$key_file\"" \
@@ -101,7 +101,8 @@ build_mcuboot udp \
 build_samples serial \
     serial \
     "$serial_board" \
-    -DCONFIG_MCUBOOT_BOOTLOADER_MODE_SWAP_WITHOUT_SCRATCH=y
+    -DCONFIG_MCUBOOT_BOOTLOADER_MODE_SWAP_WITHOUT_SCRATCH=y \
+    -DCONFIG_TEST_SELF_CONFIRM=y
 
 # Build udp sample
 build_samples udp \
@@ -109,7 +110,6 @@ build_samples udp \
     "$udp_board" \
     -DCONFIG_NET_CONFIG_MY_IPV4_ADDR="\"192.0.2.2\"" \
     -DCONFIG_ETH_STM32_HAL_API_V1=y \
-    -DDTC_OVERLAY_FILE="$udp_overlay" \
     -DCONFIG_MCUBOOT_BOOTLOADER_MODE_SWAP_SCRATCH=y
 
 # Build group device sample
@@ -123,5 +123,5 @@ build_samples udp \
     "$udp_board" \
     -DCONFIG_NET_CONFIG_MY_IPV4_ADDR="\"192.0.2.3\"" \
     -DCONFIG_ETH_STM32_HAL_API_V1=y \
-    -DDTC_OVERLAY_FILE="$udp_overlay" \
-    -DCONFIG_MCUBOOT_BOOTLOADER_MODE_SWAP_SCRATCH=y
+    -DCONFIG_MCUBOOT_BOOTLOADER_MODE_SWAP_SCRATCH=y \
+    -DCONFIG_TEST_SELF_CONFIRM=y

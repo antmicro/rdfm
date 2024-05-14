@@ -276,16 +276,20 @@ test-rdfm-client-docker:
 
 .mcumgr-client:
   <<: *ace
-  before_script:
-    # HACK: Currently CI ships Go 1.19, while the client needs 1.22+
-    - wget --quiet -O - "https://go.dev/dl/go1.22.1.linux-amd64.tar.gz" | tar xz
 
 build-mcumgr-client:
   extends: .mcumgr-client
   stage: build
+  before_script:
+    # Currently CI ships Go 1.19, while the client needs 1.22+
+    - wget --quiet -O - "https://go.dev/dl/go1.22.3.linux-amd64.tar.gz" | tar xz
   script:
     - export PATH=`pwd`/go/bin:$PATH
     - make -C devices/mcumgr-client
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - devices/mcumgr-client/rdfm-mcumgr-client
 
 build-mcumgr-test-samples:
   <<: *ace
@@ -297,8 +301,8 @@ build-mcumgr-test-samples:
     ZEPHYR_SDK_INSTALL_DIR: $CI_PROJECT_DIR/zephyr/sdk
   stage: build
   before_script:
-    - apt update >/dev/null
-    - apt -qqy --no-install-recommends install cmake device-tree-compiler ninja-build >/dev/null
+    - apt update
+    - apt -qqy --no-install-recommends install cmake device-tree-compiler ninja-build
   script:
     - ./devices/mcumgr-client/tests/build/build_samples.sh
     - ls -la ./devices/mcumgr-client/tests/out/
@@ -314,38 +318,27 @@ build-mcumgr-test-samples:
 test-mcumgr-client:
   extends: .mcumgr-client
   variables:
+    SCALENODE_CPU: 4
     SCALENODE_RAM: 6144
+    SCALENODE_DISK: 10
   dependencies:
+    - build-mcumgr-client
     - build-mcumgr-test-samples
+    - build-rdfm-artifact
   stage: local-tests
   script:
-    - export PATH=`pwd`/go/bin:$PATH
-    - apt update
-    - apt -qqy --no-install-recommends install iproute2 git-lfs >/dev/null
-    # NOTE: Currently Renode is tracked using LFS since we're using
-    #       a custom build with support for STM32F764 flash controller.
-    #       When it lands, we can replace it with an official build
-    # - wget --quiet https://builds.renode.io/renode_1.14.0_amd64.deb
-    - git lfs pull
-    - apt -qqy --no-install-recommends install ./devices/mcumgr-client/tests/prebuilt/renode*.deb >/dev/null
-    - pushd tools/rdfm-artifact
-    - make
-    - mv rdfm-artifact /usr/bin/
-    - popd
-    - pushd server
-    - poetry build
-    - poetry install
-    - python -m build
-    - pip3 install -e .
-    - popd
-    - pushd manager
-    - poetry build
-    - poetry install
-    - python -m build
-    - pip3 install -e .
-    - popd
+    - set -eo pipefail
+    - apt update && apt -qqy --no-install-recommends install iproute2 git-lfs >/dev/null
+    # NOTE: Currently Renode is tracked using LFS since we're using a custom
+    #       build with support for both STM32F764 and NRF52840 flash controllers.
+    #       If they get added into main, this can be replaced with official release
+    #       `wget --quiet https://builds.renode.io/renode_1.X.Y_amd64.deb`
+    - git lfs pull && apt -qqy --no-install-recommends install ./devices/mcumgr-client/tests/prebuilt/renode*.deb >/dev/null
+    - mv tools/rdfm-artifact/rdfm-artifact /usr/bin/
+    - mv devices/mcumgr-client/rdfm-mcumgr-client /usr/bin/
+    - pushd server && pip3 install -e . && popd
+    - pushd manager && pip3 install -e . && popd
     - cd devices/mcumgr-client
-    - make install
     # Run the test
     - ./tests/end2end/test.sh
   only:
@@ -366,6 +359,9 @@ build-rdfm-artifact:
   script:
     - cd tools/rdfm-artifact
     - make
+  artifacts:
+    paths:
+      - tools/rdfm-artifact/rdfm-artifact
 
 test-rdfm-artifact:
   extends: .rdfm-artifact

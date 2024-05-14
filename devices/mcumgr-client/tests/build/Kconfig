@@ -1,0 +1,14 @@
+# Test app config
+
+mainmenu "Test application"
+
+config UPDATE_SELF_CONFIRM
+	bool "Attempt update self confirmation"
+	default n
+
+config UPDATE_FORCE_FAIL
+	bool "Self test forced failure"
+	default n
+	depends on UPDATE_SELF_CONFIRM
+
+source "Kconfig.zephyr"
