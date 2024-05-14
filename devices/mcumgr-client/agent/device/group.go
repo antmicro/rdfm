@@ -9,6 +9,7 @@ import (
 
 	"rdfm-mcumgr-client/appcfg"
 	"rdfm-mcumgr-client/mcumgr"
+	"rdfm-mcumgr-client/mcumgr/transport"
 	"rdfm-mcumgr-client/rdfm/api"
 	"rdfm-mcumgr-client/rdfm/artifact"
 )
@@ -25,9 +26,15 @@ type (
 	}
 
 	member struct {
-		target string
-		dev    *mcumgr.Device
+		target      string
+		dev         *mcumgr.Device
+		selfConfirm bool
+
+		rollbackHash []byte
 	}
+
+	gWithSessionCb     func(*member, transport.Session) error
+	gLoopWithSessionCb func(*member, transport.Session) (bool, error)
 )
 
 func InitGroup(gCfg appcfg.GroupConfig, cfg *appcfg.AppConfig, log *slog.Logger) (*Group, error) {
@@ -58,9 +65,13 @@ func InitGroup(gCfg appcfg.GroupConfig, cfg *appcfg.AppConfig, log *slog.Logger)
 			)
 		}
 
+		rollbackHash := slices.Clone(dev.PrimaryImage.Hash)
+
 		members = append(members, member{
-			target: m.Device,
-			dev:    dev,
+			target:       m.Device,
+			dev:          dev,
+			selfConfirm:  m.SelfConfirm,
+			rollbackHash: rollbackHash,
 		})
 	}
 
@@ -117,259 +128,228 @@ func (g *Group) RunUpdate(a artifact.Artifact) error {
 		}
 	}
 
-	currImgHashes := make([][]byte, 0, len(g.members))
-	for _, m := range g.members {
-		currImgHashes = append(currImgHashes, m.dev.PrimaryImage.Hash)
-	}
-
-	waitAll := func(errC <-chan error) error {
-		var err error
-		for num := len(g.members); num > 0; num-- {
-			if e := <-errC; e != nil {
-				err = e
-			}
-		}
-		return err
-	}
-	errC := make(chan error)
-
 	log.Info("Starting update")
-	for _, m := range g.members {
-		go writeImage(art.Images[m.target].Data, m.dev, errC)
-	}
-	if err := waitAll(errC); err != nil {
+
+	if err := g.runWithSession(func(m *member, session transport.Session) error {
+		log := m.dev.Log
+		image := art.Images[m.target]
+
+		log.Debug("Writing image")
+		if err := session.WriteImage(image.Data); err != nil {
+			return err
+		}
+
+		primary, secondary, err := readImages(session)
+		if err != nil {
+			return err
+		}
+
+		if slices.Equal(primary.Hash, secondary.Hash) {
+			return fmt.Errorf("Can't update using currently running version")
+		}
+
+		return nil
+	}); err != nil {
 		return err
 	}
 
 	log.Debug("Setting images to pending")
-	for _, m := range g.members {
-		go setPending(m.dev, errC)
-	}
-	if err := waitAll(errC); err != nil {
+	if err := g.runWithSession(g.setPending); err != nil {
 		return err
 	}
 
 	log.Info("Rebooting")
-	for _, m := range g.members {
-		go reboot(m.dev, errC)
-	}
-	if err := waitAll(errC); err != nil {
+	if err := g.runWithSession(g.reboot); err != nil {
 		return err
 	}
+	time.Sleep(rebootCheckInterval)
+	g.loopWithSession(g.finishReboot)
 
-	log.Debug("Checking update")
-	for _, m := range g.members {
-		go checkUpdate(m.dev, errC)
-	}
-	if err := waitAll(errC); err != nil {
-		// At least one update was rejected - reboot all devices in group without confirming image
-		for _, m := range g.members {
-			go reboot(m.dev, errC)
-		}
-
-		return err
-	}
-
-	log.Debug("Confirming update")
-	for _, m := range g.members {
-		go confirmImage(m.dev, errC)
-	}
-	if err := waitAll(errC); err != nil {
-		log.Error("Update failed. Attempting rollback")
-
-		for i, m := range g.members {
-			go rollback(currImgHashes[i], m.dev, errC)
-		}
-		if e := waitAll(errC); e != nil {
+	log.Debug("Confirming image")
+	if err := g.loopWithSession(g.confirm); err != nil {
+		// At least one confirmation failed -> rollback entire group
+		log.Warn("Update failed. Rolling back")
+		if err := g.runWithSession(g.rollback); err != nil {
 			log.Error("Rollback failed")
 			return err
 		}
 
+		time.Sleep(rebootCheckInterval)
+		g.loopWithSession(g.finishReboot)
 		log.Info("Rollback finished", slog.String("restored_version", g.currVersion))
+
 		return err
 	}
 
+	for _, m := range g.members {
+		m.rollbackHash = slices.Clone(m.dev.PrimaryImage.Hash)
+	}
 	g.currVersion = g.members[0].dev.PrimaryImage.Version
 
 	return nil
 }
 
-func writeImage(image []byte, dev *mcumgr.Device, errC chan<- error) {
-	session, err := dev.Transport.AcqSession()
-	if err != nil {
-		errC <- err
-		return
-	}
-	defer session.Close()
+// Runs provided callback with each group member in a separate goroutine
+//
+// Provided transport session is released automatically
+// after callback finishes
+func (g *Group) runWithSession(cb gWithSessionCb) error {
+	errC := make(chan error)
+	for _, m := range g.members {
+		go func() {
+			session, err := m.dev.Transport.AcqSession()
+			if err != nil {
+				errC <- err
+				return
+			}
+			defer session.Close()
 
-	if err := session.WriteImage(image); err != nil {
-		errC <- err
-		return
-	}
-
-	primary, secondary, err := readImages(session)
-	if err != nil {
-		errC <- err
-		return
-	}
-
-	if slices.Compare(primary.Hash, secondary.Hash) == 0 {
-		errC <- fmt.Errorf("Can't update using currently running version")
-		return
+			errC <- cb(&m, session)
+		}()
 	}
 
-	errC <- nil
+	var err error
+	for range g.members {
+		if e := <-errC; e != nil {
+			err = e
+		}
+	}
+	return err
 }
 
-func setPending(dev *mcumgr.Device, errC chan<- error) {
-	session, err := dev.Transport.AcqSession()
-	if err != nil {
-		errC <- err
-		return
+func (g *Group) loopWithSession(cb gLoopWithSessionCb) error {
+	errC := make(chan error)
+	for _, m := range g.members {
+		go func() {
+			for {
+				session, err := m.dev.Transport.AcqSession()
+				if err != nil {
+					errC <- err
+					return
+				}
+
+				if end, err := cb(&m, session); end {
+					session.Close()
+					errC <- err
+					return
+				}
+
+				session.Close()
+				time.Sleep(rebootCheckInterval)
+			}
+		}()
 	}
-	defer session.Close()
+
+	var err error
+	for range g.members {
+		if e := <-errC; e != nil {
+			err = e
+		}
+	}
+	return err
+}
+
+func (*Group) setPending(m *member, session transport.Session) error {
+	log := m.dev.Log
 
 	_, secondary, err := readImages(session)
 	if err != nil {
-		errC <- err
-		return
+		return err
 	}
+
+	log.Debug("Setting image as pending")
 	if err := session.SetPendingImage(secondary.Hash); err != nil {
-		errC <- err
-		return
+		return err
 	}
 
-	errC <- nil
+	return nil
 }
 
-func reboot(dev *mcumgr.Device, errC chan<- error) {
-	session, err := dev.Transport.AcqSession()
-	if err != nil {
-		errC <- err
-		return
-	}
-	defer session.Close()
+func (*Group) reboot(m *member, session transport.Session) error {
+	log := m.dev.Log
 
-	if err := session.ResetDevice(); err != nil {
-		errC <- err
-		return
-	}
-
-	time.Sleep(rebootCheckInterval)
-
-	errC <- nil
+	log.Debug("Rebooting")
+	return session.ResetDevice()
 }
 
-func checkUpdate(dev *mcumgr.Device, errC chan<- error) {
-	mLog := dev.Log
+func (*Group) finishReboot(m *member, session transport.Session) (bool, error) {
+	log := m.dev.Log
 
-	session, err := dev.Transport.AcqSession()
-	if err != nil {
-		errC <- err
-		return
+	if session.Ping() != nil {
+		log.Debug("Waiting for device reboot")
+		return false, nil
 	}
-	defer session.Close()
-
-	passed := time.Duration(0)
-	for {
-		if session.Ping() == nil {
-			break
-		}
-
-		mLog.Debug("Waiting for device to finish reboot", slog.Duration("passed", passed))
-		time.Sleep(rebootCheckInterval)
-		passed += rebootCheckInterval
-	}
-
-	primary, secondary, err := readImages(session)
-	if err != nil {
-		errC <- err
-		return
-	}
-
-	if slices.Compare(primary.Hash, dev.PrimaryImage.Hash) == 0 {
-		errC <- fmt.Errorf("Update was rejected")
-		return
-	}
-
-	if slices.Compare(secondary.Hash, dev.PrimaryImage.Hash) != 0 {
-		errC <- fmt.Errorf("Unknown image in primary slot (hash '%x')", secondary.Hash)
-		return
-	}
-
-	errC <- nil
+	return true, nil
 }
 
-func confirmImage(dev *mcumgr.Device, errC chan<- error) {
-	session, err := dev.Transport.AcqSession()
-	if err != nil {
-		errC <- err
-		return
+func (g *Group) confirm(m *member, session transport.Session) (bool, error) {
+	if m.selfConfirm {
+		return g.deviceConfirm(m, session)
 	}
-	defer session.Close()
+	return g.manualConfirm(m, session)
+}
+
+func (*Group) deviceConfirm(m *member, session transport.Session) (bool, error) {
+	log := m.dev.Log
 
 	primary, _, err := readImages(session)
 	if err != nil {
-		errC <- err
-		return
+		return false, nil
 	}
 
-	if err := session.ConfirmImage(primary.Hash); err != nil {
-		errC <- fmt.Errorf("Failed to confirm new image")
-		return
+	if !primary.Confirmed {
+		log.Debug("Waiting for device to confirm update")
+		return false, nil
 	}
 
-	dev.PrimaryImage = primary
+	if slices.Equal(primary.Hash, m.dev.PrimaryImage.Hash) {
+		return true, fmt.Errorf("Update rejected")
+	}
 
-	errC <- nil
+	m.dev.PrimaryImage = primary
+	return true, nil
 }
 
-func rollback(oldImgHash []byte, dev *mcumgr.Device, errC chan<- error) {
-	session, err := dev.Transport.AcqSession()
+func (g *Group) manualConfirm(m *member, session transport.Session) (bool, error) {
+	log := m.dev.Log
+
+	primary, _, err := readImages(session)
 	if err != nil {
-		errC <- err
-		return
+		return true, err
 	}
 
+	if slices.Equal(primary.Hash, m.dev.PrimaryImage.Hash) {
+		return true, fmt.Errorf("Update rejected")
+	}
+
+	log.Debug("Manually confirming image")
+	if err := session.ConfirmImage(primary.Hash); err != nil {
+		return true, fmt.Errorf("Failed to confirm new image")
+	}
+
+	m.dev.PrimaryImage = primary
+	return true, nil
+}
+
+func (*Group) rollback(m *member, session transport.Session) error {
 	primary, secondary, err := readImages(session)
 	if err != nil {
-		errC <- err
-		return
+		return err
 	}
 
-	// First check if device didn't rollback by itself
-	if slices.Equal(primary.Hash, oldImgHash) {
-		errC <- nil
-		return
+	if slices.Equal(primary.Hash, m.rollbackHash) {
+		m.dev.PrimaryImage = primary
+		return nil
+	}
+
+	if !slices.Equal(secondary.Hash, m.rollbackHash) {
+		return fmt.Errorf("Unknown image in secondary slot")
 	}
 
 	if err := session.ConfirmImage(secondary.Hash); err != nil {
-		errC <- err
-		return
+		return err
 	}
 
-	if err := session.ResetDevice(); err != nil {
-		errC <- err
-		return
-	}
-	session.Close()
-
-	for {
-		session, err = dev.Transport.AcqSession()
-		if err != nil {
-			errC <- err
-			return
-		}
-		defer session.Close()
-
-		if session.Ping() == nil {
-			// Device rebooted
-			break
-		}
-
-		time.Sleep(rebootCheckInterval)
-	}
-
-	dev.PrimaryImage = secondary
-	errC <- nil
+	m.dev.PrimaryImage = primary
+	return session.ResetDevice()
 }

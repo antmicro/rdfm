@@ -43,8 +43,9 @@ type DeviceConfig struct {
 }
 
 type GroupMemberConfig struct {
-	Name   string
-	Device string
+	Name        string
+	Device      string
+	SelfConfirm bool `mapstructure:"self_confirm,omitempty"`
 
 	Transport TransportConfig
 }
