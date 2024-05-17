@@ -23,7 +23,7 @@ TEST_RO_ENDPOINT = "/api/v1/groups"
 TEST_RW_ENDPOINT = "/api/v1/groups"
 
 """ Payload to send to the above endpoint when testing RW scopes """
-TEST_RW_DATA = { "testing": 123 }
+TEST_RW_DATA = { "metadata": { "testing": 123 }}
 
 
 @pytest.fixture()

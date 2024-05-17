@@ -53,6 +53,14 @@ Group API
 ~~~~~~~~~
 
 .. autoflask:: rdfm_mgmt_server:create_docs_app()
+   :modules: api.v2.groups
+   :undoc-static:
+   :order: path
+
+Group API (legacy)
+~~~~~~~~~~~~~~~~~~
+
+.. autoflask:: rdfm_mgmt_server:create_docs_app()
    :modules: api.v1.groups
    :undoc-static:
    :order: path
@@ -67,6 +75,14 @@ Update API
 
 Device Management API
 ~~~~~~~~~~~~~~~~~~~~~
+
+.. autoflask:: rdfm_mgmt_server:create_docs_app()
+   :modules: api.v2.devices
+   :undoc-static:
+   :order: path
+
+Device Management API (legacy)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoflask:: rdfm_mgmt_server:create_docs_app()
    :modules: api.v1.devices

@@ -37,13 +37,17 @@ def test_groups(process: subprocess.Popen):
     assert resp.content == b"[]", "empty database returns no groups"
 
     # Creating a group
-    test_meta = {
-        "description": "An example group"
+    test_json = {
+        "metadata": {
+            "description": "An example group"
+        },
+        "priority": "25"
+
     }
-    resp = requests.post(GROUPS_ENDPOINT, json=test_meta)
-    assert resp.status_code == 200, "creating a grup works"
+    resp = requests.post(GROUPS_ENDPOINT, json=test_json)
+    assert resp.status_code == 200, "creating a group works"
     group_data = resp.json()
-    assert group_data["metadata"] == test_meta, "metadata was added to the group"
+    assert group_data["metadata"] == test_json["metadata"], "metadata was added to the group"
 
     # Fetching information about a single group
     resp  = requests.get(f"{GROUPS_ENDPOINT}/{group_data['id']}")
@@ -58,7 +62,7 @@ def test_groups(process: subprocess.Popen):
     assert resp.status_code == 404, "deleted group no longer exists"
 
     # Create a group that will be used for testing package assignment
-    test_group = requests.post(GROUPS_ENDPOINT, json=test_meta).json()
+    test_group = requests.post(GROUPS_ENDPOINT, json=test_json).json()
 
     # Assign a device to the group (created in test-specific DB file `test.db`)
     resp = requests.patch(f"{GROUPS_ENDPOINT}/{test_group['id']}/devices", json={

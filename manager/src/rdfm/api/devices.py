@@ -2,12 +2,12 @@ import requests
 import rdfm.config
 from rdfm.api import wrap_api_error
 from typing import List
-from rdfm.schema.v1.devices import Device, Registration
+from rdfm.schema.v2.devices import Device, Registration
 
 
 def fetch_all(config: rdfm.config.Config) -> List[Device]:
     response = requests.get(
-        rdfm.api.escape(config, "/api/v1/devices"),
+        rdfm.api.escape(config, "/api/v2/devices"),
         verify=config.ca_cert,
         auth=config.authorizer,
     )

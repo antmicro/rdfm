@@ -1,6 +1,6 @@
 from typing import Any
 from sqlalchemy import ForeignKey
-from sqlalchemy import Text, DateTime, JSON
+from sqlalchemy import Text, Integer, DateTime, JSON
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 import datetime
@@ -16,6 +16,7 @@ class Group(Base):
     created: Mapped[datetime.datetime] = mapped_column(DateTime)
     info: Mapped[dict[str, Any]] = mapped_column(JSON)
     policy: Mapped[str] = mapped_column(Text)
+    priority: Mapped[int] = mapped_column(Integer)
 
 
 class GroupPackageAssignment(Base):

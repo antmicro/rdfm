@@ -3,6 +3,7 @@ import sys
 from flask import Flask, request
 import server
 import api.v1
+import api.v2
 import configuration
 
 
@@ -68,6 +69,7 @@ def create_app(config: configuration.ServerConfig) -> Flask:
     """
     app = Flask(__name__)
     app.register_blueprint(api.v1.create_routes())
+    app.register_blueprint(api.v2.create_routes())
     app.config["RDFM_CONFIG"] = config
     if config.debug:
         add_debug_logging(app)
@@ -83,6 +85,7 @@ def create_docs_app() -> Flask:
     """
     app = Flask(__name__)
     app.register_blueprint(api.v1.create_routes())
+    app.register_blueprint(api.v2.create_routes())
     return app
 
 

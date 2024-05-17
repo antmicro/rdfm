@@ -2,13 +2,13 @@ import requests
 import rdfm.config
 from typing import List, Any, Optional
 from rdfm.api import wrap_api_error
-from rdfm.schema.v1.groups import Group
+from rdfm.schema.v2.groups import Group
 from rdfm.schema.v1.error import ApiError
 
 
 def fetch_all(config: rdfm.config.Config) -> List[Group]:
     response = requests.get(
-        rdfm.api.escape(config, "/api/v1/groups"),
+        rdfm.api.escape(config, "/api/v2/groups"),
         verify=config.ca_cert,
         auth=config.authorizer,
     )
@@ -22,14 +22,16 @@ def fetch_all(config: rdfm.config.Config) -> List[Group]:
 
 
 def create(
-    config: rdfm.config.Config, metadata: dict[str, Any]
+        config: rdfm.config.Config, metadata: dict[str, Any], priority: int
 ) -> Optional[str]:
-    response = requests.post(
-        rdfm.api.escape(config, "/api/v1/groups"),
-        verify=config.ca_cert,
-        auth=config.authorizer,
-        json=metadata,
-    )
+    req_json = {"metadata": metadata}
+    if priority is not None:
+        req_json["priority"] = priority
+    response = requests.post(rdfm.api.escape(config, "/api/v2/groups"),
+                             verify=config.ca_cert,
+                             auth=config.authorizer,
+                             json=req_json)
+
     if response.status_code == 200:
         try:
             print(f"Created group with identifier #{response.json()['id']}")
@@ -40,7 +42,7 @@ def create(
 
 def delete(config: rdfm.config.Config, id: int) -> Optional[str]:
     response = requests.delete(
-        rdfm.api.escape(config, f"/api/v1/groups/{id}"),
+        rdfm.api.escape(config, f"/api/v2/groups/{id}"),
         verify=config.ca_cert,
         auth=config.authorizer,
     )
@@ -56,7 +58,7 @@ def assign(
     config: rdfm.config.Config, group: int, packages: List[int]
 ) -> Optional[str]:
     response = requests.post(
-        rdfm.api.escape(config, f"/api/v1/groups/{group}/package"),
+        rdfm.api.escape(config, f"/api/v2/groups/{group}/package"),
         verify=config.ca_cert,
         auth=config.authorizer,
         json={"packages": packages},
@@ -77,7 +79,7 @@ def assign_device(
     removals: List[str],
 ) -> Optional[str]:
     response = requests.patch(
-        rdfm.api.escape(config, f"/api/v1/groups/{group}/devices"),
+        rdfm.api.escape(config, f"/api/v2/groups/{group}/devices"),
         verify=config.ca_cert,
         auth=config.authorizer,
         json={"add": insertions, "remove": removals},
@@ -96,7 +98,7 @@ def set_policy(
     config: rdfm.config.Config, group: int, policy: str
 ) -> Optional[str]:
     response = requests.post(
-        rdfm.api.escape(config, f"/api/v1/groups/{group}/policy"),
+        rdfm.api.escape(config, f"/api/v2/groups/{group}/policy"),
         verify=config.ca_cert,
         auth=config.authorizer,
         json={
@@ -104,3 +106,17 @@ def set_policy(
         },
     )
     return wrap_api_error(response, "Updating group policy failed")
+
+
+def set_priority(config: rdfm.config.Config,
+                 group: int,
+                 priority: int) -> Optional[str]:
+    response = requests.post(
+        rdfm.api.escape(config, f"/api/v2/groups/{group}/priority"),
+        verify=config.ca_cert,
+        auth=config.authorizer,
+        json={
+            "priority": priority,
+            }
+     )
+    return wrap_api_error(response, "Updating group priority failed")

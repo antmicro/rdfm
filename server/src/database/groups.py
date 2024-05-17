@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 import models.group
 import models.device
 import models.package
+import server
 
 
 class GroupsDB:
@@ -25,18 +26,24 @@ class GroupsDB:
                 return []
             return [x for x in groups]
 
-    def create(self, group: models.group.Group):
+    def create(self, group: models.group.Group) -> Optional[str]:
         """Create a new group
 
         The provided group is updated with the database identifier
         """
-        with Session(self.engine) as session:
-            session.add(group)
-            session.commit()
-            session.refresh(group)
+        try:
+            with Session(self.engine) as session:
+                session.add(group)
+                session.commit()
+                session.refresh(group)
+                return None
+        except IntegrityError as e:
+            return ("Conflict while adding group,"
+                    "a group with the same priority may already exist")
 
     def fetch_one(self, identifier: int) -> Optional[models.group.Group]:
-        """Fetches information about the specific group from the database"""
+        """ Fetches information about the specific group from the database
+        """
         with Session(self.engine) as session:
             stmt = select(models.group.Group).where(
                 models.group.Group.id == identifier
@@ -50,13 +57,14 @@ class GroupsDB:
             identifier: group identifier
         """
         with Session(self.engine) as session:
-            stmt = select(models.device.Device).where(
-                models.device.Device.group == identifier
-            )
-            devices = session.scalars(stmt)
-            if devices is None:
-                return []
-            return [x for x in devices]
+            return session.scalars(
+                session.query(models.device.Device)
+                .select_from(models.device.DeviceGroupAssignment)
+                .where(
+                    models.device.DeviceGroupAssignment.group_id == identifier
+                )
+                .join(models.device.Device)
+            ).all()
 
     def delete(self, identifier: int) -> bool:
         """Deletes a group
@@ -97,7 +105,8 @@ class GroupsDB:
         This covers:
             - Any device identifier which does not match a registered device
             - Any device identifier in `additions` which already has an
-              assigned group
+              assigned group with the same priority as the one specified by
+              `identifier`
             - Any device identifier in `removals` which is not currently
               assigned to the specified package
 
@@ -110,37 +119,62 @@ class GroupsDB:
             removals: device identifiers which shall be removed from specified
                       group
         """
-        with Session(self.engine) as session:
-            # Evaluate addition first
-            stmt = (
-                update(models.device.Device)
-                .values(group=identifier)
-                .where(models.device.Device.group.is_(None))
-                .where(models.device.Device.id.in_(additions))
-            )
-            res = session.execute(stmt)
-            if res.rowcount != len(additions):
-                session.rollback()
-                return "conflict while applying group additions, one of the " \
-                       "provided device identifiers may not exist anymore or" \
-                       " has already been assigned to a different group"
+        try:
+            with Session(self.engine) as session:
+                def make_assignment(group, device):
+                    assignment = models.device.DeviceGroupAssignment()
+                    assignment.group_id = group
+                    assignment.device_id = device
+                    return assignment
 
-            # Now evaluate the removals
-            stmt = (
-                update(models.device.Device)
-                .values(group=None)
-                .where(models.device.Device.group == identifier)
-                .where(models.device.Device.id.in_(removals))
-            )
-            res = session.execute(stmt)
-            if res.rowcount != len(removals):
-                session.rollback()
-                return "conflict while applying group removals, one of the " \
-                       "provided device identifiers may not exist anymore or" \
-                       " trying to remove group from unassigned device"
+                # Additions
+                current_group = self.fetch_one(identifier)
 
-            session.commit()
-            return None
+                for addition in additions:
+                    if (
+                        session.query(models.group.Group)
+                        .select_from(models.device.DeviceGroupAssignment)
+                        .where(
+                            models.device.DeviceGroupAssignment.device_id ==
+                            addition
+                        )
+                        .join(models.group.Group)
+                        .where(
+                            models.group.Group.priority ==
+                            current_group.priority
+                        )
+                        .first() is not None
+                    ):
+
+                        return ("A group with the same priority "
+                                "is already assigned to one of the devices "
+                                "requested to be added")
+
+                session.add_all(
+                        [make_assignment(identifier, a) for a in additions]
+                )
+                session.commit()
+
+                # Removals
+                stmt = (
+                    delete(models.device.DeviceGroupAssignment)
+                    .where(
+                        models.device.DeviceGroupAssignment.group_id ==
+                        identifier
+                    )
+                    .where(
+                        models.device.DeviceGroupAssignment.device_id.in_(
+                            removals
+                        )
+                    )
+                )
+                session.execute(stmt)
+                session.commit()
+
+                return None
+
+        except IntegrityError as e:
+            return "conflict while assigning device, the device may not exist"
 
     def modify_package(self, group: int, packages: List[int]) -> Optional[str]:
         """Modify package assignment of the specified group
@@ -203,6 +237,49 @@ class GroupsDB:
                 .where(models.group.GroupPackageAssignment.group_id == group)
                 .join(models.package.Package)
             ).all()
+
+    def update_priority(self, group: int, priority: int) -> Optional[str]:
+        """ Updates the group priority
+
+        The priority must be distinct among priorities of other groups to which
+        devices assigned to this group are also assigned to. If this condition
+        is not met, an error is returned and the priority is kept unmodified.
+
+        Args:
+            group: group identifier
+            priority: group priority to set
+        """
+
+        with Session(self.engine) as session:
+            devices = self.fetch_assigned(group)
+            for device in devices:
+                device_group_ids = server.instance._devices_db.fetch_groups(
+                        device.id
+                )
+                for group_id in device_group_ids:
+                    if (
+                            session.query(models.group.Group)
+                            .select_from(models.device.DeviceGroupAssignment)
+                            .where(
+                                models.device.DeviceGroupAssignment.device_id
+                                == device.id
+                            )
+                            .join(models.group.Group)
+                            .where(models.group.Group.priority == priority)
+                            .where(models.group.Group.id != group)
+                            .first() is not None
+                    ):
+                        return ("A group with the same priority "
+                                "is already assigned to one of the devices "
+                                "in this group")
+
+            stmt = (
+                update(models.group.Group)
+                .values(priority=priority)
+                .where(models.group.Group.id == group)
+            )
+            session.execute(stmt)
+            session.commit()
 
     def update_policy(self, group: int, policy: str):
         """Updates the group update policy

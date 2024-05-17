@@ -22,7 +22,7 @@ SERVER_WS = "ws://127.0.0.1:5000/"
 SERVER_WAIT_TIMEOUT = 5
 
 # Commonly used endpoints
-GROUPS_ENDPOINT = f"{SERVER}/api/v1/groups"
+GROUPS_ENDPOINT = f"{SERVER}/api/v2/groups"
 PACKAGES_ENDPOINT = f"{SERVER}/api/v1/packages"
 UPDATES_ENDPOINT = f"{SERVER}/api/v1/update/check"
 DEVICES_WS = f"{SERVER_WS}/api/v1/devices/ws"

@@ -24,8 +24,8 @@ def list_devices(config: rdfm.config.Config, args):
             print(f"\t\t{k}: {v}")
         print(f"\tLast accessed: {utc_to_local(device.last_access)}")
         print(
-            "\tAssigned to group: ",
-            '<none>' if device.group is None else device.group
+            "\tAssigned to groups: ",
+            '<none>' if device.groups is None else device.groups
         )
         print(f"\tPublic key: {device.public_key}")
         print()

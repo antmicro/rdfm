@@ -22,7 +22,7 @@ META_MAC_ADDR = "rdfm.hardware.macaddr"
 @pytest.fixture
 def create_dummy_group(process):
     # Create the group
-    resp = requests.post(GROUPS_ENDPOINT, json={})
+    resp = requests.post(GROUPS_ENDPOINT, json={"metadata":{}})
     assert resp.status_code == 200, "group creation should succeed"
 
     # Add the dummy device to the group

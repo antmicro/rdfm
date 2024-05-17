@@ -21,6 +21,15 @@ class Device(Base):
     capabilities: Mapped[str] = mapped_column(Text)
     device_metadata: Mapped[str] = mapped_column(Text)
     public_key: Mapped[Optional[str]] = mapped_column(Text)
-    group: Mapped[Optional[int]] = mapped_column(
-        ForeignKey(models.group.Group.id, ondelete="RESTRICT")
+
+
+class DeviceGroupAssignment(Base):
+    __tablename__ = "devices_groups"
+    device_id: Mapped[int] = mapped_column(
+            ForeignKey(Device.id, ondelete="RESTRICT"),
+            primary_key=True
+    )
+    group_id: Mapped[int] = mapped_column(
+            ForeignKey(models.group.Group.id, ondelete="RESTRICT"),
+            primary_key=True
     )

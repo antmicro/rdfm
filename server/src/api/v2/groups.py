@@ -10,11 +10,12 @@ import server
 from api.v1.common import api_error
 import models.group
 import models.device
-from rdfm.schema.v1.groups import (
+from rdfm.schema.v2.groups import (
     Group,
     AssignDeviceRequest,
     AssignPackageRequest,
     AssignPolicyRequest,
+    AssignPriorityRequest,
 )
 from api.v1.middleware import deserialize_schema
 import update.policy
@@ -41,10 +42,11 @@ def model_to_schema(group: models.group.Group) -> Group:
         ],
         metadata=group.info,
         policy=group.policy,
+        priority=group.priority,
     )
 
 
-@groups_blueprint.route("/api/v1/groups")
+@groups_blueprint.route("/api/v2/groups")
 @management_read_only_api
 def fetch_all():
     """Fetch all groups
@@ -59,13 +61,14 @@ def fetch_all():
     :>jsonarr array[integer] devices: currently assigned device identifiers
     :>jsonarr dict[str, str] metadata: group metadata
     :>jsonarr str policy: group update policy
+    :>jsonarr integer priority: group priority
 
 
     **Example Request**
 
     .. sourcecode:: http
 
-        GET /api/v1/groups HTTP/1.1
+        GET /api/v2/groups HTTP/1.1
         Accept: application/json, text/javascript
 
 
@@ -83,7 +86,8 @@ def fetch_all():
                 "id": 1,
                 "packages": [],
                 "metadata": {},
-                "policy": "no_update,"
+                "policy": "no_update,",
+                "priority": 25
             }
         ]
     """
@@ -100,7 +104,7 @@ def fetch_all():
         return api_error("fetching failed", 500)
 
 
-@groups_blueprint.route("/api/v1/groups/<int:identifier>")
+@groups_blueprint.route("/api/v2/groups/<int:identifier>")
 @management_read_only_api
 def fetch_one(identifier: int):
     """Fetch information about a group
@@ -117,13 +121,14 @@ def fetch_one(identifier: int):
     :>json array[integer] devices: currently assigned device identifiers
     :>json dict[str, str] metadata: group metadata
     :>json str policy: group update policy
+    :>json integer priority: group priority
 
 
     **Example Request**
 
     .. sourcecode:: http
 
-        GET /api/v1/groups/1 HTTP/1.1
+        GET /api/v2/groups/1 HTTP/1.1
         Accept: application/json, text/javascript
 
     **Example Response**
@@ -139,7 +144,8 @@ def fetch_one(identifier: int):
             "id": 1,
             "packages": [],
             "metadata": {},
-            "policy": "no_update,"
+            "policy": "no_update,",
+            "priority": 25
         }
     """
     try:
@@ -156,7 +162,7 @@ def fetch_one(identifier: int):
         return api_error("fetching failed", 500)
 
 
-@groups_blueprint.route("/api/v1/groups/<int:identifier>", methods=["DELETE"])
+@groups_blueprint.route("/api/v2/groups/<int:identifier>", methods=["DELETE"])
 @management_read_write_api
 def delete_one(identifier: int):
     """Delete a group
@@ -177,7 +183,7 @@ def delete_one(identifier: int):
 
     .. sourcecode:: http
 
-        DELETE /api/v1/groups/1 HTTP/1.1
+        DELETE /api/v2/groups/1 HTTP/1.1
 
     **Example Response**
 
@@ -204,7 +210,7 @@ def delete_one(identifier: int):
 
 
 @groups_blueprint.route(
-    "/api/v1/groups/<int:identifier>/devices", methods=["PATCH"]
+    "/api/v2/groups/<int:identifier>/devices", methods=["PATCH"]
 )
 @management_read_write_api
 @deserialize_schema(schema_dataclass=AssignDeviceRequest, key="instructions")
@@ -220,7 +226,8 @@ def change_assigned(identifier: int, instructions: AssignDeviceRequest):
 
         - Any device identifier which does not match a registered device
         - Any device identifier in `additions` which already has an assigned
-          group
+          group which has the same priority as the group specified by
+          `identifier`
           (even if the group is the same as specified by `identifier`)
         - Any device identifier in `removals` which is not currently assigned
           to the specified group
@@ -246,7 +253,7 @@ def change_assigned(identifier: int, instructions: AssignDeviceRequest):
 
     .. sourcecode:: http
 
-        PATCH /api/v1/groups/1/devices HTTP/1.1
+        PATCH /api/v2/groups/1/devices HTTP/1.1
         Accept: application/json, text/javascript
 
         {
@@ -286,7 +293,7 @@ def change_assigned(identifier: int, instructions: AssignDeviceRequest):
         return api_error("group assignment modification failed", 500)
 
 
-@groups_blueprint.route("/api/v1/groups", methods=["POST"])
+@groups_blueprint.route("/api/v2/groups", methods=["POST"])
 @management_read_write_api
 def create():
     """Create a new group
@@ -298,18 +305,24 @@ def create():
                  to create groups
     :status 404: group does not exist
 
-    :<json any key: metadata value
+    :<json dict[str, str] metadata: device metadata
+    :<json optional[int] priority: priority of the group, lower value takes
+                                   precedence
 
     **Example request**
 
     .. sourcecode:: http
 
-        POST /api/v1/groups/1 HTTP/1.1
+        POST /api/v2/groups/1 HTTP/1.1
         Content-Type: application/json
         Accept: application/json, text/javascript
 
         {
-            "description": "A test group",
+            priority: 1,
+            "metadata":
+            {
+                "description": "A test group",
+            }
         }
 
 
@@ -325,6 +338,7 @@ def create():
             "devices": [],
             "id": 2,
             "packages": [],
+            "priority": 1,
             "metadata": {
                 "description": "A test group",
             },
@@ -332,14 +346,19 @@ def create():
         }
     """
     try:
-        metadata = request.json
+        metadata = request.json["metadata"]
 
         group = models.group.Group()
         group.created = datetime.datetime.utcnow()
         group.info = metadata
         group.policy = "no_update,"
-        group.priority = GROUP_DEFAULT_PRIORITY
-        server.instance._groups_db.create(group)
+        if "priority" in request.json:
+            group.priority = request.json["priority"]
+        else:
+            group.priority = GROUP_DEFAULT_PRIORITY
+        err = server.instance._groups_db.create(group)
+        if err is not None:
+            return api_error(err, 409)
 
         return Group.Schema().dumps(model_to_schema(group)), 200
     except Exception as e:
@@ -349,7 +368,7 @@ def create():
 
 
 @groups_blueprint.route(
-    "/api/v1/groups/<int:identifier>/package", methods=["POST"]
+    "/api/v2/groups/<int:identifier>/package", methods=["POST"]
 )
 @management_read_write_api
 @deserialize_schema(schema_dataclass=AssignPackageRequest, key="assignment")
@@ -374,7 +393,7 @@ def assign_package(identifier: int, assignment: AssignPackageRequest):
 
     .. sourcecode:: http
 
-        POST /api/v1/groups/1/package HTTP/1.1
+        POST /api/v2/groups/1/package HTTP/1.1
         Content-Type: application/json
         Accept: application/json, text/javascript
 
@@ -409,7 +428,7 @@ def assign_package(identifier: int, assignment: AssignPackageRequest):
 
 
 @groups_blueprint.route(
-    "/api/v1/groups/<int:identifier>/policy", methods=["POST"]
+    "/api/v2/groups/<int:identifier>/policy", methods=["POST"]
 )
 @management_read_write_api
 @deserialize_schema(schema_dataclass=AssignPolicyRequest, key="policy_request")
@@ -436,7 +455,7 @@ def update_policy(identifier: int, policy_request: AssignPolicyRequest):
 
     .. sourcecode:: http
 
-        POST /api/v1/groups/1/policy HTTP/1.1
+        POST /api/v2/groups/1/policy HTTP/1.1
         Content-Type: application/json
         Accept: application/json, text/javascript
 
@@ -467,3 +486,63 @@ def update_policy(identifier: int, policy_request: AssignPolicyRequest):
         traceback.print_exc()
         print("Exception during group policy assignment:", repr(e))
         return api_error("group policy assignment failed", 500)
+
+
+@groups_blueprint.route(
+        "/api/v2/groups/<int:identifier>/priority", methods=["POST"]
+)
+@management_read_write_api
+@deserialize_schema(
+        schema_dataclass=AssignPriorityRequest, key="priority_request"
+)
+def change_priority(identifier: int, priority_request: AssignPriorityRequest):
+    """Change the priority of the group
+
+    The priority controls which group will be applied to a device which is
+    assigned to multiple groups.
+
+    :param identifier: group identifier
+    :status 200: no error
+    :status 401: user did not provide authorization data,
+                 or the authorization has expired
+    :status 403: user was authorized, but did not have permission
+                 to modify groups
+    :status 404: the specified group does not exist
+    :status 409: at least one device which is assigned to this group is also
+    assigned to another group with the requested priority
+
+    :<json int priority: new group priority to set
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        POST /api/v2/groups/1/priority HTTP/1.1
+        Content-Type: application/json
+        Accept: application/json, text/javascript
+
+        {
+            "priority": 1,
+        }
+
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+    """
+    try:
+        if server.instance._groups_db.fetch_one(identifier) is None:
+            return api_error("group does not exist", 404)
+
+        priority: int = priority_request.priority
+        err = server.instance._groups_db.update_priority(identifier, priority)
+        if err is not None:
+            return api_error(err, 409)
+
+        return {}, 200
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception during group priority assignment:", repr(e))
+        return api_error("group priority assignment failed", 500)

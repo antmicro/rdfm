@@ -6,7 +6,7 @@ import models.device
 import json
 from api.v1.common import api_error
 from api.v1.middleware import management_read_only_api
-from rdfm.schema.v1.devices import Device
+from rdfm.schema.v2.devices import Device
 
 
 devices_blueprint: Blueprint = Blueprint("rdfm-server-devices", __name__)
@@ -22,11 +22,11 @@ def model_to_schema(device: models.device.Device) -> Device:
         capabilities=json.loads(device.capabilities),
         metadata=json.loads(device.device_metadata),
         public_key=device.public_key,
-        group=server.instance._devices_db.fetch_active_group(device.id)
+        groups=server.instance._devices_db.fetch_groups(device.id)
     )
 
 
-@devices_blueprint.route("/api/v1/devices")
+@devices_blueprint.route('/api/v2/devices')
 @management_read_only_api
 def fetch_all():
     """Fetch a list of devices registered on the server
@@ -39,7 +39,7 @@ def fetch_all():
     :>jsonarr string last_access: UTC datetime of last access to the server (RFC822)
     :>jsonarr string name: device-reported user friendly name
     :>jsonarr string mac_addr: device-reported MAC address
-    :>jsonarr optional[integer] group: group identifier of assigned group
+    :>jsonarr optional[array[integer]] groups: group identifiers of assigned groups
     :>jsonarr dict[str, str] metadata: device metadata (key/value pairs)
     :>jsonarr dict[str, bool] capabilities: device RDFM client capabilities
 
@@ -66,7 +66,7 @@ def fetch_all():
               "file_transfer": true,
               "shell_connect": true
             },
-            "group": 1,
+            "groups": [1],
             "id": 1,
             "last_access": null,
             "mac_address": "loopback",
@@ -88,10 +88,10 @@ def fetch_all():
         return api_error("device fetching failed", 500)
 
 
-@devices_blueprint.route("/api/v1/devices/<int:identifier>")
+@devices_blueprint.route('/api/v2/devices/<int:identifier>')
 @management_read_only_api
 def fetch_one(identifier: int):
-    """Fetch information about a single device given by the identifier
+    """ Fetch information about a single device given by the identifier
 
     :status 200: no error
     :status 401: user did not provide authorization data,
@@ -102,7 +102,7 @@ def fetch_one(identifier: int):
     :>json string last_access: UTC datetime of last access to the server (RFC822)
     :>json string name: device-reported user friendly name
     :>json string mac_addr: device-reported MAC address
-    :>json optional[integer] group: group identifier of assigned group
+    :>json optional[array[integer]] groups: group identifiers of assigned groups
     :>json dict[str, str] metadata: device metadata (key/value pairs)
     :>json dict[str, bool] capabilities: device RDFM client capabilities
 
@@ -111,7 +111,7 @@ def fetch_one(identifier: int):
 
     .. sourcecode:: http
 
-        GET /api/v1/devices/1 HTTP/1.1
+        GET /api/v2/devices/1 HTTP/1.1
         Accept: application/json, text/javascript
 
 
@@ -128,7 +128,7 @@ def fetch_one(identifier: int):
             "file_transfer": true,
             "shell_connect": true
           },
-          "group": 1,
+          "groups": [1],
           "id": 1,
           "last_access": null,
           "mac_address": "loopback",

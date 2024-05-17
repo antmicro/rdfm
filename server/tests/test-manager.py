@@ -10,6 +10,7 @@ import pexpect
 
 GROUP_NAME = "dummy_group"
 GROUP_DESCRIPTION = "dummy_group_description"
+GROUP_PRIORITY = "25"
 PACKAGE_VERSION = "THIS_IS_A_PACKAGE_VERSION_v0"
 PACKAGE_DEVICE_TYPE = "x86_64"
 DEVICE_MAC = "00:00:00:00:00:00"
@@ -49,7 +50,8 @@ def create_dummy_group():
     """
     return run_manager_command(["--no-api-auth", "groups", "create",
                                 "--name", GROUP_NAME,
-                                "--description", GROUP_DESCRIPTION])
+                                "--description", GROUP_DESCRIPTION,
+                                "--priority", GROUP_PRIORITY])
 
 
 @pytest.fixture
@@ -165,6 +167,7 @@ def test_list_created_group(process, create_dummy_group):
     assert code == 0, "listing groups should succeed"
     assert GROUP_NAME in out, "the output should contain the newly created group name"
     assert GROUP_DESCRIPTION in out, "the output should contain the newly created group description"
+    assert GROUP_PRIORITY in out, "the output should contain the newly created group priority"
 
 
 def test_upload_package(process, upload_dummy_package):

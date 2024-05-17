@@ -5,6 +5,7 @@ import models.device
 from sqlalchemy import select, update
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
+import server
 
 
 class DevicesDB:
@@ -46,6 +47,33 @@ class DevicesDB:
                     models.device.Device.id == identifier
                 )
             )
+
+    def fetch_groups(self, identifier: int) -> List[int]:
+        """Fetch IDs of groups the device with a given identifier
+        is assigned to
+        """
+        with Session(self.engine) as session:
+            return session.scalars(
+                select(models.device.DeviceGroupAssignment.group_id)
+                .where(
+                    models.device.DeviceGroupAssignment.device_id == identifier
+                )
+            ).all()
+
+    def fetch_active_group(self, identifier: int) -> Optional[int]:
+        """ Fetch ID of the group that is active for the device with a given
+        identifier
+        """
+        groups = self.fetch_groups(identifier)
+        if not groups:
+            return None
+
+        prios = []
+        for group_id in groups:
+            g = server.instance._groups_db.fetch_one(group_id)
+            prios.append(g.priority)
+
+        return groups[prios.index(min(prios))]
 
     def insert(self, device: models.device.Device):
         """Add a device to the database

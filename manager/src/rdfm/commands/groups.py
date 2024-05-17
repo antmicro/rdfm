@@ -24,6 +24,7 @@ def list_groups(config: rdfm.config.Config, args) -> Optional[str]:
         )
         print(f"\tAssigned packages: {group.packages}")
         print(f"\tUpdate policy: '{group.policy}'")
+        print(f"\tPriority: '{group.priority}'")
         print("\tGroup metadata:")
         for k, v in group.metadata.items():
             print(f"\t\t{k}: {v}")
@@ -38,7 +39,7 @@ def create_group(config: rdfm.config.Config, args) -> Optional[str]:
     metadata[META_GROUP_NAME] = args.name
     metadata[META_GROUP_DESC] = args.description
 
-    return rdfm.api.groups.create(config, metadata)
+    return rdfm.api.groups.create(config, metadata, args.priority)
 
 
 def delete_group(config: rdfm.config.Config, args) -> Optional[str]:
@@ -77,6 +78,12 @@ def set_target(config: rdfm.config.Config, args) -> Optional[str]:
     return rdfm.api.groups.set_policy(config, args.group_id, policy)
 
 
+def set_group_priority(config: rdfm.config.Config, args) -> Optional[str]:
+    """ CLI entrypoint - setting a priority level for the group
+    """
+    return rdfm.api.groups.set_priority(config, args.group_id, args.priority)
+
+
 def add_groups_parser(parser: argparse._SubParsersAction):
     """Create a parser for the `groups` CLI command tree within
        the given subparser.
@@ -99,6 +106,9 @@ def add_groups_parser(parser: argparse._SubParsersAction):
         "--description", type=str, required=True, help="group description"
     )
     create.add_argument(
+        "--priority", type=int, help="group priority"
+    )
+    create.add_argument(
         "--metadata",
         type=str,
         action="append",
@@ -110,6 +120,17 @@ def add_groups_parser(parser: argparse._SubParsersAction):
     delete.set_defaults(func=delete_group)
     delete.add_argument(
         "--group-id", type=str, required=True, help="group identifier"
+    )
+
+    set_priority = sub.add_parser(
+        "set-priority", help="set the priority level of a group"
+    )
+    set_priority.set_defaults(func=set_group_priority)
+    set_priority.add_argument(
+        "--group-id", type=str, required=True, help="group identifier"
+    )
+    set_priority.add_argument(
+        "--priority", type=int, required=True, help="group priority"
     )
 
     target = sub.add_parser(

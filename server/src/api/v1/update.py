@@ -31,8 +31,9 @@ def check_for_update(device_token: DeviceToken):
     Device clients must call this endpoint with their associated metadata.
     At minimum, the `rdfm.software.version`, `rdfm.hardware.devtype` and
     `rdfm.hardware.macaddr` pairs must be present. Based on this metadata,
-    the device's currently assigned group (if any) and package, an
-    update package is picked from the available ones.
+    the device's currently assigned groups (if any) and package, an
+    update package is picked from the available ones. If more than one group is
+    assigned, the group with the lowest priority value takes precedence.
 
     :status 200: an update is available
     :status 204: no updates are available
@@ -110,14 +111,17 @@ def check_for_update(device_token: DeviceToken):
                 "provided MAC address does not match any device", 500
             )
 
+        # Select the active group
+        group_id = server.instance._devices_db.fetch_active_group(device.id)
+
         # If the device is not assigned to any group, there's no updates
         # to hand out to it
-        if device.group is None:
+        if group_id is None:
             return {}, 204
 
         group: Optional[
-            models.group.Group
-        ] = server.instance._groups_db.fetch_one(device.group)
+                models.group.Group
+        ] = server.instance._groups_db.fetch_one(group_id)
         if group is None:
             # Because of DB constraints, this should never happen
             return api_error("device-assigned group does not exist", 500)
