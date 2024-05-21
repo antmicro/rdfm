@@ -11,9 +11,11 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"rdfm-mcumgr-client/mcumgr"
 	"strings"
 	"time"
+
+	"rdfm-mcumgr-client/agent/device"
+	"rdfm-mcumgr-client/rdfm/api"
 )
 
 const rdfmAuthorizationHeader = "X-RDFM-Device-Signature"
@@ -37,14 +39,10 @@ func InitClient(rdfmHostname string) (*RdfmClient, error) {
 	}, nil
 }
 
-func (rc *RdfmClient) AuthorizeDevice(d *mcumgr.Device) (bool, error) {
-	reqBody := AuthorizeReq{
-		Metadata: DeviceMetadata{
-			DeviceType:      d.Config.DevType,
-			SoftwareVersion: d.PrimaryImage.Version,
-			MacAddress:      d.Config.Id,
-		},
-		PublicKey: d.Key.PubKeyPEM(),
+func (rc *RdfmClient) AuthorizeDevice(d device.Device) (bool, error) {
+	reqBody := api.AuthorizeReq{
+		Metadata:  d.Metadata(),
+		PublicKey: d.Key().PubKeyPEM(),
 		Timestamp: time.Now().Unix(),
 	}
 
@@ -59,7 +57,7 @@ func (rc *RdfmClient) AuthorizeDevice(d *mcumgr.Device) (bool, error) {
 		return false, errors.New("Failed to create new request")
 	}
 
-	signature, err := d.Key.SignPayload(reqJson)
+	signature, err := d.Key().SignPayload(reqJson)
 	if err != nil {
 		return false, errors.New("Failed to sign message")
 	}
@@ -73,7 +71,7 @@ func (rc *RdfmClient) AuthorizeDevice(d *mcumgr.Device) (bool, error) {
 
 	switch resp.StatusCode {
 	case 200:
-		var authResp AuthorizeRes
+		var authResp api.AuthorizeRes
 		decoder := json.NewDecoder(resp.Body)
 
 		if err := decoder.Decode(&authResp); err != nil {
@@ -89,7 +87,7 @@ func (rc *RdfmClient) AuthorizeDevice(d *mcumgr.Device) (bool, error) {
 	}
 }
 
-func (rc *RdfmClient) UpdateCheck(d *mcumgr.Device) (*UpdateCheckRes, error) {
+func (rc *RdfmClient) UpdateCheck(d device.Device) (*api.UpdateCheckRes, error) {
 	isAuth, err := rc.AuthorizeDevice(d)
 	if err != nil {
 		return nil, err
@@ -98,12 +96,8 @@ func (rc *RdfmClient) UpdateCheck(d *mcumgr.Device) (*UpdateCheckRes, error) {
 		return nil, errors.New("Server did not authorize this device")
 	}
 
-	reqBody := UpdateCheckReq{
-		DeviceMetadata{
-			DeviceType:      d.Config.DevType,
-			SoftwareVersion: d.PrimaryImage.Version,
-			MacAddress:      d.Config.Id,
-		},
+	reqBody := api.UpdateCheckReq{
+		DeviceMetadata: d.Metadata(),
 	}
 
 	reqJson, err := json.Marshal(reqBody)
@@ -121,7 +115,7 @@ func (rc *RdfmClient) UpdateCheck(d *mcumgr.Device) (*UpdateCheckRes, error) {
 
 	switch resp.StatusCode {
 	case 200:
-		var ucRes UpdateCheckRes
+		var ucRes api.UpdateCheckRes
 		decoder := json.NewDecoder(resp.Body)
 
 		if err := decoder.Decode(&ucRes); err != nil {
@@ -140,7 +134,7 @@ func (rc *RdfmClient) UpdateCheck(d *mcumgr.Device) (*UpdateCheckRes, error) {
 	}
 }
 
-func (rc *RdfmClient) FetchUpdateArtifact(update *UpdateCheckRes) ([]byte, error) {
+func (rc *RdfmClient) FetchUpdateArtifact(update *api.UpdateCheckRes) ([]byte, error) {
 	resp, err := rc.client.Get(update.Uri)
 	if err != nil {
 		return nil, errors.New("Failed to send fetch update request")

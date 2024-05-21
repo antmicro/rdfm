@@ -1,6 +1,6 @@
 module rdfm-mcumgr-client
 
-go 1.21
+go 1.22
 
 require (
 	github.com/mendersoftware/mender-artifact v0.0.0-20240108122953-c1dab739372d

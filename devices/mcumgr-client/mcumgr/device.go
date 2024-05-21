@@ -3,7 +3,6 @@ package mcumgr
 import (
 	"errors"
 	"log/slog"
-	"path"
 
 	"rdfm-mcumgr-client/appcfg"
 	"rdfm-mcumgr-client/mcumgr/transport"
@@ -12,18 +11,17 @@ import (
 )
 
 type Device struct {
-	Config    appcfg.DeviceConfig
+	Config    appcfg.TransportConfig
 	Transport transport.Transport
-	Key       *DeviceKey
 
 	PrimaryImage *nmp.ImageStateEntry
 
 	Log *slog.Logger
 }
 
-func InitDevice(cfg appcfg.DeviceConfig, keyBasePath string, log *slog.Logger) (*Device, error) {
-	log.Debug("Initializing device transport", slog.String("type", cfg.Transport.Type))
-	transport, err := transport.InitTransport(cfg.Transport)
+func InitDevice(cfg appcfg.TransportConfig, log *slog.Logger) (*Device, error) {
+	log.Debug("Initializing device transport", slog.String("type", cfg.Type))
+	transport, err := transport.InitTransport(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -54,15 +52,9 @@ func InitDevice(cfg appcfg.DeviceConfig, keyBasePath string, log *slog.Logger) (
 		}
 	}
 
-	devKey, err := InitDeviceKey(path.Join(keyBasePath, cfg.Key), log)
-	if err != nil {
-		return nil, err
-	}
-
 	return &Device{
 		Config:       cfg,
 		Transport:    transport,
-		Key:          devKey,
 		PrimaryImage: &images[0],
 		Log:          log,
 	}, nil

@@ -1,4 +1,4 @@
-package rdfm
+package api
 
 type DeviceMetadata struct {
 	DeviceType      string `json:"rdfm.hardware.devtype"`

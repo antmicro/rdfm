@@ -21,13 +21,8 @@ type ZephyrArtifact struct {
 }
 
 func ExtractZephyrArtifact(reader *areader.Reader) (*ZephyrArtifact, error) {
-	f, store := NewMemStoreFactory()
-
-	for _, v := range reader.GetHandlers() {
-		v.SetUpdateStorerProducer(f)
-	}
-
-	if err := reader.ReadArtifactData(); err != nil {
+	store, err := ReadArtifactToMem(reader)
+	if err != nil {
 		return nil, err
 	}
 
@@ -41,35 +36,7 @@ func ExtractZephyrArtifact(reader *areader.Reader) (*ZephyrArtifact, error) {
 		image = v
 	}
 
-	// Depends extraction
-	depends, err := reader.MergeArtifactDepends()
-	if err != nil {
-		return nil, err
-	}
-
-	depErr := func() error { return errors.New(fmt.Sprintf("Artifact should contain list of compatible devices")) }
-
-	comp, ok := depends["device_type"]
-	if !ok {
-		return nil, depErr()
-	}
-
-	compArr, ok := comp.([]interface{})
-	if !ok {
-		return nil, depErr()
-	}
-
-	compatible := make([]string, 0, len(compArr))
-	for _, v := range compArr {
-		vStr, ok := v.(string)
-		if !ok {
-			return nil, depErr()
-		}
-		compatible = append(compatible, vStr)
-	}
-
-	// Provides extraction
-	provides, err := reader.MergeArtifactProvides()
+	compatible, provides, err := ExtractArtifactCommon(reader)
 	if err != nil {
 		return nil, err
 	}
@@ -97,5 +64,5 @@ func ExtractZephyrArtifact(reader *areader.Reader) (*ZephyrArtifact, error) {
 }
 
 func (za *ZephyrArtifact) String() string {
-	return fmt.Sprintf("Zephyr artifact - version %s, size %d bytes", za.Version, len(za.Image))
+	return fmt.Sprintf("Zephyr artifact: version %s, size %d bytes", za.Version, len(za.Image))
 }

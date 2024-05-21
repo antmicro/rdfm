@@ -1,4 +1,4 @@
-package mcumgr
+package device
 
 import (
 	"crypto"

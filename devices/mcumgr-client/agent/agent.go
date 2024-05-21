@@ -1,157 +1,116 @@
 package agent
 
 import (
-	"bytes"
-	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
-	"rdfm-mcumgr-client/appcfg"
-	"rdfm-mcumgr-client/mcumgr"
-	"rdfm-mcumgr-client/rdfm"
-	"rdfm-mcumgr-client/rdfm/artifact"
 	"sync"
 	"syscall"
 	"time"
 
+	"rdfm-mcumgr-client/agent/device"
+	"rdfm-mcumgr-client/appcfg"
+	"rdfm-mcumgr-client/rdfm"
+
 	"mynewt.apache.org/newtmgr/nmxact/nmxutil"
 )
 
-// Main entrypoint that tries to initialize each device
-// and starts its poll update loop
+// RDFM client shared between all devices
+var rdfmClient *rdfm.RdfmClient
+
+// Main entrypoint
 func Run(cfg appcfg.AppConfig, verbose bool) {
 	var wg sync.WaitGroup
 
 	log := appLogger(verbose)
 	log.Info("Starting client", slog.String("server", cfg.Server))
 
-	exitChs := make(chan chan<- any, len(cfg.Devices))
+	// Setup RDFM client
+	client, err := rdfm.InitClient(cfg.Server)
+	if err != nil {
+		logErr("RDFM client setup failed", log, err)
+		return
+	}
+	rdfmClient = client
+
+	exitChs := make(chan chan<- any, len(cfg.Devices)+len(cfg.Groups))
 
 	log.Debug("Configuring devices", slog.Int("devices", len(cfg.Devices)))
-	for _, devcfg := range cfg.Devices {
-		go func(devcfg appcfg.DeviceConfig) {
-			dLog := log.With(slog.String("device", devcfg.Name))
+	for _, dCfg := range cfg.Devices {
 
-			// Use global value if device config doesn't specify otherwise
-			if devcfg.UpdateInterval == nil {
-				devcfg.UpdateInterval = cfg.UpdateInterval
-			}
-
-			dev, err := mcumgr.InitDevice(devcfg, cfg.KeyDir, dLog)
-			if err != nil {
-				logErr("Device setup failed", dLog, err)
-				return
-			}
-
-			client, err := rdfm.InitClient(cfg.Server)
-			if err != nil {
-				logErr("RDFM client setup failed", dLog, err)
-				return
-			}
-
-			attemptRetry := cfg.Retries > 0
-
-			exitCh := make(chan any, 1)
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-
-				retries := cfg.Retries
-
-				dLog.Info("Configuration successful", slog.String("version", dev.PrimaryImage.Version))
-				for {
-					if success := runUpdateTask(client, dev); !success && attemptRetry {
-						if retries -= 1; retries == 0 {
-							dLog.Error(fmt.Sprintf("Device failed to update after %d attempt(s)", cfg.Retries))
-							return
-						}
-					} else {
-						retries = cfg.Retries
-					}
-
-					select {
-					case <-time.After(*cfg.UpdateInterval):
-						continue
-					case <-exitCh:
-						dLog.Info("Exiting")
-						return
-					}
-				}
-			}()
-
-			exitChs <- exitCh
-		}(devcfg)
+		wg.Add(1)
+		go startSingle(dCfg, &cfg, &wg, exitChs, log)
 	}
 
+	log.Debug("Configuring groups", slog.Int("groups", len(cfg.Groups)))
+	for _, gCfg := range cfg.Groups {
+
+		wg.Add(1)
+		go startGroup(gCfg, &cfg, &wg, exitChs, log)
+	}
+
+	// Setup exit handler
+	go exitSignal(exitChs, log)
+
+	wg.Wait()
+	log.Info("All devices stopped")
+}
+
+func startSingle(dCfg appcfg.DeviceConfig, cfg *appcfg.AppConfig, wg *sync.WaitGroup, exitChs chan chan<- any, log *slog.Logger) {
+	defer wg.Done()
+	dLog := log.With(slog.String("device", dCfg.Name))
+
+	// Use global defaults
+	if dCfg.UpdateInterval == nil {
+		dCfg.UpdateInterval = cfg.UpdateInterval
+	}
+
+	dev, err := device.InitSingle(dCfg, cfg, dLog)
+	if err != nil {
+		logErr("Device setup failed", dLog, err)
+		return
+	}
+	dLog.Info("Configuration successful", slog.String("version", dev.Version()))
+
+	updateLoop(dev, cfg.Retries, *dev.Cfg.UpdateInterval, exitChs)
+}
+
+func startGroup(gCfg appcfg.GroupConfig, cfg *appcfg.AppConfig, wg *sync.WaitGroup, exitChs chan chan<- any, log *slog.Logger) {
+	defer wg.Done()
+	gLog := log.With(slog.String("group", gCfg.Name))
+
+	// Use global defaults
+	if gCfg.UpdateInterval == nil {
+		gCfg.UpdateInterval = cfg.UpdateInterval
+	}
+
+	group, err := device.InitGroup(gCfg, cfg, gLog)
+	if err != nil {
+		logErr("Group setup failed", gLog, err)
+		return
+	}
+	gLog.Info("Configuration successful", slog.String("version", group.Version()), slog.Int("members", group.Members()))
+
+	updateLoop(group, cfg.Retries, *group.Cfg.UpdateInterval, exitChs)
+}
+
+func exitSignal(exitChs chan chan<- any, log *slog.Logger) {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM)
 
-	// Wait for exit
 	<-sigCh
 
-	log.Info("Exit requested. Waiting for devices")
+	log.Info("Requesting exit from devices...")
 	for len(exitChs) > 0 {
 		c := <-exitChs
 		c <- nil
 	}
 	close(exitChs)
 
-	// Setup forced exit
-	go func() {
-		timeout := time.Minute
-		<-time.After(timeout)
-		log.Error(fmt.Sprintf("Forced exit after %v", timeout))
-		os.Exit(1)
-	}()
-
-	wg.Wait()
-}
-
-// Main task that drives the update loop
-// It acts as glue that handles RDFM <-> mcumgr connection
-func runUpdateTask(client *rdfm.RdfmClient, device *mcumgr.Device) bool {
-	device.Log.Debug("Checking for updates")
-	update, err := client.UpdateCheck(device)
-	if err != nil {
-		logErr("Checking for update failed", device.Log, err)
-		return false
-	}
-
-	// No updates
-	if update == nil {
-		return true
-	}
-
-	device.Log.Info("Fetching new update")
-	artBytes, err := client.FetchUpdateArtifact(update)
-	if err != nil {
-		logErr("Fetching update failed", device.Log, err)
-		return false
-	}
-
-	art, err := artifact.ExtractArtifact(bytes.NewBuffer(artBytes))
-	if err != nil {
-		logErr("Artifact extraction failed", device.Log, err)
-		return false
-	}
-
-	device.Log.Debug("Extracted artifact", slog.String("artifact", art.String()))
-
-	// Pick device updater based on artifact type
-	switch a := art.(type) {
-	case *artifact.ZephyrArtifact:
-		// Update for individual Zephyr device
-		if err := RunDeviceUpdate(a, device); err != nil {
-			logErr("Failed to update device", device.Log, err)
-			return false
-		}
-
-		device.Log.Info("Update successful", slog.String("new_version", device.PrimaryImage.Version))
-	default:
-		device.Log.Error("Unsupported artifact type", slog.String("type", fmt.Sprintf("%T", a)))
-	}
-
-	return true
+	// Force exit after timeout passes
+	<-time.After(time.Minute)
+	log.Error("Forced exit")
+	os.Exit(1)
 }
 
 func appLogger(verbose bool) *slog.Logger {
@@ -159,11 +118,7 @@ func appLogger(verbose bool) *slog.Logger {
 	nmxutil.SetLogLevel(0)
 
 	if verbose {
-		//TODO: Use `slog.SetLogLoggerLevel` instead of this when go 1.22 releases
-		handler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-			Level: slog.LevelDebug,
-		})
-		return slog.New(handler)
+		slog.SetLogLoggerLevel(slog.LevelDebug)
 	}
 
 	return slog.Default()

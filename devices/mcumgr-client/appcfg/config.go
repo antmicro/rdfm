@@ -27,13 +27,35 @@ type TransportConfig struct {
 	UDPConfig    `mapstructure:",squash"`
 }
 
+type IdConfig struct {
+	Name string
+	Id   string
+}
+
 type DeviceConfig struct {
-	Name           string
-	Id             string
-	DevType        string         `mapstructure:"dev_type"`
-	UpdateInterval *time.Duration `mapstructure:"update_interval,omitempty"`
+	IdConfig `mapstructure:",squash"`
+
+	DevType        string `mapstructure:"dev_type"`
 	Key            string
+	UpdateInterval *time.Duration `mapstructure:"update_interval,omitempty"`
 	Transport      TransportConfig
+}
+
+type GroupMemberConfig struct {
+	Name   string
+	Device string
+
+	Transport TransportConfig
+}
+
+type GroupConfig struct {
+	IdConfig `mapstructure:",squash"`
+
+	Type           string
+	Key            string
+	UpdateInterval *time.Duration `mapstructure:"update_interval,omitempty"`
+
+	Members []GroupMemberConfig
 }
 
 type AppConfig struct {
@@ -43,6 +65,8 @@ type AppConfig struct {
 	UpdateInterval *time.Duration `mapstructure:"update_interval"`
 
 	Devices []DeviceConfig
+
+	Groups []GroupConfig
 
 	logVerbose bool
 }

@@ -1,7 +1,6 @@
 package transport
 
 import (
-	"errors"
 	"fmt"
 	"rdfm-mcumgr-client/appcfg"
 	"sync"
@@ -22,12 +21,12 @@ func InitSerialTransport(cfg appcfg.SerialConfig) (*SerialTransport, error) {
 	sc.DevPath = cfg.Device
 	sc.Baud = cfg.Baud
 	sc.Mtu = cfg.Mtu
-	sc.ReadTimeout = 10 * time.Second
+	sc.ReadTimeout = 20 * time.Second
 
 	xport := nmserial.NewSerialXport(sc)
 
 	if err := xport.Start(); err != nil {
-		return nil, errors.New(fmt.Sprintf("Failed initializing serial transport %s (err: %s)", cfg.Device, err))
+		return nil, fmt.Errorf("Failed initializing serial transport %s (err: %s)", cfg.Device, err)
 	}
 
 	return &SerialTransport{
@@ -50,12 +49,12 @@ func (st *SerialTransport) AcqSession() (Session, error) {
 	session, err := st.Xport.BuildSesn(cfg)
 	if err != nil {
 		st.Lock.Unlock()
-		return nil, errors.New(fmt.Sprintf("Failed building serial session %s (err: %s)", st.Id(), err))
+		return nil, fmt.Errorf("Failed building serial session %s (err: %s)", st.Id(), err)
 	}
 
 	if err := session.Open(); err != nil {
 		st.Lock.Unlock()
-		return nil, errors.New(fmt.Sprintf("Failed to open serial connection %s (err: %s)", st.Id(), err))
+		return nil, fmt.Errorf("Failed to open serial connection %s (err: %s)", st.Id(), err)
 	}
 
 	return NewSession(session, &st.Lock), nil

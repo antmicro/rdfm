@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/mendersoftware/mender-artifact/areader"
 	"github.com/mendersoftware/mender-artifact/artifact"
 	"github.com/mendersoftware/mender-artifact/handlers"
 )
@@ -49,6 +50,22 @@ func NewMemStoreFactory() (MemStoreFactory, *MemStore) {
 		&MemStore{},
 	}
 	return f, f.MemStore
+}
+
+// Util for setting `MemStore` as target & reading
+// in the artifact
+func ReadArtifactToMem(reader *areader.Reader) (*MemStore, error) {
+	f, store := NewMemStoreFactory()
+
+	for _, v := range reader.GetHandlers() {
+		v.SetUpdateStorerProducer(f)
+	}
+
+	if err := reader.ReadArtifactData(); err != nil {
+		return nil, err
+	}
+
+	return store, nil
 }
 
 // Needed to satisfy `UpdateStorerProducer` interface
