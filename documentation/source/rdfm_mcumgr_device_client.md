@@ -21,7 +21,7 @@ Specifically:
 ### Requirements
 
 * C compiler
-* Go compiler (1.21+)
+* Go compiler (1.22+)
 * liblzma-dev and libssl-dev packages
 
 ### Steps
@@ -303,6 +303,17 @@ rdfm-mcumgr-client --help
     - `update_interval` - (optional) override global `update_interval` for this device
     - `transport` - specifies the transport type for the device and it's specific options
 
+- `groups` - an array containing configuration for device groups
+    - `name` - display name for group, used for logging
+    - `id` - unique group identifier used when communicating with RDFM server
+    - `type` - type reported to RDFM server to specify compatible artifacts
+    - `key` - name of the file containing group private key in PEM format. Key should be stored in `key_dir` directory.
+    - `update_interval` - (optional) override global `update_interval` for this group
+    - `members` - an array containing configuration for each device that's a member of this group
+        - `name` - display name for device, used for logging
+        - `device` - name of target image to match from an artifact
+        - `transport` - specifies the transport type for the device and its specific options
+
 Transport specific:
 - `type` - specific transport type for this device. Currently supported: `ble`, `serial`, `udp`
 
@@ -318,51 +329,88 @@ Transport specific:
 * UDP transport:
     - `address`: IPv4 / IPv6 address and port in `IP`:`port` form
 
+### Device groups
+
+The client supports grouping multiple Zephyr MCUboot boards to act as one complete device from management server's perspective.
+While each device in a group can be running different Zephyr application,
+all devices are synchronized by the MCUmgr client to be running the exact same software version.
+Group updates are performed using [zephyr group artifacts](./rdfm_artifact.md#creating-a-zephyr-mcuboot-group-artifact)
+which contain update images for each member of the group and metadata on how to match image to device.
+
+During an update, the MCUmgr client matches each image to its target member and tries to apply it.
+Group update is considered successful only if **all** members of the group went through the update process without errors.
+Otherwise all members are rolled back by the client to the previous version.
+
 ### Example configuration
 
 ```json
+{
+  "server": "http://localhost:5000",
+  "key_dir": "keys",
+  "update_interval": "10s",
+  "retries": 3,
+  "devices": [
     {
-        "server": "http://localhost:5000",
-        "key_dir": "keys",
-        "update_interval": "10s",
-        "retries": 3,
-        "devices": [
-            {
-                "name": "zephyr-ble",
-                "id": "11:11:11:11:11:11",
-                "dev_type": "zeph-ble",
-                "update_interval": "15s",
-                "key": "ble.key",
-                "transport": {
-                    "type": "ble",
-                    "device_index": 0,
-                    "peer_name": "test0"
-                }
-            },
-            {
-                "name": "zephyr-serial",
-                "id": "22:22:22:22:22:22",
-                "dev_type": "zeph-ser",
-                "key": "serial.key",
-                "transport": {
-                    "type": "serial",
-                    "device": "/dev/ttyACM0",
-                    "baud": 115200,
-                    "mtu": 128
-                }
-            },
-            {
-                "name": "zephyr-udp",
-                "id": "33:33:33:33:33:33",
-                "dev_type": "zeph-udp",
-                "key": "udp.key",
-                "transport": {
-                    "type": "udp",
-                    "address": "192.168.1.1:1337"
-                }
-            }
-        ]
+      "name": "zephyr-ble",
+      "id": "11:11:11:11:11:11",
+      "dev_type": "zeph-ble",
+      "update_interval": "15s",
+      "key": "ble.key",
+      "transport": {
+        "type": "ble",
+        "device_index": 0,
+        "peer_name": "test0"
+      }
+    },
+    {
+      "name": "zephyr-serial",
+      "id": "22:22:22:22:22:22",
+      "dev_type": "zeph-ser",
+      "key": "serial.key",
+      "transport": {
+        "type": "serial",
+        "device": "/dev/ttyACM0",
+        "baud": 115200,
+        "mtu": 128
+      }
     }
+  ],
+  "groups": [
+    {
+      "name": "group-one",
+      "id": "gr1",
+      "type": "group1",
+      "key": "group1.key",
+      "members": [
+        {
+          "name": "udpl",
+          "device": "udp-left",
+          "transport": {
+            "type": "udp",
+            "address": "192.168.1.2:1337"
+          }
+        },
+        {
+          "name": "udpr",
+          "device": "udp-right",
+          "transport": {
+            "type": "udp",
+            "address": "192.168.1.3:1337"
+          }
+        },
+        {
+          "name": "bleh",
+          "device": "ble",
+          "transport": {
+            "type": "ble",
+            "device_index": 0,
+            "peer_name": "ble_head",
+          }
+        }
+      ]
+    }
+  ]
+}
 ```
 
 ### Device keys

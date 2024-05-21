@@ -9,6 +9,7 @@ Additionally, `rdfm-artifact` allows for the generation of delta updates, which 
 This can be useful for reducing the size of updates and improving the efficiency of the deployment process.
 
 `rdfm-artifact` can also be used for generation of Zephyr MCUboot artifacts, which allows for updating embedded devices running Zephyr.
+Additionally, multiple Zephyr images can be combined into one grouped artifact to allow multiple boards to act as one logical device.
 
 ## Getting started
 
@@ -46,6 +47,7 @@ COMMANDS:
    rootfs-image        Create a full rootfs image artifact
    delta-rootfs-image  Create a delta rootfs artifact
    zephyr-image        Create a full Zephyr MCUboot image artifact
+   zephyr-group-image  Create a Zephyr MCUboot group image artifact
 
 OPTIONS:
    --help, -h  show help
@@ -94,6 +96,26 @@ rdfm-artifact write zephyr-image \
    --device-type "my-device-type" \
    --output-path "path-to-output.rdfm"
 ```
+
+### Creating a Zephyr MCUboot group artifact
+
+To create a grouped Zephyr MCUboot artifact, you should have already created at least two Zephyr images with MCUboot support enabled.
+The version of individual images in a grouped artifact must be identical.
+
+Given images `one.bin` and `two.bin` for group targets `one` and `two` respectively, an artifact can be generated with:
+
+```
+rdfm-artifact write zephyr-group-image \
+	--group-type "my-group" \
+	--target "one:one.bin" \
+	--target "two:two.bin" \
+	--ouptput-path "path-to-output.rdfm"
+```
+
+:::{note}
+It's possible to create a grouped artifact with just one image,
+however in cases like that you should create simple [zephyr-image](#creating-a-zephyr-mcuboot-artifact) instead.
+:::
 
 ## Running tests
 
