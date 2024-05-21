@@ -78,13 +78,13 @@ func TestWriteGroupArtifact(t *testing.T) {
 	files := inst[0].GetUpdateFiles()
 	assert.Equal(t, 2, len(files))
 
-	for i, tt := range []struct {
-		name, checksum string
-	}{
-		{"one", "c80255d84ba460b36da8974a7587665c5dfde62ba7d7ad2669c91e75263f651f"},
-		{"two", "8babae5135c204f35ca8397f8bfffcef8e06f25d727fa4a8e26734a0382e4c70"},
-	} {
-		assert.Equal(t, files[i].Name, tt.name)
-		assert.Equal(t, string(files[i].Checksum), tt.checksum)
+	tt := map[string]string{
+		"one": "c80255d84ba460b36da8974a7587665c5dfde62ba7d7ad2669c91e75263f651f",
+		"two": "8babae5135c204f35ca8397f8bfffcef8e06f25d727fa4a8e26734a0382e4c70",
+	}
+	for _, file := range files {
+		checksum, ok := tt[file.Name]
+		assert.Equal(t, true, ok)
+		assert.Equal(t, string(file.Checksum), checksum)
 	}
 }

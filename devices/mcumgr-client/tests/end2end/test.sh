@@ -11,6 +11,7 @@ CLIENT_PID=""
 
 serial_dev="serial"
 udp_dev="udp"
+group_dev="group"
 
 target_version="2.1.2+34"
 
@@ -21,7 +22,7 @@ _log_info()
 
 start_renode() {
     net_if="testTap0"
-    net_addr="192.0.2.2/24"
+    net_addr="192.0.2.1/24"
 
     _log_info "Starting Renode"
 
@@ -33,8 +34,12 @@ start_renode() {
             -e 'start' &>/dev/null &
     RENODE_PID=$!
 
-    while [ ! -e /tmp/uartDemo ]; do
-        echo "Waiting for serial device..."
+    while [ ! -e /tmp/uartDemo1 ]; do
+        echo "Waiting for serial devices..."
+        sleep 2
+    done
+    while [ ! -e /tmp/uartDemo2 ]; do
+        echo "Waiting for serial devices..."
         sleep 2
     done
 
@@ -85,6 +90,35 @@ start_mcumgr_client() {
     echo "MCUmgr RDFM client started ($CLIENT_PID)"
 }
 
+_upload_artifact() {
+    local mgmt="rdfm-mgmt --no-api-auth"
+
+    $mgmt packages upload \
+        --path "$1.rdfm" \
+        --device $1 \
+        --version $target_version
+
+    echo "Setting up device group"
+    $mgmt groups create \
+        --name $1 \
+        --description $1
+
+    $mgmt groups assign-package \
+        --package-id $2 \
+        --group-id $2
+
+    $mgmt groups target-version \
+        --group-id $2 \
+        --version $target_version
+
+    echo "Assigning device to group"
+    $mgmt devices auth $3
+
+    $mgmt groups modify-devices \
+        --group-id $2 \
+        --add $2
+}
+
 _dev_id=1
 _setup_device() {
     local art="rdfm-artifact"
@@ -104,30 +138,28 @@ _setup_device() {
         --device-type $1 \
         --file "$samples_dir/$1.signed.bin"
 
-    $mgmt packages upload \
-        --path "$1.rdfm" \
-        --device $1 \
-        --version $target_version
+    _upload_artifact $1 $id $mac_addr
+}
 
-    echo "Setting up device group"
-    $mgmt groups create \
-        --name $1 \
-        --description $1
+_setup_group() {
+    local art="rdfm-artifact"
+    local mgmt="rdfm-mgmt --no-api-auth"
 
-    $mgmt groups assign-package \
-        --package-id $id \
-        --group-id $id
+    local id=$(( _dev_id++ ))
 
-    $mgmt groups target-version \
-        --group-id $id \
-        --version $target_version
+    echo "Setting up '$1' group"
 
-    echo "Assigning device to group"
-    $mgmt devices auth $mac_addr
+    echo "Checking group key"
+    openssl rsa -check -in "$base_dir/keys/$1.key" | grep "RSA key ok" &> /dev/null
 
-    $mgmt groups modify-devices \
-        --group-id $id \
-        --add $id
+    echo "Creating artifact"
+    $art write zephyr-group-image \
+        --output-path "$1.rdfm" \
+        --group-type $1 \
+        --target "$2-gr:$samples_dir/$2-gr.signed.bin" \
+        --target "$3-gr:$samples_dir/$3-gr.signed.bin"
+
+    _upload_artifact $1 $id $1
 }
 
 setup_devices() {
@@ -140,6 +172,8 @@ setup_devices() {
 
     _setup_device $serial_dev
     _setup_device $udp_dev
+
+    _setup_group $group_dev $serial_dev $udp_dev
 }
 
 run_test() {
@@ -168,7 +202,7 @@ run_test() {
             exit 1
         fi
 
-        if [ `grep -m 2 -c "new_version=$target_version" "$base_dir/client.log"` -eq 2 ]; then
+        if [ `grep -m 3 -c "new_version=$target_version" "$base_dir/client.log"` -eq 3 ]; then
             _log_info "Update finished"
             exit 0
         fi

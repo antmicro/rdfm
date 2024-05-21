@@ -238,8 +238,8 @@ test-rdfm-client-docker:
 .mcumgr-client:
   <<: *ace
   before_script:
-    # HACK: Currently CI ships Go 1.19, while the client needs 1.21+
-    - wget --quiet -O - "https://go.dev/dl/go1.21.4.linux-amd64.tar.gz" | tar xz
+    # HACK: Currently CI ships Go 1.19, while the client needs 1.22+
+    - wget --quiet -O - "https://go.dev/dl/go1.22.1.linux-amd64.tar.gz" | tar xz
 
 build-mcumgr-client:
   extends: .mcumgr-client
@@ -267,6 +267,10 @@ build-mcumgr-test-samples:
     expire_in: 1 day
     paths:
       - devices/mcumgr-client/tests/out
+  only:
+    refs:
+      - merge_requests
+      - main
 
 test-mcumgr-client:
   extends: .mcumgr-client

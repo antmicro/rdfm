@@ -65,21 +65,21 @@ build_smp_sample() {
             "${@:4}"
 }
 
-# overlay_type, board_type, ...rest
+# overlay_type, out_file, board_type, ...rest
 build_samples() {
     build_smp_sample \
         "$1" \
-        "$2" \
+        "$3" \
         "$version1" \
-        "${@:3}"
-    cp "$1/zephyr/zephyr.signed.hex" "$out_dir/$1.signed.hex"
+        "${@:4}"
+    cp "$1/zephyr/zephyr.signed.hex" "$out_dir/$2.signed.hex"
 
     build_smp_sample \
         "$1" \
-        "$2" \
+        "$3" \
         "$version2" \
-        "${@:3}"
-    cp "$1/zephyr/zephyr.signed.bin" "$out_dir/$1.signed.bin"
+        "${@:4}"
+    cp "$1/zephyr/zephyr.signed.bin" "$out_dir/$2.signed.bin"
 }
 
 
@@ -97,15 +97,31 @@ build_mcuboot udp \
     -DDTC_OVERLAY_FILE="$udp_overlay;app.overlay" \
     -DCONFIG_BOOT_SWAP_USING_SCRATCH=y
 
-# Build serial samples
+# Build serial sample
 build_samples serial \
+    serial \
     "$serial_board" \
     -DCONFIG_MCUBOOT_BOOTLOADER_MODE_SWAP_WITHOUT_SCRATCH=y
 
-# Build udp samples
+# Build udp sample
 build_samples udp \
+    udp \
     "$udp_board" \
-    -DCONFIG_NET_CONFIG_MY_IPV4_ADDR="\"192.0.2.1\"" \
+    -DCONFIG_NET_CONFIG_MY_IPV4_ADDR="\"192.0.2.2\"" \
+    -DCONFIG_ETH_STM32_HAL_API_V1=y \
+    -DDTC_OVERLAY_FILE="$udp_overlay" \
+    -DCONFIG_MCUBOOT_BOOTLOADER_MODE_SWAP_SCRATCH=y
+
+# Build group device sample
+build_samples serial \
+    serial-gr \
+    "$serial_board" \
+    -DCONFIG_MCUBOOT_BOOTLOADER_MODE_SWAP_WITHOUT_SCRATCH=y
+
+build_samples udp \
+    udp-gr \
+    "$udp_board" \
+    -DCONFIG_NET_CONFIG_MY_IPV4_ADDR="\"192.0.2.3\"" \
     -DCONFIG_ETH_STM32_HAL_API_V1=y \
     -DDTC_OVERLAY_FILE="$udp_overlay" \
     -DCONFIG_MCUBOOT_BOOTLOADER_MODE_SWAP_SCRATCH=y

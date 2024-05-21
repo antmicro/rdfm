@@ -1,12 +1,15 @@
 using sysbus
 
+emulation CreateTap "testTap0" "tap"
+
+# Serial sample
 mach create
 machine LoadPlatformDescription @platforms/cpus/nrf52840.repl
 
 $serialBoot?=@./tests/out/serial.elf
 $serialImg?=@./tests/out/serial.signed.hex
 
-emulation CreateUartPtyTerminal "term" "/tmp/uartDemo" true
+emulation CreateUartPtyTerminal "term" "/tmp/uartDemo1" true
 connector Connect sysbus.uart0 term
 
 # showAnalyzer uart0
@@ -21,6 +24,7 @@ sysbus LoadHEX $serialImg
 logLevel 3 sysbus.nvic
 
 
+# UDP sample
 mach create
 machine LoadPlatformDescription @platforms/boards/stm32f7_discovery-bb.repl
 
@@ -32,14 +36,7 @@ $netImg?=@./tests/out/udp.signed.hex
 emulation CreateSwitch "switch1"
 connector Connect sysbus.ethernet switch1
 
-emulation CreateTap "testTap0" "tap"
 connector Connect host.tap switch1
-
-switch1 Start
-host.tap Start
-
-allowPrivates true
-ethernet packetSent true
 
 macro reset
 """
@@ -49,3 +46,56 @@ runMacro $reset
 sysbus LoadHEX $netImg
 
 logLevel 3 sysbus.nvic
+
+
+# Group device sample
+# serial dev
+mach create
+machine LoadPlatformDescription @platforms/cpus/nrf52840.repl
+
+$serialGBoot?=@./tests/out/serial.elf
+$serialGImg?=@./tests/out/serial-gr.signed.hex
+
+emulation CreateUartPtyTerminal "term2" "/tmp/uartDemo2" true
+connector Connect sysbus.uart0 term2
+
+# showAnalyzer uart0
+
+macro reset
+"""
+    sysbus LoadELF $serialGBoot
+"""
+runMacro $reset
+sysbus LoadHEX $serialGImg
+
+logLevel 3 sysbus.nvic
+
+# Udp dev
+mach create
+machine LoadPlatformDescription @platforms/boards/stm32f7_discovery-bb.repl
+
+$netGBoot?=@./tests/out/udp.elf
+$netGImg?=@./tests/out/udp-gr.signed.hex
+
+# showAnalyzer sysbus.usart1
+
+emulation CreateSwitch "switch2"
+connector Connect sysbus.ethernet switch2
+
+connector Connect host.tap switch2
+
+macro reset
+"""
+    sysbus LoadELF $netGBoot
+"""
+runMacro $reset
+sysbus LoadHEX $netGImg
+
+logLevel 3 sysbus.nvic
+
+switch1 Start
+switch2 Start
+host.tap Start
+
+allowPrivates true
+ethernet packetSent true
