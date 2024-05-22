@@ -52,10 +52,15 @@ public class MainActivity extends Activity {
         setContentView(R.layout.main_layout);
         this.mTextViewBuild = findViewById(R.id.textViewBuild);
         this.mTextViewAddress = findViewById(R.id.textViewUrlAddress);
+        String serverAddress = mConfig.getServerAddress();
+        if (serverAddress == null) {
+            Log.e(TAG, "Server address is not set, aborting");
+            System.exit(1);
+        }
         Log.d(TAG, "Build version: " + mDeviceInfo.getSoftwareVersion());
-        Log.d(TAG, "OTA server address: " + mConfig.getServerAddress());
+        Log.d(TAG, "OTA server address: " + serverAddress);
         this.mTextViewBuild.setText(mDeviceInfo.getSoftwareVersion());
-        this.mTextViewAddress.setText(mConfig.getServerAddress());
+        this.mTextViewAddress.setText(serverAddress);
         updaterLock = new ReentrantLock();
 
         mDeviceAuthorizationProvider = new AuthorizationProvider(mDeviceInfo, mConfig, this);
@@ -116,10 +121,16 @@ public class MainActivity extends Activity {
                 new Intent(startUpdateIntent),
                 PendingIntent.FLAG_IMMUTABLE);
 
+        int updateIntervalSeconds = mConfig.getUpdateIntervalSeconds();
+        if (updateIntervalSeconds < 0) {
+            Log.e(TAG, "Invalid update interval seconds, aborting");
+            System.exit(1);
+        }
+
         startAlarm.setRepeating(
                 AlarmManager.ELAPSED_REALTIME_WAKEUP,
                 SystemClock.elapsedRealtime(),
-                mConfig.getUpdateIntervalSeconds() * 1000L,
+                updateIntervalSeconds * 1000L,
                 pendingIntent);
     }
 }

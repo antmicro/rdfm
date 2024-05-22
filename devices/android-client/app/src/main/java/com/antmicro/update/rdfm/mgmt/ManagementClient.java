@@ -45,9 +45,18 @@ public final class ManagementClient extends WebSocketListener {
         new Thread(this::reconnectThread).start();
     }
 
-    private void connectToWs() throws DeviceUnauthorizedException, ServerConnectionException {
-        mServerAddress = HttpUtils.replaceHttpSchemeWithWs(mConfig.getServerAddress());
+    private void connectToWs() throws DeviceUnauthorizedException, ServerConnectionException, RuntimeException {
+        String serverAddress = mConfig.getServerAddress();
+        if (serverAddress == null || serverAddress.isEmpty()) {
+            Log.e(TAG, "Server address is not set");
+            throw new RuntimeException();
+        }
+        mServerAddress = HttpUtils.replaceHttpSchemeWithWs(serverAddress);
         mMaxShellCount = mConfig.getMaxShellCount();
+        if (mMaxShellCount < 1) {
+            Log.e(TAG, "Invalid maximum shell count: " + mMaxShellCount);
+            throw new RuntimeException();
+        }
         String token = mTokenProvider.fetchDeviceToken();
         Request request = new Request.Builder()
                 .url(mServerAddress + "/api/v1/devices/ws")
@@ -150,6 +159,9 @@ public final class ManagementClient extends WebSocketListener {
                 continue;
             } catch (DeviceUnauthorizedException e) {
                 Log.e(TAG, "Cannot connect to the management WebSocket - device unauthorized");
+                continue;
+            } catch (RuntimeException e) {
+                Log.e(TAG, "Cannot connect to the management WebSocket - invalid configuration");
                 continue;
             }
 

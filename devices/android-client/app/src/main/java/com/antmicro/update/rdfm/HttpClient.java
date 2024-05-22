@@ -83,6 +83,10 @@ public class HttpClient {
         }
 
         try {
+            String serverAddress = config.getServerAddress();
+            if (serverAddress == null || serverAddress.isEmpty()) {
+                throw new RuntimeException("Server address is not set");
+            }
             Request request = new Request.Builder()
                     .url(config.getServerAddress() + "/api/v1/update/check")
                     .addHeader("Authorization", "Bearer token=" + token)

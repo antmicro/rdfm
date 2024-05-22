@@ -71,8 +71,12 @@ public class AuthorizationProvider implements IDeviceTokenProvider {
 
             RequestBody reqBody = RequestBody.create(requestBytes, JSON);
             try {
+                String serverAddress = mConfig.getServerAddress();
+                if (serverAddress == null || serverAddress.isEmpty()) {
+                    throw new RuntimeException("Server address is not set");
+                }
                 Request request = new Request.Builder()
-                        .url(mConfig.getServerAddress() + "/api/v1/auth/device")
+                        .url(serverAddress + "/api/v1/auth/device")
                         .addHeader("X-RDFM-Device-Signature", signature)
                         .post(reqBody)
                         .build();
