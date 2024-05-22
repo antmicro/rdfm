@@ -18,7 +18,7 @@ After cloning this repository, run the following:
 ```
 mkdir -v -p <path-to-aosp-tree>/vendor/antmicro/rdfm
 cd devices/android-client/
-cp -r app/src/main/* <path-to-aosp-tree>
+cp -r app/src/main/* <path-to-aosp-tree>/vendor/antmicro/rdfm
 ```
 
 ### Configuring the device Makefile
