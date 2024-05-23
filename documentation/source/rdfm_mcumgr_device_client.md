@@ -263,6 +263,52 @@ west sign -d build -t imgtool -- --key <key-file> --version <sign-version>
 
 Either way, the signed images will be stored next to their unsigned counterparts. They will have `signed` inserted into the filename (e.g. unsigned `zephyr.bin` will produce `zephyr.signed.bin` signed image).
 
+### Self-confirmed updates
+
+By default, MCUmgr client will try to manually confirm a new image during an update.
+While this works in simple cases, you might wish to run some additional test logic that should be used to determine if an update should be finalized.
+For example, you might want to reject an update in case one of the drivers failed to start or if the network stack is misconfigured.
+The client supports these kinds of use cases using self-confirming images.
+Rather than confirming an update by itself,
+the client will instead watch the primary image slot of the device to determine if an update was marked as permanent or if it was rejected.
+In that case, the final decision falls on the updated device.
+
+For this feature to work correctly, you will have to modify your application to include the self-testing logic.
+
+```c
+/*
+ * An example of self-test function.
+ * It will first check if this is a fresh update and run the testing logic.
+ * Based on results, it will either mark the update as permanent or reboot,
+ * causing MCUboot to revert to the previous version.
+ *
+ * This function should be called before the main application logic starts,
+ * preferably at the beginning of the `main` function.
+ */
+
+#include <zephyr/dfu/mcuboot.h>
+#include <zephyr/sys/reboot.h>
+
+void run_self_tests() {
+    if (!boot_is_img_confirmed()) {
+        bool passed;
+
+        /* Testing logic goes here */
+
+        if (!passed) {
+            sys_reboot(SYS_REBOOT_COLD); // (1)
+            return;
+        }
+
+        boot_write_img_confirmed(); // (2)
+    }
+}
+```
+::::{code-annotations}
+1. Tests failed - device reboots itself, returning to previous version
+2. Tests passed - device confirms the update, marking it as permanent
+::::
+
 ## Configuring MCUmgr client
 
 ### Search locations
@@ -300,6 +346,7 @@ rdfm-mcumgr-client --help
     - `id` - unique device identifier used when communicating with RDFM server
     - `device_type` - device type reported to RDFM server used to specify compatible artifacts
     - `key` - name of the file containing device private key in PEM format. Key should be stored in `key_dir` directory.
+    - `self_confirm` - (optional) bool indicating whether the device will confirm updates by itself. False by default
     - `update_interval` - (optional) override global `update_interval` for this device
     - `transport` - specifies the transport type for the device and it's specific options
 
@@ -312,6 +359,7 @@ rdfm-mcumgr-client --help
     - `members` - an array containing configuration for each device that's a member of this group
         - `name` - display name for device, used for logging
         - `device` - name of target image to match from an artifact
+        - `self_confirm` - (optional) bool indicating whether the device will confirm updates by itself. False by default
         - `transport` - specifies the transport type for the device and its specific options
 
 Transport specific:
@@ -367,6 +415,7 @@ Otherwise all members are rolled back by the client to the previous version.
       "id": "22:22:22:22:22:22",
       "dev_type": "zeph-ser",
       "key": "serial.key",
+      "self_confirm": true,
       "transport": {
         "type": "serial",
         "device": "/dev/ttyACM0",
@@ -401,6 +450,7 @@ Otherwise all members are rolled back by the client to the previous version.
         {
           "name": "bleh",
           "device": "ble",
+          "self_confirm": true,
           "transport": {
             "type": "ble",
             "device_index": 0,
