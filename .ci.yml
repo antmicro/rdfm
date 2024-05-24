@@ -13,14 +13,14 @@ variables:
 
 .build:
   <<: *ace
-  variables: 
+  variables:
     JWT_SECRET: testsecret123123123
   before_script:
     - python -V
-    - apt update && apt-get -y install make netcat-openbsd openssl telnet uuid-runtime xxd
-    - cd server && poetry build && poetry install && python -m build && pip3 install -e . && cd ..
-    - cd manager && poetry build && poetry install && python -m build && pip3 install -e . && cd ..
-    - cd devices/linux-client && sudo make install && cd ../..
+    - (apt update && apt-get -y install make netcat-openbsd openssl telnet uuid-runtime xxd)
+    - (cd server && poetry build && poetry install && python -m build && pip3 install -e .)
+    - (cd manager && poetry build && poetry install && python -m build && pip3 install -e .)
+    - (cd devices/linux-client && sudo make install)
     - |
       if [[ $(losetup --list | wc -l) == 0 ]]; then
         dd if=/dev/zero of=blockfile bs=1M count=100
@@ -29,7 +29,7 @@ variables:
       fi
     - cp server/tests/etc_rdfm.conf /etc/rdfm/rdfm.conf
     - cat /etc/rdfm/rdfm.conf
-    - mkdir /var/lib/rdfm && cp server/tests/etc_rdfm.conf /var/lib/rdfm/rdfm.conf
+    - (mkdir /var/lib/rdfm && cp server/tests/etc_rdfm.conf /var/lib/rdfm/rdfm.conf)
     - |
       echo "device_type=dummy" > /var/lib/rdfm/device_type
     - chmod -R 777 /etc/rdfm
@@ -54,8 +54,8 @@ python-check:
   extends: .build
   stage: static-checks
   script:
-    - cd server && poetry run test && cd ..
-    - cd manager && poetry run test && cd ..
+    - (cd server && poetry run test)
+    - (cd manager && poetry run test)
   only:
     refs:
       - merge_requests
@@ -195,7 +195,10 @@ test-rdfm-client:
   stage: local-tests
   script:
     # Build and install rdfm-artifact, which is required for the tests
-    - cd tools/rdfm-artifact && make && make install && cd ../../devices/linux-client
+    - cd tools/rdfm-artifact
+    - make
+    - make install
+    - cd ../../devices/linux-client
     - make test
   only:
     refs:
@@ -208,10 +211,14 @@ test-rdfm-client-docker:
   script:
     - export PATH=$HOME/go/bin/:$PATH
     # Build and install rdfm-artifact, which is required for the tests
-    - cd tools/rdfm-artifact && make && make install && cd ../../devices/linux-client
+    -  cd tools/rdfm-artifact
+    -  make
+    -  make install
+    -  cd ../../devices/linux-client
     # The tests are running in a Docker container, install and set up
     # the Docker daemon
-    - apt update && apt -qq -y --no-install-recommends install docker.io cgroupfs-mount crun fuse-overlayfs pigz ca-certificates
+    - apt update
+    - apt -qq -y --no-install-recommends install docker.io cgroupfs-mount crun fuse-overlayfs pigz ca-certificates
     - cgroupfs-mount
     - ../../common/docker/start-docker.sh
     # HACK: For CI runs, we have to replace the -it flag in docker run
@@ -226,7 +233,9 @@ test-rdfm-client-docker:
     - sed -i "s/git/#git/g" ./scripts/test-docker/data/check-delta-patching.sh
     # Run rdfm-client Docker tests
     - ./scripts/test-docker/test-artifact-info.sh
-    - cd scripts/test-docker/ && ./make-delta-samples.sh && cd ../../
+    - cd scripts/test-docker/
+    - ./make-delta-samples.sh
+    - cd ../../
     - ./scripts/test-docker/test-deltas.sh
   only:
     refs:
@@ -281,16 +290,32 @@ test-mcumgr-client:
   stage: local-tests
   script:
     - export PATH=`pwd`/go/bin:$PATH
-    - apt update && apt -qqy --no-install-recommends install iproute2 git-lfs >/dev/null
+    - apt update
+    - apt -qqy --no-install-recommends install iproute2 git-lfs >/dev/null
     # NOTE: Currently Renode is tracked using LFS since we're using
     #       a custom build with support for STM32F764 flash controller.
     #       When it lands, we can replace it with an official build
     # - wget --quiet https://builds.renode.io/renode_1.14.0_amd64.deb
-    - git lfs pull && apt -qqy --no-install-recommends install ./devices/mcumgr-client/tests/prebuilt/renode*.deb >/dev/null
-    - pushd tools/rdfm-artifact && make && mv rdfm-artifact /usr/bin/ && popd
-    - pushd server && poetry build && poetry install && python -m build && pip3 install -e . && popd
-    - pushd manager && poetry build && poetry install && python -m build && pip3 install -e . && popd
-    - cd devices/mcumgr-client && make install
+    - git lfs pull
+    - apt -qqy --no-install-recommends install ./devices/mcumgr-client/tests/prebuilt/renode*.deb >/dev/null
+    - pushd tools/rdfm-artifact
+    - make
+    - mv rdfm-artifact /usr/bin/
+    - popd
+    - pushd server
+    - poetry build
+    - poetry install
+    - python -m build
+    - pip3 install -e .
+    - popd
+    - pushd manager
+    - poetry build
+    - poetry install
+    - python -m build
+    - pip3 install -e .
+    - popd
+    - cd devices/mcumgr-client
+    - make install
     # Run the test
     - ./tests/end2end/test.sh
   only:
@@ -336,7 +361,7 @@ docs-build:
     # Install doc building requirements
     - pip3 install -r documentation/requirements.txt
     # Build and install the server
-    - cd server/ && poetry build --verbose && poetry install --verbose && pip3 install --verbose -e . && cd ../
+    - (cd server/ && poetry build --verbose && poetry install --verbose && pip3 install --verbose -e .)
   script:
     - cd documentation/
     - make html latexpdf
