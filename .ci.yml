@@ -50,16 +50,28 @@ build:
   script:
     - echo "Build finished"
 
-python-check:
+python-pycodestyle-check:
   extends: .build
   stage: static-checks
   script:
-    - (cd server && poetry run test)
-    - (cd manager && poetry run test)
+    - (cd server && poetry run test-pycodestyle)
+    - (cd manager && poetry run test-pycodestyle)
   only:
     refs:
       - merge_requests
       - main
+
+python-mypy-check:
+  extends: .build
+  stage: static-checks
+  script:
+    - (cd server && poetry run test-mypy)
+    - (cd manager && poetry run test-mypy)
+  only:
+    refs:
+      - merge_requests
+      - main
+  allow_failure: true
 
 test-package-api:
   extends: .build

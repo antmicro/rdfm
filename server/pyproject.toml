@@ -40,7 +40,8 @@ pycodestyle = "^2.10.0"
 [tool.poetry.group.types.dependencies]
 types-flask = "^1.1.6"
 [tool.poetry.scripts]
-test = 'scripts:static_checks'
+test-pycodestyle = 'scripts:pycodestyle_checks'
+test-mypy = 'scripts:mypy_checks'
 
 [build-system]
 requires = ["poetry-core"]
