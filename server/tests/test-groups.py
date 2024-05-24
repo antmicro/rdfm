@@ -7,29 +7,13 @@ import requests
 import subprocess
 import pytest
 
+from common import (GROUPS_ENDPOINT, process)
 
-SERVER = "http://127.0.0.1:5000/"
-GROUPS_ENDPOINT = f"{SERVER}/api/v1/groups"
 DUMMY_DEVICE_ID = 1
-DBPATH = "test-db.db"
 GROUP_DEFAULT_PRIORITY = 25
 
-@pytest.fixture()
-def process():
-    if os.path.isfile(DBPATH):
-        os.remove(DBPATH)
 
-    print("Starting server..")
-    process = subprocess.Popen(["python3", "-m", "rdfm_mgmt_server", "--debug", "--no-ssl", "--no-api-auth", "--test-mocks", "--database", f"sqlite:///{DBPATH}"])
-    time.sleep(5)
-
-    yield process
-
-    print("Shutting down server..")
-    process.kill()
-
-
-def test_groups(process: subprocess.Popen):
+def test_groups(process):
     # Fetching all groups, assumes that no groups were already created
     # i.e empty database
     resp = requests.get(GROUPS_ENDPOINT)
