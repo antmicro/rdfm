@@ -13,28 +13,41 @@ from authlib.integrations.requests_client import OAuthError
 
 def main():
     parser = argparse.ArgumentParser(
-        description='RDFM Manager utility',
-        prog='rdfm-mgmt',
-        usage='rdfm-mgmt',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        description="RDFM Manager utility",
+        prog="rdfm-mgmt",
+        usage="rdfm-mgmt",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
 
-    parser.add_argument('--url', type=str, default='http://127.0.0.1:5000/',
-                        help='URL to the RDFM Server')
-    parser.add_argument('--cert', type=str, default='./certs/CA.crt',
-                        help='path to the server CA certificate used for establishing an HTTPS connection')
-    parser.add_argument('--no-api-auth', default=False,
-                        action='store_true',
-                        dest='disable_api_auth',
-                        help='disable OAuth2 authentication for API requests')
+    parser.add_argument(
+        "--url",
+        type=str,
+        default="http://127.0.0.1:5000/",
+        help="URL to the RDFM Server",
+    )
+    parser.add_argument(
+        "--cert",
+        type=str,
+        default="./certs/CA.crt",
+        help="path to the server CA certificate used for establishing an HTTPS connection",     # noqa: E501
+    )
+    parser.add_argument(
+        "--no-api-auth",
+        default=False,
+        action="store_true",
+        dest="disable_api_auth",
+        help="disable OAuth2 authentication for API requests",
+    )
 
-    subparsers = parser.add_subparsers(required=True,
-                                       title='available commands')
+    subparsers = parser.add_subparsers(
+        required=True, title="available commands"
+    )
     # Add all subparsers for the different subcommands
     rdfm.commands.devices.add_devices_parser(subparsers)
     rdfm.commands.packages.add_packages_parser(subparsers)
     rdfm.commands.groups.add_groups_parser(subparsers)
     # Wrap argv so when no arguments are passed, we inject a help screen
-    wrapped_args = None if sys.argv[1:] else ['--help']
+    wrapped_args = None if sys.argv[1:] else ["--help"]
     args = parser.parse_args(args=wrapped_args)
 
     # Extract the configuration from the CLI arguments
@@ -48,7 +61,6 @@ def main():
     else:
         config.ca_cert = None
     config.disable_api_auth = args.disable_api_auth
-
 
     try:
         rdfm.config.load_auth_from_file(config)
@@ -70,7 +82,10 @@ def main():
         print("rdfm-mgmt: Server request timed out:", e)
         exit(1)
     except OAuthError as e:
-        print("rdfm-mgmt: Invalid credentials were supplied for authorization, please check configuration.")
+        print(
+            "rdfm-mgmt: Invalid credentials were supplied for authorization, "
+            "please check configuration."
+        )
         print("OAuth error occurred:", e)
         exit(1)
     except RuntimeError as e:
@@ -82,5 +97,5 @@ def main():
         exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
