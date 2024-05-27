@@ -20,9 +20,8 @@ class Server:
         self.remote_devices = RemoteDevices()
         self.shell_sessions = ShellSessions()
 
-
     def create_mock_data(self):
-        """ Creates mock data
+        """Creates mock data
 
         Fills the database with mock data to be used for testing purposes
         This does not check if the data was previously inserted, it is
@@ -32,12 +31,14 @@ class Server:
         print("WARNING: Do not use in production!")
 
         def make_dummy(mac: str) -> Device:
-            return Device(name=mac,
-                          mac_address=mac,
-                          last_access=datetime.datetime.utcnow(),
-                          capabilities="{}",
-                          device_metadata="{}",
-                          public_key=None)
+            return Device(
+                name=mac,
+                mac_address=mac,
+                last_access=datetime.datetime.utcnow(),
+                capabilities="{}",
+                device_metadata="{}",
+                public_key=None,
+            )
 
         # Create dummy devices
         self._devices_db.insert(make_dummy("00:00:00:00:00:00"))

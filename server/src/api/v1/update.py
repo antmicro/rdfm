@@ -1,9 +1,5 @@
 from typing import Optional, List
-from flask import (
-    request,
-    Blueprint,
-    current_app
-)
+from flask import request, Blueprint, current_app
 import storage
 import traceback
 import models.package
@@ -13,7 +9,7 @@ import models.device
 import models.group
 import configuration
 from rdfm.schema.v1.updates import UpdateCheckRequest
-from rdfm.schema.v1.updates import META_SOFT_VER, META_MAC_ADDRESS, META_DEVICE_TYPE
+from rdfm.schema.v1.updates import META_MAC_ADDRESS
 from marshmallow import ValidationError
 from models.package import Package
 from update.resolver import PackageResolver
@@ -27,10 +23,10 @@ update_blueprint: Blueprint = Blueprint("rdfm-server-updates", __name__)
 LINK_EXPIRY_TIME = 3600
 
 
-@update_blueprint.route('/api/v1/update/check', methods=['POST'])
+@update_blueprint.route("/api/v1/update/check", methods=["POST"])
 @device_api
 def check_for_update(device_token: DeviceToken):
-    """ Check for available updates
+    """Check for available updates
 
     Device clients must call this endpoint with their associated metadata.
     At minimum, the `rdfm.software.version`, `rdfm.hardware.devtype` and
@@ -89,31 +85,39 @@ def check_for_update(device_token: DeviceToken):
           "sha256": "4e415854e6d0cf9855b2290c02638e8651537989b8862ff9c9cb91b8d956ea06",
           "uri": "http://127.0.0.1:5000/local_storage/12a83ff3-2de2-4a95-8f3f-c7a884e426e5"
         }
-    """
+    """     # noqa: E501
     try:
         try:
-            update_request: UpdateCheckRequest = UpdateCheckRequest.Schema().load({
-                "metadata": request.json,
-            })
+            update_request: (
+                UpdateCheckRequest
+            ) = UpdateCheckRequest.Schema().load(
+                {
+                    "metadata": request.json,
+                }
+            )
         except ValidationError as e:
             return api_error(f"schema validation failed: {e.messages}", 400)
 
         device_meta = update_request.metadata
         print("Device metadata:", device_meta)
-        softver = device_meta[META_SOFT_VER]
-        devtype = device_meta[META_DEVICE_TYPE]
         hwmac = device_meta[META_MAC_ADDRESS]
 
-        device: Optional[models.device.Device] = server.instance._devices_db.get_device_data(hwmac)
+        device: Optional[
+            models.device.Device
+        ] = server.instance._devices_db.get_device_data(hwmac)
         if device is None:
-            return api_error("provided MAC address does not match any device", 500)
+            return api_error(
+                "provided MAC address does not match any device", 500
+            )
 
         # If the device is not assigned to any group, there's no updates
         # to hand out to it
         if device.group is None:
             return {}, 204
 
-        group: Optional[models.group.Group] = server.instance._groups_db.fetch_one(device.group)
+        group: Optional[
+            models.group.Group
+        ] = server.instance._groups_db.fetch_one(device.group)
         if group is None:
             # Because of DB constraints, this should never happen
             return api_error("device-assigned group does not exist", 500)
@@ -124,7 +128,9 @@ def check_for_update(device_token: DeviceToken):
             # should be prevented
             return api_error("invalid group policy", 500)
 
-        packages: List[Package] = server.instance._groups_db.fetch_assigned_data(group.id)
+        packages: List[
+            Package
+        ] = server.instance._groups_db.fetch_assigned_data(group.id)
         # Device is in a group, but no packages were assigned
         if len(packages) == 0:
             return {}, 204
@@ -134,10 +140,8 @@ def check_for_update(device_token: DeviceToken):
         # in the list above.
         # Note: watch out, package.metadata is an SQLAlchemy field, our meta is
         # stored in `package.info`
-        package_meta = [ pkg.info for pkg in packages ]
-        resolver = PackageResolver(device_meta,
-                                   package_meta,
-                                   policy)
+        package_meta = [pkg.info for pkg in packages]
+        resolver = PackageResolver(device_meta, package_meta, policy)
         index = resolver.resolve()
         if index is None:
             # No updates are available
@@ -148,7 +152,7 @@ def check_for_update(device_token: DeviceToken):
         print("Found matching next package:", package.info)
 
         print("Found new matching package:", package)
-        conf: configuration.ServerConfig = current_app.config['RDFM_CONFIG']
+        conf: configuration.ServerConfig = current_app.config["RDFM_CONFIG"]
         driver = storage.driver_by_name(package.driver, conf)
         if driver is None:
             return api_error("invalid storage driver", 500)
@@ -160,7 +164,7 @@ def check_for_update(device_token: DeviceToken):
             "id": package.id,
             "created": package.created,
             "sha256": package.sha256,
-            "uri": link
+            "uri": link,
         }, 200
     except Exception as e:
         traceback.print_exc()

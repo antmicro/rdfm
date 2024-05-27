@@ -26,9 +26,8 @@ ENV_HOSTNAME = "RDFM_HOSTNAME"
 ENV_API_PORT = "RDFM_API_PORT"
 
 
-class ServerConfig():
-    """ Server configuration
-    """
+class ServerConfig:
+    """Server configuration"""
 
     """ Hostname/IP address of the RDFM server
 
@@ -134,9 +133,8 @@ class ServerConfig():
     debug: bool = False
 
 
-def try_get_env(key: str,
-                 help_text: str) -> Optional[str]:
-    """ Wraps an environment variable read
+def try_get_env(key: str, help_text: str) -> Optional[str]:
+    """Wraps an environment variable read
 
     This function is a wrapper for environment variable reads.
     If the specified envvar does not exist, a user-friendly error
@@ -152,15 +150,13 @@ def try_get_env(key: str,
         str,  the environment variable value if it exists
     """
     if key not in os.environ:
-        print("Required environment variable missing:",
-              key,
-              f"({help_text})")
+        print("Required environment variable missing:", key, f"({help_text})")
         return None
     return os.environ[key]
 
 
 def parse_from_environment(config: ServerConfig) -> bool:
-    """ Parses server configuration from the environment
+    """Parses server configuration from the environment
 
     The passed `config` structure is updated with configuration
     values from the environment.
@@ -195,34 +191,53 @@ def parse_from_environment(config: ServerConfig) -> bool:
 
     config.storage_driver = os.environ.get(ENV_STORAGE_DRIVER, "local")
     if config.storage_driver not in ALLOWED_STORAGE_DRIVERS:
-        print("Invalid storage driver: got", config.storage_driver,
-              " expected one of:", ALLOWED_STORAGE_DRIVERS)
+        print(
+            "Invalid storage driver: got",
+            config.storage_driver,
+            " expected one of:",
+            ALLOWED_STORAGE_DRIVERS,
+        )
         return False
 
     if config.storage_driver == "s3":
         config.s3_url = os.environ.get(ENV_S3_URL, None)
-        config.s3_use_v4_signature = os.environ.get(ENV_S3_USE_V4_SIGNATURE, None)
+        config.s3_use_v4_signature = (
+            os.environ.get(ENV_S3_USE_V4_SIGNATURE, "False").lower() == "true"
+        )
         config.s3_region_name = os.environ.get(ENV_S3_REGION_NAME, None)
 
-        config.s3_access_key_id = try_get_env(ENV_S3_ACCESS_KEY_ID, "S3 Access Key ID")
-        config.s3_secret_access_key = try_get_env(ENV_S3_SECRET_ACCESS_KEY, "S3 Secret Access Key")
+        config.s3_access_key_id = try_get_env(
+            ENV_S3_ACCESS_KEY_ID, "S3 Access Key ID"
+        )
+        config.s3_secret_access_key = try_get_env(
+            ENV_S3_SECRET_ACCESS_KEY, "S3 Secret Access Key"
+        )
         config.s3_bucket_name = try_get_env(ENV_S3_BUCKET, "S3 Bucket name")
-        if None in [config.s3_access_key_id, config.s3_secret_access_key, config.s3_bucket_name]:
+        if None in [
+            config.s3_access_key_id,
+            config.s3_secret_access_key,
+            config.s3_bucket_name,
+        ]:
             return False
 
     # Token Introspection variables are only required when running
     # with authentication enabled.
     if not config.disable_api_auth:
-        oauth_url = try_get_env(ENV_OAUTH_URL, "RFC 7662 Token Introspection endpoint")
-        oauth_client_id = try_get_env(ENV_OAUTH_CLIENT_ID,
-                                    "OAuth2 client_id to authenticate introspection requests")
-        oauth_client_secret = try_get_env(ENV_OAUTH_CLIENT_SECRET,
-                                        "OAuth2 client_secret to authenticate introspection requests")
+        oauth_url = try_get_env(
+            ENV_OAUTH_URL, "RFC 7662 Token Introspection endpoint"
+        )
+        oauth_client_id = try_get_env(
+            ENV_OAUTH_CLIENT_ID,
+            "OAuth2 client_id to authenticate introspection requests",
+        )
+        oauth_client_secret = try_get_env(
+            ENV_OAUTH_CLIENT_SECRET,
+            "OAuth2 client_secret to authenticate introspection requests",
+        )
         if None in [oauth_url, oauth_client_id, oauth_client_secret]:
             return False
-
-        config.token_introspection_url = oauth_url
-        config.token_introspection_client_id = oauth_client_id
-        config.token_introspection_client_secret = oauth_client_secret
-
+        else:
+            config.token_introspection_url = str(oauth_url)
+            config.token_introspection_client_id = str(oauth_client_id)
+            config.token_introspection_client_secret = str(oauth_client_secret)
     return True

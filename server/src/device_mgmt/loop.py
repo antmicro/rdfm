@@ -2,14 +2,14 @@ import time
 from device_mgmt.models.remote_device import RemoteDevice
 import simple_websocket
 from auth.device import DeviceToken
-from rdfm.ws import (RDFM_WS_DUPLICATE_CONNECTION,
-                     WebSocketException)
+from rdfm.ws import RDFM_WS_DUPLICATE_CONNECTION, WebSocketException
 import server
 
 
-def start_device_event_loop(ws: simple_websocket.Client, device_token: DeviceToken):
-    """ Start the main event loop for a device websocket
-    """
+def start_device_event_loop(
+    ws: simple_websocket.Client, device_token: DeviceToken
+):
+    """Start the main event loop for a device websocket"""
     device = RemoteDevice(ws, device_token)
 
     # Save the WS connection
@@ -23,11 +23,16 @@ def start_device_event_loop(ws: simple_websocket.Client, device_token: DeviceTok
         # removed entirely.
         # See: https://github.com/miguelgrinberg/simple-websocket/pull/33
         if not previous.ws.connected:
-            print("Detected stale device connection, forcing a close", flush=True)
+            print(
+                "Detected stale device connection, forcing a close", flush=True
+            )
             previous.ws.event.set()
             time.sleep(2.0)
         else:
-            raise WebSocketException("duplicate connections not allowed", RDFM_WS_DUPLICATE_CONNECTION)
+            raise WebSocketException(
+                "duplicate connections not allowed",
+                RDFM_WS_DUPLICATE_CONNECTION,
+            )
 
     server.instance.remote_devices.add(device)
 

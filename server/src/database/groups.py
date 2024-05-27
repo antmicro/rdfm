@@ -1,38 +1,32 @@
-from typing import Optional, List, Any
-from sqlalchemy import create_engine, select, update, delete, desc, null
+from typing import Optional, List
+from sqlalchemy import select, update, delete
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
-from sqlalchemy.schema import MetaData
 from sqlalchemy.exc import IntegrityError
 import models.group
 import models.device
 import models.package
 
+
 class GroupsDB:
-    """ Wrapper class for managing group data and device-group assignment
-    """
+    """Wrapper class for managing group data and device-group assignment"""
 
     engine: Engine
 
     def __init__(self, db: Engine):
         self.engine = db
 
-
     def fetch_all(self) -> List[models.group.Group]:
-        """ Fetches all groups from the database
-        """
+        """Fetches all groups from the database"""
         with Session(self.engine) as session:
-            stmt = (
-                select(models.group.Group)
-            )
+            stmt = select(models.group.Group)
             groups = session.scalars(stmt)
             if groups is None:
                 return []
             return [x for x in groups]
 
-
     def create(self, group: models.group.Group):
-        """ Create a new group
+        """Create a new group
 
         The provided group is updated with the database identifier
         """
@@ -41,40 +35,34 @@ class GroupsDB:
             session.commit()
             session.refresh(group)
 
-
     def fetch_one(self, identifier: int) -> Optional[models.group.Group]:
-        """ Fetches information about the specific group from the database
-        """
+        """Fetches information about the specific group from the database"""
         with Session(self.engine) as session:
-            stmt = (
-                select(models.group.Group)
-                .where(models.group.Group.id == identifier)
+            stmt = select(models.group.Group).where(
+                models.group.Group.id == identifier
             )
             return session.scalar(stmt)
 
-
     def fetch_assigned(self, identifier: int) -> List[models.device.Device]:
-        """ Fetches all devices assigned to the specified group
+        """Fetches all devices assigned to the specified group
 
         Args:
             identifier: group identifier
         """
         with Session(self.engine) as session:
-            stmt = (
-                select(models.device.Device)
-                .where(models.device.Device.group == identifier)
+            stmt = select(models.device.Device).where(
+                models.device.Device.group == identifier
             )
             devices = session.scalars(stmt)
             if devices is None:
                 return []
-            return [ x for x in devices ]
-
+            return [x for x in devices]
 
     def delete(self, identifier: int) -> bool:
-        """ Deletes a group
+        """Deletes a group
 
-        Deletes a group from the database. If any devices are assigned the group
-        being removed, the delete will fail.
+        Deletes a group from the database. If any devices are assigned  to
+        the group being removed, the delete will fail.
 
         Args:
             identifier: group identifier
@@ -84,74 +72,84 @@ class GroupsDB:
         """
         try:
             with Session(self.engine) as session:
-                stmt = (
-                    delete(models.group.Group)
-                    .where(models.group.Group.id == identifier)
+                stmt = delete(models.group.Group).where(
+                    models.group.Group.id == identifier
                 )
                 session.execute(stmt)
                 session.commit()
                 return True
-        except IntegrityError as e:
+        except IntegrityError:
             # Constraint failed, the group is still used by some devices
             return False
 
+    def modify_assignment(
+        self, identifier: int, additions: List[int], removals: List[int]
+    ) -> Optional[str]:
+        """Modify assignment of devices to the specified group
 
-    def modify_assignment(self, identifier: int, additions: List[int], removals: List[int]) -> Optional[str]:
-        """ Modify assignment of devices to the specified group
+        This modifies per-device group assignment, as described by two lists
+        containing device identifiers of devices that will be added/removed
+        from the group.
 
-        This modifies per-device group assignment, as described by two lists containing
-        device identifiers of devices that will be added/removed from the group.
+        This operation is atomic - if at any point an invalid device
+        identifier is encountered, the transaction is aborted.
 
-        This operation is atomic - if at any point an invalid device identifier is
-        encountered, the transaction is aborted. This covers:
+        This covers:
             - Any device identifier which does not match a registered device
-            - Any device identifier in `additions` which already has an assigned group
-            - Any device identifier in `removals` which is not currently assigned to the
-              specified package
+            - Any device identifier in `additions` which already has an
+              assigned group
+            - Any device identifier in `removals` which is not currently
+              assigned to the specified package
 
         Additions are evaluated first, followed by the removals.
 
         Args:
             identifier: group identifier
-            additions: device identifiers which shall be added to the specified group
-            removals: device identifiers which shall be removed from specified group
+            additions: device identifiers which shall be added to the specified
+                       group
+            removals: device identifiers which shall be removed from specified
+                      group
         """
         with Session(self.engine) as session:
             # Evaluate addition first
             stmt = (
                 update(models.device.Device)
-                .values(group = identifier)
+                .values(group=identifier)
                 .where(models.device.Device.group.is_(None))
                 .where(models.device.Device.id.in_(additions))
             )
             res = session.execute(stmt)
             if res.rowcount != len(additions):
                 session.rollback()
-                return "conflict while applying group additions, one of the provided device identifiers may not exist anymore or has already been assigned to a different group"
+                return "conflict while applying group additions, one of the " \
+                       "provided device identifiers may not exist anymore or" \
+                       " has already been assigned to a different group"
 
             # Now evaluate the removals
             stmt = (
                 update(models.device.Device)
-                .values(group = None)
+                .values(group=None)
                 .where(models.device.Device.group == identifier)
                 .where(models.device.Device.id.in_(removals))
             )
             res = session.execute(stmt)
             if res.rowcount != len(removals):
                 session.rollback()
-                return "conflict while applying group removals, one of the provided device identifiers may not exist anymore or trying to remove group from unassigned device"
+                return "conflict while applying group removals, one of the " \
+                       "provided device identifiers may not exist anymore or" \
+                       " trying to remove group from unassigned device"
 
             session.commit()
             return None
 
-
     def modify_package(self, group: int, packages: List[int]) -> Optional[str]:
-        """ Modify package assignment of the specified group
+        """Modify package assignment of the specified group
 
         Args:
             group: group identifier
             packages: list of package identifiers to assign to the group.
-                     If None, package assignment is instead removed from the group
+                      If None, package assignment is instead removed from
+                      the group
 
         Returns:
             None: on success
@@ -159,9 +157,8 @@ class GroupsDB:
         """
         try:
             with Session(self.engine) as session:
-                stmt = (
-                    delete(models.group.GroupPackageAssignment)
-                    .where(models.group.GroupPackageAssignment.group_id == group)
+                stmt = delete(models.group.GroupPackageAssignment).where(
+                    models.group.GroupPackageAssignment.group_id == group
                 )
                 session.execute(stmt)
 
@@ -171,28 +168,30 @@ class GroupsDB:
                     assignment.package_id = package
                     return assignment
 
-                session.add_all([ make_assignment(group, pkg) for pkg in packages])
+                session.add_all(
+                    [make_assignment(group, pkg) for pkg in packages]
+                )
                 session.commit()
                 return None
-        except IntegrityError as e:
-            return "conflict while assigning package, the package may not exist anymore"
-
+        except IntegrityError:
+            return "conflict while assigning package, the package may " \
+                   "not exist anymore"
 
     def fetch_assigned_packages(self, group: int) -> List[int]:
-        """ Fetches a list of package identifiers assigned to this group
+        """Fetches a list of package identifiers assigned to this group
 
         Args:
             group: group identifier
         """
         with Session(self.engine) as session:
             return session.scalars(
-                select(models.group.GroupPackageAssignment.package_id)
-                .where(models.group.GroupPackageAssignment.group_id == group)
+                select(models.group.GroupPackageAssignment.package_id).where(
+                    models.group.GroupPackageAssignment.group_id == group
+                )
             ).all()
 
-
     def fetch_assigned_data(self, group: int) -> List[models.package.Package]:
-        """ Fetches a list of packages assigned to this group.
+        """Fetches a list of packages assigned to this group.
 
         Args:
             group: group identifier
@@ -205,9 +204,8 @@ class GroupsDB:
                 .join(models.package.Package)
             ).all()
 
-
     def update_policy(self, group: int, policy: str):
-        """ Updates the group update policy
+        """Updates the group update policy
 
         Args:
             group: group identifier
@@ -216,7 +214,7 @@ class GroupsDB:
         with Session(self.engine) as session:
             stmt = (
                 update(models.group.Group)
-                .values(policy = policy)
+                .values(policy=policy)
                 .where(models.group.Group.id == group)
             )
             session.execute(stmt)

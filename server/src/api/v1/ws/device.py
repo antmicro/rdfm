@@ -3,19 +3,24 @@ from flask import Blueprint
 import simple_websocket
 import device_mgmt.loop
 import device_mgmt.shell
-from api.v1.middleware import upgrade_to_websocket, device_api, DeviceToken, management_read_write_api
-from simple_websocket import Server, ConnectionClosed
-from flask import request, Response
+from auth.device import DeviceToken
+from api.v1.middleware import (
+    upgrade_to_websocket,
+    device_api,
+    management_read_write_api,
+)
 
 
 device_ws_blueprint: Blueprint = Blueprint("rdfm-server-device-ws", __name__)
 
 
-@device_ws_blueprint.route('/api/v1/devices/ws', websocket=True)
+@device_ws_blueprint.route("/api/v1/devices/ws", websocket=True)
 @device_api
 @upgrade_to_websocket
-def device_management_ws(ws: simple_websocket.Client, device_token: DeviceToken):
-    """ Device WebSocket: Device management
+def device_management_ws(
+    ws: simple_websocket.Client, device_token: DeviceToken
+):
+    """Device WebSocket: Device management
 
     This is the device management WebSocket endpoint. All devices are expected
     to establish a connection to this WebSocket.
@@ -27,14 +32,16 @@ def device_management_ws(ws: simple_websocket.Client, device_token: DeviceToken)
         raise
 
 
-@device_ws_blueprint.route('/api/v1/devices/<string:mac_address>/shell', websocket=True)
+@device_ws_blueprint.route(
+    "/api/v1/devices/<string:mac_address>/shell", websocket=True
+)
 @management_read_write_api
 @upgrade_to_websocket
 def spawn_shell_for_manager(ws: simple_websocket.Client, mac_address: str):
-    """ Manager WebSocket: Spawn a device shell
+    """Manager WebSocket: Spawn a device shell
 
-    Establish a shell connection to the target device. This WS endpoint is called by
-    the manager to spawn a shell on the device and connect to it.
+    Establish a shell connection to the target device. This WS endpoint is
+    called by the manager to spawn a shell on the device and connect to it.
     """
     try:
         device_mgmt.shell.attach_manager_to_shell(ws, mac_address)
@@ -43,11 +50,19 @@ def spawn_shell_for_manager(ws: simple_websocket.Client, mac_address: str):
         raise
 
 
-@device_ws_blueprint.route('/api/v1/devices/<string:mac_address>/shell/attach/<string:uuid>', websocket=True)
+@device_ws_blueprint.route(
+    "/api/v1/devices/<string:mac_address>/shell/attach/<string:uuid>",
+    websocket=True,
+)
 @device_api
 @upgrade_to_websocket
-def attach_device_shell_to_manager(ws: simple_websocket.Client, mac_address: str, uuid: str, device_token: DeviceToken):
-    """ Device WebSocket: Connect to manager
+def attach_device_shell_to_manager(
+    ws: simple_websocket.Client,
+    mac_address: str,
+    uuid: str,
+    device_token: DeviceToken,
+):
+    """Device WebSocket: Connect to manager
 
     This WS endpoint is meant to be used by a device for streaming the
     contents of the shell session.

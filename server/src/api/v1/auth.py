@@ -1,7 +1,11 @@
 import json
 import traceback
-from api.v1.middleware import (deserialize_schema, public_api,
-                               management_read_only_api, management_read_write_api)
+from api.v1.middleware import (
+    deserialize_schema,
+    public_api,
+    management_read_only_api,
+    management_read_write_api,
+)
 import auth.device
 import models.device
 import models.registration
@@ -16,11 +20,13 @@ auth_blueprint: Blueprint = Blueprint("rdfm-server-auth", __name__)
 DEVICE_SIGNATURE_HEADER = "X-RDFM-Device-Signature"
 
 
-@auth_blueprint.route('/api/v1/auth/device', methods=['POST'])
+@auth_blueprint.route("/api/v1/auth/device", methods=["POST"])
 @public_api
-@deserialize_schema(schema_dataclass=AuthRegisterRequest, key='register_request')
+@deserialize_schema(
+    schema_dataclass=AuthRegisterRequest, key="register_request"
+)
 def check_in(register_request: AuthRegisterRequest):
-    """ Device authorization endpoint
+    """Device authorization endpoint
 
     All device clients must first authorize with the RDFM server via this endpoint.
 
@@ -77,12 +83,16 @@ def check_in(register_request: AuthRegisterRequest):
     """  # noqa: E501
     try:
         if DEVICE_SIGNATURE_HEADER not in request.headers:
-            return api_error(f"request is missing device signature header ({DEVICE_SIGNATURE_HEADER})", 400)
+            return api_error(
+                "request is missing device signature header "
+                f"({DEVICE_SIGNATURE_HEADER})",
+                400,
+            )
 
         signature = request.headers[DEVICE_SIGNATURE_HEADER]
-        if not auth.device.verify_signature(request.get_data(),
-                                            register_request.public_key,
-                                            signature):
+        if not auth.device.verify_signature(
+            request.get_data(), register_request.public_key, signature
+        ):
             return api_error("signature verification failed", 400)
 
         # The above steps verify that the requester owns the private key
@@ -91,21 +101,24 @@ def check_in(register_request: AuthRegisterRequest):
         try:
             token: str
             data: DeviceToken
-            token, data = auth.device.try_acquire_token(register_request.public_key,
-                                                        register_request.metadata)
+            token, data = auth.device.try_acquire_token(
+                register_request.public_key, register_request.metadata
+            )
 
             # Update the device's metadata on the server
             try:
-                server.instance._devices_db.update_metadata(data.device_id,
-                                                            register_request.metadata)
+                server.instance._devices_db.update_metadata(
+                    data.device_id, register_request.metadata
+                )
             except Exception as e:
-                print(f"Failed to update metadata for device {data.device_id}, exception: {e}", flush=True)
+                print(
+                    f"Failed to update metadata for device {data.device_id}, "
+                    f"exception: {e}",
+                    flush=True,
+                )
 
-            return {
-                "token": token,
-                "expires": data.expires
-            }
-        except:
+            return {"token": token, "expires": data.expires}
+        except:     # noqa: E722
             return api_error("device unauthorized", 401)
     except Exception as e:
         traceback.print_exc()
@@ -113,10 +126,10 @@ def check_in(register_request: AuthRegisterRequest):
         return api_error("registration failed", 500)
 
 
-@auth_blueprint.route('/api/v1/auth/pending')
+@auth_blueprint.route("/api/v1/auth/pending")
 @management_read_only_api
 def fetch_registrations():
-    """ Fetch all pending registrations
+    """Fetch all pending registrations
 
     This endpoint returns device registrations requests that have not been accepted
     by an administrator yet.
@@ -169,7 +182,8 @@ def fetch_registrations():
                 "public_key": reg.public_key,
                 "last_appeared": reg.last_appeared,
                 "metadata": reg.info,
-            } for reg in registrations
+            }
+            for reg in registrations
         ]
     except Exception as e:
         traceback.print_exc()
@@ -177,10 +191,10 @@ def fetch_registrations():
         return api_error("fetching registrations failed", 500)
 
 
-@auth_blueprint.route('/api/v1/auth/register', methods=['POST'])
+@auth_blueprint.route("/api/v1/auth/register", methods=["POST"])
 @management_read_write_api
 def set_registration():
-    """ Accept registration request
+    """Accept registration request
 
     Accepts an incoming device registration request. As a result, the device
     will be allowed access to the RDFM server on next registration attempt.
@@ -222,7 +236,9 @@ def set_registration():
         mac = payload["mac_address"]
         public_key = payload["public_key"]
 
-        registration = server.instance._registrations_db.fetch_one(mac, public_key)
+        registration = server.instance._registrations_db.fetch_one(
+            mac, public_key
+        )
         if registration is None:
             return api_error("specified registration does not exist", 404)
 
@@ -234,13 +250,26 @@ def set_registration():
         if dev is not None:
             if dev.public_key != public_key:
                 # Key change
-                print("Device with identifier:", mac, "is changing key", flush=True)
+                print(
+                    "Device with identifier:",
+                    mac,
+                    "is changing key",
+                    flush=True,
+                )
                 server.instance._devices_db.update_key(mac, public_key)
-                server.instance._devices_db.update_metadata(mac, registration.info)
-                server.instance._devices_db.update_timestamp(mac, registration.last_appeared)
+                server.instance._devices_db.update_metadata(
+                    mac, registration.info
+                )
+                server.instance._devices_db.update_timestamp(
+                    mac, registration.last_appeared
+                )
             else:
                 # Shouldn't happen
-                print("Registration for identical public key - should never happen", flush=True)
+                print(
+                    "Registration for identical public key - should never \
+                    happen",
+                    flush=True,
+                )
         else:
             # Create a device and insert it into the database.
             device = models.device.Device()
@@ -261,4 +290,3 @@ def set_registration():
         traceback.print_exc()
         print("Exception during registrations fetch:", repr(e))
         return api_error("fetching registrations failed", 500)
-

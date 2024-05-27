@@ -2,70 +2,61 @@ import datetime
 import inspect
 import functools
 from marshmallow import ValidationError
-from flask import request
+from flask import request, current_app, Response
 from api.v1.common import api_error
-import functools
-from auth.device import decode_and_verify_token, DeviceToken
-from api.v1.common import api_error
-from flask import request
+from auth.device import decode_and_verify_token
 import configuration
 import requests
 from typing import Callable, Optional
-from api.v1.common import api_error
-from flask import request, current_app
 from authlib.integrations.requests_client import OAuth2Session
 from authlib.oauth2.rfc6749.util import scope_to_list
 import server
-import functools
-import inspect
 from simple_websocket import Server, ConnectionClosed
-from flask import request, Response
 from rdfm.ws import WebSocketException
 from device_mgmt.helpers import WS_PING_INTERVAL
 
 
 """ Read-write administrator scope """
-SCOPE_READ_WRITE = 'rdfm_admin_rw'
+SCOPE_READ_WRITE = "rdfm_admin_rw"
 
 """ Read-only administrator scope """
-SCOPE_READ_ONLY = 'rdfm_admin_ro'
+SCOPE_READ_ONLY = "rdfm_admin_ro"
 
 """ Text to append after the endpoint's docstring when a token
     with read-only scope is required
 """
-DOCS_SCOPE_RO_TEXT = f"""
-.. warning:: Accessing this endpoint requires providing a management token with read-only scope ``{SCOPE_READ_ONLY}`` or administrative scope ``{SCOPE_READ_WRITE}``.
-"""
+DOCS_SCOPE_RO_TEXT = """.. warning:: Accessing this endpoint requires """ \
+                     """providing a management token with read-only scope """ \
+                     f"""``{SCOPE_READ_ONLY}`` or administrative scope """ \
+                     f"""``{SCOPE_READ_WRITE}``."""
 
 """ Text to append after the endpoint's docstring when a token
     with read-write scope is required
 """
-DOCS_SCOPE_RW_TEXT = f"""
-.. warning:: Accessing this endpoint requires providing a management token with read-write scope ``{SCOPE_READ_WRITE}``.
-"""
+DOCS_SCOPE_RW_TEXT = """.. warning:: Accessing this endpoint requires """ \
+                     """providing a management token with read-write scope""" \
+                     f""" ``{SCOPE_READ_WRITE}``."""
 
 """ Unprotected API routes
 """
-DOCS_PUBLIC_API_TEXT = f"""
-.. note:: This is a public API route; no authorization is required to access it.
-"""
+DOCS_PUBLIC_API_TEXT = """.. note:: This is a public API route; no """ \
+                       """authorization is required to access it."""
 
 """ API routes requiring a device token
 """
-DOCS_DEVICE_API_TEXT = f"""
+DOCS_DEVICE_API_TEXT = """
 .. warning:: Accessing this endpoint requires providing a device token.
 """
 
 """ WebSocket routes
 """
-DOCS_WEBSOCKET_ROUTE = f"""
+DOCS_WEBSOCKET_ROUTE = """
 .. note:: This is a WebSocket route.
 """
 
 
-
 def __add_scope_docs(function, text: str):
-    """ Add scope documentation to the specified function
+    """Add scope documentation to the specified function
 
     This function ensures that the passed in text has the same indentation
     level as the function's docstring, otherwise the docs are not properly
@@ -84,8 +75,10 @@ def __add_scope_docs(function, text: str):
         function.__doc__ += "\n"
 
 
-def __introspect_and_validate_token(conf: configuration.ServerConfig, token: str) -> Optional[list[str]]:
-    """ Introspect and validate the given token against a configured
+def __introspect_and_validate_token(
+    conf: configuration.ServerConfig, token: str
+) -> Optional[list[str]]:
+    """Introspect and validate the given token against a configured
         authorization server.
 
     This calls the Token Introspection endpoint to validate the given token.
@@ -105,36 +98,46 @@ def __introspect_and_validate_token(conf: configuration.ServerConfig, token: str
     """
     try:
         # Introspect the token
-        client = OAuth2Session(conf.token_introspection_client_id,
-                               conf.token_introspection_client_secret)
-        resp: requests.models.Response = client.introspect_token(conf.token_introspection_url,
-                                                                 token=token)
+        client = OAuth2Session(
+            conf.token_introspection_client_id,
+            conf.token_introspection_client_secret,
+        )
+        resp: requests.models.Response = client.introspect_token(
+            conf.token_introspection_url, token=token
+        )
         if resp.status_code != 200:
-            print("Error during token introspection: authorization server "
-                  "responded with a non-success status.", flush=True)
+            print(
+                "Error during token introspection: authorization server "
+                "responded with a non-success status.",
+                flush=True,
+            )
             return None
 
         introspected_token = resp.json()
-        active = introspected_token['active']
+        active = introspected_token["active"]
         if not active:
             return None
 
         # According to the spec, the authorization server is allowed
         # to only return an `"active": True` response for valid tokens.
-        if 'scope' not in introspected_token:
-            print("Error during token introspection: authorization server "
-                  "response did not contain a `scope` field for valid token. ",
-                  flush=True)
+        if "scope" not in introspected_token:
+            print(
+                "Error during token introspection: authorization server "
+                "response did not contain a `scope` field for valid token. ",
+                flush=True,
+            )
             return None
 
-        return scope_to_list(introspected_token['scope'])
+        return scope_to_list(introspected_token["scope"])
     except Exception as e:
         print("Exception during token introspection:", e)
         return None
 
 
-def deserialize_schema(schema_dataclass: type, key: str = 'payload'):
-    """ Validate and deserialize the incoming request against a predefined marshmallow schema.
+def deserialize_schema(schema_dataclass: type, key: str = "payload"):
+    """
+    Validate and deserialize the incoming request against a predefined
+    marshmallow schema.
 
     This decorator verifies whether an incoming request's schema matches the
     one specified in the given schema, and deserializes it into the specified
@@ -146,41 +149,55 @@ def deserialize_schema(schema_dataclass: type, key: str = 'payload'):
     Args:
         schema_dataclass: dataclass representing the request schema, which the
                           request will be deserialized to.
-        key: argument name for the deserialized structure. The receiving argument
-             must be of the type as specified in `schema_dataclass`.
+        key: argument name for the deserialized structure.
+             The receiving argument must be of the type as specified
+             in `schema_dataclass`.
     """
+
     def _deserialize(f):
         @functools.wraps(f)
         def __deserialize(*args, **kwargs):
-            if not hasattr(schema_dataclass, 'Schema'):
-                raise RuntimeError("deserialize_schema requires a dataclass decorated "
-                                   "with the @marshmallow_dataclass.dataclass decorator")
+            if not hasattr(schema_dataclass, "Schema"):
+                raise RuntimeError(
+                    "deserialize_schema requires a dataclass decorated "
+                    "with the @marshmallow_dataclass.dataclass decorator"
+                )
 
             try:
-                payload: schema_dataclass = schema_dataclass.Schema().load(request.json)
+                payload: schema_dataclass = schema_dataclass.Schema().load(
+                    request.json
+                )
             except ValidationError as e:
-                return api_error(f"schema validation failed: {e.messages}", 400)
+                return api_error(
+                    f"schema validation failed: {e.messages}", 400
+                )
 
             spec = inspect.getfullargspec(f)
             if key in kwargs:
-                raise RuntimeError("deserialize_schema decorator was used, but the wrapped route function "
-                                   f"<{f.__name__}> "
-                                   f"is already receiving an argument with the name: <{key}>")
+                raise RuntimeError(
+                    "deserialize_schema decorator was used, but the wrapped "
+                    f"route function <{f.__name__}> is already receiving an "
+                    f"argument with the name: <{key}>"
+                )
             if key not in spec.args:
-                raise KeyError("deserialize_schema decorator was used, but the wrapped route function "
-                               f"<{f.__name__}> "
-                               "does not accept the deserialized structure parameter "
-                               f"(missing function argument: <{key}> of type: <{schema_dataclass.__name__}>)")
+                raise KeyError(
+                    "deserialize_schema decorator was used, but the wrapped "
+                    f"route function <{f.__name__}> does not accept the "
+                    f"deserialized structure parameter (missing function "
+                    f"argument: <{key}> of type: "
+                    f"<{schema_dataclass.__name__}>)"
+                )
 
             kwargs[key] = payload
             return f(*args, **kwargs)
+
         return __deserialize
 
     return _deserialize
 
 
 def device_api(f):
-    """ Decorator for device APIs
+    """Decorator for device APIs
 
     This decorator verifies whether an incoming request contains a valid
     device token. If no token was provided, or an invalid/expired one
@@ -196,7 +213,10 @@ def device_api(f):
         if auth is None:
             return api_error("no Authorization header was provided", 401)
         if auth.type != "bearer":
-            return api_error("invalid authorization - expected authorization type Bearer", 401)
+            return api_error(
+                "invalid authorization - expected authorization type Bearer",
+                401,
+            )
         if "token" not in auth:
             return api_error("invalid authorization - missing field: token")
 
@@ -206,17 +226,24 @@ def device_api(f):
 
         # Update the last accessed timestamp for this device
         try:
-            server.instance._devices_db.update_timestamp(token.device_id, datetime.datetime.utcnow())
+            server.instance._devices_db.update_timestamp(
+                token.device_id, datetime.datetime.utcnow()
+            )
         except Exception as e:
-            print(f"Failed to update timestamp for device {token.device_id}, exception: {e}", flush=True)
+            print(
+                f"Failed to update timestamp for device {token.device_id}, "
+                f"exception: {e}",
+                flush=True,
+            )
 
         kwargs["device_token"] = token
         return f(*args, **kwargs)
+
     return _device_api
 
 
 def __management_api(scope_check_callback: Callable[[list[str]], bool]):
-    """ Decorator for management APIs
+    """Decorator for management APIs
 
     This decorator verifies whether an incoming request contains a valid
     management token. If no token was provided, or an invalid/expired one
@@ -228,16 +255,20 @@ def __management_api(scope_check_callback: Callable[[list[str]], bool]):
     403 Forbidden status code.
 
     Args:
-        scope_check_callback: callback that is called with the list of scopes contained
-                              within the token. If the client should not be authorized,
-                              the callback is expected to return False. Otherwise, True
-                              will allow the request to be processed.
+        scope_check_callback: callback that is called with the list of scopes
+                              contained within the token. If the client should
+                              not be authorized, the callback is expected to
+                              return False. Otherwise, True will allow the
+                              request to be processed.
     """
+
     def _management_api_impl(f):
         @functools.wraps(f)
         def __management_api_impl(*args, **kwargs):
             # First, check if authentication was not explicitly disabled
-            conf: configuration.ServerConfig = current_app.config['RDFM_CONFIG']
+            conf: configuration.ServerConfig = current_app.config[
+                "RDFM_CONFIG"
+            ]
             if conf.disable_api_auth:
                 return f(*args, **kwargs)
 
@@ -246,31 +277,47 @@ def __management_api(scope_check_callback: Callable[[list[str]], bool]):
             if auth is None:
                 return api_error("no Authorization header was provided", 401)
             if auth.type != "bearer":
-                return api_error("invalid authorization - expected authorization type Bearer", 401)
+                return api_error(
+                    "invalid authorization - expected authorization type"
+                    "Bearer",
+                    401,
+                )
             if "token" not in auth:
-                return api_error("invalid authorization - missing field: token", 401)
+                return api_error(
+                    "invalid authorization - missing field: token", 401
+                )
             token: str = auth["token"]
 
-            scopes: Optional[list[str]] = __introspect_and_validate_token(conf, token)
+            scopes: Optional[list[str]] = __introspect_and_validate_token(
+                conf, token
+            )
             if scopes is None:
                 return api_error("unauthorized", 401)
 
             if not scope_check_callback(scopes):
-                print("Rejecting request - authenticated user does not "
-                      "have the required scopes to access this resource "
-                      f"(user claims: {', '.join(scopes)})", flush=True)
-                return api_error("accessing this resource requires OAuth2 scopes "
-                                 "which are not provided by the authenticated client", 403)
+                print(
+                    "Rejecting request - authenticated user does not "
+                    "have the required scopes to access this resource "
+                    f"(user claims: {', '.join(scopes)})",
+                    flush=True,
+                )
+                return api_error(
+                    "accessing this resource requires OAuth2 scopes "
+                    "which are not provided by the authenticated client",
+                    403,
+                )
 
             # Verified the token successfully, the user is authorized
             # Call the original view function
             return f(*args, **kwargs)
+
         return __management_api_impl
+
     return _management_api_impl
 
 
 def upgrade_to_websocket(f):
-    """ Upgrade a request to WebSocket.
+    """Upgrade a request to WebSocket.
 
     This decorator upgrades an incoming request to a WebSocket.
     The connected socket is passed in as `ws` kwarg to the wrapped
@@ -302,27 +349,30 @@ def upgrade_to_websocket(f):
     @functools.wraps(f)
     def __upgrade(*args, **kwargs):
         spec = inspect.getfullargspec(f)
-        if 'ws' in kwargs:
-            raise RuntimeError("upgrade_to_websocket decorator was used, but the wrapped route function "
-                                f"<{f.__name__}> "
-                                f"is already receiving an argument with the name 'ws'")
-        if 'ws' not in spec.args:
-            raise KeyError("upgrade_to_websocket decorator was used, but the wrapped route function "
-                            f"<{f.__name__}> "
-                            "does not accept the WebSocket client parameter "
-                            f"(missing function argument 'ws' of type simple_websocket.Client)")
+        if "ws" in kwargs:
+            raise RuntimeError(
+                "upgrade_to_websocket decorator was used, but the wrapped"
+                f"route function <{f.__name__}> is already receiving an "
+                "argument with the name 'ws'"
+            )
+        if "ws" not in spec.args:
+            raise KeyError(
+                "upgrade_to_websocket decorator was used, but the wrapped "
+                f"route function <{f.__name__}> does not accept the WebSocket "
+                "client parameter (wissing function argument 'ws' of type "
+                "simple_websocket.Client)"
+            )
 
         ws = Server.accept(request.environ, ping_interval=WS_PING_INTERVAL)
-        exception: WebSocketException = None
 
-        kwargs['ws'] = ws
+        kwargs["ws"] = ws
         try:
             f(*args, **kwargs)
             ws.close()
         except WebSocketException as e:
             try:
                 ws.close(reason=e.status_code, message=e.message)
-            except:
+            except ConnectionClosed:
                 pass
         except ConnectionClosed:
             pass
@@ -331,9 +381,9 @@ def upgrade_to_websocket(f):
         # value to indicate that the request was already handled.
         class WebSocketResponse(Response):
             def __call__(self, *args, **kwargs):
-                if ws.mode == 'gunicorn':
+                if ws.mode == "gunicorn":
                     raise StopIteration()
-                elif ws.mode == 'werkzeug':
+                elif ws.mode == "werkzeug":
                     return super().__call__(*args, **kwargs)
                 else:
                     return []
@@ -344,14 +394,13 @@ def upgrade_to_websocket(f):
 
 
 def management_read_only_api(f):
-    """ Decorator to be used on read-only management API routes
+    """Decorator to be used on read-only management API routes
 
     This decorator verifies if the requester has read-only access
     to the protected resource.
     """
-    client_has_ro_scope = lambda scopes: SCOPE_READ_ONLY in scopes
-    client_has_rw_scope = lambda scopes: SCOPE_READ_WRITE in scopes
-    client_read_allowed = lambda scopes: client_has_ro_scope(scopes) or client_has_rw_scope(scopes)
+    def client_read_allowed(scopes: list[str]) -> bool:
+        return SCOPE_READ_WRITE in scopes or SCOPE_READ_ONLY in scopes
 
     # Mark the handler function with a custom attribute
     f.__rdfm_api_privileges__ = "management_ro"
@@ -361,11 +410,13 @@ def management_read_only_api(f):
 
 
 def management_read_write_api(f):
-    """ Decorator to be used on read-write management API routes
+    """Decorator to be used on read-write management API routes
 
-    This decorator verifies if the requester has read-write access to the protected
+    This decorator verifies if the requester has read-write access
+    to the protected.
     """
-    client_has_rw_scope = lambda scopes: SCOPE_READ_WRITE in scopes
+    def client_has_rw_scope(scopes):
+        return SCOPE_READ_WRITE in scopes
 
     # Mark the handler function with a custom attribute
     f.__rdfm_api_privileges__ = "management_rw"
@@ -375,9 +426,10 @@ def management_read_write_api(f):
 
 
 def public_api(f):
-    """ Decorator to be used on public API routes
+    """Decorator to be used on public API routes
 
-    These routes do not require authorization. This should be used with caution.
+    These routes do not require authorization.
+    This should be used with caution.
     """
     f.__rdfm_api_privileges__ = "public"
     __add_scope_docs(f, DOCS_PUBLIC_API_TEXT)

@@ -15,22 +15,28 @@ WS_READ_TIMEOUT = 5.0
 WS_PING_INTERVAL = 25.0
 
 
-class CopierThread():
-    """ Used for threaded copying of data from one WebSocket to another
+class CopierThread:
+    """Used for threaded copying of data from one WebSocket to another
 
-    This allows us to implement bidirectional transfer of data between two WebSockets.
-    Synchronization between the RX/TX is achieved using the `conn_died` Event variable.
+    This allows us to implement bidirectional transfer of data between
+    two WebSockets.
+    Synchronization between the RX/TX is achieved using the `conn_died`
+    Event variable.
     """
+
     source: simple_websocket.Client
     destination: simple_websocket.Client
     connection_died: threading.Event
 
-
-    def __init__(self, source: simple_websocket.Client, destination: simple_websocket.Client, conn_died: threading.Event) -> None:
+    def __init__(
+        self,
+        source: simple_websocket.Client,
+        destination: simple_websocket.Client,
+        conn_died: threading.Event,
+    ) -> None:
         self.source = source
         self.destination = destination
         self.connection_died = conn_died
-
 
     def _do_copy(self):
         while True:
@@ -41,19 +47,19 @@ class CopierThread():
                 data = self.source.receive(WS_READ_TIMEOUT)
                 if data is not None:
                     self.destination.send(data)
-            except:
+            except simple_websocket.errors.ConnectionClosed:
                 self.connection_died.set()
                 return
 
-
     def start(self):
-        """ Start the copier thread
-        """
+        """Start the copier thread"""
         threading.Thread(target=self._do_copy).start()
 
 
-def bidirectional_copy(first: simple_websocket.Client, second: simple_websocket.Client):
-    """ Bidirectionally copies data between two websockets
+def bidirectional_copy(
+    first: simple_websocket.Client, second: simple_websocket.Client
+):
+    """Bidirectionally copies data between two websockets
 
     All data read from `first` is sent into `second` and vice versa.
     This function will block until one of the involved parties is disconnected,
@@ -65,5 +71,3 @@ def bidirectional_copy(first: simple_websocket.Client, second: simple_websocket.
     A.start()
     B.start()
     on_connection_dead.wait()
-
-

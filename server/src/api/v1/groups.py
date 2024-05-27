@@ -1,23 +1,21 @@
 import datetime
 import traceback
 from typing import List, Optional
-from api.v1.middleware import management_read_only_api, management_read_write_api
-from flask import (
-    Flask,
-    request,
-    Response,
-    abort,
-    send_from_directory,
-    Blueprint
+from api.v1.middleware import (
+    management_read_only_api,
+    management_read_write_api,
 )
+from flask import request, Blueprint
 import server
 from api.v1.common import api_error
 import models.group
 import models.device
-from rdfm.schema.v1.groups import (Group,
-                                   AssignDeviceRequest,
-                                   AssignPackageRequest,
-                                   AssignPolicyRequest)
+from rdfm.schema.v1.groups import (
+    Group,
+    AssignDeviceRequest,
+    AssignPackageRequest,
+    AssignPolicyRequest,
+)
 from api.v1.middleware import deserialize_schema
 import update.policy
 
@@ -26,23 +24,28 @@ groups_blueprint: Blueprint = Blueprint("rdfm-server-groups", __name__)
 
 
 def model_to_schema(group: models.group.Group) -> Group:
-    """ Convert a database group model to a schema model.
+    """Convert a database group model to a schema model.
 
     As we have to fetch the device list, this can't be done using just a simple
     mapping between the fields.
     """
-    return Group(id=group.id,
-                 created=group.created,
-                 packages=server.instance._groups_db.fetch_assigned_packages(group.id),
-                 devices=[ device.id for device in server.instance._groups_db.fetch_assigned(group.id) ],
-                 metadata=group.info,
-                 policy=group.policy)
+    return Group(
+        id=group.id,
+        created=group.created,
+        packages=server.instance._groups_db.fetch_assigned_packages(group.id),
+        devices=[
+            device.id
+            for device in server.instance._groups_db.fetch_assigned(group.id)
+        ],
+        metadata=group.info,
+        policy=group.policy,
+    )
 
 
-@groups_blueprint.route('/api/v1/groups')
+@groups_blueprint.route("/api/v1/groups")
 @management_read_only_api
 def fetch_all():
-    """ Fetch all groups
+    """Fetch all groups
 
     :status 200: no error
     :status 401: user did not provide authorization data,
@@ -83,18 +86,22 @@ def fetch_all():
         ]
     """
     try:
-        groups: List[models.group.Group] = server.instance._groups_db.fetch_all()
-        return Group.Schema().dumps([ model_to_schema(group) for group in groups ], many=True)
+        groups: List[
+            models.group.Group
+        ] = server.instance._groups_db.fetch_all()
+        return Group.Schema().dumps(
+            [model_to_schema(group) for group in groups], many=True
+        )
     except Exception as e:
         traceback.print_exc()
         print("Exception during group fetch:", repr(e))
         return api_error("fetching failed", 500)
 
 
-@groups_blueprint.route('/api/v1/groups/<int:identifier>')
+@groups_blueprint.route("/api/v1/groups/<int:identifier>")
 @management_read_only_api
 def fetch_one(identifier: int):
-    """ Fetch information about a group
+    """Fetch information about a group
 
     :param identifier: group identifier
     :status 200: no error
@@ -134,7 +141,9 @@ def fetch_one(identifier: int):
         }
     """
     try:
-        group: Optional[models.group.Group] = server.instance._groups_db.fetch_one(identifier)
+        group: Optional[
+            models.group.Group
+        ] = server.instance._groups_db.fetch_one(identifier)
         if group is None:
             return api_error("group does not exist", 404)
 
@@ -145,10 +154,10 @@ def fetch_one(identifier: int):
         return api_error("fetching failed", 500)
 
 
-@groups_blueprint.route('/api/v1/groups/<int:identifier>', methods=['DELETE'])
+@groups_blueprint.route("/api/v1/groups/<int:identifier>", methods=["DELETE"])
 @management_read_write_api
 def delete_one(identifier: int):
-    """ Delete a group
+    """Delete a group
 
     The group being deleted **must NOT** be assigned to any devices.
 
@@ -175,7 +184,9 @@ def delete_one(identifier: int):
         HTTP/1.1 200 OK
     """
     try:
-        group: Optional[models.group.Group] = server.instance._groups_db.fetch_one(identifier)
+        group: Optional[
+            models.group.Group
+        ] = server.instance._groups_db.fetch_one(identifier)
         if group is None:
             return api_error("group does not exist", 404)
 
@@ -190,11 +201,13 @@ def delete_one(identifier: int):
         return api_error("deleting failed", 500)
 
 
-@groups_blueprint.route('/api/v1/groups/<int:identifier>/devices', methods=['PATCH'])
+@groups_blueprint.route(
+    "/api/v1/groups/<int:identifier>/devices", methods=["PATCH"]
+)
 @management_read_write_api
-@deserialize_schema(schema_dataclass=AssignDeviceRequest, key='instructions')
+@deserialize_schema(schema_dataclass=AssignDeviceRequest, key="instructions")
 def change_assigned(identifier: int, instructions: AssignDeviceRequest):
-    """ Modify the list of devices assigned to a group
+    """Modify the list of devices assigned to a group
 
     This endpoint allows modifying the list of devices assigned to the group,
     as described by two arrays containing device identifiers of devices that
@@ -204,10 +217,11 @@ def change_assigned(identifier: int, instructions: AssignDeviceRequest):
     encountered, the entire operation is aborted. This covers:
 
         - Any device identifier which does not match a registered device
-        - Any device identifier in `additions` which already has an assigned group
+        - Any device identifier in `additions` which already has an assigned
+          group
           (even if the group is the as specified by `identifier`)
-        - Any device identifier in `removals` which is not currently assigned to the
-          specified package
+        - Any device identifier in `removals` which is not currently assigned
+          to the specified package
 
     Additions are evaluated first, followed by the removals.
 
@@ -220,8 +234,10 @@ def change_assigned(identifier: int, instructions: AssignDeviceRequest):
     :status 404: group does not exist
     :status 409: one of the conflict situations described above has occurred
 
-    :<json array[string] add: identifiers of devices that should be assigned to the group
-    :<json array[string] remove: identifiers of devices that should be removed from the group
+    :<json array[string] add: identifiers of devices that should be assigned
+                              to the group
+    :<json array[string] remove: identifiers of devices that should be removed
+                                 from the group
 
 
     **Example request**
@@ -250,13 +266,15 @@ def change_assigned(identifier: int, instructions: AssignDeviceRequest):
         HTTP/1.1 200 OK
     """
     try:
-        group: Optional[models.group.Group] = server.instance._groups_db.fetch_one(identifier)
+        group: Optional[
+            models.group.Group
+        ] = server.instance._groups_db.fetch_one(identifier)
         if group is None:
             return api_error("group does not exist", 404)
 
-        err = server.instance._groups_db.modify_assignment(identifier,
-                                                           instructions.add,
-                                                           instructions.remove)
+        err = server.instance._groups_db.modify_assignment(
+            identifier, instructions.add, instructions.remove
+        )
         if err is not None:
             return api_error(err, 409)
         return {}, 200
@@ -266,10 +284,10 @@ def change_assigned(identifier: int, instructions: AssignDeviceRequest):
         return api_error("group assignment modification failed", 500)
 
 
-@groups_blueprint.route('/api/v1/groups', methods=['POST'])
+@groups_blueprint.route("/api/v1/groups", methods=["POST"])
 @management_read_write_api
 def create():
-    """ Create a new group
+    """Create a new group
 
     :status 200: no error
     :status 401: user did not provide authorization data,
@@ -327,11 +345,13 @@ def create():
         return api_error("group creation failed", 500)
 
 
-@groups_blueprint.route('/api/v1/groups/<int:identifier>/package', methods=['POST'])
+@groups_blueprint.route(
+    "/api/v1/groups/<int:identifier>/package", methods=["POST"]
+)
 @management_read_write_api
-@deserialize_schema(schema_dataclass=AssignPackageRequest, key='assignment')
+@deserialize_schema(schema_dataclass=AssignPackageRequest, key="assignment")
 def assign_package(identifier: int, assignment: AssignPackageRequest):
-    """ Assign a package to a specific group
+    """Assign a package to a specific group
 
     :param identifier: group identifier
     :status 200: no error
@@ -343,7 +363,8 @@ def assign_package(identifier: int, assignment: AssignPackageRequest):
     :status 404: the specified package or group does not exist
     :status 409: the package/group was modified or deleted during the operation
 
-    :<json array[integer] packages: identifiers of the packages to assign, or empty array
+    :<json array[integer] packages: identifiers of the packages to assign, or
+                                    empty array
 
 
     **Example request**
@@ -366,11 +387,15 @@ def assign_package(identifier: int, assignment: AssignPackageRequest):
         HTTP/1.1 200 OK
     """
     try:
-        group: Optional[models.group.Group] = server.instance._groups_db.fetch_one(identifier)
+        group: Optional[
+            models.group.Group
+        ] = server.instance._groups_db.fetch_one(identifier)
         if group is None:
             return api_error("group does not exist", 404)
 
-        err = server.instance._groups_db.modify_package(identifier, assignment.packages)
+        err = server.instance._groups_db.modify_package(
+            identifier, assignment.packages
+        )
         if err is not None:
             return api_error(err, 409)
         return {}, 200
@@ -380,11 +405,13 @@ def assign_package(identifier: int, assignment: AssignPackageRequest):
         return api_error("group package assignment failed", 500)
 
 
-@groups_blueprint.route('/api/v1/groups/<int:identifier>/policy', methods=['POST'])
+@groups_blueprint.route(
+    "/api/v1/groups/<int:identifier>/policy", methods=["POST"]
+)
 @management_read_write_api
-@deserialize_schema(schema_dataclass=AssignPolicyRequest, key='policy_request')
+@deserialize_schema(schema_dataclass=AssignPolicyRequest, key="policy_request")
 def update_policy(identifier: int, policy_request: AssignPolicyRequest):
-    """ Change the update policy of the group
+    """Change the update policy of the group
 
     The update policy defines the target versions that each device within
     the group should be receiving.
@@ -427,7 +454,7 @@ def update_policy(identifier: int, policy_request: AssignPolicyRequest):
 
         policy: str = policy_request.policy
         try:
-            policy_obj = update.policy.create(policy)
+            update.policy.create(policy)
         except RuntimeError as e:
             return api_error(f"invalid policy: {e}", 400)
 

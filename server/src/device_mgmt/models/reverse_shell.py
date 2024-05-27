@@ -3,8 +3,8 @@ import simple_websocket
 import threading
 
 
-class ReverseShell():
-    """ Represents an active shell session
+class ReverseShell:
+    """Represents an active shell session
 
     This contains information about an active shell session tracked
     by the server. Each session is identified by a MAC:UUID pair.
@@ -14,15 +14,15 @@ class ReverseShell():
     device. The device then connects and sends/receives shell data
     to the saved manager WebSocket.
     """
+
     manager_socket: simple_websocket.Client
     device_connection_closed: threading.Event
     device_connected: threading.Event
     uuid: UUID
     mac_addr: str
 
-
     def __init__(self, ws: simple_websocket.Client, mac: str) -> None:
-        """ Create a shell session
+        """Create a shell session
 
         Args:
             ws: manager WebSocket

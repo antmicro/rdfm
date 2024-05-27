@@ -5,9 +5,8 @@ from update.policies.no_update import NoUpdate
 
 
 def create(policy_str: str) -> Type[BasePolicy]:
-    """ Parses a given policy string and creates an associated policy object.
-    """
-    parts = policy_str.split(',', 1)
+    """Parses a given policy string and creates an associated policy object."""
+    parts = policy_str.split(",", 1)
     if len(parts) != 2:
         raise RuntimeError("invalid policy string, missing arguments")
 

@@ -1,13 +1,8 @@
-from api.v1.middleware import management_read_only_api, management_read_write_api
-from flask import (
-    Flask,
-    request,
-    Response,
-    abort,
-    send_from_directory,
-    Blueprint,
-    current_app
+from api.v1.middleware import (
+    management_read_only_api,
+    management_read_write_api,
 )
+from flask import request, abort, send_from_directory, Blueprint, current_app
 from pathlib import Path
 import storage
 import hashlib
@@ -28,28 +23,26 @@ packages_blueprint: Blueprint = Blueprint("rdfm-server-packages", __name__)
 
 def metadata_contains_reserved_keys(metadata: dict[str, str]) -> bool:
     """Verify whether the user-provided metadata is legal, i.e does not
-       contain any forbidden names.
+    contain any forbidden names.
     """
-    return any([
-        key.startswith("rdfm.storage.")
-        for key in metadata
-    ])
+    return any([key.startswith("rdfm.storage.") for key in metadata])
 
 
 def model_to_schema(package: models.package.Package) -> Package:
-    """ Convert a database model to the schema model
-    """
-    return Package(id=package.id,
-                   created=package.created,
-                   sha256=package.sha256,
-                   driver=package.driver,
-                   metadata=package.info)
+    """Convert a database model to the schema model"""
+    return Package(
+        id=package.id,
+        created=package.created,
+        sha256=package.sha256,
+        driver=package.driver,
+        metadata=package.info,
+    )
 
 
-@packages_blueprint.route('/api/v1/packages')
+@packages_blueprint.route("/api/v1/packages")
 @management_read_only_api
 def fetch_packages():
-    """ Fetch a list of packages uploaded to the server
+    """Fetch a list of packages uploaded to the server
 
     :status 200: no error
     :status 401: user did not provide authorization data,
@@ -94,17 +87,19 @@ def fetch_packages():
     """  # noqa: E501
     try:
         packages = server.instance._packages_db.fetch_all()
-        return Package.Schema().dumps([ model_to_schema(package) for package in packages ], many=True)
+        return Package.Schema().dumps(
+            [model_to_schema(package) for package in packages], many=True
+        )
     except Exception as e:
         traceback.print_exc()
         print("Exception during package fetch:", repr(e))
         return {}, 500
 
 
-@packages_blueprint.route('/api/v1/packages', methods=['POST'])
+@packages_blueprint.route("/api/v1/packages", methods=["POST"])
 @management_read_write_api
 def upload_package():
-    """ Upload an update package.
+    """Upload an update package.
 
     Uploads an update package to the server.
     Remaining key/value pairs in the form request are used as
@@ -162,7 +157,7 @@ def upload_package():
         Content-Type: application/json
     """  # noqa: E501
     try:
-        conf: configuration.ServerConfig = current_app.config['RDFM_CONFIG']
+        conf: configuration.ServerConfig = current_app.config["RDFM_CONFIG"]
         driver_name = conf.storage_driver
 
         meta = request.form.to_dict()
@@ -180,12 +175,12 @@ def upload_package():
             return api_error("invalid storage driver", 500)
 
         sha256 = ""
-        with tempfile.NamedTemporaryFile('wb+') as f:
+        with tempfile.NamedTemporaryFile("wb+") as f:
             request.files["file"].save(f.name)
             success = driver.upsert(meta, f.name, storage_directory)
             if not success:
                 return api_error("could not store artifact", 500)
-            sha256 = hashlib.file_digest(f, 'sha256').hexdigest()
+            sha256 = hashlib.file_digest(f, "sha256").hexdigest()
 
         package = models.package.Package()
         package.created = datetime.datetime.utcnow()
@@ -204,10 +199,10 @@ def upload_package():
         return {}, 500
 
 
-@packages_blueprint.route('/api/v1/packages/<int:identifier>', methods=['GET'])
+@packages_blueprint.route("/api/v1/packages/<int:identifier>", methods=["GET"])
 @management_read_only_api
 def fetch_package(identifier: int):
-    """ Fetch information about a single package given by the specified ID
+    """Fetch information about a single package given by the specified ID
 
     :param identifier: package identifier
     :status 200: no error
@@ -262,10 +257,12 @@ def fetch_package(identifier: int):
         return {}, 500
 
 
-@packages_blueprint.route('/api/v1/packages/<int:identifier>', methods=['DELETE'])
+@packages_blueprint.route(
+    "/api/v1/packages/<int:identifier>", methods=["DELETE"]
+)
 @management_read_write_api
 def delete_package(identifier: int):
-    """ Delete the specified package
+    """Delete the specified package
 
     Deletes the specified package from the server and from the
     underlying storage.
@@ -302,10 +299,12 @@ def delete_package(identifier: int):
 
         # The delete may fail because the package is assigned to a group
         if not server.instance._packages_db.delete(identifier):
-            return api_error("delete failed, the package is assigned to at least one group",
-                             409)
+            return api_error(
+                "delete failed, the package is assigned to at least one group",
+                409,
+            )
 
-        conf: configuration.ServerConfig = current_app.config['RDFM_CONFIG']
+        conf: configuration.ServerConfig = current_app.config["RDFM_CONFIG"]
         driver = storage.driver_by_name(package.driver, conf)
         if driver is None:
             return api_error("delete failed", 500)
@@ -318,10 +317,10 @@ def delete_package(identifier: int):
         return api_error("delete failed", 500)
 
 
-@packages_blueprint.route('/local_storage/<path:name>')
+@packages_blueprint.route("/local_storage/<path:name>")
 @public_api
 def fetch_local_package(name: str):
-    """ Endpoint for exposing local package storage.
+    """Endpoint for exposing local package storage.
 
     **WARNING: Local storage should not be used in production deployment,
     only for local testing!**
@@ -331,7 +330,7 @@ def fetch_local_package(name: str):
     :status 200: no error
     :status 404: specified package does not exist
     """
-    conf: configuration.ServerConfig = current_app.config['RDFM_CONFIG']
+    conf: configuration.ServerConfig = current_app.config["RDFM_CONFIG"]
     storage_location = Path(conf.package_dir).resolve()
     package = (storage_location / name).resolve()
     if not package.is_relative_to(storage_location):
