@@ -84,13 +84,6 @@ public class MainActivity extends Activity {
         registerReceiver(startUpdateReceiver, new IntentFilter(startUpdateIntent), UPDATE_INTENT_PERMISSION, null);
         mConfigReceiver = new ConfigurationIntentReceiver(this);
         this.setUpdateAlarm();
-        this.mUpdateManager.bind();
-    }
-
-    @Override
-    protected void onPause() {
-        this.mUpdateManager.unbind();
-        super.onPause();
     }
 
     private void onStartUpdateIntent() {
@@ -104,6 +97,7 @@ public class MainActivity extends Activity {
         }
 
         Log.d(TAG, "Start system update");
+        this.mUpdateManager.bind();
         try {
             mHttpClient.checkUpdate(mDeviceInfo, mConfig, mUpdateManager);
         } catch (RuntimeException e) {
