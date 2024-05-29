@@ -50,6 +50,7 @@ public class UpdateManager {
         Log.d(TAG, "Complete applying payload, errorCode: "
                 + UpdateEngineErrors.getCodeName(errorCode));
 
+        this.unbind();
         String otaPackageFullPah = otaPackagePath + "/" + otaPackageName;
         try {
             Files.deleteIfExists(Paths.get(otaPackageFullPah));
