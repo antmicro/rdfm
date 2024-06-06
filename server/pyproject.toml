@@ -32,6 +32,7 @@ simple-websocket = "^1.0.0"
 gevent = "^23.9.1"
 gunicorn = "^21.2.0"
 alembic = "^1.13.1"
+SQLAlchemy-Utils = "^0.41.2"
 
 [tool.poetry.group.test.dependencies]
 mypy = "^1.4.0"
