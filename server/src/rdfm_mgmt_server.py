@@ -51,6 +51,9 @@ def create_server_instance(
         if config.create_mocks:
             srv.create_mock_data()
 
+        if srv.db is None:
+            raise RuntimeError("Database connection failed")
+
         return srv
     except Exception as e:
         raise RuntimeError(f"Failed to connect to the database: {e}")
