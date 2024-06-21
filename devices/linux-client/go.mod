@@ -22,3 +22,5 @@ require (
 	github.com/urfave/cli/v2 v2.25.7
 	golang.org/x/crypto v0.12.0 // indirect
 )
+
+replace github.com/mendersoftware/mender v0.0.0-20230726064531-bbe854cef242 => github.com/antmicro/mender v0.0.0-20240724071621-94b3886d04b6

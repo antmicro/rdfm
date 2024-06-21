@@ -178,7 +178,7 @@ func (ctx *RDFM) InstallArtifact(path string) error {
 	}
 	stateExec := device.NewStateScriptExecutor(menderConfig)
 
-	return app.DoStandaloneInstall(ctx.deviceManager, path, clientConfig, stateExec, false)
+	return DoInstall(ctx.deviceManager, path, clientConfig, stateExec, false)
 }
 
 // Attempt to commit the currently installed update
