@@ -1,10 +1,12 @@
 package app
 
 import (
+	"os"
 	"io"
 	"io/ioutil"
-	"os"
 	"strings"
+
+	"github.com/antmicro/rdfm/download"
 
 	"github.com/mendersoftware/mender/client"
 	"github.com/mendersoftware/mender/statescript"
@@ -19,41 +21,18 @@ func DoInstall(device *dev.DeviceManager, updateURI string,
 	clientConfig client.Config,
 	stateExec statescript.Executor, rebootExitCode bool) error {
 
-	var image io.ReadCloser
-	var imageSize int64
 	var filePath = updateURI
-	var upclient client.Updater
+	var err error
 
 	if strings.HasPrefix(updateURI, "http:") ||
 		strings.HasPrefix(updateURI, "https:") {
-		upclient = client.NewUpdate()
 
-		file, err := os.CreateTemp(RdfmDataDirectory, "update.cache-")
-		defer file.Close()
-
-		ac, err := client.NewApiClient(clientConfig)
-		image, imageSize, err := upclient.FetchUpdate(ac, updateURI, 0)
-		defer image.Close()
+		filePath, err = download.CacheArtifactFromURI(updateURI, RdfmDataDirectory, clientConfig)
 
 		if err != nil {
 			return err
 		}
-
-		arr := make([]byte, 1024)
-		var wholeSize int64
-		for {
-			n, _ := image.Read(arr)
-			wholeSize += int64(n)
-			file.Write(arr[:n])
-			if wholeSize >= imageSize {
-				break
-			}
-		}
-
-		if err != nil {
-			return err
-		}
-		filePath = file.Name()
+		defer os.Remove(filePath)
 	}
 
 	log.Infof("Start updating from local image file: [%s]", filePath)
