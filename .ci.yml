@@ -272,12 +272,14 @@ test-rdfm-client-docker:
     - sed -i "s/git/#git/g" ./scripts/test-docker/data/check-artifact-info.sh
     - sed -i "s/\-it//g" ./scripts/test-docker/test-deltas.sh
     - sed -i "s/git/#git/g" ./scripts/test-docker/data/check-delta-patching.sh
+    - sed -i "s/\-it//g" ./scripts/test-docker/test-delta-over-http.sh
     # Run rdfm-client Docker tests
     - ./scripts/test-docker/test-artifact-info.sh
     - cd scripts/test-docker/
     - ./make-delta-samples.sh
     - cd ../../
     - ./scripts/test-docker/test-deltas.sh
+    - ./scripts/test-docker/test-delta-over-http.sh
   only:
     refs:
       - merge_requests

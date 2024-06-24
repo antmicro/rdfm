@@ -33,4 +33,4 @@ docker run \
 	--device "$VBLOCK1" \
 	--rm \
 	-it	$BASEIMAGE \
-	bash -c "/data/scripts/test-docker/data/check-delta-patching.sh $VBLOCK0 $VBLOCK1 0"
+	bash -c "/data/scripts/test-docker/data/check-delta-patching.sh $VBLOCK0 $VBLOCK1 1"

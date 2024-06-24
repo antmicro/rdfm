@@ -12,6 +12,7 @@ ARTIFACT_DUMMY="RDFM_TEST_ARTIFACT_NAME"
 PROVIDES_DUMMY="rootfs-image.checksum=RDFM_TEST_DUMMY_VALUE"
 PART_A="$1"
 PART_B="$2"
+IS_HTTP=${3:-0}
 echo "Running tests in container with loop devices: $PART_A $PART_B"
 
 # More pleasing logging
@@ -123,9 +124,22 @@ EOF
 # Install the delta artifact and validate the checksum on the secondary partition
 test_delta_installation()
 {
-	if ! rdfm install ./scripts/test-docker/vloop0_to_vloop1.delta.rdfm; then
-		log_info "test delta installation: FAIL"
-		return 1
+	if [[ $IS_HTTP == 0 ]]; then
+		if ! rdfm install ./scripts/test-docker/vloop0_to_vloop1.delta.rdfm; then
+			log_info "test delta installation: FAIL"
+			return 1
+		fi
+	else
+		set +e
+		log_info "Running first update"
+		timeout 5 rdfm install http://127.0.0.1:8000/vloop0_to_vloop1.delta.rdfm
+		log_info "Killed first update"
+		set -e
+		log_info "Running second update"
+		if ! rdfm install http://127.0.0.1:8000/vloop0_to_vloop1.delta.rdfm; then
+			log_info "test delta installation: FAIL"
+			return 1
+		fi
 	fi
 
 	# Validate the checksum of the secondary partition
@@ -141,11 +155,26 @@ test_delta_installation()
 	return 0
 }
 
+setup_http_server()
+{
+	DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -qy python3-pip
+	pip install rangehttpserver --break-system-packages
+	pushd ./scripts/test-docker
+	echo "Starting HTTP server"
+	python3 ./data/server.py 8000 &
+	sleep 1
+	popd
+}
+
 # =====================================================
 
 setup_environment
 
 test_dependency_tracking
+
+if [[ $IS_HTTP == 1 ]]; then
+	setup_http_server
+fi
 
 setup_test_delta_installation
 test_delta_installation
