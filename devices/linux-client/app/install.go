@@ -1,19 +1,18 @@
 package app
 
 import (
-	"os"
 	"io"
 	"io/ioutil"
 	"strings"
 
 	"github.com/antmicro/rdfm/download"
 
-	"github.com/mendersoftware/mender/client"
-	"github.com/mendersoftware/mender/statescript"
 	"github.com/mendersoftware/mender/app"
-	"github.com/mendersoftware/mender/utils"
-	"github.com/mendersoftware/mender/installer"
+	"github.com/mendersoftware/mender/client"
 	dev "github.com/mendersoftware/mender/device"
+	"github.com/mendersoftware/mender/installer"
+	"github.com/mendersoftware/mender/statescript"
+	"github.com/mendersoftware/mender/utils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -21,24 +20,19 @@ func DoInstall(device *dev.DeviceManager, updateURI string,
 	clientConfig client.Config,
 	stateExec statescript.Executor, rebootExitCode bool) error {
 
-	var filePath = updateURI
+	var image io.ReadCloser
+	var imageSize int64
 	var err error
 
 	if strings.HasPrefix(updateURI, "http:") ||
 		strings.HasPrefix(updateURI, "https:") {
 
-		filePath, err = download.CacheArtifactFromURI(updateURI, RdfmDataDirectory, clientConfig)
-
-		if err != nil {
-			return err
-		}
-		defer os.Remove(filePath)
+		log.Infof("Start updating from URI: [%s]", updateURI)
+		image, imageSize, err = download.FetchAndCacheUpdateFromURI(updateURI, RdfmDataDirectory, clientConfig)
+	} else {
+		log.Infof("Start updating from local image file: [%s]", updateURI)
+		image, imageSize, err = installer.FetchUpdateFromFile(updateURI)
 	}
-
-	log.Infof("Start updating from local image file: [%s]", filePath)
-
-	image, imageSize, err := installer.FetchUpdateFromFile(filePath)
-
 	if err != nil {
 		return err
 	}
