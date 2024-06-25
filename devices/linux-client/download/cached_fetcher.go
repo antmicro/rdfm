@@ -3,6 +3,8 @@ package download
 import (
 	"os"
 	"io"
+	"fmt"
+	"path/filepath"
 	"crypto/sha1"
 
 	"github.com/antmicro/rdfm/parser"
@@ -41,9 +43,7 @@ func (u *ReadSaver) Read(p []byte) (n int, err error) {
 	} else {
 		n = len(u.data) - u.offset
 	}
-	for i, val := range u.data[u.offset:u.offset + n] {
-		p[i] = val
-	}
+	copy(p, u.data[u.offset:u.offset + n])
 	u.offset += n
 	return n, nil
 }
@@ -82,8 +82,6 @@ func (u *UpdateCacher) Close() error {
 func FetchAndCacheUpdateFromURI(url string, cacheDirectory string,
 	clientConfig client.Config) (io.ReadCloser, int64, error) {
 
-	log.Infof("Starting artifact download from %s", url)
-
 	apiReq, _ := client.NewApiClient(clientConfig)
 	image, imageSize, err := client.NewUpdate().FetchUpdate(apiReq, url, 0)
 
@@ -91,21 +89,38 @@ func FetchAndCacheUpdateFromURI(url string, cacheDirectory string,
 		return nil, 0, err
 	}
 
-	urlReader := &ReadSaver {offset: 0}
-	readSplitter := io.TeeReader(image, urlReader)
+	readSaver := &ReadSaver {
+		offset: 0,
+	}
+	readSplitter := io.TeeReader(image, readSaver)
 
 	bytes, err := parser.GetHeader(readSplitter)
 	headerHash := sha1.Sum(bytes)
 
-	log.Infof("Header hash: %x", headerHash)
+	cacheFile := filepath.Join(cacheDirectory, fmt.Sprintf("update-%x.cache", headerHash))
 
-	doubleReader := &CombinedSourceReader {
-		firstReader: urlReader,
+	var doubleReader *CombinedSourceReader
+	var file *os.File
+
+	if _, err := os.Stat(cacheFile); err == nil {
+		log.Infof("Cache file exists")
+		file, err = os.Open(cacheFile)
+		doubleReader = &CombinedSourceReader {
+			firstReader: file,
+			firstReaderEOF: false,
+			secondReader: image,
+		}
+		return doubleReader, imageSize, nil
+	}
+
+	log.Infof("Cache file doesn't exist")
+	file, err = os.Create(cacheFile)
+	doubleReader = &CombinedSourceReader {
+		firstReader: readSaver,
 		firstReaderEOF: false,
 		secondReader: image,
 	}
 
-	file, err := os.CreateTemp(cacheDirectory, "update.cache-")
 	updateCacher := &UpdateCacher {
 		reader:			doubleReader,
 		cacheFile:	file,
