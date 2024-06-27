@@ -20,7 +20,14 @@ func GetHeader(reader io.Reader) ([]byte, error) {
 		}
 		if tarFile.Name == "header.tar" {
 			header := make([]byte, tarFile.Size)
-			tarReader.Read(header)
+			offset := 0
+			for {
+				if offset >= len(header) {
+					break
+				}
+				n, _ := tarReader.Read(header[offset:])
+				offset += n
+			}
 			return header, nil
 		}
 	}
