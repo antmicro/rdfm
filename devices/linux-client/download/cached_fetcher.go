@@ -58,7 +58,8 @@ func (c *CombinedSourceReader) Read(p []byte) (n int, err error) {
 		c.firstReaderEOF = (err == io.EOF)
 		return n, nil
 	}
-	return c.secondReader.Read(p)
+	n, err = c.secondReader.Read(p)
+	return n, err
 }
 
 func (u *CombinedSourceReader) Close() error {
@@ -83,7 +84,7 @@ func FetchAndCacheUpdateFromURI(url string, cacheDirectory string,
 	clientConfig client.Config) (io.ReadCloser, int64, error) {
 
 	apiReq, _ := client.NewApiClient(clientConfig)
-	image, imageSize, err := client.NewUpdate().FetchUpdate(apiReq, url, 0)
+	image, imageSize, err := client.NewUpdate().FetchUpdate(apiReq, url, 0, 0)
 
 	if err != nil {
 		return nil, 0, err
@@ -102,8 +103,13 @@ func FetchAndCacheUpdateFromURI(url string, cacheDirectory string,
 	var doubleReader *CombinedSourceReader
 	var file *os.File
 
-	if _, err := os.Stat(cacheFile); err == nil {
+	if stat, err := os.Stat(cacheFile); err == nil {
+		image.Close()
 		log.Infof("Cache file exists")
+		image, _, err := client.NewUpdate().FetchUpdate(apiReq, url, 0, stat.Size())
+		if err != nil {
+			return nil, 0, err
+		}
 		file, err = os.Open(cacheFile)
 		doubleReader = &CombinedSourceReader {
 			firstReader: file,
