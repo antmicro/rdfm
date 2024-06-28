@@ -83,14 +83,18 @@ func (u *UpdateCacher) Close() error {
 func FetchAndCacheUpdateFromURI(url string, cacheDirectory string,
 	clientConfig client.Config) (io.ReadCloser, int64, error) {
 
-	apiReq, _ := client.NewApiClient(clientConfig)
-	image, imageSize, err := client.NewUpdate().FetchUpdate(apiReq, url, 0, 0)
+	image, imageSize, supportsRangeRequests, err := NewRdfmHttpUpdateReader(url, 0, clientConfig)
 
 	if err != nil {
 		return nil, 0, err
 	}
 
-	readSaver := &ReadSaver {
+	if !supportsRangeRequests {
+		log.Warnf("Server doesn't support range requests - caching disabled")
+		return image, imageSize, nil
+	}
+
+	readSaver := &ReadSaver{
 		offset: 0,
 	}
 	readSplitter := io.TeeReader(image, readSaver)
@@ -105,8 +109,8 @@ func FetchAndCacheUpdateFromURI(url string, cacheDirectory string,
 
 	if stat, err := os.Stat(cacheFile); err == nil {
 		image.Close()
-		log.Infof("Cache file exists")
-		image, _, err := client.NewUpdate().FetchUpdate(apiReq, url, 0, stat.Size())
+		log.Infof("Resuming download from cache")
+		image, _, _, err := NewRdfmHttpUpdateReader(url, stat.Size(), clientConfig)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -119,12 +123,11 @@ func FetchAndCacheUpdateFromURI(url string, cacheDirectory string,
 		return doubleReader, imageSize, nil
 	}
 
-	log.Infof("Cache file doesn't exist")
 	file, err = os.Create(cacheFile)
-	doubleReader = &CombinedSourceReader {
-		firstReader: readSaver,
+	doubleReader = &CombinedSourceReader{
+		firstReader:    readSaver,
 		firstReaderEOF: false,
-		secondReader: image,
+		secondReader:   image,
 	}
 
 	updateCacher := &UpdateCacher {
