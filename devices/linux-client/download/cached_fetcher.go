@@ -14,19 +14,19 @@ import (
 )
 
 type ReadSaver struct {
-	data                []byte
-	offset              int
+	data   []byte
+	offset int
 }
 
 type CombinedSourceReader struct {
-	firstReader         io.ReadCloser
-	firstReaderEOF      bool
-	secondReader        io.ReadCloser
+	firstReader    io.ReadCloser
+	firstReaderEOF bool
+	secondReader   io.ReadCloser
 }
 
-type UpdateCacher struct {
-	reader              io.ReadCloser
-	cacheFile           *os.File
+type TeeReadCloser struct {
+	reader io.ReadCloser
+	writer io.WriteCloser
 }
 
 func (u *ReadSaver) Write(p []byte) (n int, err error) {
@@ -38,12 +38,12 @@ func (u *ReadSaver) Read(p []byte) (n int, err error) {
 	if u.offset >= len(u.data) {
 		return 0, io.EOF
 	}
-	if len(p) <= len(u.data) - u.offset {
+	if len(p) <= len(u.data)-u.offset {
 		n = len(p)
 	} else {
 		n = len(u.data) - u.offset
 	}
-	copy(p, u.data[u.offset:u.offset + n])
+	copy(p, u.data[u.offset:u.offset+n])
 	u.offset += n
 	return n, nil
 }
@@ -68,15 +68,15 @@ func (u *CombinedSourceReader) Close() error {
 	return nil
 }
 
-func (u *UpdateCacher) Read(p []byte) (n int, err error) {
-	n, err = u.reader.Read(p)
-	u.cacheFile.Write(p[:n])
+func (t *TeeReadCloser) Read(p []byte) (n int, err error) {
+	n, err = t.reader.Read(p)
+	t.writer.Write(p[:n])
 	return n, err
 }
 
-func (u *UpdateCacher) Close() error {
-	u.reader.Close()
-	u.cacheFile.Close()
+func (t *TeeReadCloser) Close() error {
+	t.reader.Close()
+	t.writer.Close()
 	return nil
 }
 
@@ -114,11 +114,12 @@ func FetchAndCacheUpdateFromURI(url string, cacheDirectory string,
 		if err != nil {
 			return nil, 0, err
 		}
-		file, err = os.Open(cacheFile)
-		doubleReader = &CombinedSourceReader {
-			firstReader: file,
+		file, err = os.OpenFile(cacheFile, os.O_APPEND|os.O_RDWR, stat.Mode())
+		tr := &TeeReadCloser{image, file}
+		doubleReader = &CombinedSourceReader{
+			firstReader:    file,
 			firstReaderEOF: false,
-			secondReader: image,
+			secondReader:   tr,
 		}
 		return doubleReader, imageSize, nil
 	}
@@ -130,9 +131,9 @@ func FetchAndCacheUpdateFromURI(url string, cacheDirectory string,
 		secondReader:   image,
 	}
 
-	updateCacher := &UpdateCacher {
-		reader:			doubleReader,
-		cacheFile:	file,
+	updateCacher := &TeeReadCloser{
+		reader: doubleReader,
+		writer: file,
 	}
 
 	if err != nil {
