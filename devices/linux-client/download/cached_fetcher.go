@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"crypto/sha1"
+	"strings"
 
 	"github.com/antmicro/rdfm/parser"
 
@@ -102,7 +103,10 @@ func FetchAndCacheUpdateFromURI(url string, cacheDirectory string,
 	bytes, err := parser.GetHeader(readSplitter)
 	headerHash := sha1.Sum(bytes)
 
-	cacheFile := filepath.Join(cacheDirectory, fmt.Sprintf("update-%x.cache", headerHash))
+	if _, err := os.Stat(cacheDirectory); os.IsNotExist(err) {
+		os.MkdirAll(cacheDirectory, os.ModePerm)
+	}
+	cacheFile := filepath.Join(cacheDirectory, fmt.Sprintf(strings.Replace(conf.RdfmCacheFilePattern, "*", "%x", 1), headerHash))
 
 	var doubleReader *CombinedSourceReader
 	var file *os.File
@@ -141,4 +145,19 @@ func FetchAndCacheUpdateFromURI(url string, cacheDirectory string,
 	}
 
 	return updateCacher, imageSize, nil
+}
+
+func CleanCache(cacheDirectory string) {
+	log.Infof("Removing cached updates")
+	_, err := os.Stat(cacheDirectory)
+	if err != nil {
+		log.Warnf("Cache directory doesn't exist - nothing to clean")
+		return
+	}
+	files, err := filepath.Glob(filepath.Join(cacheDirectory, conf.RdfmCacheFilePattern))
+	for _, file := range files {
+		if err := os.Remove(file); err != nil {
+			log.Warnf("Could not remove %s", file)
+		}
+	}
 }

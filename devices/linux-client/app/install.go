@@ -28,7 +28,7 @@ func DoInstall(device *dev.DeviceManager, updateURI string,
 		strings.HasPrefix(updateURI, "https:") {
 
 		log.Infof("Start updating from URI: [%s]", updateURI)
-		image, imageSize, err = download.FetchAndCacheUpdateFromURI(updateURI, RdfmDataDirectory, clientConfig)
+		image, imageSize, err = download.FetchAndCacheUpdateFromURI(updateURI, RdfmCachePath, clientConfig)
 	} else {
 		log.Infof("Start updating from local image file: [%s]", updateURI)
 		image, imageSize, err = installer.FetchUpdateFromFile(updateURI)
@@ -40,5 +40,11 @@ func DoInstall(device *dev.DeviceManager, updateURI string,
 	p := utils.NewProgressWriter(imageSize)
 	tr := io.TeeReader(image, p)
 
-	return app.DoStandaloneInstallStates(ioutil.NopCloser(tr), device, stateExec, rebootExitCode)
+	err = app.DoStandaloneInstallStates(ioutil.NopCloser(tr), device, stateExec, rebootExitCode)
+
+	if err == nil {
+		download.CleanCache(RdfmCachePath)
+	}
+
+	return err
 }

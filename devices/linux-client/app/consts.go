@@ -11,6 +11,8 @@ const (
 	RdfmArtifactInfoFilename = "artifact_info"
 	RdfmProvidesInfoFilename = "provides_info"
 	RdfmRSAKeysFilename      = "rsa.pem"
+	RdfmCacheDirectory       = "cache"
+	RdfmCacheFilePattern     = "update-*.cache"
 )
 
 var (
@@ -19,4 +21,5 @@ var (
 	RdfmArtifactInfoPath  = path.Join(RdfmConfigDirectory, RdfmArtifactInfoFilename)
 	RdfmProvidesInfoPath  = path.Join(RdfmConfigDirectory, RdfmProvidesInfoFilename)
 	RdfmRSAKeysPath       = path.Join(RdfmDataDirectory, RdfmRSAKeysFilename)
+	RdfmCachePath         = path.Join(RdfmDataDirectory, RdfmCacheDirectory)
 )
