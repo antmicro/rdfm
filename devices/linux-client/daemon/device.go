@@ -24,6 +24,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/antmicro/rdfm/app"
+	"github.com/antmicro/rdfm/conf"
 	"github.com/antmicro/rdfm/daemon/capabilities"
 	"github.com/gorilla/websocket"
 
@@ -147,7 +148,7 @@ func (d *Device) connect() error {
 	// Check whether we should encrypt connection
 	serverUrl := d.rdfmCtx.RdfmConfig.ServerURL
 	if serverUrl == "" {
-		log.Fatalf("No server URL in %s!", app.RdfmOverlayConfigPath)
+		log.Fatalf("No server URL in %s!", conf.RdfmOverlayConfigPath)
 	}
 	encrypt, err := netUtils.ShouldEncryptProxy(serverUrl)
 	if err != nil {
@@ -156,7 +157,7 @@ func (d *Device) connect() error {
 
 	if encrypt {
 		if d.rdfmCtx.RdfmConfig.ServerCertificate == "" {
-			log.Fatalf("No server certificate path in %s!", app.RdfmOverlayConfigPath)
+			log.Fatalf("No server certificate path in %s!", conf.RdfmOverlayConfigPath)
 		}
 		cert, err := os.ReadFile(d.rdfmCtx.RdfmConfig.ServerCertificate)
 		if err != nil {
@@ -288,7 +289,7 @@ func getPublicKey(privateKey *rsa.PrivateKey) []byte {
 func (d Device) getKeys() (*rsa.PrivateKey, string) {
 	var publicKeyPem []byte
 	var privateKey *rsa.PrivateKey
-	keyFileName := app.RdfmRSAKeysPath
+	keyFileName := conf.RdfmRSAKeysPath
 
 	// Read key from file
 	privateKeyPem, err := os.ReadFile(keyFileName)

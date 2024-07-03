@@ -71,12 +71,12 @@ func NewRdfmContext() (*RDFM, error) {
 }
 
 func loadConfig() (*conf.RDFMConfig, *mconf.MenderConfig, error) {
-	RDFMConfig, MenderConfig, err := conf.LoadConfig(RdfmDefaultConfigPath, RdfmOverlayConfigPath)
+	RDFMConfig, MenderConfig, err := conf.LoadConfig(conf.RdfmDefaultConfigPath, conf.RdfmOverlayConfigPath)
 	if err != nil {
 		return nil, nil, errors.New("failed to load configuration from file")
 	}
 	if MenderConfig.DeviceTypeFile == "" {
-		deviceTypeFile := path.Join(RdfmDataDirectory, "device_type")
+		deviceTypeFile := path.Join(conf.RdfmDataDirectory, "device_type")
 		RDFMConfig.DeviceTypeFile = deviceTypeFile
 	}
 
@@ -114,14 +114,14 @@ func reinitializeDbStore(s *store.DBStore) (*store.DBStore, error) {
 	log.Debug("Reinitializing database")
 
 	artifactName := "unknown"
-	data, err = helpers.LoadKeyValueFile(RdfmArtifactInfoPath)
+	data, err = helpers.LoadKeyValueFile(conf.RdfmArtifactInfoPath)
 	if err == nil && data["artifact_name"] != "" {
 		artifactName = data["artifact_name"]
 		log.Debug("Reinitializing artifact_name from artifact_info: ", artifactName)
 	}
 
 	provides := make(map[string]string)
-	data, err = helpers.LoadKeyValueFile(RdfmProvidesInfoPath)
+	data, err = helpers.LoadKeyValueFile(conf.RdfmProvidesInfoPath)
 	if err == nil {
 		if data["artifact_name"] != "" {
 			log.Warn("provides_info file contained artifact_name - this is not allowed, ignoring")
@@ -143,7 +143,7 @@ func reinitializeDbStore(s *store.DBStore) (*store.DBStore, error) {
 }
 
 func loadDbStore() (*store.DBStore, error) {
-	store := store.NewDBStore(RdfmDataDirectory)
+	store := store.NewDBStore(conf.RdfmDataDirectory)
 	if store == nil {
 		return nil, errors.New("failed to load DB store")
 	}

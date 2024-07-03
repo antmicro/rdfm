@@ -81,8 +81,7 @@ func (t *TeeReadCloser) Close() error {
 	return nil
 }
 
-func FetchAndCacheUpdateFromURI(url string, cacheDirectory string,
-	clientConfig client.Config) (io.ReadCloser, int64, error) {
+func FetchAndCacheUpdateFromURI(url string, clientConfig client.Config) (io.ReadCloser, int64, error) {
 
 	image, imageSize, supportsRangeRequests, err := NewRdfmHttpUpdateReader(url, 0, clientConfig)
 
@@ -103,10 +102,10 @@ func FetchAndCacheUpdateFromURI(url string, cacheDirectory string,
 	bytes, err := parser.GetHeader(readSplitter)
 	headerHash := sha1.Sum(bytes)
 
-	if _, err := os.Stat(cacheDirectory); os.IsNotExist(err) {
-		os.MkdirAll(cacheDirectory, os.ModePerm)
+	if _, err := os.Stat(conf.RdfmCachePath); os.IsNotExist(err) {
+		os.MkdirAll(conf.RdfmCachePath, os.ModePerm)
 	}
-	cacheFile := filepath.Join(cacheDirectory, fmt.Sprintf(strings.Replace(conf.RdfmCacheFilePattern, "*", "%x", 1), headerHash))
+	cacheFile := filepath.Join(conf.RdfmCachePath, fmt.Sprintf(strings.Replace(conf.RdfmCacheFilePattern, "*", "%x", 1), headerHash))
 
 	var doubleReader *CombinedSourceReader
 	var file *os.File
@@ -147,14 +146,14 @@ func FetchAndCacheUpdateFromURI(url string, cacheDirectory string,
 	return updateCacher, imageSize, nil
 }
 
-func CleanCache(cacheDirectory string) {
+func CleanCache() {
 	log.Infof("Removing cached updates")
-	_, err := os.Stat(cacheDirectory)
+	_, err := os.Stat(conf.RdfmCachePath)
 	if err != nil {
 		log.Warnf("Cache directory doesn't exist - nothing to clean")
 		return
 	}
-	files, err := filepath.Glob(filepath.Join(cacheDirectory, conf.RdfmCacheFilePattern))
+	files, err := filepath.Glob(filepath.Join(conf.RdfmCachePath, conf.RdfmCacheFilePattern))
 	for _, file := range files {
 		if err := os.Remove(file); err != nil {
 			log.Warnf("Could not remove %s", file)

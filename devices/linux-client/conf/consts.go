@@ -1,4 +1,4 @@
-package app
+package conf
 
 import (
 	"path"
@@ -12,7 +12,8 @@ const (
 	RdfmProvidesInfoFilename = "provides_info"
 	RdfmRSAKeysFilename      = "rsa.pem"
 	RdfmCacheDirectory       = "cache"
-	RdfmCacheFilePattern     = "update-*.cache"
+	// This pattern can only contain one '*', because of the Sprintf use in cached_fetcher
+	RdfmCacheFilePattern = "update-*.cache"
 )
 
 var (
