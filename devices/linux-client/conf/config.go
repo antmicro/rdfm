@@ -13,6 +13,9 @@ import (
 
 const DEFAULT_UPDATE_POLL_INTERVAL_S = 15 * 60
 const DEFAULT_RETRY_POLL_INTERVAL_S = 60
+const DEFAULT_HTTP_CACHE_ENABLED = true
+const DEFAULT_RECONNECT_RETRY_COUNT = 3
+const DEFAULT_RECONNECT_RETRY_TIME = 60
 
 type RDFMConfig struct {
 	// Path to the device type file
@@ -34,7 +37,16 @@ type RDFMConfig struct {
 	ServerURL string `json:",omitempty"`
 	// Path to deployment log file
 	UpdateLogPath string `json:",omitempty"`
+	// Is artifact caching enabled. Default: true
+	HttpCacheEnabled bool `json:",omitempty"`
+	// HTTP reconnect retry count
+	ReconnectRetryCount int `json:",omitempty"`
+	// HTTP reconnect retry time
+	ReconnectRetryTime int `json:",omitempty"`
 }
+
+var rdfmConfigInstance *RDFMConfig
+var menderConfigInstance *conf.MenderConfig
 
 func (c RDFMConfig) ToMenderConfig() *conf.MenderConfig {
 	menderConfig := conf.NewMenderConfig()
@@ -52,38 +64,48 @@ func (c RDFMConfig) ToMenderConfig() *conf.MenderConfig {
 	return menderConfig
 }
 
+func GetConfig() (*RDFMConfig, *conf.MenderConfig, error) {
+	if rdfmConfigInstance == nil || menderConfigInstance == nil {
+		return LoadConfig(RdfmDefaultConfigPath, RdfmOverlayConfigPath)
+	}
+	return rdfmConfigInstance, menderConfigInstance, nil
+}
+
 // LoadConfig parses the mender and rdfm configuration json-files
 // (/etc/rdfm/rdfm.conf - mender conf, /var/lib/rdfm/rdfm.conf - rdfm conf)
 // and loads the values into the RDFMConfig structure defining high level
 // client configurations.
 func LoadConfig(mainConfigFile string, overlayConfigFile string) (*RDFMConfig, *conf.MenderConfig, error) {
-	var menderConfig conf.MenderConfig
-	rdfmConfig := RDFMConfig{
+	menderConfigInstance := &conf.MenderConfig{}
+	rdfmConfigInstance = &RDFMConfig{
 		UpdatePollIntervalSeconds: DEFAULT_UPDATE_POLL_INTERVAL_S,
 		RetryPollIntervalSeconds:  DEFAULT_RETRY_POLL_INTERVAL_S,
+		HttpCacheEnabled:          DEFAULT_HTTP_CACHE_ENABLED,
+		ReconnectRetryCount:       DEFAULT_RECONNECT_RETRY_COUNT,
+		ReconnectRetryTime:        DEFAULT_RECONNECT_RETRY_TIME,
 	}
 
 	// Load Mender config
-	loadErr := loadConfigFile(mainConfigFile, &menderConfig)
+	loadErr := loadConfigFile(mainConfigFile, menderConfigInstance)
 	if loadErr != nil {
 		log.Println("Error reading main config:", mainConfigFile)
 		log.Println(loadErr)
 		return nil, nil, loadErr
 	}
 	log.Println("Loaded main config", mainConfigFile)
-	log.Debugf("Loaded Mender configuration = %#v", menderConfig)
+	log.Debugf("Loaded Mender configuration = %#v", menderConfigInstance)
 
 	// Load RDFM config
-	loadErr = loadConfigFile(overlayConfigFile, &rdfmConfig)
+	loadErr = loadConfigFile(overlayConfigFile, &rdfmConfigInstance)
 	if loadErr != nil {
 		log.Println("Error reading overlay config:", overlayConfigFile)
 		log.Println(loadErr)
 		return nil, nil, loadErr
 	}
 	log.Println("Loaded overlay config", overlayConfigFile)
-	log.Debugf("Loaded RDFM configuration = %#v", rdfmConfig)
+	log.Debugf("Loaded RDFM configuration = %#v", rdfmConfigInstance)
 
-	return &rdfmConfig, &menderConfig, nil
+	return rdfmConfigInstance, menderConfigInstance, nil
 }
 
 func loadConfigFile(fileName string, config interface{}) error {

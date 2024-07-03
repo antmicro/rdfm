@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	conf "github.com/antmicro/rdfm/conf"
+
 	"github.com/mendersoftware/mender/client"
 	log "github.com/sirupsen/logrus"
 )
@@ -26,12 +28,14 @@ func (r *RdfmHttpUpdateReader) Read(p []byte) (n int, err error) {
 		return n, err
 	}
 
-	for i := 0; i < 3; i++ {
+	rdfmConf, _, _ := conf.GetConfig()
+
+	for i := 0; i < rdfmConf.ReconnectRetryCount; i++ {
 		if r.body != nil {
 			r.body.Close()
 		}
 		log.Errorf("Connection error - trying to resume")
-		time.Sleep(1 * time.Minute)
+		time.Sleep(time.Duration(rdfmConf.ReconnectRetryTime) * time.Second)
 		response, supportsRangeRequests, err := setupHttpConnection(r.apiClient, r.url, r.offset)
 
 		if err != nil {

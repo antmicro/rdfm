@@ -1,13 +1,14 @@
 package download
 
 import (
-	"os"
-	"io"
-	"fmt"
-	"path/filepath"
 	"crypto/sha1"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
 	"strings"
 
+	"github.com/antmicro/rdfm/conf"
 	"github.com/antmicro/rdfm/parser"
 
 	"github.com/mendersoftware/mender/client"
@@ -83,14 +84,15 @@ func (t *TeeReadCloser) Close() error {
 
 func FetchAndCacheUpdateFromURI(url string, clientConfig client.Config) (io.ReadCloser, int64, error) {
 
+	rdfmConf, _, _ := conf.GetConfig()
 	image, imageSize, supportsRangeRequests, err := NewRdfmHttpUpdateReader(url, 0, clientConfig)
 
 	if err != nil {
 		return nil, 0, err
 	}
 
-	if !supportsRangeRequests {
-		log.Warnf("Server doesn't support range requests - caching disabled")
+	if !supportsRangeRequests || !rdfmConf.HttpCacheEnabled {
+		log.Warnf("Caching disabled")
 		return image, imageSize, nil
 	}
 
