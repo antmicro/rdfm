@@ -43,3 +43,6 @@ go.work
 keys/
 config.json
 rdfm-mcumgr-client
+debug/
+tests/out/
+tests/work/

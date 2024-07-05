@@ -19,6 +19,9 @@ macro reset
     sysbus LoadELF $serialBoot
 """
 runMacro $reset
+
+sysbus Tag <0x40029100 1> "QSPI:EVENTS_READY" 1
+
 sysbus LoadHEX $serialImg
 
 logLevel 3 sysbus.nvic
@@ -66,6 +69,9 @@ macro reset
     sysbus LoadELF $serialGBoot
 """
 runMacro $reset
+
+sysbus Tag <0x40029100 1> "QSPI:EVENTS_READY" 1
+
 sysbus LoadHEX $serialGImg
 
 logLevel 3 sysbus.nvic
