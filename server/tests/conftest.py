@@ -2,6 +2,7 @@ import pytest
 import os
 import subprocess
 from pathlib import Path
+import pg_temp
 from common import (
     DBPATH,
     SERVER_WAIT_TIMEOUT,
@@ -71,6 +72,38 @@ def process_gunicorn():
             "RDFM_DISABLE_API_AUTH": "1",
             **os.environ
         },
+        stdout=log_file,
+        stderr=log_file,
+    )
+    assert wait_for_api(SERVER_WAIT_TIMEOUT, SERVER), "server has started successfully"
+
+    yield process
+
+    print("Shutting down server..")
+    process.kill()
+    log_file.close()
+
+@pytest.fixture(scope="function")
+def process_postgres():
+    """Fixture to start the RDFM server with Werkzeug and Postgres"""
+
+    log_file = (Path(__file__).parent / "server.log").open("a")
+    dbname = DBPATH.split('.')[0].replace('-','_')
+    temp_db = pg_temp.TempDB(databases=[dbname])
+    db_url = f"postgresql:///{dbname}?host={temp_db.pg_socket_dir}"
+
+    print("Starting server..")
+    process = subprocess.Popen(
+        [
+            "python3",
+            "-m",
+            "rdfm_mgmt_server",
+            "--no-ssl",
+            "--no-api-auth",
+            "--test-mocks",
+            "--database",
+            db_url
+        ],
         stdout=log_file,
         stderr=log_file,
     )

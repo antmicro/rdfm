@@ -41,6 +41,8 @@ pycodestyle = "^2.10.0"
 httpx = "^0.27.0"
 cryptography = "^42.0.5"
 pytest-asyncio = "^0.23.5.post1"
+pg-temp = "^0.9.1"
+pytest-lazy-fixture = "^0.6.3"
 
 [tool.poetry.group.types.dependencies]
 types-flask = "^1.1.6"
