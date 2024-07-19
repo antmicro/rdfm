@@ -40,10 +40,12 @@ def create(connstring: str) -> Engine:
             event.listen(db, "connect", _fk_pragma_on_connect)
 
         if os.path.isfile('alembic.ini'):
-            # If the database exists but is not managed by alembic,
-            # we assume it is the initial version and stamp it as such.
+            # If the database exists, is not empty,
+            # and is not managed by alembic, we assume it is
+            # the initial version and stamp it as such.
             if (
                 database_exists(connstring) and
+                len(inspect(db).get_table_names()) > 0 and
                 not inspect(db).has_table("alembic_version")
             ):
                 alembic_args = [
