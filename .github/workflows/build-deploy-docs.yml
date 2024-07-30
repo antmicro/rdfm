@@ -21,6 +21,10 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install documentation dependencies
+        run: |
+          apt update && apt install -qqy texlive texlive-latex-recommended texlive-latex-extra texlive-fonts-extra latexmk
+
       - name: Install and configure Poetry
         uses: snok/install-poetry@v1
 
@@ -36,7 +40,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: Documentation
-          path: documentation/build/html
+          path: documentation/build/
 
       - name: Deploy
         if: github.ref == 'refs/heads/main'
