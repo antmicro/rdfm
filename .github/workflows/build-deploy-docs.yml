@@ -42,6 +42,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           sudo chown -R $(whoami) documentation
+          cp documentation/build/latex/*.pdf documentation/build/html/
           cd documentation/build/html
           touch .nojekyll
           git init
