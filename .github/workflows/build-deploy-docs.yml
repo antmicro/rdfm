@@ -23,7 +23,7 @@ jobs:
 
       - name: Install documentation dependencies
         run: |
-          apt update && apt install -qqy texlive texlive-latex-recommended texlive-latex-extra texlive-fonts-extra latexmk
+          sudo apt update && sudo apt install -qqy texlive texlive-latex-recommended texlive-latex-extra texlive-fonts-extra latexmk
 
       - name: Install and configure Poetry
         uses: snok/install-poetry@v1
