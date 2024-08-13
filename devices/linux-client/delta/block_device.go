@@ -5,10 +5,11 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"log"
 	"os"
 	"strings"
 	"syscall"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/mendersoftware/mender/system"
 )

@@ -2,10 +2,11 @@ package netUtils
 
 import (
 	"errors"
-	"log"
 	"net"
 	"net/url"
 	"regexp"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func HostWithOrWithoutPort(addr string, withPort bool) (string, error) {
