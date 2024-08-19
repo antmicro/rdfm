@@ -134,6 +134,66 @@ def __introspect_and_validate_token(
         return None
 
 
+def deserialize_schema_from_params(schema_dataclass: type,
+                                   key: str = "parameters"):
+    """
+    Validate and deserialize the incoming request GET args against a
+    predefined marshmallow schema.
+
+    This decorator verifies whether an incoming request's schema matches the
+    one specified in the given schema, and deserializes it into the specified
+    dataclass.
+
+    If an invalid request schema was provided, the request handling will
+    immediately terminate by returning an API error and the 400 status code.
+
+    Args:
+        schema_dataclass: dataclass representing the request schema, which the
+                          request GET params will be deserialized to.
+        key: argument name for the deserialized structure.
+             The receiving argument must be of the type as specified
+             in `schema_dataclass`.
+    """
+
+    def _deserialize_schema_from_params(f):
+        @functools.wraps(f)
+        def __deserialize_schema_from_params(*args, **kwargs):
+            if not hasattr(schema_dataclass, "Schema"):
+                raise RuntimeError(
+                    "get_parameters requires a dataclass decorated "
+                    "with the @marshmallow_dataclass.dataclass decorator"
+                )
+            try:
+                parameters: schema_dataclass = schema_dataclass.Schema().load(
+                    request.args.to_dict()
+                )
+            except ValidationError as e:
+                return api_error(
+                    f"schema validation failed: {e.messages}", 400
+                )
+            spec = inspect.getfullargspec(f)
+            if key in kwargs:
+                raise RuntimeError(
+                    "deserialize_schema_from_params decorator was used,"
+                    "but the wrapped "
+                    f"route function <{f.__name__}> is already receiving an "
+                    f"argument with the name: <{key}>"
+                )
+            if key not in spec.args:
+                raise KeyError(
+                    "deserialize_schema_from_params decorator was used,"
+                    "but the wrapped "
+                    f"route function <{f.__name__}> does not accept the "
+                    f"deserialized structure parameter (missing function "
+                    f"argument: <{key}> of type: "
+                    f"<{schema_dataclass.__name__}>)"
+                )
+            kwargs[key] = parameters
+            return f(*args, **kwargs)
+        return __deserialize_schema_from_params
+    return _deserialize_schema_from_params
+
+
 def deserialize_schema(schema_dataclass: type, key: str = "payload"):
     """
     Validate and deserialize the incoming request against a predefined

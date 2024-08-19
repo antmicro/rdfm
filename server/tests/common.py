@@ -3,7 +3,12 @@ import time
 import requests
 import jwt
 import urllib.parse
-from typing import Optional
+import base64
+import json
+from typing import Any, Optional
+from Crypto.PublicKey import RSA
+from Crypto.Hash import SHA256
+from Crypto.Signature.pkcs1_15 import PKCS115_SigScheme
 
 
 # Which path to use for probing by default
@@ -24,7 +29,52 @@ GROUPS_ENDPOINT = f"{SERVER}/api/v2/groups"
 PACKAGES_ENDPOINT = f"{SERVER}/api/v1/packages"
 UPDATES_ENDPOINT = f"{SERVER}/api/v1/update/check"
 DEVICES_ENDPOINT = f"{SERVER}/api/v2/devices"
+LOGS_ENDPOINT = f"{SERVER}/api/v1/logs"
 DEVICES_WS = f"{SERVER}/api/v1/devices/ws"
+
+def make_signature(key_pair, payload_bytes):
+    """ Generates the signature that will be placed in the signature header
+    """
+    h = SHA256.new(payload_bytes)
+    s = PKCS115_SigScheme(key_pair)
+    signature = s.sign(h)
+    return base64.b64encode(signature)
+
+
+def make_authentication_request(metadata, key_pair):
+    """ Creates the authentication request structure
+    """
+    return {
+        "metadata": metadata,
+        "public_key": key_pair.public_key().export_key("PEM").decode("utf-8"),
+        "timestamp": int(time.time())
+    }
+
+
+class SimpleDevice():
+    """ Device metadata """
+    metadata: dict[str, str]
+    """ The device's private/public key pair """
+    key_pair: RSA.RsaKey
+    """ Authentication request as dictionary """
+    request: dict[str, Any]
+    """ Authentication request as raw bytes """
+    request_bytes: bytes
+    """ Base64 signature to put in the request"""
+    signature: str
+
+
+    def __init__(self, metadata, key: Optional[RSA.RsaKey] = None) -> None:
+        self.metadata = metadata
+        if key is None:
+            self.key_pair = RSA.generate(bits=2048)
+        else:
+            self.key_pair = key
+        self.request = make_authentication_request(self.metadata, self.key_pair)
+        # The signature must be calculated on the raw bytes
+        # No further modification of `payload` allowed!
+        self.request_bytes = json.dumps(self.request).encode("utf-8")
+        self.signature = make_signature(self.key_pair, self.request_bytes)
 
 
 def manager_shell_ws(mac: str):

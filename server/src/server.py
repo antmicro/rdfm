@@ -3,6 +3,7 @@ from database.devices import DevicesDB
 from database.packages import PackagesDB
 from database.groups import GroupsDB
 from database.registrations import RegistrationsDB
+from database.logs import LogsDB
 import database.db
 import configuration
 from device_mgmt.containers import RemoteDevices, ShellSessions
@@ -17,6 +18,7 @@ class Server:
         self._packages_db: PackagesDB = PackagesDB(self.db)
         self._groups_db: GroupsDB = GroupsDB(self.db)
         self._registrations_db: RegistrationsDB = RegistrationsDB(self.db)
+        self._logs_db: LogsDB = LogsDB(self.db)
         self.remote_devices = RemoteDevices()
         self.shell_sessions = ShellSessions()
 

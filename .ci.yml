@@ -211,6 +211,17 @@ test-server-stress:
       - server/tests/logs/*
     when: always
 
+test-server-logs:
+  extends: .build
+  stage: local-tests
+  script:
+    - cd server
+    - pytest tests/test-server-logs.py
+  only:
+    refs:
+      - merge_requests
+      - main
+
 # ===== rdfm-client ===== #
 
 build-rdfm-client:

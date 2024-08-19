@@ -9,7 +9,7 @@ from typing import Any, Optional
 from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
 from Crypto.Signature.pkcs1_15 import PKCS115_SigScheme
-from common import UPDATES_ENDPOINT
+from common import UPDATES_ENDPOINT, SimpleDevice
 
 
 SERVER = "http://127.0.0.1:5000/"
@@ -24,51 +24,6 @@ METADATA = {
 }
 TEST_METADATA_CACHING_KEY="rdfm.software.version"
 TEST_METADATA_CACHING_EXPECTED_VALUE="this_was_modified"
-
-
-def make_signature(key_pair, payload_bytes):
-    """ Generates the signature that will be placed in the signature header
-    """
-    h = SHA256.new(payload_bytes)
-    s = PKCS115_SigScheme(key_pair)
-    signature = s.sign(h)
-    return base64.b64encode(signature)
-
-
-def make_authentication_request(metadata, key_pair):
-    """ Creates the authentication request structure
-    """
-    return {
-        "metadata": metadata,
-        "public_key": key_pair.public_key().export_key("PEM").decode("utf-8"),
-        "timestamp": int(time.time())
-    }
-
-
-class SimpleDevice():
-    """ Device metadata """
-    metadata: dict[str, str]
-    """ The device's private/public key pair """
-    key_pair: RSA.RsaKey
-    """ Authentication request as dictionary """
-    request: dict[str, Any]
-    """ Authentication request as raw bytes """
-    request_bytes: bytes
-    """ Base64 signature to put in the request"""
-    signature: str
-
-
-    def __init__(self, metadata, key: Optional[RSA.RsaKey] = None) -> None:
-        self.metadata = metadata
-        if key is None:
-            self.key_pair = RSA.generate(bits=2048)
-        else:
-            self.key_pair = key
-        self.request = make_authentication_request(self.metadata, self.key_pair)
-        # The signature must be calculated on the raw bytes
-        # No further modification of `payload` allowed!
-        self.request_bytes = json.dumps(self.request).encode("utf-8")
-        self.signature = make_signature(self.key_pair, self.request_bytes)
 
 
 test_device = SimpleDevice(METADATA)
