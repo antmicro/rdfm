@@ -1,6 +1,7 @@
 import os
 import sys
 from flask import Flask, request
+from flask_cors import CORS
 import server
 import api.v1
 import api.v2
@@ -68,6 +69,7 @@ def create_app(config: configuration.ServerConfig) -> Flask:
     is required (see: `setup`).
     """
     app = Flask(__name__)
+    CORS(app)
     app.register_blueprint(api.v1.create_routes())
     app.register_blueprint(api.v2.create_routes())
     app.config["RDFM_CONFIG"] = config
