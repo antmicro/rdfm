@@ -1,7 +1,6 @@
 package telemetry
 
 import (
-	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -10,14 +9,17 @@ import (
 type LoggerContext struct {
 	Args LoggerArgs // Arguments
 
-	Done <-chan struct{} // Should only be used by a function of type PersistentLoggerFunc
-	
+	Timeout time.Duration
+	Logs    chan<- LogEntry
+	Done    <-chan struct{} // Should only be used by a function of type PersistentLoggerFunc
+
 }
 
 /*** Logger function types ***/
 
 /* Recurring logger function */
 type RecurringLogger func(ctx LoggerContext)
+
 /*
 Purpose:
 	Designed for one-time, periodic data collection,
@@ -30,6 +32,7 @@ Bahavior:
 
 /* Persistent logger function */
 type PersistentLogger func(ctx LoggerContext)
+
 /*
 Purpose:
 	Suitable for stream-based log data, where logging begins
@@ -54,6 +57,7 @@ func (p PersistentLogger) log(ctx LoggerContext) {
 
 type logTask struct {
 	done     chan struct{}
+	logs     chan LogEntry
 	interval time.Duration
 	logger   Logger
 	args     LoggerArgs
@@ -99,9 +103,13 @@ func (task *logTask) start() {
 		return
 	}
 
-	task.done = make(chan struct{})
 	task.running = true
-	ctx := LoggerContext{Args: task.args, Done: nil}
+	ctx := LoggerContext{
+		Args:    task.args,
+		Done:    nil,
+		Logs:    task.logs,
+		Timeout: task.interval,
+	}
 
 	switch task.logger.(type) {
 	case RecurringLogger:
@@ -141,21 +149,17 @@ func MakeLogManager() *LogManager {
 	}
 }
 
-func (manager *LogManager) AddTask(name string, logger Logger, interval ...time.Duration) error {
+func (manager *LogManager) AddTask(name string, logger Logger, interval time.Duration) error {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
 
 	if _, exists := manager.tasks[name]; exists {
-		return errors.New(fmt.Sprintf("task \"%s\" already exists", name))
+		return fmt.Errorf("task \"%s\" already exists", name)
 	}
 	var task *logTask
 	switch logger.(type) {
 	case RecurringLogger:
-		if len(interval) == 0 {
-			task = &logTask{logger: logger, interval: time.Second}
-		} else {
-			task = &logTask{logger: logger, interval: interval[0]}
-		}
+		task = &logTask{logger: logger, interval: interval}
 	case PersistentLogger:
 		task = &logTask{logger: logger, interval: 0}
 	}
@@ -164,20 +168,21 @@ func (manager *LogManager) AddTask(name string, logger Logger, interval ...time.
 	return nil
 }
 
-func (manager *LogManager) StartTask(name string, args LoggerArgs) error {
+func (manager *LogManager) StartTask(name string, args LoggerArgs, logs chan LogEntry) error {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
 
 	if task, exists := manager.tasks[name]; exists {
 		if task.isRunning() {
-			return errors.New(fmt.Sprintf("task \"%s\" is already running", name))
+			return fmt.Errorf("task \"%s\" is already running", name)
 		}
 		task.args = args
+		task.done = make(chan struct{})
+		task.logs = logs
 		task.start()
 	} else {
-		return errors.New(fmt.Sprintf("task \"%s\" does not exist", name))
+		return fmt.Errorf("task \"%s\" does not exist", name)
 	}
-
 	return nil
 }
 
@@ -189,10 +194,10 @@ func (manager *LogManager) StopTask(name string) error {
 		if task.isRunning() {
 			task.stop()
 		} else {
-			return errors.New(fmt.Sprintf("task \"%s\" is not running", name))
+			return fmt.Errorf("task \"%s\" is not running", name)
 		}
 	} else {
-		return errors.New(fmt.Sprintf("task \"%s\" does not exist", name))
+		return fmt.Errorf("task \"%s\" does not exist", name)
 	}
 
 	return nil

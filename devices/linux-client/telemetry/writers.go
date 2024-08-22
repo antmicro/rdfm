@@ -44,7 +44,7 @@ func (w *SizeLimitWriter) Write(output []byte) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	if uint64(fi.Size()) + uint64(len(output)) > w.maxSize {
+	if uint64(fi.Size())+uint64(len(output)) > w.maxSize {
 		if w.fp, err = rotate(w.fp, w.filePath, w.maxFiles); err != nil {
 			return 0, err
 		}

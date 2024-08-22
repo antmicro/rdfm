@@ -46,7 +46,7 @@ func TestDoesNotExist(t *testing.T) {
 	name := "DoesntExist"
 	want := regexp.MustCompile(`\btask "` + name + `" does not exist\b`)
 
-	err := lm.StartTask(name, ld)
+	err := lm.StartTask(name, ld, nil)
 	if err == nil || !want.MatchString(err.Error()) {
 		t.Fatalf(`.StartTask("DoesntExist") = %v, want match for %#q`, err, want)
 	}
@@ -65,7 +65,7 @@ func TestNotRunning(t *testing.T) {
 		nop()
 	}
 
-	lm.AddTask(name, rl)
+	lm.AddTask(name, rl, time.Millisecond)
 	if err := lm.StopTask(name); err == nil || !want.MatchString(err.Error()) {
 		t.Fatalf(`.StopTask("NotRunning") = %v, want match for %#q`, err, want)
 
@@ -82,9 +82,9 @@ func TestAlreadyRunning(t *testing.T) {
 		nop()
 	}
 
-	lm.AddTask(name, rl)
-	lm.StartTask(name, ld)
-	if err := lm.StartTask(name, ld); err == nil || !want.MatchString(err.Error()) {
+	lm.AddTask(name, rl, time.Millisecond)
+	lm.StartTask(name, ld, nil)
+	if err := lm.StartTask(name, ld, nil); err == nil || !want.MatchString(err.Error()) {
 		t.Fatalf(`.StartTask("AlreadyRunning") = %v, want match for %#q`, err, want)
 	}
 	lm.StopTask(name)
@@ -98,8 +98,8 @@ func TestAlreadyExists(t *testing.T) {
 	var rl RecurringLogger = func(ctx LoggerContext) {
 		nop()
 	}
-	lm.AddTask(name, rl)
-	if err := lm.AddTask(name, rl); err == nil || !want.MatchString(err.Error()) {
+	lm.AddTask(name, rl, time.Millisecond)
+	if err := lm.AddTask(name, rl, time.Millisecond); err == nil || !want.MatchString(err.Error()) {
 		t.Fatalf(`.AddTask("AlreadyExists") = %v, want match for %#q`, err, want)
 	}
 }
@@ -111,8 +111,8 @@ func FuzzRecurringLogger(f *testing.F) {
 
 	f.Add("name")
 	f.Fuzz(func(t *testing.T, name string) {
-		lm.AddTask(name, rl)
-		lm.StartTask(name, ld)
+		lm.AddTask(name, rl, time.Millisecond)
+		lm.StartTask(name, ld, nil)
 		lm.StopTask(name)
 	})
 }
@@ -124,8 +124,8 @@ func FuzzPersistentLogger(f *testing.F) {
 
 	f.Add("name")
 	f.Fuzz(func(t *testing.T, name string) {
-		lm.AddTask(name, pl)
-		lm.StartTask(name, ld)
+		lm.AddTask(name, pl, time.Millisecond)
+		lm.StartTask(name, ld, nil)
 		lm.StopTask(name)
 	})
 }
@@ -164,16 +164,16 @@ func FuzzRandomOrder(f *testing.F) {
 func add(lm *LogManager, name string) {
 	if randBool() {
 		var pl PersistentLogger = persistentLogger
-		lm.AddTask(name, pl)
+		lm.AddTask(name, pl, time.Millisecond)
 	} else {
 		var rl RecurringLogger = recurringLogger
-		lm.AddTask(name, rl)
+		lm.AddTask(name, rl, time.Millisecond)
 	}
 }
 
 func start(lm *LogManager, name string) {
 	ld := LoggerArgs{}
-	lm.StartTask(name, ld)
+	lm.StartTask(name, ld, nil)
 }
 
 func stop(lm *LogManager, name string) {

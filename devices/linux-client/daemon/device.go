@@ -268,6 +268,12 @@ func (d *Device) managementWsLoop(done chan bool) {
 	panic(err)
 }
 
+func (d Device) getDeviceToken() string {
+	tokenMutex.Lock()
+	defer tokenMutex.Unlock()
+	return d.deviceToken
+}
+
 func getPublicKey(privateKey *rsa.PrivateKey) []byte {
 	publicKey := privateKey.PublicKey
 	publicKeyBytes := x509.MarshalPKCS1PublicKey(&publicKey)
