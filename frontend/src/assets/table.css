@@ -1,0 +1,76 @@
+/* TODO: FIX ME NAME TO A MORE GENERIC ONE */
+
+.resources-table {
+    border: 2px solid var(--gray-400);
+    border-radius: 5px;
+    padding: 0.5em;
+    width: 100%;
+
+    /* display: grid; */
+    /* Repeated value is equal to the number of column values */
+    /* grid-template-columns: repeat(5, min-content); */
+    & > .resources-table-row {
+        & > .entry {
+            padding: 0.5em 1em;
+            border-bottom: 2px solid var(--gray-400);
+            box-sizing: content-box;
+
+            & > .title {
+                color: var(--gray-900);
+                text-wrap: nowrap;
+            }
+
+            & > .value {
+                color: var(--gray-1000);
+                text-wrap: nowrap;
+            }
+
+            /* The last child should take all the space and be aligned to the right */
+            &:last-child {
+                & > * {
+                    display: block;
+                    margin-left: auto;
+                    margin-right: 0;
+                    text-align: right;
+                }
+            }
+
+            & > .action-button {
+                &.blue {
+                    color: var(--accent-900);
+                    background-color: var(--accent-100);
+                    border: 2px solid var(--accent-400);
+
+                    &:hover {
+                        background-color: var(--accent-200);
+                    }
+                }
+
+                &.red {
+                    color: var(--destructive-900);
+                    background-color: var(--destructive-100);
+                    border: 2px solid var(--destructive-400);
+
+                    &:hover {
+                        background-color: var(--destructive-200);
+                    }
+                }
+
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 1em;
+                padding: 0.75em;
+
+                height: min-content;
+                width: fit-content;
+            }
+        }
+
+        &:last-child,
+        &.no-border {
+            & > .entry {
+                border-bottom: none;
+            }
+        }
+    }
+}

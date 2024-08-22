@@ -1,0 +1,86 @@
+<template>
+    <div id="wrapper">
+        <div id="titlebar">
+            <div id="title">{{ title }}</div>
+            <div id="subtitle">{{ subtitle }}</div>
+        </div>
+        <div v-if="displayButton" id="actionbar">
+            <button id="action-button" @click="buttonCallback">{{ actionButtonName }}</button>
+        </div>
+    </div>
+</template>
+
+<style scoped>
+#wrapper {
+    border: 1px solid var(--gray-400);
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 2em;
+
+    & > #titlebar {
+        display: flex;
+        flex-direction: column;
+
+        & > #title {
+            color: var(--gray-1000);
+            font-family: 'Inter', sans-serif;
+            font-size: 3em;
+        }
+
+        & > #subtitle {
+            color: var(--gray-900);
+            font-family: 'Inter', sans-serif;
+            font-size: 1.1em;
+        }
+    }
+
+    & > #actionbar {
+        display: flex;
+        align-items: center;
+
+        & > #action-button {
+            color: var(--accent-900);
+            background-color: var(--accent-100);
+            border: 2px solid var(--accent-400);
+            border-radius: 5px;
+            font-size: 1em;
+            padding: 0.75em;
+            cursor: pointer;
+
+            &:hover {
+                background-color: var(--accent-200);
+            }
+        }
+    }
+}
+</style>
+
+<script lang="ts">
+import { computed, defineComponent } from 'vue';
+import { type PropType } from 'vue';
+
+export default defineComponent({
+    props: {
+        title: {
+            type: String,
+            required: true,
+        },
+        subtitle: {
+            type: String,
+            required: true,
+        },
+        actionButtonName: {
+            type: String,
+        },
+        buttonCallback: {
+            type: Function as PropType<(payload: MouseEvent) => void>,
+        },
+    },
+    setup(props) {
+        const displayButton = computed(() => props.actionButtonName && props.buttonCallback);
+
+        return { displayButton };
+    },
+});
+</script>

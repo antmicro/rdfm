@@ -1,0 +1,5 @@
+# npm dependencies
+node_modules
+
+# Build directory
+dist

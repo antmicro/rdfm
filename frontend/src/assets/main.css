@@ -1,0 +1,57 @@
+@import './table.css';
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,600;1,14..32,600&display=swap');
+
+:root {
+    /* Color styles */
+    --gray-100: rgba(26, 26, 26, 1);
+    --gray-200: rgba(31, 31, 31, 1);
+    --gray-300: rgba(41, 41, 41, 1);
+    --gray-400: rgba(46, 46, 46, 1);
+    --gray-500: rgba(69, 69, 69, 1);
+    --gray-600: rgba(135, 135, 135, 1);
+    --gray-700: rgba(143, 143, 143, 1);
+    --gray-800: rgba(125, 125, 125, 1);
+    --gray-900: rgba(161, 161, 161, 1);
+    --gray-1000: rgba(237, 237, 237, 1);
+    --background-100: rgba(0, 0, 0, 1);
+    --background-200: rgba(10, 10, 10, 1);
+    --accent-100: rgba(13, 25, 56, 1);
+    --accent-200: rgba(14, 33, 70, 1);
+    --accent-300: rgba(20, 45, 95, 1);
+    --accent-400: rgba(21, 52, 113, 1);
+    --accent-500: rgba(24, 63, 135, 1);
+    --accent-600: rgba(70, 140, 251, 1);
+    --accent-700: rgba(54, 107, 246, 1);
+    --accent-800: rgba(36, 87, 224, 1);
+    --accent-900: rgba(103, 165, 255, 1);
+    --accent-1000: rgba(237, 246, 255, 1);
+    --destructive-100: rgba(51, 10, 17, 1);
+    --destructive-200: rgba(68, 13, 19, 1);
+    --destructive-300: rgba(93, 14, 23, 1);
+    --destructive-400: rgba(111, 16, 27, 1);
+    --destructive-500: rgba(136, 21, 31, 1);
+    --destructive-600: rgba(243, 46, 64, 1);
+    --destructive-700: rgba(241, 50, 66, 1);
+    --destructive-800: rgba(226, 22, 42, 1);
+    --destructive-900: rgba(255, 86, 95, 1);
+}
+
+html,
+body {
+    min-height: 100%;
+    background-color: var(--background-100);
+    font-family: 'Noto Sans';
+    font-weight: 400;
+}
+body {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+#app {
+    font-weight: normal;
+    height: 100%;
+}
