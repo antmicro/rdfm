@@ -27,10 +27,7 @@ TEST_RW_DATA = { "metadata": { "testing": 123 }}
 
 
 @pytest.fixture()
-def process(configure_token_mock):
-    if os.path.isfile(DBPATH):
-        os.remove(DBPATH)
-
+def process(db, configure_token_mock, request):
     new_env = os.environ.copy()
     new_env["JWT_SECRET"] = "TESTDEVELOPMENTSECRET123"
     new_env["RDFM_OAUTH_URL"] = configure_token_mock
@@ -39,8 +36,8 @@ def process(configure_token_mock):
 
     print("Starting server..")
     process = subprocess.Popen([
-        "python3", "-m", "rdfm_mgmt_server",
-        "--debug", "--no-ssl", "--test-mocks", "--database", f"sqlite:///{DBPATH}"
+        "poetry", "run", "python3", "-m", "rdfm_mgmt_server",
+        "--debug", "--no-ssl", "--test-mocks", "--database", request.getfixturevalue(db)
     ], env=new_env)
     assert wait_for_api(SERVER_WAIT_TIMEOUT, SERVER, success_status=401), "server has started successfully"
 

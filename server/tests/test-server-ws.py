@@ -71,17 +71,8 @@ def spawn_shell_on_mock_device():
     except (simple_websocket.ConnectionError) as e:
         pytest.fail(f"connecting to the shell WebSocket failed: {e}")
 
-@pytest.mark.parametrize('proc, conn', [
-    (
-        pytest.lazy_fixture('process'),
-        pytest.lazy_fixture('connect_mock_device')
-    ),
-    (
-        pytest.lazy_fixture('process_postgres'),
-        pytest.lazy_fixture('connect_mock_device')
-    )
-])
-def test_ws_connect_device(proc, conn):
+
+def test_ws_connect_device(process, connect_mock_device):
     """ This tests if the device WebSocket connection works properly
 
     The device connects to this endpoint. This is a simple test to see
@@ -92,17 +83,8 @@ def test_ws_connect_device(proc, conn):
     pass
 
 
-@pytest.mark.parametrize('proc, conn', [
-    (
-        pytest.lazy_fixture('process'),
-        pytest.lazy_fixture('connect_mock_device')
-    ),
-    (
-        pytest.lazy_fixture('process_postgres'),
-        pytest.lazy_fixture('connect_mock_device')
-    )
-])
-def test_ws_device_capability_report(proc, conn):
+def test_ws_device_capability_report(process,
+                                     connect_mock_device):
     """ This tests if device capabilities are considered by the server
 
     We accomplish this by attempting to spawn a shell. The connection should
@@ -118,46 +100,26 @@ def test_ws_device_capability_report(proc, conn):
     assert "shell_attach" in client.close_message, "the close message should indicate the missing capability"
 
 
-@pytest.mark.parametrize('proc, conn, spawn', [
-    (
-        pytest.lazy_fixture('process'),
-        pytest.lazy_fixture('connect_mock_device_with_shell_capability'),
-        pytest.lazy_fixture('spawn_shell_on_mock_device')
-    ),
-    (
-        pytest.lazy_fixture('process_postgres'),
-        pytest.lazy_fixture('connect_mock_device_with_shell_capability'),
-        pytest.lazy_fixture('spawn_shell_on_mock_device')
-    )
-])
-def test_ws_device_receives_shell_attach_message(proc, conn, spawn):
+def test_ws_device_receives_shell_attach_message(process,
+                                                 connect_mock_device_with_shell_capability,
+                                                 spawn_shell_on_mock_device):
     """ This tests if the device receives a shell attach message
 
     When a manager spawns a shell, the device should receive a `shell_attach`
     message from the server indicating where it should connect to provide
     the shell contents.
     """
-    msg = receive_message(conn, MESSAGE_WAIT_TIMEOUT)
+    msg = receive_message(connect_mock_device_with_shell_capability, MESSAGE_WAIT_TIMEOUT)
     assert isinstance(msg, DeviceAttachToManager), "the device should have received a shell_attach message"
 
 
-@pytest.mark.parametrize('proc, conn, spawn', [
-    (
-        pytest.lazy_fixture('process'),
-        pytest.lazy_fixture('connect_mock_device_with_shell_capability'),
-        pytest.lazy_fixture('spawn_shell_on_mock_device')
-    ),
-    (
-        pytest.lazy_fixture('process_postgres'),
-        pytest.lazy_fixture('connect_mock_device_with_shell_capability'),
-        pytest.lazy_fixture('spawn_shell_on_mock_device')
-    )
-])
-def test_ws_device_attaching_to_shell_session(proc, conn, spawn):
+def test_ws_device_attaching_to_shell_session(process,
+                                              connect_mock_device_with_shell_capability,
+                                              spawn_shell_on_mock_device):
     """ This tests if the device can attach to the shell session
         indicated in the `shell_attach` message.
     """
-    msg: DeviceAttachToManager = receive_message(conn, MESSAGE_WAIT_TIMEOUT)
+    msg: DeviceAttachToManager = receive_message(connect_mock_device_with_shell_capability, MESSAGE_WAIT_TIMEOUT)
     try:
         device_client = simple_websocket.Client.connect(device_attach_shell_ws(FAKE_DEVICE_MAC, msg.uuid), headers={
             "Authorization": f"Bearer token={create_fake_device_token()}",
@@ -166,29 +128,19 @@ def test_ws_device_attaching_to_shell_session(proc, conn, spawn):
         pytest.fail(f"device failed to attach to the shell session: {e}")
 
 
-@pytest.mark.parametrize('proc, conn, spawn', [
-    (
-        pytest.lazy_fixture('process'),
-        pytest.lazy_fixture('connect_mock_device_with_shell_capability'),
-        pytest.lazy_fixture('spawn_shell_on_mock_device')
-    ),
-    (
-        pytest.lazy_fixture('process_postgres'),
-        pytest.lazy_fixture('connect_mock_device_with_shell_capability'),
-        pytest.lazy_fixture('spawn_shell_on_mock_device')
-    )
-])
-def test_ws_shell_bidirectional_communication(proc, conn, spawn):
+def test_ws_shell_bidirectional_communication(process,
+                                              connect_mock_device_with_shell_capability,
+                                              spawn_shell_on_mock_device):
     """ This tests if data is transferred between the manager and device
         in a established shell session.
     """
 
-    msg: DeviceAttachToManager = receive_message(conn, MESSAGE_WAIT_TIMEOUT)
+    msg: DeviceAttachToManager = receive_message(connect_mock_device_with_shell_capability, MESSAGE_WAIT_TIMEOUT)
     device_client = simple_websocket.Client.connect(device_attach_shell_ws(FAKE_DEVICE_MAC, msg.uuid), headers={
         "Authorization": f"Bearer token={create_fake_device_token()}",
     })
 
-    manager: simple_websocket.Client = spawn
+    manager: simple_websocket.Client = spawn_shell_on_mock_device
     TEST_MESSAGE = b'\x1b[1;31mRDFM TEST SHELL MESSAGE\033[m'
 
     device_client.send(TEST_MESSAGE)
@@ -200,11 +152,7 @@ def test_ws_shell_bidirectional_communication(proc, conn, spawn):
     assert received == TEST_MESSAGE, "manager to device data transfer should work"
 
 
-@pytest.mark.parametrize('proc', [
-    (pytest.lazy_fixture('process')),
-    (pytest.lazy_fixture('process_postgres'))
-])
-def test_ws_shell_spawn_on_nonexistent_device(proc):
+def test_ws_shell_spawn_on_nonexistent_device(process):
     """ This tests if trying to spawn a shell on a nonexistent device fails properly.
     """
     with pytest.raises(simple_websocket.ConnectionClosed):

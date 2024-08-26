@@ -15,11 +15,16 @@ variables:
   <<: *ace
   variables:
     JWT_SECRET: testsecret123123123
+    POSTGRES_MAJOR_VERSION: 15
   before_script:
     - python -V
-    - (apt update && apt-get -y install make netcat-openbsd openssl telnet uuid-runtime xxd)
-    - (cd server && poetry build && poetry install && python -m build && pip3 install -e .)
-    - (cd manager && poetry build && poetry install && python -m build && pip3 install -e .)
+    - (apt update &&
+        apt-get -y install make netcat-openbsd openssl telnet uuid-runtime xxd postgresql-$POSTGRES_MAJOR_VERSION postgresql-contrib &&
+        service postgresql start &&
+        ln -s /usr/lib/postgresql/$POSTGRES_MAJOR_VERSION/bin/initdb /bin/initdb &&
+        ln -s /usr/lib/postgresql/$POSTGRES_MAJOR_VERSION/bin/postgres /bin/postgres)
+    - (cd server && poetry build && poetry install)
+    - (cd manager && poetry build && poetry install)
     - (cd devices/linux-client && sudo make install)
     - |
       if [[ $(losetup --list | wc -l) == 0 ]]; then
@@ -77,7 +82,8 @@ test-package-api:
   extends: .build
   stage: local-tests
   script:
-    - python3 server/tests/test-packages.py
+    - cd server
+    - poetry run pytest tests/test-packages.py
   only:
     refs:
       - merge_requests
@@ -88,7 +94,7 @@ test-group-api:
   stage: local-tests
   script:
     - cd server
-    - pytest tests/test-groups.py
+    - poetry run pytest tests/test-groups.py
   only:
     refs:
       - merge_requests
@@ -99,7 +105,8 @@ test-server-update-policies:
   stage: local-tests
   script:
     - cd server
-    - pytest tests/test-update-policies.py
+    - poetry run pytest tests/test-update-policies.py --sqlite
+    - poetry run pytest tests/test-update-policies.py --postgres
   only:
     refs:
       - merge_requests
@@ -110,7 +117,7 @@ test-server-update-resolver:
   stage: local-tests
   script:
     - cd server
-    - pytest tests/test-update-resolver.py
+    - poetry run pytest tests/test-update-resolver.py
   only:
     refs:
       - merge_requests
@@ -121,7 +128,8 @@ test-server-update-api:
   stage: local-tests
   script:
     - cd server
-    - pytest tests/test-update-checker.py
+    - poetry run pytest tests/test-update-checker.py --sqlite
+    - poetry run pytest tests/test-update-checker.py --postgres
   only:
     refs:
       - merge_requests
@@ -130,9 +138,12 @@ test-server-update-api:
 test-server-device-auth-api:
   extends: .build
   stage: local-tests
+  variables:
+    SCALENODE_RAM: 4096
   script:
     - cd server
-    - pytest tests/test-server-auth.py
+    - poetry run pytest tests/test-server-auth.py --sqlite
+    - poetry run pytest tests/test-server-auth.py --postgres
   only:
     refs:
       - merge_requests
@@ -143,7 +154,7 @@ test-server-s3-storage:
   stage: local-tests
   script:
     - cd server
-    - pytest tests/test-server-s3-storage.py
+    - poetry run pytest tests/test-server-s3-storage.py
   only:
     refs:
       - merge_requests
@@ -152,9 +163,12 @@ test-server-s3-storage:
 test-server-management-auth:
   extends: .build
   stage: local-tests
+  variables:
+    SCALENODE_RAM: 4096
   script:
     - cd server
-    - pytest tests/test-server-management-auth.py
+    - poetry run pytest tests/test-server-management-auth.py --sqlite
+    - poetry run pytest tests/test-server-management-auth.py --postgres
   only:
     refs:
       - merge_requests
@@ -165,7 +179,7 @@ test-server-route-correctness:
   stage: local-tests
   script:
     - cd server
-    - pytest tests/test-server-route-correctness.py
+    - poetry run pytest tests/test-server-route-correctness.py
   only:
     refs:
       - merge_requests
@@ -176,7 +190,8 @@ test-server-websocket:
   stage: local-tests
   script:
     - cd server
-    - pytest tests/test-server-ws.py
+    - poetry run pytest tests/test-server-ws.py --sqlite
+    - poetry run pytest tests/test-server-ws.py --postgres
   only:
     refs:
       - merge_requests
@@ -185,9 +200,12 @@ test-server-websocket:
 test-manager:
   extends: .build
   stage: local-tests
+  variables:
+    SCALENODE_RAM: 4096
   script:
     - cd server
-    - pytest tests/test-manager.py
+    - poetry run pytest tests/test-manager.py --sqlite
+    - poetry run pytest tests/test-manager.py --postgres
   only:
     refs:
       - merge_requests
@@ -216,7 +234,8 @@ test-server-logs:
   stage: local-tests
   script:
     - cd server
-    - pytest tests/test-server-logs.py
+    - poetry run pytest tests/test-server-logs.py --sqlite
+    - poetry run pytest tests/test-server-logs.py --postgres
   only:
     refs:
       - merge_requests

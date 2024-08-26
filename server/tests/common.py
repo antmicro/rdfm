@@ -5,6 +5,7 @@ import jwt
 import urllib.parse
 import base64
 import json
+from dataclasses import dataclass
 from typing import Any, Optional
 from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
@@ -21,7 +22,7 @@ DBPATH = "test-db.db"
 SERVER = "http://127.0.0.1:5000/"
 SERVER_WS = "ws://127.0.0.1:5000/"
 # Server wait timeout, in seconds
-SERVER_WAIT_TIMEOUT = 5
+SERVER_WAIT_TIMEOUT = 20
 
 # Commonly used endpoints
 AUTH_ENDPOINT = f"{SERVER}/api/v1/auth"
@@ -31,6 +32,16 @@ UPDATES_ENDPOINT = f"{SERVER}/api/v1/update/check"
 DEVICES_ENDPOINT = f"{SERVER}/api/v2/devices"
 LOGS_ENDPOINT = f"{SERVER}/api/v1/logs"
 DEVICES_WS = f"{SERVER}/api/v1/devices/ws"
+
+@dataclass
+class ProcessConfig():
+    """A class representing RDFM server configuration
+    """
+    insert_mocks: bool = True
+    no_ssl: bool = True
+    no_api_auth: bool = True
+    debug: bool = False
+
 
 def make_signature(key_pair, payload_bytes):
     """ Generates the signature that will be placed in the signature header

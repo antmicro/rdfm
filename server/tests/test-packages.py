@@ -1,3 +1,4 @@
+import pytest
 import pexpect
 import time
 import os
@@ -5,16 +6,15 @@ import json
 import sys
 import requests
 import subprocess
-
+from common import ProcessConfig
 
 SERVER = "http://127.0.0.1:5000/"
 PACKAGES_ENDPOINT = f"{SERVER}/api/v1/packages"
 TESTING_PACKAGE_SIZE = 1024
 
-process = subprocess.Popen(["python3", "-m", "rdfm_mgmt_server", "--debug", "--no-ssl", "--no-api-auth"])
-time.sleep(5)
 
-try:
+@pytest.mark.parametrize("process_config", [ProcessConfig(debug=True)])
+def test_packages(process):
     # Check if package endpoint returns data
     packages = requests.get(PACKAGES_ENDPOINT)
     assert packages.status_code == 200
@@ -51,5 +51,3 @@ try:
     assert response_single.status_code == 404
 
     print("\033[0;32m", "Package tests passed!", "\033[0m")
-finally:
-    process.kill()

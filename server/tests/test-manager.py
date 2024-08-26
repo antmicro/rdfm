@@ -59,11 +59,11 @@ def upload_dummy_package(install_manager_to_venv):
                                    "--path", f.name])
 
 
-@pytest.fixture
-def start_shell_mock():
+@pytest.fixture(scope="function")
+def start_shell_mock(process):
     """ Starts a mock device providing shell functionality
     """
-    process = pexpect.spawn("python3 tests/scripts/device-websocket-loop.py")
+    process = pexpect.spawn("poetry run python3 tests/scripts/device-websocket-loop.py")
     try:
         process.expect("connected", timeout=10.0)
     except pexpect.EOF:
@@ -98,7 +98,7 @@ def drain_stdout(p: pexpect.spawn):
         pass
 
 
-def test_list_devices(process):
+def test_list_devices(process, install_manager_to_venv):
     """ Test if listing registered devices works
     """
     out, code = run_manager_command(["--no-api-auth", "devices", "list"])
@@ -106,7 +106,7 @@ def test_list_devices(process):
     assert DEVICE_MAC in out, "the output should contain the registered device"
 
 
-def test_list_packages(process):
+def test_list_packages(process, install_manager_to_venv):
     """ Test if listing packages works
     """
     out, code = run_manager_command(["--no-api-auth", "packages", "list"])
@@ -114,7 +114,7 @@ def test_list_packages(process):
     assert 'Available packages:' in out, "the output should contain the uploaded packages"
 
 
-def test_list_groups(process):
+def test_list_groups(process, install_manager_to_venv):
     """ Test if listing groups works
     """
     out, code = run_manager_command(["--no-api-auth", "groups", "list"])
@@ -122,7 +122,7 @@ def test_list_groups(process):
     assert 'Device groups:' in out, "the output should contain the created groups"
 
 
-def test_list_registrations(process):
+def test_list_registrations(process, install_manager_to_venv):
     """ Test if listing pending registrations works
     """
     out, code = run_manager_command(["--no-api-auth", "devices", "pending"])
@@ -206,7 +206,7 @@ def test_group_package_assignment(process, create_dummy_group, upload_dummy_pack
     assert code == 0, "assigning the package to a group should succeed"
 
 
-def test_shell_to_device_prompt(process, start_shell_mock, device_shell: pexpect.spawn):
+def test_shell_to_device_prompt(start_shell_mock, device_shell: pexpect.spawn):
     """ Test if we can reverse shell to a dummy device
 
     This tests only if we receive incoming data from the shell.
@@ -217,7 +217,7 @@ def test_shell_to_device_prompt(process, start_shell_mock, device_shell: pexpect
         pytest.fail("should receive shell prompt after connecting")
 
 
-def test_shell_to_device_command(process, start_shell_mock, device_shell: pexpect.spawn):
+def test_shell_to_device_command(start_shell_mock, device_shell: pexpect.spawn):
     """ Test if we can run commands in a reverse shell
 
     This tests bidirectional communication between the shell and the user.
@@ -233,7 +233,7 @@ def test_shell_to_device_command(process, start_shell_mock, device_shell: pexpec
         pytest.fail("running a simple echo command should work")
 
 
-def test_shell_to_device_sigint(process, start_shell_mock, device_shell: pexpect.spawn):
+def test_shell_to_device_sigint(start_shell_mock, device_shell: pexpect.spawn):
     """ Tests if Ctrl-C causes the shell to exit cleanly
     """
     device_shell.kill(signal.SIGINT)
@@ -243,7 +243,7 @@ def test_shell_to_device_sigint(process, start_shell_mock, device_shell: pexpect
     assert device_shell.wait() == 0, "Ctrl-C should be a clean exit"
 
 
-def test_shell_to_device_eof_stdin(process, start_shell_mock, device_shell: pexpect.spawn):
+def test_shell_to_device_eof_stdin(start_shell_mock, device_shell: pexpect.spawn):
     """ Tests if Ctrl-d causes the shell to exit cleanly
     """
     device_shell.sendeof()

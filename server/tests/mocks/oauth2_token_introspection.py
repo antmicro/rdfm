@@ -89,9 +89,9 @@ def start_token_mock():
 
     # Run this module in a separate interpreter process, see `main`.
     process = subprocess.Popen([
-        "python3", inspect.getabsfile(inspect.currentframe())
+        "poetry", "run", "python3", inspect.getabsfile(inspect.currentframe())
     ])
-    time.sleep(1.2)
+    time.sleep(5)
 
     # The test expects to be passed the URL to the introspection endpoint
     yield f"{MOCKS_BASE_URL}{MOCKS_INTROSPECT_PATH}"

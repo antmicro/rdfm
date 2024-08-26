@@ -9,7 +9,7 @@ from typing import Any, Optional
 from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
 from Crypto.Signature.pkcs1_15 import PKCS115_SigScheme
-from common import UPDATES_ENDPOINT, SimpleDevice
+from common import UPDATES_ENDPOINT, SimpleDevice, ProcessConfig
 
 
 SERVER = "http://127.0.0.1:5000/"
@@ -27,21 +27,6 @@ TEST_METADATA_CACHING_EXPECTED_VALUE="this_was_modified"
 
 
 test_device = SimpleDevice(METADATA)
-
-
-@pytest.fixture()
-def process():
-    if os.path.isfile(DBPATH):
-        os.remove(DBPATH)
-
-    print("Starting server..")
-    process = subprocess.Popen(["python3", "-m", "rdfm_mgmt_server", "--debug", "--no-ssl", "--no-api-auth", "--database", f"sqlite:///{DBPATH}"])
-    time.sleep(5)
-
-    yield process
-
-    print("Shutting down server..")
-    process.kill()
 
 
 @pytest.fixture
@@ -230,6 +215,7 @@ def test_different_pubkey(process):
     assert response.status_code == 400, "server should reject the request with a different public key as the signature is invalid"
 
 
+@pytest.mark.parametrize("process_config", [ProcessConfig(insert_mocks=False)])
 def test_key_change(process, submit_and_approve, change_registered_device_key, list_devices, list_registrations):
     """ This tests the scenario in which a device changes it's key.
     """
@@ -261,6 +247,7 @@ def test_registrations_approve_device(process, submit_and_approve, list_registra
     assert len(list_registrations) == 0, "registrations list should now be empty, as the device has been approved"
 
 
+@pytest.mark.parametrize("process_config", [ProcessConfig(insert_mocks=False)])
 def test_list_devices_without_approval(process, submit_authorization, list_devices):
     """ This tests if the device is not added to the devices list when it hasn't
         been approved yet.
@@ -284,6 +271,7 @@ def test_auth_after_approval(process, submit_and_approve, submit_authorization):
     assert "token" in submit_authorization.json(), "the authentication response should contain an app token"
 
 
+@pytest.mark.parametrize("process_config", [ProcessConfig(insert_mocks=False)])
 def test_device_metadata_change(process,
                                 submit_and_approve,
                                 submit_authorization_with_modified_version,
@@ -294,6 +282,7 @@ def test_device_metadata_change(process,
     assert list_devices[0]["metadata"][TEST_METADATA_CACHING_KEY] == TEST_METADATA_CACHING_EXPECTED_VALUE, "the metadata should have been updated on the server"
 
 
+@pytest.mark.parametrize("process_config", [ProcessConfig(insert_mocks=False)])
 def test_device_last_access_tracking(process,
                                      submit_and_approve,
                                      list_devices,

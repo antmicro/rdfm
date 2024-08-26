@@ -25,6 +25,7 @@ def list_logs(list_devices):
     """Return a flat list of dictionaries representing log entries
     """
     logs = []
+
     for device in list_devices.json():
         response = requests.get(f"{LOGS_ENDPOINT}/device/{device['id']}")
         logs.append(response.json())
@@ -78,9 +79,10 @@ def try_insert_malformed_log_date():
 
 
 @pytest.fixture
-def delete_logs_from_first_device(list_devices):
-    response = requests.delete(f"{LOGS_ENDPOINT}/device/{list_devices.json()[0]['id']}")
-    assert response.status_code == 200, "deletion should have returned a success status code"
+def delete_logs_from_devices(list_devices):
+    for device in list_devices.json():
+        response = requests.delete(f"{LOGS_ENDPOINT}/device/{device['id']}")
+        assert response.status_code == 200, "deletion should have returned a success status code"
 
 
 @pytest.fixture
@@ -120,7 +122,7 @@ def test_inserted_logs(process, insert_correct_log_batch, list_logs):
     assert any(list_logs), "there should be log entries in the db"
 
 
-def test_delete_logs(process, insert_correct_log_batch, delete_logs_from_first_device, list_logs):
+def test_delete_logs(process, insert_correct_log_batch, delete_logs_from_devices, list_logs):
     assert not any(list_logs), "the log db should be empty"
 
 
