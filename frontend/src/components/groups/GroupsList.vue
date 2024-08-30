@@ -1,4 +1,6 @@
 <template>
+    <BlurPanel></BlurPanel>
+
     <TitleBar
         title="Groups"
         subtitle="manage your groups"
@@ -140,9 +142,9 @@ import {
     DELETE_GROUP_ENDPOINT,
     UPDATE_GROUP_PRIORITY_ENDPOINT,
     resourcesGetter,
-} from '../common/utils';
-import { type Group } from '../common/utils';
-import TitleBar from './TitleBar.vue';
+} from '../../common/utils';
+import { type Group } from '../../common/utils';
+import TitleBar from '../TitleBar.vue';
 
 export default {
     components: {

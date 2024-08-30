@@ -66,8 +66,8 @@
 import { ref } from 'vue';
 
 import DevicesList from '../components/DevicesList.vue';
-import PackagesList from '../components/PackagesList.vue';
-import GroupsList from '../components/GroupsList.vue';
+import PackagesList from '../components/packages/PackagesList.vue';
+import GroupsList from '../components/groups/GroupsList.vue';
 
 const enum ActiveTab {
     Devices,
@@ -82,7 +82,7 @@ export default {
         GroupsList,
     },
     setup() {
-        const activeTab = ref(ActiveTab.Devices);
+        const activeTab = ref(ActiveTab.Packages);
 
         const navbarItemClasses = (tabName: number) => {
             return {

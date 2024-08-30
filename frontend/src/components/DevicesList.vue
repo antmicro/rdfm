@@ -1,5 +1,7 @@
 <template>
     <div id="devices">
+        <!-- TODO: Research how are devices created -->
+        <!-- <BlurPanel></BlurPanel> -->
         <TitleBar
             title="Devices"
             subtitle="manage your devices"
@@ -149,10 +151,12 @@ import {
 } from '../common/utils';
 import { type PendingDevice, type RegisteredDevice } from '../common/utils';
 import TitleBar from './TitleBar.vue';
+// import BlurPanel from './BlurPanel.vue';
 
 export default {
     components: {
         TitleBar,
+        // BlurPanel,
     },
     setup() {
         const pendingDevicesResources = resourcesGetter<PendingDevice[]>(PENDING_ENDPOINT);
