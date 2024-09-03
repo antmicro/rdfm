@@ -1,4 +1,6 @@
 @import './table.css';
+@import './popup.css';
+@import './buttons.css';
 
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,600;1,14..32,600&display=swap');
@@ -55,4 +57,15 @@ body {
 #app {
     font-weight: normal;
     height: 100%;
+}
+
+/* Vue Transition values */
+.v-enter-active,
+.v-leave-active {
+    transition: opacity 0.25s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+    opacity: 0;
 }
