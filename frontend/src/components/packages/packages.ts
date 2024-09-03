@@ -1,10 +1,12 @@
 import {
     DELETE_PACKAGE_ENDPOINT,
-    HTTPStatus,
     PACKAGES_ENDPOINT,
     resourcesGetter,
     type Package,
+    type RequestOutput,
 } from '../../common/utils';
+
+import { StatusCodes } from 'http-status-codes';
 
 export type NewPackageData = {
     version: string | null;
@@ -16,39 +18,50 @@ export const packageResources = resourcesGetter<Package[]>(PACKAGES_ENDPOINT);
 export const uploadPackageRequest = async (
     uploadedPackageFile: HTMLInputElement,
     packageUploadData: NewPackageData,
-) => {
+): Promise<RequestOutput> => {
     const formData = new FormData();
-    if (uploadedPackageFile === null || uploadedPackageFile.files === null) {
-        return;
+    if ((uploadedPackageFile?.files ?? []).length > 0) {
+        return { success: false, message: 'No file provided' };
     }
+    if (packageUploadData.version === null)
+        return { success: false, message: 'No package version provided' };
 
-    // TODO validate the input
-    const file = uploadedPackageFile.files[0];
+    if (packageUploadData.deviceType === null)
+        return { success: false, message: 'No device type provided' };
+
+    const file = uploadedPackageFile.files![0];
     formData.append('file', file);
     formData.append('rdfm.software.version', packageUploadData.version!);
     formData.append('rdfm.hardware.devtype', packageUploadData.deviceType!);
 
     const headers = new Headers();
 
-    const [status] = await packageResources.fetchPOST(PACKAGES_ENDPOINT, headers, formData);
-    if (status) {
-        await packageResources.fetchResources();
-    } else {
-        alert('Failed to upload package');
+    const out = await packageResources.fetchPOST(PACKAGES_ENDPOINT, headers, formData);
+    if (!out.success) {
+        return {
+            success: false,
+            message: 'Failed to upload a package. Got a response code of ' + out.code,
+        };
     }
+    await packageResources.fetchResources();
+    return { success: true };
 };
 
-export const removePackageRequest = async (packageId: number) => {
-    const [success, status] = await packageResources.fetchDELETE(
-        DELETE_PACKAGE_ENDPOINT(packageId),
-    );
-    if (success) {
-        await packageResources.fetchResources();
-    } else {
-        if (status === HTTPStatus.Conflict) {
-            alert('The package you are trying to remove is in a group and cannot be removed');
+export const removePackageRequest = async (packageId: number): Promise<RequestOutput> => {
+    const out = await packageResources.fetchDELETE(DELETE_PACKAGE_ENDPOINT(packageId));
+    if (!out.success) {
+        if (out.code === StatusCodes.CONFLICT) {
+            return {
+                success: false,
+                message: 'The package you are trying to remove is in a group and cannot be removed',
+            };
         } else {
-            alert('Failed to delete package');
+            return {
+                success: false,
+                message: 'Failed to delete package. Got a response code of ' + out.code,
+            };
         }
     }
+    await packageResources.fetchResources();
+    return { success: true };
 };

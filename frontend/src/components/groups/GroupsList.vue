@@ -63,6 +63,7 @@
                     <div class="entry">
                         <p>Packages</p>
                         <input
+                            pattern="(\d+,\s*)+\d+"
                             type="text"
                             v-model="groupConfiguration.packages"
                             placeholder="Packages"
@@ -71,6 +72,7 @@
                     <div class="entry">
                         <p>Devices</p>
                         <input
+                            pattern="(\d+,\s*)+\d+"
                             type="text"
                             v-model="groupConfiguration.devices"
                             placeholder="Devices"
@@ -320,8 +322,12 @@ export default {
         };
 
         const addGroup = async () => {
-            await addGroupRequest(newGroupData!);
-            closeAddGroupPopup();
+            const { success, message } = await addGroupRequest(newGroupData!);
+            if (!success) {
+                alert(message);
+            } else {
+                closeAddGroupPopup();
+            }
         };
         // =======================
         // Remove group functionality
@@ -330,8 +336,12 @@ export default {
         const groupToRemove: Ref<number | null> = ref(null);
 
         const removeGroup = async () => {
-            await removeGroupRequest(groupToRemove.value!);
-            closeRemoveGroupPopup();
+            const { success, message } = await removeGroupRequest(groupToRemove.value!);
+            if (!success) {
+                alert(message);
+            } else {
+                closeRemoveGroupPopup();
+            }
         };
 
         const openRemoveGroupPopup = async (groupId: number) => {
@@ -394,6 +404,11 @@ export default {
             );
         };
 
+        const isList = (s: string) => {
+            const re = new RegExp('((^\\d+,\\s*)*\\d+$)|(^$)');
+            return re.test(s);
+        };
+
         const configureGroup = async () => {
             const groupToModify = groupResources.resources.value!.find(
                 (group) => group.id === groupConfiguration.id!,
@@ -405,28 +420,67 @@ export default {
             }
 
             // Updating priority
-            if (groupConfiguration.priority! !== initialGroupConfiguration!.priority)
-                await updatePriorityRequest(groupConfiguration.id!, groupConfiguration.priority!);
+            if (groupConfiguration.priority! !== initialGroupConfiguration!.priority) {
+                const { success, message } = await updatePriorityRequest(
+                    groupConfiguration.id!,
+                    groupConfiguration.priority!,
+                );
+                if (!success) {
+                    alert(message);
+                    return;
+                }
+            }
 
             // Updating devices
             const initialDevices = initialGroupConfiguration!.devices;
-            const newDevices = groupConfiguration.devices!.replace(/ /g, '').split(',').map(Number);
+            groupConfiguration.devices ??= '';
+            if (!isList(groupConfiguration.devices)) {
+                alert('Devices should be a list of integers separated by commas');
+                return;
+            }
+
+            let newDevices: number[] = [];
+            if (groupConfiguration.devices.length !== 0) {
+                newDevices = groupConfiguration.devices.replace(/ /g, '').split(',').map(Number);
+            }
 
             const removedDevices = initialDevices.filter((device) => !newDevices.includes(device));
             const addedDevices = newDevices.filter((device) => !initialDevices.includes(device));
 
-            if (removedDevices.length > 0 || addedDevices.length > 0)
-                await patchDevicesRequest(groupConfiguration.id!, addedDevices, removedDevices);
+            if (removedDevices.length > 0 || addedDevices.length > 0) {
+                const { success, message } = await patchDevicesRequest(
+                    groupConfiguration.id!,
+                    addedDevices,
+                    removedDevices,
+                );
+                if (!success) {
+                    alert(message);
+                    return;
+                }
+            }
 
             // Updating packages
             const initialPackages = initialGroupConfiguration!.packages;
-            const newPackages = groupConfiguration
-                .packages!.replace(/ /g, '')
-                .split(',')
-                .map(Number);
+            groupConfiguration.packages ??= '';
+            if (!isList(groupConfiguration.packages)) {
+                alert('Devices should be a list of integers separated by commas');
+                return;
+            }
 
-            if (JSON.stringify(initialPackages) !== JSON.stringify(newPackages))
-                await updatePackagesRequest(groupConfiguration.id!, newPackages);
+            let newPackages: number[] = [];
+            if (groupConfiguration.packages.length !== 0) {
+                newPackages = groupConfiguration.packages.replace(/ /g, '').split(',').map(Number);
+            }
+            if (JSON.stringify(initialPackages) !== JSON.stringify(newPackages)) {
+                const { success, message } = await updatePackagesRequest(
+                    groupConfiguration.id!,
+                    newPackages,
+                );
+                if (!success) {
+                    alert(message);
+                    return;
+                }
+            }
 
             closeConfigureGroupPopup();
         };
@@ -442,9 +496,7 @@ export default {
 
         const startPolling = () => {
             if (intervalID === undefined) {
-                intervalID = setInterval(async () => {
-                    await fetchResources();
-                }, POLL_INTERVAL);
+                intervalID = setInterval(fetchResources, POLL_INTERVAL);
             }
         };
 

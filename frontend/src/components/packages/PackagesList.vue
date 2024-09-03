@@ -170,8 +170,15 @@ export default {
         };
 
         const uploadPackage = async () => {
-            uploadPackageRequest(uploadedPackageFile.value!, packageUploadData);
-            closeAddPackagePopup();
+            const { success, message } = await uploadPackageRequest(
+                uploadedPackageFile.value!,
+                packageUploadData,
+            );
+            if (!success) {
+                alert(message);
+            } else {
+                closeAddPackagePopup();
+            }
         };
 
         // =======================
@@ -190,8 +197,12 @@ export default {
         };
 
         const removePackage = async () => {
-            removePackageRequest(packageToRemove.value!);
-            closeRemovePackagePopup();
+            const { success, message } = await removePackageRequest(packageToRemove.value!);
+            if (!success) {
+                alert(message);
+            } else {
+                closeRemovePackagePopup();
+            }
         };
 
         // =======================
@@ -200,9 +211,7 @@ export default {
             await packageResources.fetchResources();
 
             if (intervalID === undefined) {
-                intervalID = setInterval(async () => {
-                    await packageResources.fetchResources();
-                }, POLL_INTERVAL);
+                intervalID = setInterval(packageResources.fetchResources, POLL_INTERVAL);
             }
         });
 

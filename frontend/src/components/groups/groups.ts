@@ -10,7 +10,10 @@ import {
     type Group,
     type Package,
     type RegisteredDevice,
+    type RequestOutput,
 } from '../../common/utils';
+
+import { StatusCodes } from 'http-status-codes';
 
 export type InitialGroupConfiguration = {
     id: number;
@@ -61,63 +64,149 @@ export const patchDevicesRequest = async (
     groupId: number,
     addedDevices: number[],
     removedDevices: number[],
-) => {
+): Promise<RequestOutput> => {
     const body = JSON.stringify({
         add: addedDevices,
         remove: removedDevices,
     });
 
-    const [status] = await groupResources.fetchPATCH(
+    const out = await groupResources.fetchPATCH(
         PATCH_DEVICES_IN_GROUP_ENDPOINT(groupId),
         headers,
         body,
     );
-    if (status) {
-        await groupResources.fetchResources();
-    } else {
-        alert('Failed to configure group devices');
+    if (!out.success) {
+        switch (out.code) {
+            case StatusCodes.UNAUTHORIZED:
+                return {
+                    success: false,
+                    message:
+                        'User did not provide authorization data, or the authorization has expired',
+                };
+            case StatusCodes.FORBIDDEN:
+                return {
+                    success: false,
+                    message: 'User was authorized, but did not have permission to delete groups',
+                };
+            case StatusCodes.CONFLICT:
+                return {
+                    success: false,
+                    message:
+                        'One of the conflicts situations described below has occurred\n\n' +
+                        '- Any device identifier which does not match a registered device\n\n' +
+                        '- Any device identifier in additions which already has an assigned group which has the same priority as the group specified by identifier (even if the group is the same as specified by identifier\n\n' +
+                        '- Any device identifier in removals which is not currently assigned to the specified group',
+                };
+            case StatusCodes.NOT_FOUND:
+                return { success: false, message: 'Group does not exist' };
+            default:
+                return {
+                    success: false,
+                    message: 'Failed to update group devices. Got a response code of ' + out.code,
+                };
+        }
     }
+    await groupResources.fetchResources();
+    return { success: true };
 };
 
-export const updatePackagesRequest = async (groupId: number, packages: number[]) => {
+export const updatePackagesRequest = async (
+    groupId: number,
+    packages: number[],
+): Promise<RequestOutput> => {
     const body = JSON.stringify({
         packages,
     });
 
-    const [status] = await groupResources.fetchPOST(
+    const out = await groupResources.fetchPOST(
         ASSIGN_PACKAGE_IN_GROUP_ENDPOINT(groupId),
         headers,
         body,
     );
-    if (status) {
-        await groupResources.fetchResources();
-    } else {
-        alert('Failed to update group packages');
+    if (!out.success) {
+        switch (out.code) {
+            case StatusCodes.BAD_REQUEST:
+                return { success: false, message: 'Invalid request schema' };
+            case StatusCodes.UNAUTHORIZED:
+                return {
+                    success: false,
+                    message:
+                        'User did not provide authorization data, or the authorization has expired',
+                };
+            case StatusCodes.FORBIDDEN:
+                return {
+                    success: false,
+                    message: 'User was authorized, but did not have permission to assign packages',
+                };
+            case StatusCodes.CONFLICT:
+                return {
+                    success: false,
+                    message: 'The package/group was modified or deleted during the operation',
+                };
+            case StatusCodes.NOT_FOUND:
+                return { success: false, message: 'The specified package or group does not exist' };
+            default:
+                return {
+                    success: false,
+                    message: 'Failed to update group packages. Got a response code of ' + out.code,
+                };
+        }
     }
+    await groupResources.fetchResources();
+    return { success: true };
 };
 
-export const updatePriorityRequest = async (groupId: number, priority: number) => {
+export const updatePriorityRequest = async (
+    groupId: number,
+    priority: number,
+): Promise<RequestOutput> => {
     const body = JSON.stringify({
         priority: priority,
     });
 
-    const [status] = await groupResources.fetchPOST(
+    const out = await groupResources.fetchPOST(
         UPDATE_GROUP_PRIORITY_ENDPOINT(groupId),
         headers,
         body,
     );
-    if (status) {
-        await groupResources.fetchResources();
-    } else {
-        alert('Failed to update group priority');
+    if (!out.success) {
+        switch (out.code) {
+            case StatusCodes.UNAUTHORIZED:
+                return {
+                    success: false,
+                    message:
+                        'User did not provide authorization data, or the authorization has expired',
+                };
+            case StatusCodes.FORBIDDEN:
+                return {
+                    success: false,
+                    message: 'User was authorized, but did not have permission to modify groups',
+                };
+            case StatusCodes.CONFLICT:
+                return {
+                    success: false,
+                    message:
+                        'At least one device which is assigned to this group is also assigned to another group with the requested priority',
+                };
+            case StatusCodes.NOT_FOUND:
+                return { success: false, message: 'The specified group does not exist' };
+            default:
+                return {
+                    success: false,
+                    message: 'Failed to update group priority. Got a response code of ' + out.code,
+                };
+        }
     }
+    await groupResources.fetchResources();
+    return { success: true };
 };
 
-export const addGroupRequest = async (newGroup: NewGroupData) => {
-    const body = JSON.stringify({
-        // Keys are taken from the manager source code
+export const addGroupRequest = async (newGroup: NewGroupData): Promise<RequestOutput> => {
+    if (!newGroup.name) return { success: false, message: 'No group name provided' };
+    if (!newGroup.description) return { success: false, message: 'No group description provided' };
+    if (!newGroup.priority) return { success: false, message: 'No group priority provided' };
 
-        // TODO: Validate the input
+    const body = JSON.stringify({
         priority: newGroup.priority!,
         metadata: {
             'rdfm.group.name': newGroup.name!,
@@ -125,19 +214,62 @@ export const addGroupRequest = async (newGroup: NewGroupData) => {
         },
     });
 
-    const [status] = await groupResources.fetchPOST(GROUPS_ENDPOINT, headers, body);
-    if (status) {
-        await groupResources.fetchResources();
-    } else {
-        alert('Failed to create a new group');
+    const out = await groupResources.fetchPOST(GROUPS_ENDPOINT, headers, body);
+    if (!out.success) {
+        switch (out.code) {
+            case StatusCodes.UNAUTHORIZED:
+                return {
+                    success: false,
+                    message:
+                        'User did not provide authorization data, or the authorization has expired',
+                };
+            case StatusCodes.FORBIDDEN:
+                return {
+                    success: false,
+                    message: 'User was authorized, but did not have permission to create groups',
+                };
+            case StatusCodes.NOT_FOUND:
+                return { success: false, message: 'The specified group does not exist' };
+            default:
+                return {
+                    success: false,
+                    message: 'Failed to create a group. Got a response code of ' + out.code,
+                };
+        }
     }
+    await groupResources.fetchResources();
+    return { success: true };
 };
 
-export const removeGroupRequest = async (groupId: number) => {
-    const [status] = await groupResources.fetchDELETE(DELETE_GROUP_ENDPOINT(groupId));
-    if (status) {
-        await groupResources.fetchResources();
-    } else {
-        alert('Failed to delete group');
+export const removeGroupRequest = async (groupId: number): Promise<RequestOutput> => {
+    const out = await groupResources.fetchDELETE(DELETE_GROUP_ENDPOINT(groupId));
+    if (!out.success) {
+        switch (out.code) {
+            case StatusCodes.UNAUTHORIZED:
+                return {
+                    success: false,
+                    message:
+                        'User did not provide authorization data, or the authorization has expired',
+                };
+            case StatusCodes.FORBIDDEN:
+                return {
+                    success: false,
+                    message: 'User was authorized, but did not have permission to delete groups',
+                };
+            case StatusCodes.CONFLICT:
+                return {
+                    success: false,
+                    message: 'At least one device is still assigned to the group',
+                };
+            case StatusCodes.NOT_FOUND:
+                return { success: false, message: 'The specified group does not exist' };
+            default:
+                return {
+                    success: false,
+                    message: 'Failed to remove a group. Got a response code of ' + out.code,
+                };
+        }
     }
+    await groupResources.fetchResources();
+    return { success: true };
 };

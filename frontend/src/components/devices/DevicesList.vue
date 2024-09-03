@@ -78,9 +78,7 @@
                             <td class="entry">
                                 <button
                                     class="action-button blue"
-                                    @click="
-                                        registerDeviceRequest(device.mac_address, device.public_key)
-                                    "
+                                    @click="registerDevice(device.mac_address, device.public_key)"
                                 >
                                     Register
                                 </button>
@@ -186,6 +184,13 @@ export default {
     setup() {
         let intervalID: undefined | number = undefined;
 
+        const registerDevice = async (mac_address: string, public_key: string) => {
+            const { success, message } = await registerDeviceRequest(mac_address, public_key);
+            if (!success) {
+                alert(message);
+            }
+        };
+
         const fetchResources = async () => {
             await registeredDevicesResources.fetchResources();
             await pendingDevicesResources.fetchResources();
@@ -195,9 +200,7 @@ export default {
             await fetchResources();
 
             if (intervalID === undefined) {
-                intervalID = setInterval(async () => {
-                    await fetchResources();
-                }, POLL_INTERVAL);
+                intervalID = setInterval(fetchResources, POLL_INTERVAL);
             }
         });
 
@@ -223,7 +226,7 @@ export default {
             pendingDevicesCount,
             registeredDevicesCount,
             devicesCount,
-            registerDeviceRequest,
+            registerDevice,
         };
     },
 };

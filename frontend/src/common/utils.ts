@@ -55,8 +55,15 @@ export interface Group {
     priority: number;
 }
 
-export enum HTTPStatus {
-    Conflict = 409,
+export interface RequestOutput {
+    success: boolean;
+    message?: string;
+}
+
+export interface FetchOutput {
+    success: boolean;
+    code?: number;
+    data?: any;
 }
 
 export const resourcesGetter = <T>(resources_url: string) => {
@@ -68,7 +75,7 @@ export const resourcesGetter = <T>(resources_url: string) => {
         method: string,
         headers: Headers = new Headers(),
         body?: BodyInit,
-    ): Promise<[boolean, number | undefined, T | undefined]> => {
+    ): Promise<FetchOutput> => {
         let response;
         try {
             response = await fetch(url, { method, body, headers: headers });
@@ -76,10 +83,10 @@ export const resourcesGetter = <T>(resources_url: string) => {
                 throw new Error(`Failed to fetch ${url}`);
             }
             const data = await response.json();
-            return [true, response.status, data];
+            return { success: true, code: response.status, data };
         } catch (e) {
             console.error(`Failed to fetch ${url} - ${e}`);
-            return [false, response?.status, undefined];
+            return { success: false, code: response?.status, data: undefined };
         }
     };
 
@@ -94,9 +101,9 @@ export const resourcesGetter = <T>(resources_url: string) => {
         fetchWrapper(url, 'PATCH', headers, body);
 
     const fetchResources = async () => {
-        const [success, status, data] = await fetchGET(resources_url);
-        if (success) {
-            resources.value = data as T;
+        const out = await fetchGET(resources_url);
+        if (out.success) {
+            resources.value = out.data as T;
             pollingStatus.value = PollingStatus.ActivePolling;
         } else {
             resources.value = undefined;
