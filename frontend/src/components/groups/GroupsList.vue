@@ -1,90 +1,190 @@
 <template>
-    <BlurPanel></BlurPanel>
+    <Transition>
+        <BlurPanel v-if="popupOpen == 0" @click.self="closeAddGroupPopup">
+            <div class="popup">
+                <div class="header">
+                    <p class="title">Create a new group</p>
+                    <p class="description">Configure a new devices group and add packages to it</p>
+                </div>
+                <div class="body">
+                    <div class="entry">
+                        <p>Name</p>
+                        <input type="text" v-model="newGroupData.name" placeholder="New group" />
+                    </div>
+                    <div class="entry">
+                        <p>Description</p>
+                        <input
+                            type="text"
+                            v-model="newGroupData.description"
+                            placeholder="Group description"
+                        />
+                    </div>
+                    <div class="entry">
+                        <p>Priority</p>
+                        <input type="number" v-model="newGroupData.priority" placeholder="10" />
+                    </div>
+
+                    <div class="buttons">
+                        <button class="action-button gray" @click="closeAddGroupPopup">
+                            Cancel
+                        </button>
+                        <button class="action-button blue white" @click="addGroup">Create</button>
+                    </div>
+                </div>
+            </div>
+        </BlurPanel>
+    </Transition>
+
+    <RemovePopup
+        @click.self="closeRemoveGroupPopup"
+        title="Are you absolutely sure?"
+        :enabled="popupOpen == 1"
+        :description="`This action cannot be undone. It will permanently delete #${groupToRemove} group.`"
+        :cancelCallback="closeRemoveGroupPopup"
+        :removeCallback="removeGroup"
+    />
+
+    <Transition>
+        <BlurPanel v-if="popupOpen == 2" @click.self="closeConfigureGroupPopup">
+            <div class="popup">
+                <div class="header">
+                    <p class="title">Configure the #{{ groupConfiguration.id }} group</p>
+                    <p class="description">Configure group packages, devices and priority</p>
+                </div>
+                <div class="body">
+                    <div class="entry">
+                        <p>Priority</p>
+                        <input
+                            type="text"
+                            v-model="groupConfiguration.priority"
+                            placeholder="Priority"
+                        />
+                    </div>
+                    <div class="entry">
+                        <p>Packages</p>
+                        <input
+                            type="text"
+                            v-model="groupConfiguration.packages"
+                            placeholder="Packages"
+                        />
+                    </div>
+                    <div class="entry">
+                        <p>Devices</p>
+                        <input
+                            type="text"
+                            v-model="groupConfiguration.devices"
+                            placeholder="Devices"
+                        />
+                    </div>
+
+                    <div class="buttons">
+                        <button class="action-button gray" @click="closeConfigureGroupPopup">
+                            Cancel
+                        </button>
+                        <button class="action-button blue white" @click="configureGroup">
+                            Configure
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </BlurPanel>
+    </Transition>
 
     <TitleBar
         title="Groups"
         subtitle="manage your groups"
         actionButtonName="Create new group"
-        :buttonCallback="createGroup"
+        :buttonCallback="openAddGroupPopup"
     />
 
     <div class="container">
-        <p>Groups</p>
-        <div v-for="group in groups" :key="group.id" class="group">
-            <div class="group-row">
-                <div class="entry">
-                    <div class="title">ID</div>
-                    <div class="value">{{ group.id }}</div>
+        <p>Overview</p>
+        <table cellspacing="0" cellpadding="0" class="resources-table">
+            <tr class="resources-table-row">
+                <td class="entry">
+                    <div class="value">Total groups</div>
+                </td>
+                <td class="entry">
+                    <div class="value">{{ groupsCount }}</div>
+                </td>
+            </tr>
+        </table>
+        <template v-if="groups && groups.length !== 0">
+            <p>Groups</p>
+            <div v-for="group in groups" :key="group.id" class="group">
+                <div class="group-row">
+                    <div class="entry">
+                        <div class="title">ID</div>
+                        <div class="value">#{{ group.id }}</div>
+                    </div>
+                    <div class="entry">
+                        <div class="title">Created</div>
+                        <div class="value">{{ group.created }}</div>
+                    </div>
+                    <div class="entry">
+                        <div class="title">Name</div>
+                        <div class="value">{{ group.metadata['rdfm.group.name'] }}</div>
+                    </div>
+                    <div class="entry">
+                        <div class="title">Description</div>
+                        <div class="value">{{ group.metadata['rdfm.group.description'] }}</div>
+                    </div>
+                    <div class="entry">
+                        <div class="title">Policy</div>
+                        <div class="value">{{ group.policy }}</div>
+                    </div>
+                    <div class="entry">
+                        <div class="title">Priority</div>
+                        <div class="value">{{ group.priority }}</div>
+                    </div>
+                    <div class="entry right">
+                        <div class="button-wrapper">
+                            <button
+                                class="action-button gray"
+                                @click="openConfigureGroupPopup(group)"
+                            >
+                                Configure
+                            </button>
+                            <button
+                                class="action-button red"
+                                @click="openRemoveGroupPopup(group.id)"
+                            >
+                                Remove
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="entry">
-                    <div class="title">Created</div>
-                    <div class="value">{{ group.created }}</div>
+                <div class="group-row">
+                    <div class="entry">
+                        <div class="title" v-if="group.packages.length == 1">1 Package</div>
+                        <div class="title" v-else>{{ group.packages.length }} Packages</div>
+                        <div class="values">
+                            <div v-for="pckg in group.packages" :key="pckg" class="item">
+                                #{{ pckg }}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="entry">
-                    <div class="title">Policy</div>
-                    <div class="value">{{ group.policy }}</div>
-                </div>
-                <div class="entry">
-                    <div class="title">Priority</div>
-                    <div class="value">{{ group.priority }}</div>
+                <div class="group-row">
+                    <div class="entry">
+                        <div class="title" v-if="group.devices.length == 1">1 Device</div>
+                        <div class="title" v-else>{{ group.devices.length }} Devices</div>
+                        <div class="values">
+                            <div v-for="device in group.devices" :key="device" class="item">
+                                #{{ device }} - {{ findDevice(device) }}
+                                <button
+                                    class="action-button red small-padding"
+                                    @click="patchDevicesRequest(group.id, [], [device])"
+                                >
+                                    <Cross></Cross>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="group-row">
-                <div class="entry">
-                    <div class="title">{{ group.packages.length }} Packages</div>
-                    <div class="value">{{ group.packages }}</div>
-                </div>
-            </div>
-            <div class="group-row">
-                <div class="entry">
-                    <div class="title">{{ group.devices.length }} Devices</div>
-                    <div class="value">{{ group.devices }}</div>
-                </div>
-            </div>
-        </div>
+        </template>
     </div>
-
-    <!-- <div>
-        <h2>Create a new group:</h2>
-        <form @submit.prevent="addGroup">
-            <input type="text" v-model="newGroupData.name" placeholder="Name" />
-            <br />
-            <input type="text" v-model="newGroupData.description" placeholder="Description" />
-            <br />
-            <input type="text" v-model="newGroupData.priority" placeholder="Priority" />
-            <br />
-            <input type="submit" />
-        </form>
-    </div> -->
-
-    <!-- <ListWrapper :pollingStatus="pollingStatus">
-        <div v-if="groups!.length === 0">
-            <h2>No groups defined</h2>
-        </div>
-        <div v-else>
-            <h2>Groups:</h2>
-            <div v-for="group in groups" :key="group.id" class="group-entry">
-                ID: {{ group.id }} <br />
-                Created: {{ group.created }} <br />
-                Packages: {{ group.packages }} <br />
-                Devices: {{ group.devices }} <br />
-                Metadata:
-                <ul>
-                    <li v-for="[key, data] in Object.entries(group.metadata)" :key="key">
-                        {{ key }}: {{ data }}
-                    </li>
-                </ul>
-                Policy: {{ group.policy }} <br />
-                <input
-                    @change="updatePriority(group.id, group.priority)"
-                    type="number"
-                    v-model="group.priority"
-                /><br />
-                <br />
-                <button @click="deleteGroup(group.id)">Delete</button>
-            </div>
-        </div>
-    </ListWrapper> -->
 </template>
 
 <style scoped>
@@ -125,6 +225,29 @@
                     color: var(--gray-1000);
                     text-wrap: nowrap;
                 }
+
+                & > .values {
+                    display: flex;
+                    flex-direction: row;
+
+                    & > .item {
+                        border: 1px solid var(--gray-400);
+                        border-radius: 5px;
+                        background-color: var(--gray-100);
+                        margin: 0.25em 1em;
+                        padding: 0.25em 0.5em;
+                    }
+                }
+
+                &:last-child {
+                    flex-grow: 1;
+                }
+
+                & > .button-wrapper {
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 1em;
+                }
             }
         }
 
@@ -134,49 +257,193 @@
 </style>
 
 <script lang="ts">
-import { onMounted, onUnmounted, reactive } from 'vue';
+import { computed, onMounted, onUnmounted, ref, type Ref, reactive, type Reactive } from 'vue';
 
+import { POLL_INTERVAL, type Group } from '../../common/utils';
 import {
-    GROUPS_ENDPOINT,
-    POLL_INTERVAL,
-    DELETE_GROUP_ENDPOINT,
-    UPDATE_GROUP_PRIORITY_ENDPOINT,
-    resourcesGetter,
-} from '../../common/utils';
-import { type Group } from '../../common/utils';
+    addGroupRequest,
+    devicesResources,
+    findDevice,
+    findPackage,
+    groupResources,
+    packagesResources,
+    patchDevicesRequest,
+    removeGroupRequest,
+    updatePackagesRequest,
+    updatePriorityRequest,
+    type GroupConfiguration,
+    type InitialGroupConfiguration,
+    type NewGroupData,
+} from './groups';
+
+import BlurPanel from '../BlurPanel.vue';
+import RemovePopup from '../RemovePopup.vue';
 import TitleBar from '../TitleBar.vue';
+import Cross from '../icons/Cross.vue';
+
+enum PopupOpen {
+    AddGroup,
+    RemoveGroup,
+    ConfigureGroup,
+    None,
+}
 
 export default {
     components: {
+        BlurPanel,
+        RemovePopup,
         TitleBar,
+        Cross,
     },
     setup() {
-        const groupResources = resourcesGetter<Group[]>(GROUPS_ENDPOINT);
-        const newGroupData = reactive({
-            name: '',
-            description: '',
-            priority: '',
+        const popupOpen = ref(PopupOpen.None);
+
+        // =======================
+        // Add group functionality
+        // =======================
+        const newGroupData: Reactive<NewGroupData> = reactive({
+            name: null,
+            description: null,
+            priority: null,
         });
 
-        const POSTHeaders = new Headers();
-        POSTHeaders.set('Content-type', 'application/json');
-        POSTHeaders.set('Accept', 'application/json, text/javascript');
+        const openAddGroupPopup = () => {
+            popupOpen.value = PopupOpen.AddGroup;
+        };
+
+        const closeAddGroupPopup = () => {
+            newGroupData.name = null;
+            newGroupData.description = null;
+            newGroupData.priority = null;
+
+            popupOpen.value = PopupOpen.None;
+        };
+
+        const addGroup = async () => {
+            await addGroupRequest(newGroupData!);
+            closeAddGroupPopup();
+        };
+        // =======================
+        // Remove group functionality
+        // =======================
+
+        const groupToRemove: Ref<number | null> = ref(null);
+
+        const removeGroup = async () => {
+            await removeGroupRequest(groupToRemove.value!);
+            closeRemoveGroupPopup();
+        };
+
+        const openRemoveGroupPopup = async (groupId: number) => {
+            groupToRemove.value = groupId;
+            popupOpen.value = PopupOpen.RemoveGroup;
+        };
+
+        const closeRemoveGroupPopup = () => {
+            groupToRemove.value = null;
+            popupOpen.value = PopupOpen.None;
+        };
+        // =======================
+        // Configure group functionality
+        // =======================
+        const groupConfiguration: Reactive<GroupConfiguration> = reactive({
+            id: null,
+            priority: null,
+            devices: null,
+            packages: null,
+        });
+
+        let initialGroupConfiguration: InitialGroupConfiguration | null = null;
+
+        const openConfigureGroupPopup = async (group: Group) => {
+            groupConfiguration.id = group.id;
+            groupConfiguration.priority = group.priority;
+            groupConfiguration.packages = group.packages.map((pckg) => pckg.toString()).join(', ');
+            groupConfiguration.devices = group.devices
+                .map((devices) => devices.toString())
+                .join(', ');
+
+            // Storing a copy of the initial configuration to detect any changes that could occur
+            // during group configuration
+            initialGroupConfiguration = {
+                id: group.id,
+                priority: group.priority,
+                packages: [...group.packages],
+                devices: [...group.devices],
+            };
+
+            popupOpen.value = PopupOpen.ConfigureGroup;
+        };
+
+        const closeConfigureGroupPopup = () => {
+            groupConfiguration.id = null;
+            groupConfiguration.priority = null;
+            groupConfiguration.packages = null;
+            groupConfiguration.devices = null;
+            initialGroupConfiguration = null;
+
+            popupOpen.value = PopupOpen.None;
+        };
+
+        const wasGroupModified = (original: Group, initial: InitialGroupConfiguration) => {
+            return !(
+                original.id === initial.id &&
+                original.priority === initial.priority &&
+                JSON.stringify(original.packages) === JSON.stringify(initial.packages) &&
+                JSON.stringify(original.devices) === JSON.stringify(initial.devices)
+            );
+        };
+
+        const configureGroup = async () => {
+            const groupToModify = groupResources.resources.value!.find(
+                (group) => group.id === groupConfiguration.id!,
+            );
+
+            if (wasGroupModified(groupToModify!, initialGroupConfiguration!)) {
+                alert('Modification detected during configuration! Configuration is aborted.');
+                return;
+            }
+
+            // Updating priority
+            if (groupConfiguration.priority! !== initialGroupConfiguration!.priority)
+                await updatePriorityRequest(groupConfiguration.id!, groupConfiguration.priority!);
+
+            // Updating devices
+            const initialDevices = initialGroupConfiguration!.devices;
+            const newDevices = groupConfiguration.devices!.replace(/ /g, '').split(',').map(Number);
+
+            const removedDevices = initialDevices.filter((device) => !newDevices.includes(device));
+            const addedDevices = newDevices.filter((device) => !initialDevices.includes(device));
+
+            if (removedDevices.length > 0 || addedDevices.length > 0)
+                await patchDevicesRequest(groupConfiguration.id!, addedDevices, removedDevices);
+
+            // Updating packages
+            const initialPackages = initialGroupConfiguration!.packages;
+            const newPackages = groupConfiguration
+                .packages!.replace(/ /g, '')
+                .split(',')
+                .map(Number);
+
+            if (JSON.stringify(initialPackages) !== JSON.stringify(newPackages))
+                await updatePackagesRequest(groupConfiguration.id!, newPackages);
+
+            closeConfigureGroupPopup();
+        };
+        // =======================
 
         let intervalID: undefined | number = undefined;
 
-        const deleteGroup = async (packageId: number) => {
-            const [status] = await groupResources.fetchDELETE(DELETE_GROUP_ENDPOINT(packageId));
-            if (status) {
-                await groupResources.fetchResources();
-            } else {
-                console.error('Failed to delete group');
-            }
+        const fetchResources = async () => {
+            await packagesResources.fetchResources();
+            await devicesResources.fetchResources();
+            await groupResources.fetchResources();
         };
 
         const startPolling = () => {
             if (intervalID === undefined) {
                 intervalID = setInterval(async () => {
-                    await groupResources.fetchResources();
+                    await fetchResources();
                 }, POLL_INTERVAL);
             }
         };
@@ -188,7 +455,7 @@ export default {
         };
 
         onMounted(async () => {
-            await groupResources.fetchResources();
+            await fetchResources();
             startPolling();
         });
 
@@ -196,57 +463,27 @@ export default {
             stopPolling();
         });
 
-        const addGroup = async () => {
-            const body = JSON.stringify({
-                // Keys are taken from the manager source code
-                priority: newGroupData.priority,
-                metadata: {
-                    'rdfm.group.name': newGroupData.name,
-                    'rdfm.group.description': newGroupData.description,
-                },
-            });
-
-            const [status] = await groupResources.fetchPOST(GROUPS_ENDPOINT, POSTHeaders, body);
-            if (status) {
-                await groupResources.fetchResources();
-            } else {
-                console.error('Failed to create a new group');
-            }
-        };
-
-        const updatePriority = async (groupId: number, priority: number) => {
-            // Polling is paused when handling update requests
-            // TODO: This does not fix the issue fully, I guess some form of submit button is needed
-            stopPolling();
-
-            const body = JSON.stringify({
-                priority: priority,
-            });
-
-            const [status] = await groupResources.fetchPOST(
-                UPDATE_GROUP_PRIORITY_ENDPOINT(groupId),
-                POSTHeaders,
-                body,
-            );
-            if (status) {
-                await groupResources.fetchResources();
-            } else {
-                console.error('Failed to update group priority');
-            }
-            // Polling is restored after update handling is finished
-            startPolling();
-        };
-
-        const createGroup = () => alert('TODO!');
+        const groupsCount = computed(() => groupResources.resources.value?.length ?? 0);
 
         return {
+            openRemoveGroupPopup,
+            closeAddGroupPopup,
             addGroup,
-            createGroup,
-            deleteGroup,
+            groupsCount,
+            removeGroup,
             groups: groupResources.resources,
             newGroupData,
-            pollingStatus: groupResources.pollingStatus,
-            updatePriority,
+            groupToRemove,
+            closeRemoveGroupPopup,
+            popupOpen,
+            openAddGroupPopup,
+            findPackage,
+            patchDevicesRequest,
+            findDevice,
+            openConfigureGroupPopup,
+            closeConfigureGroupPopup,
+            groupConfiguration,
+            configureGroup,
         };
     },
 };

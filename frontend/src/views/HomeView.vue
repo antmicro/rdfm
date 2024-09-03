@@ -65,7 +65,7 @@
 <script lang="ts">
 import { ref } from 'vue';
 
-import DevicesList from '../components/DevicesList.vue';
+import DevicesList from '../components/devices/DevicesList.vue';
 import PackagesList from '../components/packages/PackagesList.vue';
 import GroupsList from '../components/groups/GroupsList.vue';
 
@@ -82,7 +82,7 @@ export default {
         GroupsList,
     },
     setup() {
-        const activeTab = ref(ActiveTab.Packages);
+        const activeTab = ref(ActiveTab.Groups);
 
         const navbarItemClasses = (tabName: number) => {
             return {
