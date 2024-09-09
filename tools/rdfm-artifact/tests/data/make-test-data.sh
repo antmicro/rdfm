@@ -49,6 +49,48 @@ if [ ! -f ./dummy-zephyr.img ]; then
 	echo "WARNING: The tests WILL fail if do not do this!"
 fi
 
+if [ ! -f ./dummy-single-file.bin ]; then
+	DUMMYSIZE="1048576"
+	BLOCKSIZE="512"
+
+	# Create a dummy invalid "zephyr binary"
+	dd if=/dev/random of=dummy-single-file.bin.img bs=$BLOCKSIZE count=$(( DUMMYSIZE / BLOCKSIZE ))
+
+	echo "WARNING: Single file binaries were regenerated"
+	echo "WARNING: You must change the hashes in the tests to match the generated images"
+	echo "WARNING: The tests WILL fail if you do not do this!"
+fi
+
+INVALID_SINGLE_FILE_DIR="./invalid_single_file"
+
+if [ ! -d $INVALID_SINGLE_FILE_DIR ]; then
+	mkdir -p invalid_single_file
+fi
+
+DEST_DIR_FILENAME="dest_dir"
+if [ ! -f "$INVALID_SINGLE_FILE_DIR/${DEST_DIR_FILENAME}" ]; then
+	echo "'${INVALID_SINGLE_FILE_DIR}/${DEST_DIR_FILENAME}' file not found, creating a dummy file"
+	echo "This is a dummy ${DEST_DIR_FILENAME} file" > "$INVALID_SINGLE_FILE_DIR/${DEST_DIR_FILENAME}"
+fi
+
+PERMISSIONS_FILENAME="permissions"
+if [ ! -f "$INVALID_SINGLE_FILE_DIR/${PERMISSIONS_FILENAME}" ]; then
+	echo "'${INVALID_SINGLE_FILE_DIR}/${PERMISSIONS_FILENAME}' file file not found, creating a dummy file"
+	echo "This is a dummy ${PERMISSIONS_FILENAME} file" > "$INVALID_SINGLE_FILE_DIR/${PERMISSIONS_FILENAME}"
+fi
+
+ROLLBACK_SUPPORT_FILENAME="rollback_support"
+if [ ! -f "$INVALID_SINGLE_FILE_DIR/${ROLLBACK_SUPPORT_FILENAME}" ]; then
+	echo "'${INVALID_SINGLE_FILE_DIR}/${ROLLBACK_SUPPORT_FILENAME}' file file not found, creating a dummy file"
+	echo "This is a dummy ${ROLLBACK_SUPPORT_FILENAME} file" > "$INVALID_SINGLE_FILE_DIR/${ROLLBACK_SUPPORT_FILENAME}"
+fi
+
+FILENAME_FILENAME="filename"
+if [ ! -f "$INVALID_SINGLE_FILE_DIR/${FILENAME_FILENAME}" ]; then
+	echo "'${INVALID_SINGLE_FILE_DIR}/${FILENAME_FILENAME}' file file not found, creating a dummy file"
+	echo "This is a dummy ${FILENAME_FILENAME} file" > "$INVALID_SINGLE_FILE_DIR/${FILENAME_FILENAME}"
+fi
+
 rdfm-artifact write rootfs-image \
 	--file "dummy-rootfs.img" \
 	--artifact-name "dummy-artifact" \

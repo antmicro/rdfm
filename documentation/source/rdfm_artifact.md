@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The RDFM Artifact tool (`rdfm-artifact`) allows for easy creation and modification of RDFM Linux client-compatible artifacts containing rootfs partition images. 
+The RDFM Artifact tool (`rdfm-artifact`) allows for easy creation and modification of RDFM Linux client-compatible artifacts containing rootfs partition images.
 A basic RDFM artifact consists of a rootfs image, as well as its checksum, metadata and compatibility with certain device types.
 
 Additionally, `rdfm-artifact` allows for the generation of delta updates, which contain only the differences between two versions of an artifact rather than the entire artifact itself.
@@ -10,6 +10,9 @@ This can be useful for reducing the size of updates and improving the efficiency
 
 `rdfm-artifact` can also be used for generation of Zephyr MCUboot artifacts, which allows for updating embedded devices running Zephyr.
 Additionally, multiple Zephyr images can be combined into one grouped artifact to allow multiple boards to act as one logical device.
+
+Single file updates are also supported.
+This option allows for creating, or updating specific files on the device, without the need to update the whole partition.
 
 ## Getting started
 
@@ -48,6 +51,7 @@ COMMANDS:
    delta-rootfs-image  Create a delta rootfs artifact
    zephyr-image        Create a full Zephyr MCUboot image artifact
    zephyr-group-image  Create a Zephyr MCUboot group image artifact
+   single-file         Create a single file artifact
 
 OPTIONS:
    --help, -h  show help
@@ -116,6 +120,26 @@ rdfm-artifact write zephyr-group-image \
 It's possible to create a grouped artifact with just one image,
 however in cases like that you should create simple [zephyr-image](#creating-a-zephyr-mcuboot-artifact) instead.
 :::
+
+### Creating a single file artifact
+
+Apart from updating a whole partition, it's also possible to update a single file on the device.
+The usage is the same as for rootfs artifacts, but with the `single-file` subcommand and two new options:
+
+- `--dest-dir` - the destination directory on the device where the file should be placed
+- `--rollback-support` - (optional) determines, whether a backup of the file should be created for rollback purposes.
+   The backup file is stored in the same directory as the original file, with the `.tmp` extension added to the name.
+   By default, the rollback support is disabled.
+
+```
+rdfm-artifact write single-file \
+	--file "my-file.txt" \
+	--artifact-name "my-artifact-name" \
+	--device-type "my-device-type" \
+	--output-path "path-to-output.rdfm" \
+	--dest-dir "/destination/device/directory" \
+	--rollback-support
+```
 
 ## Running tests
 
