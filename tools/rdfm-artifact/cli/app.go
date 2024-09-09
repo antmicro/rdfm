@@ -73,6 +73,13 @@ func makeCommands() []cli.Command {
 					Flags:       makeGroupFlags(),
 					Action:      writeGroupZephyr,
 				},
+				{
+					Name:        "single-file",
+					Usage:       "Create a single file artifact",
+					Description: "Creates an artifact containing a single file that can be installed on a target device",
+					Flags:       makeSingleFileFlags(),
+					Action:      writeSingleFile,
+				},
 			},
 		},
 	}
