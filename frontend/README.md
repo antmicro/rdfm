@@ -35,7 +35,7 @@ python -m http.server 8080
 
 Visiting the `http://localhost:8080` should display the application.
 
-```danger
+```warning
 Make sure that `0.0.0.0` address is not used, as it is known to cause CORS issues.
 ```
 

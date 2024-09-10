@@ -13,5 +13,6 @@ rdfm_manager
 rdfm_mgmt_server
 rdfm_ota_manual
 server_operation
+rdfm_frontend
 api
 ```
