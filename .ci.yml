@@ -406,6 +406,26 @@ test-rdfm-artifact:
       - merge_requests
       - main
 
+
+# ===== rdfm-frontend ===== #
+
+build-rdfm-frontend:
+  <<: *ace
+  image: node:20
+  stage: static-checks
+  script:
+    - cd frontend
+    - npm install
+    - npm run format-check
+    - npm run build
+  only:
+    refs:
+      - merge_requests
+      - main
+  artifacts:
+    paths:
+      - frontend/dist
+
 # ===== documentation ===== #
 
 docs-build:
