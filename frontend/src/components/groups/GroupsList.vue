@@ -4,7 +4,7 @@
             <div class="popup">
                 <div class="header">
                     <p class="title">Create a new group</p>
-                    <p class="description">Configure a new devices group and add packages to it</p>
+                    <p class="description">Configure new devices group and add packages to it</p>
                 </div>
                 <div class="body">
                     <div class="entry">
@@ -101,85 +101,91 @@
 
     <div class="container">
         <p>Overview</p>
-        <table cellspacing="0" cellpadding="0" class="resources-table">
-            <tr class="resources-table-row">
-                <td class="entry">
-                    <div class="value">Total groups</div>
-                </td>
-                <td class="entry">
-                    <div class="value">{{ groupsCount }}</div>
-                </td>
-            </tr>
-        </table>
+        <div class="resources-table-wrapper">
+            <table class="resources-table">
+                <tbody>
+                    <tr class="resources-table-row">
+                        <td class="entry">
+                            <div class="value">Total groups</div>
+                        </td>
+                        <td class="entry">
+                            <div class="value">{{ groupsCount }}</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
         <template v-if="groups && groups.length !== 0">
             <p>Groups</p>
-            <div v-for="group in groups" :key="group.id" class="group">
-                <div class="group-row">
-                    <div class="entry">
-                        <div class="title">ID</div>
-                        <div class="value">#{{ group.id }}</div>
-                    </div>
-                    <div class="entry">
-                        <div class="title">Created</div>
-                        <div class="value">{{ group.created }}</div>
-                    </div>
-                    <div class="entry">
-                        <div class="title">Name</div>
-                        <div class="value">{{ group.metadata['rdfm.group.name'] }}</div>
-                    </div>
-                    <div class="entry">
-                        <div class="title">Description</div>
-                        <div class="value">{{ group.metadata['rdfm.group.description'] }}</div>
-                    </div>
-                    <div class="entry">
-                        <div class="title">Policy</div>
-                        <div class="value">{{ group.policy }}</div>
-                    </div>
-                    <div class="entry">
-                        <div class="title">Priority</div>
-                        <div class="value">{{ group.priority }}</div>
-                    </div>
-                    <div class="entry right">
-                        <div class="button-wrapper">
-                            <button
-                                class="action-button gray"
-                                @click="openConfigureGroupPopup(group)"
-                            >
-                                Configure
-                            </button>
-                            <button
-                                class="action-button red"
-                                @click="openRemoveGroupPopup(group.id)"
-                            >
-                                Remove
-                            </button>
+            <div class="resources-table-wrapper">
+                <div v-for="group in groups" :key="group.id" class="group">
+                    <div class="group-row">
+                        <div class="entry">
+                            <div class="title">ID</div>
+                            <div class="value">#{{ group.id }}</div>
                         </div>
-                    </div>
-                </div>
-                <div class="group-row">
-                    <div class="entry">
-                        <div class="title" v-if="group.packages.length == 1">1 Package</div>
-                        <div class="title" v-else>{{ group.packages.length }} Packages</div>
-                        <div class="values">
-                            <div v-for="pckg in group.packages" :key="pckg" class="item">
-                                #{{ pckg }}
+                        <div class="entry">
+                            <div class="title">Created</div>
+                            <div class="value">{{ group.created }}</div>
+                        </div>
+                        <div class="entry">
+                            <div class="title">Name</div>
+                            <div class="value">{{ group.metadata['rdfm.group.name'] }}</div>
+                        </div>
+                        <div class="entry">
+                            <div class="title">Description</div>
+                            <div class="value">{{ group.metadata['rdfm.group.description'] }}</div>
+                        </div>
+                        <div class="entry">
+                            <div class="title">Policy</div>
+                            <div class="value">{{ group.policy }}</div>
+                        </div>
+                        <div class="entry">
+                            <div class="title">Priority</div>
+                            <div class="value">{{ group.priority }}</div>
+                        </div>
+                        <div class="entry right">
+                            <div class="button-wrapper">
+                                <button
+                                    class="action-button gray"
+                                    @click="openConfigureGroupPopup(group)"
+                                >
+                                    Configure
+                                </button>
+                                <button
+                                    class="action-button red"
+                                    @click="openRemoveGroupPopup(group.id)"
+                                >
+                                    Remove
+                                </button>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="group-row">
-                    <div class="entry">
-                        <div class="title" v-if="group.devices.length == 1">1 Device</div>
-                        <div class="title" v-else>{{ group.devices.length }} Devices</div>
-                        <div class="values">
-                            <div v-for="device in group.devices" :key="device" class="item">
-                                #{{ device }} - {{ findDevice(device) }}
-                                <button
-                                    class="action-button red small-padding"
-                                    @click="patchDevicesRequest(group.id, [], [device])"
-                                >
-                                    <Cross></Cross>
-                                </button>
+                    <div class="group-row">
+                        <div class="entry">
+                            <div class="title" v-if="group.packages.length == 1">1 Package</div>
+                            <div class="title" v-else>{{ group.packages.length }} Packages</div>
+                            <div class="values">
+                                <div v-for="pckg in group.packages" :key="pckg" class="item">
+                                    #{{ pckg }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="group-row">
+                        <div class="entry">
+                            <div class="title" v-if="group.devices.length == 1">1 Device</div>
+                            <div class="title" v-else>{{ group.devices.length }} Devices</div>
+                            <div class="values">
+                                <div v-for="device in group.devices" :key="device" class="item">
+                                    #{{ device }} - {{ findDevice(device) }}
+                                    <button
+                                        class="action-button red small-padding"
+                                        @click="patchDevicesRequest(group.id, [], [device])"
+                                    >
+                                        <Cross></Cross>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -198,9 +204,10 @@
         font-size: 1.5em;
     }
 
-    & > .group {
+    .group {
         display: flex;
         flex-direction: column;
+        min-width: max-content;
 
         border: 2px solid var(--gray-400);
         border-radius: 5px;

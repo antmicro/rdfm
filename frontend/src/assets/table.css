@@ -1,9 +1,16 @@
+.resources-table-wrapper {
+    overflow-x: auto;
+}
+
 .resources-table {
     border: 2px solid var(--gray-400);
     border-radius: 5px;
     padding: 0.5em;
 
-    & > .resources-table-row {
+    border-collapse: separate;
+    border-spacing: 0;
+
+    & > tbody > .resources-table-row {
         & > .entry {
             padding: 0.5em 1em;
             border-bottom: 2px solid var(--gray-400);

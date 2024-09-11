@@ -58,52 +58,67 @@
 
     <div class="container">
         <p>Overview</p>
-        <table cellspacing="0" cellpadding="0" class="resources-table">
-            <tr class="resources-table-row">
-                <td class="entry">
-                    <div class="value">Total packages</div>
-                </td>
-                <td class="entry">
-                    <div class="value">{{ packagesCount }}</div>
-                </td>
-            </tr>
-        </table>
-        <template v-if="(packages?.length ?? 0) !== 0">
-            <p>Packages</p>
-            <table cellspacing="0" cellpadding="0" class="resources-table">
-                <tr v-for="pckg in packages" :key="pckg.id" class="resources-table-row">
-                    <td class="entry">
-                        <div class="title">ID</div>
-                        <div class="value">#{{ pckg.id }}</div>
-                    </td>
-                    <td class="entry">
-                        <div class="title">Version</div>
-                        <div class="value">{{ pckg.metadata['rdfm.software.version'] }}</div>
-                    </td>
-                    <td class="entry">
-                        <div class="title">Device type</div>
-                        <div class="value">{{ pckg.metadata['rdfm.hardware.devtype'] }}</div>
-                    </td>
-                    <td class="entry">
-                        <div class="title">Uploaded on</div>
-                        <div class="value">{{ pckg.created }}</div>
-                    </td>
-                    <td class="entry">
-                        <div class="title">SHA256</div>
-                        <div class="value">{{ pckg.sha256 }}</div>
-                    </td>
-                    <td class="entry">
-                        <div class="title">Storage Driver</div>
-                        <div class="value">{{ pckg.driver }}</div>
-                    </td>
-                    <!-- TODO: Display metadata of the package -->
-                    <td class="entry">
-                        <button class="action-button red" @click="openRemovePackagePopup(pckg.id)">
-                            Remove
-                        </button>
-                    </td>
-                </tr>
+        <div class="resources-table-wrapper">
+            <table class="resources-table">
+                <tbody>
+                    <tr class="resources-table-row">
+                        <td class="entry">
+                            <div class="value">Total packages</div>
+                        </td>
+                        <td class="entry">
+                            <div class="value">{{ packagesCount }}</div>
+                        </td>
+                    </tr>
+                </tbody>
             </table>
+        </div>
+        <template v-if="(packages?.length ?? 0) > 0">
+            <p>Packages</p>
+            <div class="resources-table-wrapper">
+                <table class="resources-table">
+                    <tbody>
+                        <tr v-for="pckg in packages" :key="pckg.id" class="resources-table-row">
+                            <td class="entry">
+                                <div class="title">ID</div>
+                                <div class="value">#{{ pckg.id }}</div>
+                            </td>
+                            <td class="entry">
+                                <div class="title">Version</div>
+                                <div class="value">
+                                    {{ pckg.metadata['rdfm.software.version'] }}
+                                </div>
+                            </td>
+                            <td class="entry">
+                                <div class="title">Device type</div>
+                                <div class="value">
+                                    {{ pckg.metadata['rdfm.hardware.devtype'] }}
+                                </div>
+                            </td>
+                            <td class="entry">
+                                <div class="title">Uploaded on</div>
+                                <div class="value">{{ pckg.created }}</div>
+                            </td>
+                            <td class="entry">
+                                <div class="title">SHA256</div>
+                                <div class="value">{{ pckg.sha256 }}</div>
+                            </td>
+                            <td class="entry">
+                                <div class="title">Storage Driver</div>
+                                <div class="value">{{ pckg.driver }}</div>
+                            </td>
+                            <!-- TODO: Display metadata of the package -->
+                            <td class="entry">
+                                <button
+                                    class="action-button red"
+                                    @click="openRemovePackagePopup(pckg.id)"
+                                >
+                                    Remove
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </template>
     </div>
 </template>
