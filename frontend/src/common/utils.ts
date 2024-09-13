@@ -1,7 +1,8 @@
 import { ref } from 'vue';
 import { type Ref } from 'vue';
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || `${window.location.protocol}//${window.location.host}`
+const SERVER_URL =
+    import.meta.env.VITE_SERVER_URL || `${window.location.protocol}//${window.location.host}`;
 
 export const PACKAGES_ENDPOINT = `${SERVER_URL}/api/v1/packages`;
 export const DELETE_PACKAGE_ENDPOINT = (id: number) => `${PACKAGES_ENDPOINT}/${id}`;
@@ -13,8 +14,10 @@ export const REGISTER_DEVICE_ENDPOINT = `${SERVER_URL}/api/v1/auth/register`;
 export const GROUPS_ENDPOINT = `${SERVER_URL}/api/v2/groups`;
 export const DELETE_GROUP_ENDPOINT = (id: number) => `${GROUPS_ENDPOINT}/${id}`;
 export const UPDATE_GROUP_PRIORITY_ENDPOINT = (id: number) => `${GROUPS_ENDPOINT}/${id}/priority`;
+export const PATCH_DEVICES_IN_GROUP_ENDPOINT = (id: number) => `${GROUPS_ENDPOINT}/${id}/devices`;
+export const ASSIGN_PACKAGE_IN_GROUP_ENDPOINT = (id: number) => `${GROUPS_ENDPOINT}/${id}/package`;
 
-export const POLL_INTERVAL = 1000;
+export const POLL_INTERVAL = 2500;
 
 export interface Package {
     id: number;
@@ -35,7 +38,7 @@ export interface RegisteredDevice {
     id: number;
     last_access: string;
     name: string;
-    mac_addr: string;
+    mac_address: string;
     groups?: number[];
     metadata: Record<string, string>;
     capabilities: Record<string, boolean>;
@@ -82,11 +85,13 @@ export const resourcesGetter = <T>(resources_url: string) => {
 
     const fetchGET = (url: string) => fetchWrapper(url, 'GET');
 
-    const fetchPOST = (url: string, headers: Headers, body: BodyInit) => fetchWrapper(url, 'POST', headers, body);
+    const fetchPOST = (url: string, headers: Headers, body: BodyInit) =>
+        fetchWrapper(url, 'POST', headers, body);
 
     const fetchDELETE = (url: string) => fetchWrapper(url, 'DELETE');
 
-    const fetchPATCH = (url: string, headers: Headers, body: BodyInit) => fetchWrapper(url, 'PATCH', headers, body);
+    const fetchPATCH = (url: string, headers: Headers, body: BodyInit) =>
+        fetchWrapper(url, 'PATCH', headers, body);
 
     const fetchResources = async () => {
         const [success, status, data] = await fetchGET(resources_url);
