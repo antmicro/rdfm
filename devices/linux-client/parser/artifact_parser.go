@@ -4,6 +4,12 @@ import (
 	"archive/tar"
 	"errors"
 	"io"
+
+	"github.com/antmicro/rdfm/handlers"
+
+	"github.com/mendersoftware/mender-artifact/areader"
+	mhandlers "github.com/mendersoftware/mender-artifact/handlers"
+	"github.com/mendersoftware/mender/installer"
 )
 
 func GetHeader(reader io.Reader) ([]byte, error) {
@@ -32,5 +38,28 @@ func GetHeader(reader io.Reader) ([]byte, error) {
 		}
 	}
 
-	return nil, errors.New("No header found in artifact")
+	return nil, errors.New("no header found in artifact")
+}
+
+func InitializeArtifactHandlers(art io.ReadCloser, inst *installer.AllModules) (*handlers.Handler, error) {
+	ar := areader.NewReader(art)
+
+	rootfs := mhandlers.NewRootfsInstaller()
+	rootfs.SetUpdateStorerProducer(inst.DualRootfs)
+	ar.RegisterHandler(rootfs)
+
+	for _, newHandler := range handlers.AvailableHandlers {
+		err := ar.RegisterHandler(newHandler())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	ar.ForbidUnknownHandlers = true
+
+	if err := ar.ReadArtifactHeaders(); err != nil {
+		return nil, err
+	}
+
+	return handlers.NewHandler(ar), nil
 }

@@ -23,7 +23,7 @@ func TestGetIncorrectHeader(t *testing.T) {
 	_, err := GetHeader(reader)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(),
-		"No header found in artifact")
+		"no header found in artifact")
 }
 
 func TestGetNoHeader(t *testing.T) {
