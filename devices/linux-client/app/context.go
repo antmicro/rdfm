@@ -8,7 +8,6 @@ import (
 	conf "github.com/antmicro/rdfm/conf"
 	"github.com/antmicro/rdfm/delta"
 	"github.com/antmicro/rdfm/helpers"
-	"github.com/mendersoftware/mender/app"
 	"github.com/mendersoftware/mender/client"
 	mconf "github.com/mendersoftware/mender/conf"
 	"github.com/mendersoftware/mender/datastore"
@@ -172,35 +171,18 @@ func createDeviceManager(config *mconf.MenderConfig, store *store.DBStore) (*dev
 // This can be either an artifact on the local filesystem, or an HTTP URL
 func (ctx *RDFM) InstallArtifact(path string) error {
 	clientConfig := client.Config{}
-	menderConfig, err := OverlayMenderConfig(ctx.RdfmConfig, ctx.menderConfig)
-	if err != nil {
-		return err
-	}
-	stateExec := device.NewStateScriptExecutor(menderConfig)
 
-	return DoInstall(ctx.deviceManager, path, clientConfig, stateExec, false)
+	return DoInstall(ctx.deviceManager, path, clientConfig, false)
 }
 
 // Attempt to commit the currently installed update
 func (ctx *RDFM) CommitCurrentArtifact() error {
-	menderConfig, err := OverlayMenderConfig(ctx.RdfmConfig, ctx.menderConfig)
-	if err != nil {
-		return err
-	}
-	stateExec := device.NewStateScriptExecutor(menderConfig)
-
-	return app.DoStandaloneCommit(ctx.deviceManager, stateExec)
+	return DoCommit(ctx.deviceManager)
 }
 
 // Attempt to rollback the currently installed update
 func (ctx *RDFM) RollbackCurrentArtifact() error {
-	menderConfig, err := OverlayMenderConfig(ctx.RdfmConfig, ctx.menderConfig)
-	if err != nil {
-		return err
-	}
-	stateExec := device.NewStateScriptExecutor(menderConfig)
-
-	return app.DoStandaloneRollback(ctx.deviceManager, stateExec)
+	return DoRollback(ctx.deviceManager)
 }
 
 func (ctx *RDFM) GetCurrentArtifactName() (string, error) {
