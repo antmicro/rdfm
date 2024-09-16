@@ -1,8 +1,19 @@
+/*
+ * Copyright (c) 2024 Antmicro <www.antmicro.com>
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { ref } from 'vue';
 import { type Ref } from 'vue';
 
 const SERVER_URL =
     import.meta.env.VITE_SERVER_URL || `${window.location.protocol}//${window.location.host}`;
+
+/**
+ * Endpoints for rdfm-server API
+ * Specification in https://antmicro.github.io/rdfm/api.html
+ */
 
 export const PACKAGES_ENDPOINT = `${SERVER_URL}/api/v1/packages`;
 export const DELETE_PACKAGE_ENDPOINT = (id: number) => `${PACKAGES_ENDPOINT}/${id}`;
@@ -19,6 +30,10 @@ export const ASSIGN_PACKAGE_IN_GROUP_ENDPOINT = (id: number) => `${GROUPS_ENDPOI
 
 export const POLL_INTERVAL = 2500;
 
+/**
+ * Package interface specified in
+ * https://antmicro.github.io/rdfm/api.html#get--api-v1-packages-response-json-array-of-objects
+ */
 export interface Package {
     id: number;
     created: string;
@@ -27,6 +42,10 @@ export interface Package {
     metadata: Record<string, string>;
 }
 
+/**
+ * Pending device interface specified in
+ * https://antmicro.github.io/rdfm/api.html#get--api-v1-auth-pending-response-json-array-of-objects
+ */
 export interface PendingDevice {
     public_key: string;
     mac_address: string;
@@ -34,6 +53,10 @@ export interface PendingDevice {
     metadata: Record<string, string>;
 }
 
+/**
+ * Registered device interface specified in
+ * https://antmicro.github.io/rdfm/api.html#get--api-v2-devices-response-json-array-of-objects
+ */
 export interface RegisteredDevice {
     id: number;
     last_access: string;
@@ -45,6 +68,10 @@ export interface RegisteredDevice {
     public_key: string;
 }
 
+/**
+ * Group interface specified in
+ * https://antmicro.github.io/rdfm/api.html#get--api-v2-groups-response-json-array-of-objects
+ */
 export interface Group {
     id: number;
     created: string;
@@ -55,15 +82,41 @@ export interface Group {
     priority: number;
 }
 
+/**
+ * Interface for wrapping request output.
+ * @param success - boolean value indicating if request was successful
+ * @param message - optional message with additional information.
+ * If the `success` value is set to `true`, the message should be omitted.
+ * Otherwise, the message should contain error information.
+ */
 export interface RequestOutput {
     success: boolean;
     message?: string;
 }
 
+/**
+ * Interface for fetch requests.
+ * @param success - boolean value indicating if request was successful
+ * @param code - optional value with HTTP status code, if any returned
+ * @param data - optional data obtained from the server
+ */
 export interface FetchOutput {
     success: boolean;
     code?: number;
     data?: any;
+}
+
+/**
+ * Enum that describes resource state
+ * @param InitialPoll - the getter did not try to fetch resources yet.
+ * The status is set to this value initially.
+ * @param UnreachableURL - the getter could not communicate with the server.
+ * @param ActivePolling - the getter successfully fetched resources.
+ */
+export enum PollingStatus {
+    InitialPoll,
+    UnreachableURL,
+    ActivePolling,
 }
 
 export const resourcesGetter = <T>(resources_url: string) => {
@@ -80,7 +133,7 @@ export const resourcesGetter = <T>(resources_url: string) => {
         try {
             response = await fetch(url, { method, body, headers: headers });
             if (!response.ok) {
-                throw new Error(`Failed to fetch ${url}`);
+                throw new Error(`Fetch returned status ${response.status}`);
             }
             const data = await response.json();
             return { success: true, code: response.status, data };
@@ -122,8 +175,3 @@ export const resourcesGetter = <T>(resources_url: string) => {
     };
 };
 
-export enum PollingStatus {
-    InitialPoll,
-    UnreachableURL,
-    ActivePolling,
-}

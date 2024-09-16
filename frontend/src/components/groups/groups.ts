@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2024 Antmicro <www.antmicro.com>
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import {
     ASSIGN_PACKAGE_IN_GROUP_ENDPOINT,
     DELETE_GROUP_ENDPOINT,
@@ -60,6 +66,10 @@ export const findDevice = (deviceId: number) => {
     return device!.mac_address;
 };
 
+/**
+ * Request specified in
+ * https://antmicro.github.io/rdfm/api.html#patch--api-v2-groups-(int-identifier)-devices
+ */
 export const patchDevicesRequest = async (
     groupId: number,
     addedDevices: number[],
@@ -88,17 +98,17 @@ export const patchDevicesRequest = async (
                     success: false,
                     message: 'User was authorized, but did not have permission to delete groups',
                 };
+            case StatusCodes.NOT_FOUND:
+                return { success: false, message: 'Group does not exist' };
             case StatusCodes.CONFLICT:
                 return {
                     success: false,
                     message:
-                        'One of the conflicts situations described below has occurred\n\n' +
+                        'One of the conflict described below has occurred\n\n' +
                         '- Any device identifier which does not match a registered device\n\n' +
                         '- Any device identifier in additions which already has an assigned group which has the same priority as the group specified by identifier (even if the group is the same as specified by identifier\n\n' +
                         '- Any device identifier in removals which is not currently assigned to the specified group',
                 };
-            case StatusCodes.NOT_FOUND:
-                return { success: false, message: 'Group does not exist' };
             default:
                 return {
                     success: false,
@@ -110,6 +120,10 @@ export const patchDevicesRequest = async (
     return { success: true };
 };
 
+/**
+ * Request specified in
+ * https://antmicro.github.io/rdfm/api.html#post--api-v2-groups-(int-identifier)-package
+ */
 export const updatePackagesRequest = async (
     groupId: number,
     packages: number[],
@@ -156,6 +170,10 @@ export const updatePackagesRequest = async (
     return { success: true };
 };
 
+/**
+ * Request specified in
+ * https://antmicro.github.io/rdfm/api.html#post--api-v2-groups-(int-identifier)-priority
+ */
 export const updatePriorityRequest = async (
     groupId: number,
     priority: number,
@@ -201,6 +219,10 @@ export const updatePriorityRequest = async (
     return { success: true };
 };
 
+/**
+ * Request specified in
+ * https://antmicro.github.io/rdfm/api.html#post--api-v2-groups
+ */
 export const addGroupRequest = async (newGroup: NewGroupData): Promise<RequestOutput> => {
     if (!newGroup.name) return { success: false, message: 'No group name provided' };
     if (!newGroup.description) return { success: false, message: 'No group description provided' };
@@ -241,6 +263,10 @@ export const addGroupRequest = async (newGroup: NewGroupData): Promise<RequestOu
     return { success: true };
 };
 
+/**
+ * Request specified in
+ * https://antmicro.github.io/rdfm/api.html#delete--api-v2-groups-(int-identifier)
+ */
 export const removeGroupRequest = async (groupId: number): Promise<RequestOutput> => {
     const out = await groupResources.fetchDELETE(DELETE_GROUP_ENDPOINT(groupId));
     if (!out.success) {

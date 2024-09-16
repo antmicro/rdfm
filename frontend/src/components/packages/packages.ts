@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2024 Antmicro <www.antmicro.com>
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import {
     DELETE_PACKAGE_ENDPOINT,
     PACKAGES_ENDPOINT,
@@ -15,6 +21,10 @@ export type NewPackageData = {
 
 export const packageResources = resourcesGetter<Package[]>(PACKAGES_ENDPOINT);
 
+/**
+ * Request specified in
+ * https://antmicro.github.io/rdfm/api.html#post--api-v1-packages
+ */
 export const uploadPackageRequest = async (
     uploadedPackageFile: HTMLInputElement,
     packageUploadData: NewPackageData,
@@ -38,28 +48,66 @@ export const uploadPackageRequest = async (
 
     const out = await packageResources.fetchPOST(PACKAGES_ENDPOINT, headers, formData);
     if (!out.success) {
-        return {
-            success: false,
-            message: 'Failed to upload a package. Got a response code of ' + out.code,
-        };
+        switch (out.code) {
+            case StatusCodes.BAD_REQUEST:
+                return {
+                    success: false,
+                    message: 'Provided metadata contains keys reserved by RDFM or a file was not provided.',
+                };
+            case StatusCodes.UNAUTHORIZED:
+                return {
+                    success: false,
+                    message: 'User did not provide authorization data, or the authorization has expired'
+                }
+            case StatusCodes.FORBIDDEN:
+                return {
+                    success: false,
+                    message: 'User was authorized, but did not have permission to upload packages',
+                }
+            default:
+                return {
+                    success: false,
+                    message: 'Failed to upload a package. Got a response code of ' + out.code,
+                };
+        }
     }
     await packageResources.fetchResources();
     return { success: true };
 };
 
+/**
+ * Request specified in
+ * https://antmicro.github.io/rdfm/api.html#delete--api-v1-packages-(int-identifier)
+ */
 export const removePackageRequest = async (packageId: number): Promise<RequestOutput> => {
     const out = await packageResources.fetchDELETE(DELETE_PACKAGE_ENDPOINT(packageId));
     if (!out.success) {
-        if (out.code === StatusCodes.CONFLICT) {
-            return {
-                success: false,
-                message: 'The package you are trying to remove is in a group and cannot be removed',
-            };
-        } else {
-            return {
-                success: false,
-                message: 'Failed to delete package. Got a response code of ' + out.code,
-            };
+        switch (out.code) {
+            case StatusCodes.UNAUTHORIZED:
+                return {
+                    success: false,
+                    message: 'User did not provide authorization data, or the authorization has expired',
+                };
+            case StatusCodes.FORBIDDEN:
+                return {
+                    success: false,
+                    message: 'User was authorized, but did not have permission to delete packages',
+                };
+            case StatusCodes.NOT_FOUND:
+                return {
+                    success: false,
+                    message: 'Specified package does not exist',
+                };
+            case StatusCodes.CONFLICT:
+                return {
+                    success: false,
+                    message: 'Package is assigned to a group and cannot be deleted',
+                };
+            default:
+                return {
+                    success: false,
+                    message: 'Failed to delete package. Got a response code of ' + out.code,
+                };
         }
     }
     await packageResources.fetchResources();

@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2024 Antmicro <www.antmicro.com>
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import {
     DEVICES_ENDPOINT,
     PENDING_ENDPOINT,
@@ -13,6 +19,10 @@ import { StatusCodes } from 'http-status-codes';
 export const pendingDevicesResources = resourcesGetter<PendingDevice[]>(PENDING_ENDPOINT);
 export const registeredDevicesResources = resourcesGetter<RegisteredDevice[]>(DEVICES_ENDPOINT);
 
+/**
+ * Request specified in
+ * https://antmicro.github.io/rdfm/api.html#post--api-v1-auth-register
+ */
 export const registerDeviceRequest = async (
     mac_address: string,
     public_key: string,
@@ -42,6 +52,12 @@ export const registerDeviceRequest = async (
                     message:
                         'User was authorized, but did not have permission to change device registration status',
                 };
+            case StatusCodes.NOT_FOUND:
+                return {
+                    success: false,
+                    message:
+                        'The specified registration request does not exist'
+                }
             default:
                 return {
                     success: false,
