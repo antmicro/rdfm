@@ -1,3 +1,13 @@
+<!--
+Copyright (c) 2024 Antmicro <www.antmicro.com>
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
+<!--
+Component wraps functionality for displaying and working with rdfm packages.
+-->
+
 <template>
     <RemovePopup
         @click.self="closeRemovePackagePopup"

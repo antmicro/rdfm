@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * Module containing wrappers for sending requests related to groups,
+ * that return an appropriate message based on documentation.
+ */
+
 import {
     ASSIGN_PACKAGE_IN_GROUP_ENDPOINT,
     DELETE_GROUP_ENDPOINT,

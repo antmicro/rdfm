@@ -1,3 +1,13 @@
+<!--
+Copyright (c) 2024 Antmicro <www.antmicro.com>
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
+<!--
+Component wraps functionality for displaying and working with rdfm groups.
+-->
+
 <template>
     <Transition>
         <BlurPanel v-if="popupOpen == 0" @click.self="closeAddGroupPopup">

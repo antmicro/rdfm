@@ -1,3 +1,13 @@
+<!--
+Copyright (c) 2024 Antmicro <www.antmicro.com>
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
+<!--
+Component representing a panel with a blurred background that occupies the whole screen.
+-->
+
 <template>
     <div class="blur-panel">
         <slot />

@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * Module containing rdfm-server ENDPOINTS, interfaces of resources and
+ * utility functions for obtaining the resources.
+ */
+
 import { ref } from 'vue';
 import { type Ref } from 'vue';
 
@@ -174,4 +179,3 @@ export const resourcesGetter = <T>(resources_url: string) => {
         fetchDELETE,
     };
 };
-

@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * Module containing wrappers for sending requests related to devices,
+ * that return an appropriate message based on documentation.
+ */
+
 import {
     DEVICES_ENDPOINT,
     PENDING_ENDPOINT,
@@ -55,9 +60,8 @@ export const registerDeviceRequest = async (
             case StatusCodes.NOT_FOUND:
                 return {
                     success: false,
-                    message:
-                        'The specified registration request does not exist'
-                }
+                    message: 'The specified registration request does not exist',
+                };
             default:
                 return {
                     success: false,

@@ -1,3 +1,14 @@
+<!--
+Copyright (c) 2024 Antmicro <www.antmicro.com>
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
+<!--
+Component representing a popup that asks the user to confirm the removal of an item.
+It is displayed on top of the rest of the page, with a blurred background.
+-->
+
 <template>
     <Transition>
         <BlurPanel v-if="enabled">

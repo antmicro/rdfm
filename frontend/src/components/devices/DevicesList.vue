@@ -1,3 +1,13 @@
+<!--
+Copyright (c) 2024 Antmicro <www.antmicro.com>
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
+<!--
+Component wraps functionality for displaying and working with rdfm devices.
+-->
+
 <template>
     <div id="devices">
         <TitleBar title="Devices" subtitle="manage your devices" />

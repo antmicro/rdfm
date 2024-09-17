@@ -1,3 +1,14 @@
+<!--
+Copyright (c) 2024 Antmicro <www.antmicro.com>
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
+<!--
+Component representing a top bar of each view,
+with a title, subtitle and an optional action button.
+-->
+
 <template>
     <div id="wrapper">
         <div id="titlebar">

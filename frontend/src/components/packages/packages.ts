@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * Module containing wrappers for sending requests related to packages,
+ * that return an appropriate message based on documentation.
+ */
+
 import {
     DELETE_PACKAGE_ENDPOINT,
     PACKAGES_ENDPOINT,
@@ -52,18 +57,20 @@ export const uploadPackageRequest = async (
             case StatusCodes.BAD_REQUEST:
                 return {
                     success: false,
-                    message: 'Provided metadata contains keys reserved by RDFM or a file was not provided.',
+                    message:
+                        'Provided metadata contains keys reserved by RDFM or a file was not provided.',
                 };
             case StatusCodes.UNAUTHORIZED:
                 return {
                     success: false,
-                    message: 'User did not provide authorization data, or the authorization has expired'
-                }
+                    message:
+                        'User did not provide authorization data, or the authorization has expired',
+                };
             case StatusCodes.FORBIDDEN:
                 return {
                     success: false,
                     message: 'User was authorized, but did not have permission to upload packages',
-                }
+                };
             default:
                 return {
                     success: false,
@@ -86,7 +93,8 @@ export const removePackageRequest = async (packageId: number): Promise<RequestOu
             case StatusCodes.UNAUTHORIZED:
                 return {
                     success: false,
-                    message: 'User did not provide authorization data, or the authorization has expired',
+                    message:
+                        'User did not provide authorization data, or the authorization has expired',
                 };
             case StatusCodes.FORBIDDEN:
                 return {
