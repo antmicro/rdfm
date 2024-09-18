@@ -35,7 +35,7 @@ export const uploadPackageRequest = async (
     packageUploadData: NewPackageData,
 ): Promise<RequestOutput> => {
     const formData = new FormData();
-    if ((uploadedPackageFile?.files ?? []).length > 0) {
+    if ((uploadedPackageFile?.files ?? []).length <= 0) {
         return { success: false, message: 'No file provided' };
     }
     if (packageUploadData.version === null)
