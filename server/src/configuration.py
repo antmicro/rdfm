@@ -132,6 +132,16 @@ class ServerConfig:
     """
     debug: bool = False
 
+    """ Determines whether frontend application should be served on
+        a dedicated endpoint.
+    """
+    include_frontend: bool = False
+
+    """ Disables CORS checks for development purposes
+        DO NOT USE OUTSIDE A DEVELOPMENT ENVIRONMENT!
+    """
+    disable_cors: bool = False
+
 
 def try_get_env(key: str, help_text: str) -> Optional[str]:
     """Wraps an environment variable read

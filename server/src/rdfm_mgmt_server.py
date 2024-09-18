@@ -1,10 +1,11 @@
 import os
+from pathlib import Path
 import sys
 from flask import Flask, request
-from flask_cors import CORS
 import server
 import api.v1
 import api.v2
+import api.static
 import configuration
 
 
@@ -68,11 +69,30 @@ def create_app(config: configuration.ServerConfig) -> Flask:
     is not yet runnable in this state, as further initialization
     is required (see: `setup`).
     """
-    app = Flask(__name__)
-    CORS(app)
+
+    if config.include_frontend:
+        assets_path = Path(__file__).parent / "static" / "dist" / "assets"
+        assets_url_path = "/assets"
+        template_path = Path(__file__).parent / "static" / "dist"
+        app = Flask(
+            __name__,
+            static_folder=assets_path,
+            static_url_path=assets_url_path,
+            template_folder=template_path
+        )
+        app.register_blueprint(api.static.create_routes())
+    else:
+        app = Flask(__name__)
+
     app.register_blueprint(api.v1.create_routes())
     app.register_blueprint(api.v2.create_routes())
     app.config["RDFM_CONFIG"] = config
+
+    if config.disable_cors:
+        from flask_cors import CORS
+
+        CORS(app)
+
     if config.debug:
         add_debug_logging(app)
     return app
@@ -88,6 +108,7 @@ def create_docs_app() -> Flask:
     app = Flask(__name__)
     app.register_blueprint(api.v1.create_routes())
     app.register_blueprint(api.v2.create_routes())
+    app.register_blueprint(api.static.create_routes())
     return app
 
 
@@ -216,6 +237,18 @@ def parse_config_from_cli() -> configuration.ServerConfig:
         dest="create_mocks",
         help="""insert mock data into the
                             database for running tests""",
+    )
+    parser.add_argument(
+        "--include-frontend",
+        action="store_true",
+        dest="include_frontend",
+        help="determines whether to serve frontend application"
+    )
+    parser.add_argument(
+        "--disable-cors",
+        action="store_true",
+        dest="disable_cors",
+        help="determines whether to disable cors for development purposes"
     )
     parser.add_argument(
         "--debug", action="store_true", help="launch server in debug mode"
