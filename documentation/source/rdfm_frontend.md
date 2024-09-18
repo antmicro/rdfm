@@ -27,19 +27,8 @@ npm run build
 ```
 
 The built static files are located in the `dist` directory.
-To be able to run the application and communicate with `rdfm-server` the `dist/index.html` file has to be served using a web server.
-For example using `http.server` package from python:
-
-```bash
-cd dist
-python -m http.server 8080
-```
-
-Visiting the `http://localhost:8080` should display the application.
-
-```{warning}
-Make sure that `0.0.0.0` address is not used, as it is known to cause CORS issues.
-```
+To include the frontend application and access it using `rdfm-server`, a `RDFM_INCLUDE_FRONTEND_ENDPOINT` docker-compose variable has to be set.
+As a consequence, the frontend application will be served on `/api/static/frontend` endpoint, one the HTTP server is started.
 
 ## Running development server
 
@@ -48,6 +37,12 @@ To install dependencies and start the development server run the following comma
 ```bash
 npm install
 npm run dev
+```
+
+To communicate with `rdfm-server` when using a separate development server, make sure to set `RDFM_DISABLE_CORS` variable in docker-compose configuration.
+
+```{warning}
+`RDFM_DISABLE_CORS` variable should not be set in production environment, as it allows for cross-origin requests.
 ```
 
 ## Formatting
