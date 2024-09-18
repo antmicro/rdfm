@@ -50,6 +50,20 @@ if [ ${_missing_variables} == 1 ]; then
 	exit 1
 fi
 
+if [ -n "${RDFM_DISABLE_CORS}" ]; then
+	server_args="${server_args} --disable-cors"
+fi
+
+if [ -n "${RDFM_INCLUDE_FRONTEND_ENDPOINT}" ]; then
+	if [ ! -d /rdfm/frontend/dist ]; then
+		echo "ERROR: Frontend files not found at frontend/dist. Make sure to build the frontend first."
+		exit 1
+	fi
+
+	cp -R /rdfm/frontend/dist /rdfm/server/src/static
+	server_args="${server_args} --include-frontend"
+fi
+
 echo "Starting RDFM Management Server.."
 
 wsgi_server="${RDFM_WSGI_SERVER:-gunicorn}"
