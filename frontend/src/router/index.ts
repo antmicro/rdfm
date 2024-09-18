@@ -11,7 +11,9 @@ const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes: [
         {
-            path: '/',
+            // This is needed for when the built application
+            // is served from a subdirectory
+            path: '/:catchAll(.*)',
             name: 'home',
             component: HomeView,
         },
