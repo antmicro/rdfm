@@ -71,6 +71,7 @@ Development configuration:
 
 - `RDFM_DISABLE_ENCRYPTION` - if set, disables the use of HTTPS, falling back to exposing the API over HTTP. This can only be used in production if an additional HTTPS reverse proxy is used in front of the RDFM server.
 - `RDFM_DISABLE_API_AUTH` - if set, disables request authentication on the exposed API routes. **WARNING: This is a development flag only! Do not use in production!** This causes all API methods to be freely accessible, without any access control in place!
+- `RDFM_DISABLE_CORS` - if set, disables CORS checks, which in consequence allows any origin to access the server. **WARNING: This is a development flag only! Do not use in production!**
 
 HTTP/WSGI configuration:
 
@@ -80,6 +81,7 @@ HTTP/WSGI configuration:
 - `RDFM_SERVER_KEY` - required when HTTPS is enabled; path to the server's private key. Additionally, the above also applies here.
 - `RDFM_WSGI_SERVER` - WSGI server to use, this value should be left default. Accepted values: `gunicorn` (**default**, production-ready), `werkzeug` (recommended for development).
 - `RDFM_WSGI_MAX_CONNECTIONS` - (when using Gunicorn) maximum amount of connections available to the server worker. This value must be set to at minimum the amount of devices that are expected to be maintaining a persistent (via WebSocket) connection with the server. Default: `4000`.
+- `RDFM_INCLUDE_FRONTEND_ENDPOINT` - specifies whether the RDFM server should serve the frontend application application. If set, the server will serve the frontend application from  endpoint `/api/static/frontend`. Before setting this variable, the frontend application must be built and placed in the `frontend/dist` directory.
 
 API OAuth2 configuration (must be present when `RDFM_DISABLE_API_AUTH` is omitted):
 
