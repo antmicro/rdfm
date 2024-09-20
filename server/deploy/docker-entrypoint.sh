@@ -60,6 +60,7 @@ if [ -n "${RDFM_INCLUDE_FRONTEND_ENDPOINT}" ]; then
 		exit 1
 	fi
 
+	mkdir -p /rdfm/server/src/static
 	cp -R /rdfm/frontend/dist /rdfm/server/src/static
 	server_args="${server_args} --include-frontend"
 fi
