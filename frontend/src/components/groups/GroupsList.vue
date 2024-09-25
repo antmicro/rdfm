@@ -10,7 +10,7 @@ Component wraps functionality for displaying and working with rdfm groups.
 
 <template>
     <Transition>
-        <BlurPanel v-if="popupOpen == 0" @click.self="closeAddGroupPopup">
+        <BlurPanel v-if="popupOpen == GroupPopupOpen.AddGroup" @click.self="closeAddGroupPopup">
             <div class="popup">
                 <div class="header">
                     <p class="title">Create a new group</p>
@@ -48,14 +48,17 @@ Component wraps functionality for displaying and working with rdfm groups.
     <RemovePopup
         @click.self="closeRemoveGroupPopup"
         title="Are you absolutely sure?"
-        :enabled="popupOpen == 1"
+        :enabled="popupOpen == GroupPopupOpen.RemoveGroup"
         :description="`This action cannot be undone. It will permanently delete #${groupToRemove} group.`"
         :cancelCallback="closeRemoveGroupPopup"
         :removeCallback="removeGroup"
     />
 
     <Transition>
-        <BlurPanel v-if="popupOpen == 2" @click.self="closeConfigureGroupPopup">
+        <BlurPanel
+            v-if="popupOpen == GroupPopupOpen.ConfigureGroup"
+            @click.self="closeConfigureGroupPopup"
+        >
             <div class="popup">
                 <div class="header">
                     <p class="title">Configure the #{{ groupConfiguration.id }} group</p>
@@ -553,6 +556,7 @@ export default {
             closeConfigureGroupPopup,
             groupConfiguration,
             configureGroup,
+            GroupPopupOpen,
         };
     },
 };
