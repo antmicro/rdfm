@@ -16,7 +16,7 @@
     top: 50vh;
     transform: translate(-50%, -50%);
     padding: 2em;
-    width: 40vh;
+    width: max-content;
 
     & > .header {
         font-family: 'Inter', sans-serif;

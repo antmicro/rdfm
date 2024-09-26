@@ -75,11 +75,11 @@ Component wraps functionality for displaying and working with rdfm groups.
                     </div>
                     <div class="entry">
                         <p>Packages</p>
-                        <input
-                            pattern="(\d+,\s*)+\d+"
-                            type="text"
-                            v-model="groupConfiguration.packages"
-                            placeholder="Packages"
+                        <Dropdown
+                            :columnNames="['ID', 'Version', 'Device type']"
+                            :data="packageList"
+                            :select="selectPackage"
+                            :selected="selectedPackages"
                         />
                     </div>
                     <div class="entry">
@@ -302,6 +302,7 @@ import BlurPanel from '../BlurPanel.vue';
 import RemovePopup from '../RemovePopup.vue';
 import TitleBar from '../TitleBar.vue';
 import Cross from '../icons/Cross.vue';
+import Dropdown from '../Dropdown.vue';
 
 export enum GroupPopupOpen {
     AddGroup,
@@ -316,6 +317,7 @@ export default {
         RemovePopup,
         TitleBar,
         Cross,
+        Dropdown,
     },
     setup() {
         const popupOpen = ref(GroupPopupOpen.None);
@@ -392,6 +394,9 @@ export default {
             groupConfiguration.devices = group.devices
                 .map((devices) => devices.toString())
                 .join(', ');
+            selectedPackages.value = packagesResources.resources.value.map(({ id }) =>
+                group.packages.includes(id),
+            );
 
             // Storing a copy of the initial configuration to detect any changes that could occur
             // during group configuration
@@ -488,8 +493,11 @@ export default {
             }
 
             let newPackages: number[] = [];
-            if (groupConfiguration.packages.length !== 0) {
-                newPackages = groupConfiguration.packages.replace(/ /g, '').split(',').map(Number);
+            if (selectedPackages.value.some((v) => v)) {
+                newPackages = selectedPackages.value
+                    .map((selected, i) => [selected, packagesResources.resources.value[i].id])
+                    .filter(([selected]) => selected)
+                    .map(([_, id]) => id);
             }
             if (JSON.stringify(initialPackages) !== JSON.stringify(newPackages)) {
                 const { success, message } = await updatePackagesRequest(
@@ -535,6 +543,12 @@ export default {
             stopPolling();
         });
 
+        let selectedPackages = ref([]);
+
+        const selectPackage = (i: number) => {
+            selectedPackages.value[i] = !selectedPackages.value[i];
+        };
+
         const groupsCount = computed(() => groupResources.resources.value?.length ?? 0);
 
         return {
@@ -557,6 +571,9 @@ export default {
             groupConfiguration,
             configureGroup,
             GroupPopupOpen,
+            packageList: packagesResources.resources,
+            selectedPackages,
+            selectPackage,
         };
     },
 };
