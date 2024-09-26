@@ -8,7 +8,7 @@
                 </div>
             </div>
             <button @click="() => (dropdownOpen = !dropdownOpen)" v-if="!tags.length" class="hint">
-                Choose packages
+                {{ placeholder }}
             </button>
             <button @click="() => (dropdownOpen = !dropdownOpen)" class="dropdown-opener">
                 <img :src="`/src/images/caret-${dropdownOpen ? 'up' : 'down'}.svg`" />
@@ -19,19 +19,23 @@
                 <thead>
                     <tr>
                         <th></th>
-                        <th v-for="col in columnNames" :key="col">{{ col }}</th>
+                        <th v-for="col in columns" :key="col.name">{{ col.name }}</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="(row, i) in packages" :key="row.id" @click="() => select(i)">
+                    <tr v-for="(row, i) in data" :key="row.id" @click="() => select(i)">
                         <td>
                             <div class="checkbox">
-                                <div :class="selected[i] ? 'selected' : ''"></div>
+                                <div :class="row.selected ? 'selected' : ''"></div>
                             </div>
                         </td>
-                        <td>#{{ row.id }}</td>
-                        <td>{{ row.version }}</td>
-                        <td>{{ row.device }}</td>
+                        <td v-for="col in columns" :key="col.name">
+                            {{
+                                row[col.id].length > 18
+                                    ? row[col.id].substring(0, 14) + '...'
+                                    : row[col.id]
+                            }}
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -78,6 +82,7 @@
     position: absolute;
     margin-top: 4px;
     padding: 8px;
+    z-index: 10;
 }
 
 input,
@@ -184,27 +189,16 @@ tbody tr:active {
 import { ref, computed } from 'vue';
 
 export default {
-    props: ['columnNames', 'data', 'select', 'selected'],
+    props: ['placeholder', 'columns', 'data', 'select'],
     setup(props) {
         const dropdownOpen = ref(false);
 
-        const packages = computed(() =>
-            props.data.map((el) => ({
-                id: el.id,
-                version: el.metadata['rdfm.software.version'],
-                device: el.metadata['rdfm.hardware.devtype'],
-            })),
-        );
-
         const tags = computed(() =>
-            props.selected
-                .map((v, i) => (v ? { name: packages.value[i].id, id: i } : null))
-                .filter((v) => v),
+            props.data.filter((d) => d.selected).map((d, i) => ({ name: d.id, id: i })),
         );
 
         return {
             dropdownOpen,
-            packages,
             tags,
         };
     },

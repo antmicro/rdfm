@@ -76,19 +76,19 @@ Component wraps functionality for displaying and working with rdfm groups.
                     <div class="entry">
                         <p>Packages</p>
                         <Dropdown
-                            :columnNames="['ID', 'Version', 'Device type']"
+                            placeholder="Choose packages"
+                            :columns="packageDropdownColumns"
                             :data="packageList"
                             :select="selectPackage"
-                            :selected="selectedPackages"
                         />
                     </div>
                     <div class="entry">
                         <p>Devices</p>
-                        <input
-                            pattern="(\d+,\s*)+\d+"
-                            type="text"
-                            v-model="groupConfiguration.devices"
-                            placeholder="Devices"
+                        <Dropdown
+                            placeholder="Choose devices"
+                            :columns="deviceDropdownColumns"
+                            :data="deviceList"
+                            :select="selectDevice"
                         />
                     </div>
 
@@ -394,9 +394,16 @@ export default {
             groupConfiguration.devices = group.devices
                 .map((devices) => devices.toString())
                 .join(', ');
-            selectedPackages.value = packagesResources.resources.value.map(({ id }) =>
-                group.packages.includes(id),
-            );
+            packageList.value = packagesResources.resources.value.map((v) => ({
+                id: v.id,
+                version: v.metadata['rdfm.software.version'],
+                type: v.metadata['rdfm.hardware.devtype'],
+                selected: group.packages.includes(v.id),
+            }));
+            deviceList.value = devicesResources.resources.value.map((v) => ({
+                ...v,
+                selected: group.devices.includes(v.id),
+            }));
 
             // Storing a copy of the initial configuration to detect any changes that could occur
             // during group configuration
@@ -465,8 +472,10 @@ export default {
             }
 
             let newDevices: number[] = [];
-            if (groupConfiguration.devices.length !== 0) {
-                newDevices = groupConfiguration.devices.replace(/ /g, '').split(',').map(Number);
+            if (deviceList.value.some(({ selected }) => selected)) {
+                newDevices = deviceList.value
+                    .filter(({ selected }) => selected)
+                    .map(({ id }) => parseInt(id));
             }
 
             const removedDevices = initialDevices.filter((device) => !newDevices.includes(device));
@@ -493,11 +502,10 @@ export default {
             }
 
             let newPackages: number[] = [];
-            if (selectedPackages.value.some((v) => v)) {
-                newPackages = selectedPackages.value
-                    .map((selected, i) => [selected, packagesResources.resources.value[i].id])
-                    .filter(([selected]) => selected)
-                    .map(([_, id]) => id);
+            if (packageList.value.some(({ selected }) => selected)) {
+                newPackages = packageList.value
+                    .filter(({ selected }) => selected)
+                    .map(({ id }) => id);
             }
             if (JSON.stringify(initialPackages) !== JSON.stringify(newPackages)) {
                 const { success, message } = await updatePackagesRequest(
@@ -537,17 +545,36 @@ export default {
         onMounted(async () => {
             await fetchResources();
             startPolling();
+            console.log(devicesResources.resources.value);
         });
 
         onUnmounted(() => {
             stopPolling();
         });
 
-        let selectedPackages = ref([]);
+        const packageList = ref([]);
 
         const selectPackage = (i: number) => {
-            selectedPackages.value[i] = !selectedPackages.value[i];
+            packageList.value[i].selected = !packageList.value[i].selected;
         };
+
+        const packageDropdownColumns = [
+            { id: 'id', name: 'ID' },
+            { id: 'version', name: 'Version' },
+            { id: 'type', name: 'Device type' },
+        ];
+
+        const deviceList = ref([]);
+
+        const selectDevice = (i: number) => {
+            deviceList.value[i].selected = !deviceList.value[i].selected;
+        };
+
+        const deviceDropdownColumns = [
+            { id: 'id', name: 'ID' },
+            { id: 'name', name: 'Name' },
+            { id: 'mac_address', name: 'MAC address' },
+        ];
 
         const groupsCount = computed(() => groupResources.resources.value?.length ?? 0);
 
@@ -571,9 +598,12 @@ export default {
             groupConfiguration,
             configureGroup,
             GroupPopupOpen,
-            packageList: packagesResources.resources,
-            selectedPackages,
+            packageDropdownColumns,
+            packageList,
             selectPackage,
+            deviceDropdownColumns,
+            deviceList,
+            selectDevice,
         };
     },
 };
