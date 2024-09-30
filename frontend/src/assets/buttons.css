@@ -58,6 +58,8 @@
     height: fit-content;
     width: fit-content;
 
+    text-decoration: none;
+
     &.small-padding {
         padding: 0.25em;
     }
