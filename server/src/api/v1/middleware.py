@@ -22,6 +22,23 @@ SCOPE_READ_WRITE = "rdfm_admin_rw"
 """ Read-only administrator scope """
 SCOPE_READ_ONLY = "rdfm_admin_ro"
 
+""" Single file package write scope """
+SCOPE_SINGLE_FILE = "rdfm_upload_single_file"
+
+""" Rootfs Image package write scope """
+SCOPE_ROOTFS_IMAGE = "rdfm_upload_rootfs_image"
+
+""" Text to append after the endpoint's docstring when an appropriate
+    package write scope is required
+"""
+DOCS_SCOPE_PACKAGE_TEXT = \
+    """.. warning:: Accessing this endpoint requires """ \
+    """providing a management token with the appropriate """ \
+    """package write scope. Available scopes are: """ \
+    f"""``{SCOPE_SINGLE_FILE}`` - single file package, """ \
+    f"""``{SCOPE_ROOTFS_IMAGE}`` - rootfs image package.""" \
+    f"""``{SCOPE_READ_WRITE}`` - all package write scopes."""
+
 """ Text to append after the endpoint's docstring when a token
     with read-only scope is required
 """
@@ -114,6 +131,7 @@ def __introspect_and_validate_token(
             return None
 
         introspected_token = resp.json()
+
         active = introspected_token["active"]
         if not active:
             return None
@@ -128,7 +146,17 @@ def __introspect_and_validate_token(
             )
             return None
 
-        return scope_to_list(introspected_token["scope"])
+        # TODO: We should be able to differentiate between scopes
+        # of a client and user roles, but for now there are merged
+        scopes = scope_to_list(introspected_token["scope"])
+        if (
+            "realm_access" in introspected_token and
+            "roles" in introspected_token["realm_access"]
+        ):
+            scopes += scope_to_list(
+                introspected_token["realm_access"]["roles"],
+            )
+        return scopes
     except Exception as e:
         print("Exception during token introspection:", e)
         return None
@@ -302,7 +330,9 @@ def device_api(f):
     return _device_api
 
 
-def __management_api(scope_check_callback: Callable[[list[str]], bool]):
+def __management_api(
+        scope_check_callback: Callable[[list[str]], bool],
+        append_scopes: bool = False):
     """Decorator for management APIs
 
     This decorator verifies whether an incoming request contains a valid
@@ -320,6 +350,8 @@ def __management_api(scope_check_callback: Callable[[list[str]], bool]):
                               not be authorized, the callback is expected to
                               return False. Otherwise, True will allow the
                               request to be processed.
+        append_scopes: if True, the scopes of the authenticated user will be
+                       passed down to the route handler in the request object.
     """
 
     def _management_api_impl(f):
@@ -369,7 +401,10 @@ def __management_api(scope_check_callback: Callable[[list[str]], bool]):
 
             # Verified the token successfully, the user is authorized
             # Call the original view function
-            return f(*args, **kwargs)
+            if append_scopes:
+                return f(*args, **kwargs, scopes=scopes)
+            else:
+                return f(*args, **kwargs)
 
         return __management_api_impl
 
@@ -483,6 +518,54 @@ def management_read_write_api(f):
     __add_scope_docs(f, DOCS_SCOPE_RW_TEXT)
 
     return __management_api(client_has_rw_scope)(f)
+
+
+def artifact_type_to_scope(artifact_type: str) -> str:
+    """Convert an artifact type to the corresponding scope that is required
+    for this artifact to be uploaded.
+
+    Args:
+        artifact_type: artifact type string
+
+    Returns:
+        The corresponding scope string
+    """
+    if artifact_type == "single-file":
+        return SCOPE_SINGLE_FILE
+    if artifact_type == "rootfs-image":
+        return SCOPE_ROOTFS_IMAGE
+    return SCOPE_READ_WRITE
+
+
+def get_scopes_for_upload_package(artifact_type: str) -> bool:
+    """Get the scopes required to upload a package of the given type.
+    Any of the returned scopes will be sufficient to upload a package.
+
+    Args:
+        artifact_type: artifact type string
+
+    Returns:
+        A list of scopes, that are required to upload
+        a package of the given type
+    """
+    required_scope = artifact_type_to_scope(artifact_type)
+    return list(set([required_scope, SCOPE_READ_WRITE]))
+
+
+def management_upload_package_api(f):
+    """Decorator used to be used on upload_package API route.
+
+    This decorator passes the scopes of the authenticated user
+    to the wrapped function.
+    """
+    def scope_check_callback(scopes):
+        return True
+
+    # Mark the handler function with a custom attribute
+    f.__rdfm_api_privileges__ = "management_upload_package"
+    __add_scope_docs(f, DOCS_SCOPE_PACKAGE_TEXT)
+
+    return __management_api(scope_check_callback, append_scopes=True)(f)
 
 
 def public_api(f):
