@@ -36,8 +36,8 @@ export type InitialGroupConfiguration = {
 export type GroupConfiguration = {
     id: number | null;
     priority: number | null;
-    devices: string | null;
-    packages: string | null;
+    devices: number[] | null;
+    packages: number[] | null;
 };
 
 export type NewGroupData = {

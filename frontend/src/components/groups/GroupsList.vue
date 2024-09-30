@@ -59,7 +59,7 @@ Component wraps functionality for displaying and working with rdfm groups.
             v-if="popupOpen == GroupPopupOpen.ConfigureGroup"
             @click.self="closeConfigureGroupPopup"
         >
-            <div class="popup">
+            <div class="popup" @click="closeDropdowns">
                 <div class="header">
                     <p class="title">Configure the #{{ groupConfiguration.id }} group</p>
                     <p class="description">Configure group packages, devices and priority</p>
@@ -76,19 +76,25 @@ Component wraps functionality for displaying and working with rdfm groups.
                     <div class="entry">
                         <p>Packages</p>
                         <Dropdown
+                            @click.stop
                             placeholder="Choose packages"
                             :columns="packageDropdownColumns"
                             :data="packageList"
                             :select="selectPackage"
+                            :toggleDropdown="() => toggleDropdown(0)"
+                            :dropdownOpen="packageDropdownOpen"
                         />
                     </div>
                     <div class="entry">
                         <p>Devices</p>
                         <Dropdown
+                            @click.stop
                             placeholder="Choose devices"
                             :columns="deviceDropdownColumns"
                             :data="deviceList"
                             :select="selectDevice"
+                            :toggleDropdown="() => toggleDropdown(1)"
+                            :dropdownOpen="deviceDropdownOpen"
                         />
                     </div>
 
@@ -298,6 +304,8 @@ import {
     type NewGroupData,
 } from './groups';
 
+import type { Column, DataEntry } from '../Dropdown.vue';
+
 import BlurPanel from '../BlurPanel.vue';
 import RemovePopup from '../RemovePopup.vue';
 import TitleBar from '../TitleBar.vue';
@@ -308,6 +316,12 @@ export enum GroupPopupOpen {
     AddGroup,
     RemoveGroup,
     ConfigureGroup,
+    None,
+}
+
+export enum DropDownOpen {
+    Packages,
+    Devices,
     None,
 }
 
@@ -390,18 +404,20 @@ export default {
         const openConfigureGroupPopup = async (group: Group) => {
             groupConfiguration.id = group.id;
             groupConfiguration.priority = group.priority;
-            groupConfiguration.packages = group.packages.map((pckg) => pckg.toString()).join(', ');
-            groupConfiguration.devices = group.devices
-                .map((devices) => devices.toString())
-                .join(', ');
-            packageList.value = packagesResources.resources.value.map((v) => ({
+            groupConfiguration.devices = [...group.devices];
+            groupConfiguration.packages = [...group.packages];
+
+            packageList.value = (packagesResources.resources.value ?? []).map((v) => ({
                 id: v.id,
                 version: v.metadata['rdfm.software.version'],
                 type: v.metadata['rdfm.hardware.devtype'],
                 selected: group.packages.includes(v.id),
             }));
-            deviceList.value = devicesResources.resources.value.map((v) => ({
-                ...v,
+
+            deviceList.value = (devicesResources.resources.value ?? []).map((v) => ({
+                id: v.id,
+                mac_address: v.mac_address,
+                name: v.name,
                 selected: group.devices.includes(v.id),
             }));
 
@@ -420,11 +436,10 @@ export default {
         const closeConfigureGroupPopup = () => {
             groupConfiguration.id = null;
             groupConfiguration.priority = null;
-            groupConfiguration.packages = null;
-            groupConfiguration.devices = null;
             initialGroupConfiguration = null;
 
             popupOpen.value = GroupPopupOpen.None;
+            closeDropdowns();
         };
 
         const wasGroupModified = (original: Group, initial: InitialGroupConfiguration) => {
@@ -434,11 +449,6 @@ export default {
                 JSON.stringify(original.packages) === JSON.stringify(initial.packages) &&
                 JSON.stringify(original.devices) === JSON.stringify(initial.devices)
             );
-        };
-
-        const isList = (s: string) => {
-            const re = new RegExp('((^\\d+,\\s*)*\\d+$)|(^$)');
-            return re.test(s);
         };
 
         const configureGroup = async () => {
@@ -465,18 +475,10 @@ export default {
 
             // Updating devices
             const initialDevices = initialGroupConfiguration!.devices;
-            groupConfiguration.devices ??= '';
-            if (!isList(groupConfiguration.devices)) {
-                alert('Devices should be a list of integers separated by commas');
-                return;
-            }
 
-            let newDevices: number[] = [];
-            if (deviceList.value.some(({ selected }) => selected)) {
-                newDevices = deviceList.value
-                    .filter(({ selected }) => selected)
-                    .map(({ id }) => parseInt(id));
-            }
+            const newDevices = deviceList.value
+                .filter(({ selected }) => selected)
+                .map(({ id }) => id);
 
             const removedDevices = initialDevices.filter((device) => !newDevices.includes(device));
             const addedDevices = newDevices.filter((device) => !initialDevices.includes(device));
@@ -495,18 +497,11 @@ export default {
 
             // Updating packages
             const initialPackages = initialGroupConfiguration!.packages;
-            groupConfiguration.packages ??= '';
-            if (!isList(groupConfiguration.packages)) {
-                alert('Devices should be a list of integers separated by commas');
-                return;
-            }
 
-            let newPackages: number[] = [];
-            if (packageList.value.some(({ selected }) => selected)) {
-                newPackages = packageList.value
-                    .filter(({ selected }) => selected)
-                    .map(({ id }) => id);
-            }
+            let newPackages = packageList.value
+                .filter(({ selected }) => selected)
+                .map(({ id }) => id);
+
             if (JSON.stringify(initialPackages) !== JSON.stringify(newPackages)) {
                 const { success, message } = await updatePackagesRequest(
                     groupConfiguration.id!,
@@ -545,36 +540,47 @@ export default {
         onMounted(async () => {
             await fetchResources();
             startPolling();
-            console.log(devicesResources.resources.value);
         });
 
         onUnmounted(() => {
             stopPolling();
         });
 
-        const packageList = ref([]);
+        const openDropdown = ref(DropDownOpen.None);
+
+        const packageList: Ref<DataEntry[]> = ref([]);
+        const packageDropdownOpen = computed(() => openDropdown.value === DropDownOpen.Packages);
 
         const selectPackage = (i: number) => {
             packageList.value[i].selected = !packageList.value[i].selected;
         };
 
-        const packageDropdownColumns = [
+        const packageDropdownColumns: Column[] = [
             { id: 'id', name: 'ID' },
             { id: 'version', name: 'Version' },
             { id: 'type', name: 'Device type' },
         ];
 
-        const deviceList = ref([]);
+        const deviceList: Ref<DataEntry[]> = ref([]);
+        const deviceDropdownOpen = computed(() => openDropdown.value === DropDownOpen.Devices);
 
         const selectDevice = (i: number) => {
             deviceList.value[i].selected = !deviceList.value[i].selected;
         };
 
-        const deviceDropdownColumns = [
+        const deviceDropdownColumns: Column[] = [
             { id: 'id', name: 'ID' },
             { id: 'name', name: 'Name' },
             { id: 'mac_address', name: 'MAC address' },
         ];
+
+        const closeDropdowns = () => {
+            openDropdown.value = DropDownOpen.None;
+        };
+
+        const toggleDropdown = (dropdown: DropDownOpen) => {
+            openDropdown.value = openDropdown.value === dropdown ? DropDownOpen.None : dropdown;
+        };
 
         const groupsCount = computed(() => groupResources.resources.value?.length ?? 0);
 
@@ -604,6 +610,10 @@ export default {
             deviceDropdownColumns,
             deviceList,
             selectDevice,
+            packageDropdownOpen,
+            deviceDropdownOpen,
+            closeDropdowns,
+            toggleDropdown,
         };
     },
 };
