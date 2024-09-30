@@ -158,7 +158,7 @@ import {
     type NewPackageData,
 } from './packages';
 
-enum PopupOpen {
+export enum PackagePopupOpen {
     AddPackage,
     RemovePackage,
     None,
@@ -173,7 +173,7 @@ export default {
     setup() {
         let intervalID: undefined | number = undefined;
 
-        const popupOpen = ref(PopupOpen.None);
+        const popupOpen = ref(PackagePopupOpen.None);
 
         // =======================
         // Add package functionality
@@ -185,13 +185,13 @@ export default {
         });
 
         const openAddPackagePopup = () => {
-            popupOpen.value = PopupOpen.AddPackage;
+            popupOpen.value = PackagePopupOpen.AddPackage;
         };
 
         const closeAddPackagePopup = () => {
             packageUploadData.version = null;
             packageUploadData.deviceType = null;
-            popupOpen.value = PopupOpen.None;
+            popupOpen.value = PackagePopupOpen.None;
         };
 
         const uploadPackage = async () => {
@@ -213,12 +213,12 @@ export default {
 
         const openRemovePackagePopup = async (packageId: number) => {
             packageToRemove.value = packageId;
-            popupOpen.value = PopupOpen.RemovePackage;
+            popupOpen.value = PackagePopupOpen.RemovePackage;
         };
 
         const closeRemovePackagePopup = () => {
             packageToRemove.value = null;
-            popupOpen.value = PopupOpen.None;
+            popupOpen.value = PackagePopupOpen.None;
         };
 
         const removePackage = async () => {

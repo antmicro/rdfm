@@ -300,7 +300,7 @@ import RemovePopup from '../RemovePopup.vue';
 import TitleBar from '../TitleBar.vue';
 import Cross from '../icons/Cross.vue';
 
-enum PopupOpen {
+export enum GroupPopupOpen {
     AddGroup,
     RemoveGroup,
     ConfigureGroup,
@@ -315,7 +315,7 @@ export default {
         Cross,
     },
     setup() {
-        const popupOpen = ref(PopupOpen.None);
+        const popupOpen = ref(GroupPopupOpen.None);
 
         // =======================
         // Add group functionality
@@ -327,7 +327,7 @@ export default {
         });
 
         const openAddGroupPopup = () => {
-            popupOpen.value = PopupOpen.AddGroup;
+            popupOpen.value = GroupPopupOpen.AddGroup;
         };
 
         const closeAddGroupPopup = () => {
@@ -335,7 +335,7 @@ export default {
             newGroupData.description = null;
             newGroupData.priority = null;
 
-            popupOpen.value = PopupOpen.None;
+            popupOpen.value = GroupPopupOpen.None;
         };
 
         const addGroup = async () => {
@@ -363,12 +363,12 @@ export default {
 
         const openRemoveGroupPopup = async (groupId: number) => {
             groupToRemove.value = groupId;
-            popupOpen.value = PopupOpen.RemoveGroup;
+            popupOpen.value = GroupPopupOpen.RemoveGroup;
         };
 
         const closeRemoveGroupPopup = () => {
             groupToRemove.value = null;
-            popupOpen.value = PopupOpen.None;
+            popupOpen.value = GroupPopupOpen.None;
         };
         // =======================
         // Configure group functionality
@@ -399,7 +399,7 @@ export default {
                 devices: [...group.devices],
             };
 
-            popupOpen.value = PopupOpen.ConfigureGroup;
+            popupOpen.value = GroupPopupOpen.ConfigureGroup;
         };
 
         const closeConfigureGroupPopup = () => {
@@ -409,7 +409,7 @@ export default {
             groupConfiguration.devices = null;
             initialGroupConfiguration = null;
 
-            popupOpen.value = PopupOpen.None;
+            popupOpen.value = GroupPopupOpen.None;
         };
 
         const wasGroupModified = (original: Group, initial: InitialGroupConfiguration) => {
