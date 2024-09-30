@@ -7,6 +7,7 @@
 @import './table.css';
 @import './popup.css';
 @import './buttons.css';
+@import './tags.css';
 
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,600;1,14..32,600&display=swap');
@@ -62,7 +63,7 @@ body {
 
 #app {
     font-weight: normal;
-    height: 100%;
+    min-height: 100%;
 }
 
 /* Vue Transition values */

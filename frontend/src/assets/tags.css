@@ -1,0 +1,14 @@
+.tags {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.tag {
+    display: flex;
+    padding: 0.5rem 1rem;
+    background: var(--gray-100);
+    filter: brightness(130%);
+    border-radius: 20px;
+}
