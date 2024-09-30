@@ -35,6 +35,7 @@ services:
       - start-dev
     volumes:
       - keycloak:/opt/keycloak/data/
+      - ../keycloak-themes:/opt/keycloak/themes
 
 volumes:
   db:
