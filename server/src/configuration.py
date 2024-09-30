@@ -19,11 +19,16 @@ ENV_S3_BUCKET = "RDFM_S3_BUCKET"
 ALLOWED_STORAGE_DRIVERS = ["local", "s3"]
 
 ENV_OAUTH_URL = "RDFM_OAUTH_URL"
+ENV_LOGIN_URL = "RDFM_LOGIN_URL"
+ENV_LOGOUT_URL = "RDFM_LOGOUT_URL"
 ENV_OAUTH_CLIENT_ID = "RDFM_OAUTH_CLIENT_ID"
 ENV_OAUTH_CLIENT_SECRET = "RDFM_OAUTH_CLIENT_SEC"
 
 ENV_HOSTNAME = "RDFM_HOSTNAME"
 ENV_API_PORT = "RDFM_API_PORT"
+
+ENV_FRONTEND_APP_URL = "RDFM_FRONTEND_APP_URL"
+ENV_INCLUDE_FRONTEND_ENDPOINT = "RDFM_INCLUDE_FRONTEND_ENDPOINT"
 
 
 class ServerConfig:
@@ -102,6 +107,15 @@ class ServerConfig:
         DO NOT USE OUTSIDE A DEVELOPMENT ENVIRONMENT!
     """
     disable_api_auth: bool
+
+    # TODO: Add docs
+    oauth_login_url: str
+
+    # TODO: Add docs
+    oauth_logout_url: str
+
+    # TODO: Add docs
+    frontend_app_url: str
 
     """ URL to an RFC 7662-compatible OAuth2 Token Introspection endpoint.
         This is used to validate tokens from requests coming to the server API.
@@ -230,11 +244,24 @@ def parse_from_environment(config: ServerConfig) -> bool:
         ]:
             return False
 
+    if not config.include_frontend:
+        config.frontend_app_url = try_get_env(
+            ENV_FRONTEND_APP_URL, "Frontend application URL"
+        )
+        if config.frontend_app_url is None:
+            return False
+
     # Token Introspection variables are only required when running
     # with authentication enabled.
     if not config.disable_api_auth:
         oauth_url = try_get_env(
             ENV_OAUTH_URL, "RFC 7662 Token Introspection endpoint"
+        )
+        login_url = try_get_env(
+            ENV_LOGIN_URL, "TODO:"
+        )
+        logout_url = try_get_env(
+            ENV_LOGOUT_URL, "TODO:"
         )
         oauth_client_id = try_get_env(
             ENV_OAUTH_CLIENT_ID,
@@ -244,10 +271,18 @@ def parse_from_environment(config: ServerConfig) -> bool:
             ENV_OAUTH_CLIENT_SECRET,
             "OAuth2 client_secret to authenticate introspection requests",
         )
-        if None in [oauth_url, oauth_client_id, oauth_client_secret]:
+        if None in [
+            oauth_url,
+            login_url,
+            logout_url,
+            oauth_client_id,
+            oauth_client_secret,
+        ]:
             return False
         else:
             config.token_introspection_url = str(oauth_url)
+            config.oauth_login_url = str(login_url)
+            config.oauth_logout_url = str(logout_url)
             config.token_introspection_client_id = str(oauth_client_id)
             config.token_introspection_client_secret = str(oauth_client_secret)
     return True
