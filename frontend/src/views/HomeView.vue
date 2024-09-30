@@ -32,7 +32,7 @@ SPDX-License-Identifier: Apache-2.0
 <style scoped>
 #main {
     background-color: var(--background-200);
-    height: 100%;
+    min-height: 100vh;
 
     & > #navbar {
         display: flex;

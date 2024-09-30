@@ -179,7 +179,7 @@ Component wraps functionality for displaying and working with rdfm devices.
             display: flex;
             flex-direction: column;
             gap: 1em;
-            min-width: 20vw;
+            width: 20%;
 
             & > a {
                 color: inherit;
@@ -187,7 +187,7 @@ Component wraps functionality for displaying and working with rdfm devices.
         }
 
         & > #device-list {
-            width: 80vw;
+            width: 80%;
         }
     }
 }
