@@ -33,6 +33,9 @@ export const UPDATE_GROUP_PRIORITY_ENDPOINT = (id: number) => `${GROUPS_ENDPOINT
 export const PATCH_DEVICES_IN_GROUP_ENDPOINT = (id: number) => `${GROUPS_ENDPOINT}/${id}/devices`;
 export const ASSIGN_PACKAGE_IN_GROUP_ENDPOINT = (id: number) => `${GROUPS_ENDPOINT}/${id}/package`;
 
+export const LOGIN_PATH = SERVER_URL + '/api/login';
+export const LOGOUT_PATH = SERVER_URL + '/api/logout';
+
 export const POLL_INTERVAL = 2500;
 
 /**
@@ -136,6 +139,11 @@ export const resourcesGetter = <T>(resources_url: string) => {
     ): Promise<FetchOutput> => {
         let response;
         try {
+            const accessToken = localStorage.getItem('access_token');
+
+            if (accessToken) {
+                headers.append('Authorization', `Bearer token=${accessToken}`);
+            }
             response = await fetch(url, { method, body, headers: headers });
             if (!response.ok) {
                 throw new Error(`Fetch returned status ${response.status}`);
