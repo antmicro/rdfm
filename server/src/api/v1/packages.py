@@ -1,6 +1,11 @@
+import tarfile
+import json
+
 from api.v1.middleware import (
+    management_upload_package_api,
     management_read_only_api,
     management_read_write_api,
+    get_scopes_for_upload_package,
 )
 from flask import request, abort, send_from_directory, Blueprint, current_app
 from pathlib import Path
@@ -97,8 +102,8 @@ def fetch_packages():
 
 
 @packages_blueprint.route("/api/v1/packages", methods=["POST"])
-@management_read_write_api
-def upload_package():
+@management_upload_package_api
+def upload_package(scopes: list[str]):
     """Upload an update package.
 
     Uploads an update package to the server.
@@ -177,6 +182,27 @@ def upload_package():
         sha256 = ""
         with tempfile.NamedTemporaryFile("wb+") as f:
             request.files["file"].save(f.name)
+
+            # Verification of the artifact type
+            # The artifact is a .tar file containing a 'header.tar' file,
+            # which is also a .tar file that contains a 'header-info' JSON.
+            # TODO: Introduce validation that the input is a valid artifact
+            package_tar = tarfile.open(f.name)
+            header_io = package_tar.extractfile('header.tar')
+            header_tar = tarfile.open(fileobj=header_io)
+            header_info_io = header_tar.extractfile('header-info')
+            header_info_json = json.load(header_info_io)
+            artifact_type: str = header_info_json['payloads'][0]['type']
+
+            required_scopes = get_scopes_for_upload_package(artifact_type)
+            # Checking if the user has any of the required scopes
+            if not any(scope in scopes for scope in required_scopes):
+                return api_error(
+                    "user does not have permission to upload this " +
+                    "package type. One of the scopes is required: " +
+                    ", ".join(required_scopes),
+                    403
+                )
             success = driver.upsert(meta, f.name, storage_directory)
             if not success:
                 return api_error("could not store artifact", 500)
