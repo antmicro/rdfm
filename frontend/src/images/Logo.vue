@@ -1,0 +1,114 @@
+<!--
+Copyright (c) 2024 Antmicro <www.antmicro.com>
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
+<template>
+    <svg
+        width="112"
+        height="26"
+        viewBox="0 0 112 26"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+    >
+        <path d="M25.3715 0H0V25.3715H25.3715V0Z" fill="#EDEDED" />
+        <path
+            d="M18.2211 7.28906H7.15033V18.0823"
+            stroke="black"
+            stroke-width="2.89467"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+        />
+        <path
+            d="M18.221 18.0823L13.2979 13.1581"
+            stroke="black"
+            stroke-width="2.89467"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+        />
+        <path
+            opacity="0.3"
+            d="M13.2979 13.1581H18.221V7.28906"
+            stroke="black"
+            stroke-width="2.89467"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+        />
+        <g clip-path="url(#clip0_2_202)">
+            <path
+                d="M81.3438 12.8835H84.3573"
+                stroke="#EDEDED"
+                stroke-width="3.35155"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+            <path
+                d="M49.4926 5.6358H35.452V19.3438"
+                stroke="#EDEDED"
+                stroke-width="3.35155"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+            <path
+                d="M49.4926 19.3438L43.2474 13.091"
+                stroke="#EDEDED"
+                stroke-width="3.35155"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+            <path
+                d="M55.5935 19.6162H69.24V5.55432H55.5509"
+                stroke="#EDEDED"
+                stroke-width="3.35155"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+            <path
+                d="M75.6961 19.3438V5.6358H89.7348"
+                stroke="#EDEDED"
+                stroke-width="3.35155"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+            <path
+                d="M110.165 19.3289V5.66357H96.1262V19.3716"
+                stroke="#EDEDED"
+                stroke-width="3.35155"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+            <path
+                d="M43.2474 13.091H49.4926V5.73029"
+                stroke="#EDEDED"
+                stroke-width="3.35155"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+            <path
+                d="M56.0023 14.0433V11.0253"
+                stroke="#EDEDED"
+                stroke-width="3.35155"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+            <path
+                d="M103.216 19.3049V12.8386"
+                stroke="#EDEDED"
+                stroke-width="3.35155"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+        </g>
+        <defs>
+            <clipPath id="clip0_2_202">
+                <rect
+                    width="78.3831"
+                    height="17.7376"
+                    fill="white"
+                    transform="translate(33.6169 3.71643)"
+                />
+            </clipPath>
+        </defs>
+    </svg>
+</template>

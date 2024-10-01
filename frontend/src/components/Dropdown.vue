@@ -4,14 +4,15 @@
             <div class="tags">
                 <div v-for="tag in tags" :key="tag.id" class="t">
                     <p>#{{ tag.name }}</p>
-                    <button @click="() => select(tag.id)"><img src="/src/images/x.svg" /></button>
+                    <button @click="() => select(tag.id)"><Cross /></button>
                 </div>
             </div>
             <button @click="toggleDropdown" v-if="!tags.length" class="hint">
                 {{ placeholder }}
             </button>
             <button @click="toggleDropdown" class="dropdown-opener">
-                <img :src="`/src/images/caret-${dropdownOpen ? 'up' : 'down'}.svg`" />
+                <CaretUp v-if="dropdownOpen" />
+                <CaretDown v-else />
             </button>
         </div>
         <div v-if="dropdownOpen" class="table-holder" ref="tableRef" :style="tableStyles">
@@ -192,6 +193,9 @@ tbody tr:active {
 <script lang="ts">
 import { computed, defineComponent, ref } from 'vue';
 import type { PropType, Ref } from 'vue';
+import Cross from '../images/Cross.vue';
+import CaretUp from '../images/CaretUp.vue';
+import CaretDown from '../images/CaretDown.vue';
 
 export interface DataEntry {
     id: number;
@@ -205,6 +209,11 @@ export interface Column {
 }
 
 export default defineComponent({
+    components: {
+        CaretUp,
+        CaretDown,
+        Cross,
+    },
     props: {
         placeholder: {
             type: String,

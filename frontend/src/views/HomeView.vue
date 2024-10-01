@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 <template>
     <div id="main">
         <div id="logobar">
-            <img src="../images/rdfm-logo.svg" alt="logo" id="logo" />
+            <Logo id="logo" />
         </div>
 
         <!-- Navbar for navigation between views -->
@@ -56,7 +56,6 @@ SPDX-License-Identifier: Apache-2.0
             }
         }
     }
-
     & > #logobar {
         color: white;
         padding: 2em;
@@ -74,6 +73,7 @@ import { ref } from 'vue';
 import DevicesList from '../components/devices/DevicesList.vue';
 import PackagesList from '../components/packages/PackagesList.vue';
 import GroupsList from '../components/groups/GroupsList.vue';
+import Logo from '../images/Logo.vue';
 
 const enum ActiveTab {
     Devices,
@@ -83,6 +83,7 @@ const enum ActiveTab {
 
 export default {
     components: {
+        Logo,
         DevicesList,
         PackagesList,
         GroupsList,
