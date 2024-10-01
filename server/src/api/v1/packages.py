@@ -103,7 +103,7 @@ def fetch_packages():
 
 @packages_blueprint.route("/api/v1/packages", methods=["POST"])
 @management_upload_package_api
-def upload_package(scopes: list[str]):
+def upload_package(scopes: list[str] = []):
     """Upload an update package.
 
     Uploads an update package to the server.
@@ -187,22 +187,23 @@ def upload_package(scopes: list[str]):
             # The artifact is a .tar file containing a 'header.tar' file,
             # which is also a .tar file that contains a 'header-info' JSON.
             # TODO: Introduce validation that the input is a valid artifact
-            package_tar = tarfile.open(f.name)
-            header_io = package_tar.extractfile('header.tar')
-            header_tar = tarfile.open(fileobj=header_io)
-            header_info_io = header_tar.extractfile('header-info')
-            header_info_json = json.load(header_info_io)
-            artifact_type: str = header_info_json['payloads'][0]['type']
+            if not conf.disable_api_auth:
+                package_tar = tarfile.open(f.name)
+                header_io = package_tar.extractfile('header.tar')
+                header_tar = tarfile.open(fileobj=header_io)
+                header_info_io = header_tar.extractfile('header-info')
+                header_info_json = json.load(header_info_io)
+                artifact_type: str = header_info_json['payloads'][0]['type']
 
-            required_scopes = get_scopes_for_upload_package(artifact_type)
-            # Checking if the user has any of the required scopes
-            if not any(scope in scopes for scope in required_scopes):
-                return api_error(
-                    "user does not have permission to upload this " +
-                    "package type. One of the scopes is required: " +
-                    ", ".join(required_scopes),
-                    403
-                )
+                required_scopes = get_scopes_for_upload_package(artifact_type)
+                # Checking if the user has any of the required scopes
+                if not any(scope in scopes for scope in required_scopes):
+                    return api_error(
+                        "user does not have permission to upload this " +
+                        "package type. One of the scopes is required: " +
+                        ", ".join(required_scopes),
+                        403
+                    )
             success = driver.upsert(meta, f.name, storage_directory)
             if not success:
                 return api_error("could not store artifact", 500)

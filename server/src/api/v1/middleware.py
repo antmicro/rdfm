@@ -352,7 +352,11 @@ def __management_api(
                               return False. Otherwise, True will allow the
                               request to be processed.
         append_scopes: if True, the scopes of the authenticated user will be
-                       passed down to the route handler in the request object.
+                       passed down to the route handler in the request object
+                       along with an information about authentication being
+                       disabled. This is useful for routes that require
+                       additional information about the authenticated
+                       user.
     """
 
     def _management_api_impl(f):
