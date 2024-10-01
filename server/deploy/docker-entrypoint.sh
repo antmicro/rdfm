@@ -50,7 +50,7 @@ if [ ${_missing_variables} == 1 ]; then
 	exit 1
 fi
 
-if [ -n "${RDFM_DISABLE_CORS}" ]; then
+if [ -n "${RDFM_ENABLE_CORS}" ]; then
 	server_args="${server_args} --disable-cors"
 fi
 

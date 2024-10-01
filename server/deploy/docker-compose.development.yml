@@ -11,7 +11,7 @@ services:
       - RDFM_DISABLE_API_AUTH=1
       - RDFM_LOCAL_PACKAGE_DIR=/packages/
       - RDFM_WSGI_SERVER=werkzeug
-      - RDFM_DISABLE_CORS=1
+      - RDFM_ENABLE_CORS=1
     ports:
       - "5000:5000"
     volumes:

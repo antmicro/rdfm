@@ -146,9 +146,10 @@ def __introspect_and_validate_token(
             )
             return None
 
-        # TODO: We should be able to differentiate between scopes
-        # of a client and user roles, but for now there are merged
         scopes = scope_to_list(introspected_token["scope"])
+
+        # Keycloak specific, extracts roles from the user's
+        # access token and adds them to the list of scopes
         if (
             "realm_access" in introspected_token and
             "roles" in introspected_token["realm_access"]

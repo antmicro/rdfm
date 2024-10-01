@@ -108,13 +108,23 @@ class ServerConfig:
     """
     disable_api_auth: bool
 
-    # TODO: Add docs
+    """ URL to OAuth2 login endpoint.
+        This is used to redirect user to the OAuth2 login page
+        to authenticate.
+    """
     oauth_login_url: str
 
-    # TODO: Add docs
+    """ URL to OAuth2 logout endpoint.
+        This is used to redirect user to the OAuth2 logout page
+        to de-authenticate and clear the session.
+    """
     oauth_logout_url: str
 
-    # TODO: Add docs
+    """ URL to the frontend application
+        This is used for authentication handling and redirection
+        after login/logout. If the frontend application is not server
+        on a dedicated endpoint, this value is not used.
+    """
     frontend_app_url: str
 
     """ URL to an RFC 7662-compatible OAuth2 Token Introspection endpoint.
@@ -244,12 +254,18 @@ def parse_from_environment(config: ServerConfig) -> bool:
         ]:
             return False
 
+    if config.disable_cors and config.include_frontend:
+        print("Cannot disable CORS and include the frontend application " +
+              "at the same time.")
+        return False
+
     if not config.include_frontend:
-        config.frontend_app_url = try_get_env(
-            ENV_FRONTEND_APP_URL, "Frontend application URL"
-        )
-        if config.frontend_app_url is None:
-            return False
+        if ENV_FRONTEND_APP_URL not in os.environ:
+            print(f"Environment variable missing: {ENV_FRONTEND_APP_URL}, " +
+                  "this is required in order to use the frontend application")
+            config.frontend_app_url = None
+        else:
+            config.frontend_app_url = os.environ[ENV_FRONTEND_APP_URL]
 
     # Token Introspection variables are only required when running
     # with authentication enabled.
@@ -258,10 +274,10 @@ def parse_from_environment(config: ServerConfig) -> bool:
             ENV_OAUTH_URL, "RFC 7662 Token Introspection endpoint"
         )
         login_url = try_get_env(
-            ENV_LOGIN_URL, "TODO:"
+            ENV_LOGIN_URL, "URL to redirect users to for login"
         )
         logout_url = try_get_env(
-            ENV_LOGOUT_URL, "TODO:"
+            ENV_LOGOUT_URL, "URL to redirect users to for logout"
         )
         oauth_client_id = try_get_env(
             ENV_OAUTH_CLIENT_ID,

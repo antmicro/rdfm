@@ -71,7 +71,7 @@ Development configuration:
 
 - `RDFM_DISABLE_ENCRYPTION` - if set, disables the use of HTTPS, falling back to exposing the API over HTTP. This can only be used in production if an additional HTTPS reverse proxy is used in front of the RDFM server.
 - `RDFM_DISABLE_API_AUTH` - if set, disables request authentication on the exposed API routes. **WARNING: This is a development flag only! Do not use in production!** This causes all API methods to be freely accessible, without any access control in place!
-- `RDFM_DISABLE_CORS` - if set, disables CORS checks, which in consequence allows any origin to access the server. **WARNING: This is a development flag only! Do not use in production!**
+- `RDFM_ENABLE_CORS` - if set, disables CORS checks, which in consequence allows any origin to access the server. **WARNING: This is a development flag only! Do not use in production!**
 
 HTTP/WSGI configuration:
 
@@ -82,10 +82,13 @@ HTTP/WSGI configuration:
 - `RDFM_WSGI_SERVER` - WSGI server to use, this value should be left default. Accepted values: `gunicorn` (**default**, production-ready), `werkzeug` (recommended for development).
 - `RDFM_WSGI_MAX_CONNECTIONS` - (when using Gunicorn) maximum amount of connections available to the server worker. This value must be set to at minimum the amount of devices that are expected to be maintaining a persistent (via WebSocket) connection with the server. Default: `4000`.
 - `RDFM_INCLUDE_FRONTEND_ENDPOINT` - specifies whether the RDFM server should serve the frontend application. If set, the server will serve the frontend application from endpoint `/api/static/frontend`. Before setting this variable, the frontend application must be built and placed in the `frontend/dist` directory.
+- `RDFM_FRONTEND_APP_URL` - specifies URL to the frontend application. This variable is required when `RDFM_INCLUDE_FRONTEND_ENDPOINT` is not set, as backend HTTP server has to know where to redirect the **user**.
 
 API OAuth2 configuration (must be present when `RDFM_DISABLE_API_AUTH` is omitted):
 
 - `RDFM_OAUTH_URL` - specifies the URL to an authorization server endpoint compatible with the RFC 7662 OAuth2 Token Introspection extension. This endpoint is used to authorize access to the RDFM server based on tokens provided in requests made by API users.
+- `RDFM_LOGIN_URL` - specifies the URL to a login page of the authorization server. It is used to authorize users and generate an access token and start a session.
+- `RDFM_LOGOUT_URL` - specified the URL to a logout page of the authorization server. It is used to end the session and revoke the access token.
 - `RDFM_OAUTH_CLIENT_ID` - if the authorization server endpoint provided in `RDFM_OAUTH_URL` requires the RDFM server to authenticate, this variable defines the OAuth2 `client_id` used for authentication.
 - `RDFM_OAUTH_CLIENT_SEC` - if the authorization server endpoint provided in `RDFM_OAUTH_URL` requires the RDFM server to authenticate, this variable defines the OAuth2 `client_secret` used for authentication.
 
@@ -154,6 +157,11 @@ The following scopes are used for controlling access to different methods of the
 - `rdfm_admin_ro` - read-only access to the API (fetching devices, groups, packages)
 - `rdfm_admin_rw` - complete administrative access to the API with modification rights
 
+Additional rules are defined for package uploading route from [Packages API](api.rst#Packages_API).
+- `rdfm_upload_single_file` - allows uploading an artifact of type `single-file`.
+- `rdfm_upload_rootfs_image` - allows uploading artifacts `rootfs-image` and `delta-rootfs-image`.
+Each package type requires its corresponding scope, or the complete admin access - `rdfm_admin_rw`.
+
 Refer to the [RDFM Server API Reference chapter](api.rst) for a breakdown of the scopes required for accessing each API method.
 
 ### API authentication using Keycloak
@@ -199,6 +207,7 @@ services:
       - start-dev
     volumes:
       - keycloak:/opt/keycloak/data/
+      - ../keycloak-themes:/opt/keycloak/themes
 
 volumes:
   db:
@@ -241,15 +250,21 @@ This secret must be configured in the RDFM server under the `RDFM_OAUTH_CLIENT_S
 After changing the `docker-compose` variables, remember to restart the services (by pressing `Ctrl+C` and re-running the `docker-compose up` command).
 :::
 
-Additionally, you must create proper client scopes to define which users have access to the read-only and read-write parts of the RDFM API.
-To do this, navigate to the `Client scopes` tab and select `Create client scope`.
-Create two separate scopes with the following names; the rest of the settings can be left as default (if required, you may also add a description to the scope):
+Additionally, you must create proper client scopes and user roles to define which users have access to the read-only and read-write parts of the RDFM API.
+To create new scopes, navigate to the `Client scopes` tab and select `Create client scope`.
+Create four separate scopes with the following names; the rest of the settings can be left as default (if required, you may also add a description to the scope):
 - `rdfm_admin_ro`
 - `rdfm_admin_rw`
+- `rdfm_upload_single_file`
+- `rdfm_upload_rootfs_image`
+
+To create new roles, navigate to the `Realm roles` tab and select `Create role`.
+Create separate roles with the same names. The rest of the settings can be left as default (if required, you may also add a description to the role).
 
 After restarting the services, the RDFM server will now validate requests against the Keycloak server.
+To further setup the `rdfm-mgmt` manager to use the Keycloak server, refer to the [RDFM manager manual](rdfm_manager.md). To add users with roles to the Keycloak server, which can then be used to access the RDFM API using the frontend application, refer to the [Adding a User](#adding-a-user) section below.
 
-#### Adding an API user
+#### Adding an API client
 
 First, navigate to the Keycloak Administration Console found at `http://localhost:8080/` and login with the initial credentials provided in Keycloak's configuration above (by default: `admin`/`admin`).
 
@@ -268,6 +283,38 @@ Finally, assign the required scope to the client: under the `Client scopes` tab,
 The newly-created client will now have access to the RDFM API.
 To configure `rdfm-mgmt` to use this client, follow the [Configuration section](rdfm_manager.md#configuration) of the RDFM manager manual.
 :::
+
+#### Adding a User
+
+First, navigate to the Keycloak Administration Console found at `http://localhost:8080/` and login with the initial credentials provided in Keycloak's configuration above (by default: `admin`/`admin`).
+
+Next, go to `Users` tab and press **Add user**. This will open up a form to create a new user.
+Fill in the **Username** field and press **Create**.
+
+Next, go to `Credentials` tab found under the user details and press **Set password**.
+This form allows you to set a password for the user and determine whether creating a new one is required on the next login.
+
+After configuring the user, go to `Role mapping` tab under the user details.
+There, appropriate roles can be assigned to the user using the **Assign role** button.
+
+:::{note}
+The newly created users can now log in using the RDFM frontend application.
+To configure and run the frontend application, refer to the [RDFM Frontend chapter](rdfm_frontend.md).
+:::
+
+##### Configuring frontend application
+
+When using the frontend application, logging in functionality is provided by the Keycloak server.
+To integrate the Keycloak server with the frontend application first go to the client details created in the [Keycloak configuration](#keycloak-configuration) section.
+
+Go to `Capability config` and make sure that **Implicit flow** and **Standard flow** are enabled.
+
+Open `Settings` panel and set **Valid redirect URIs** and **Valid post logout redirect URIs** values to the URL of the frontend application.
+The value depends on the deployment method, if the `rdfm-server` is used to host the frontend application the value can be inferred from the `RDFM_HOSTNAME` and `RDFM_API_PORT` environment variables and will most likely be `http[s]://{RDFM_HOSTNAME}:{RDFM_API_PORT}`.
+Otherwise, the value should be equal to `RDFM_FRONTEND_APP_URL` variable.
+
+Additionally, you can change the theme of the login page to match the frontend application.
+To do this, go to `Login settings` section and `rdfm` in the **Login theme** dropdown.
 
 ## Configuring HTTPS
 

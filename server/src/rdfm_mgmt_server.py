@@ -140,6 +140,7 @@ def setup_with_config_from_env() -> Flask:
     )
     config.disable_api_auth = "RDFM_DISABLE_API_AUTH" in os.environ
     config.encrypted = "RDFM_DISABLE_ENCRYPTION" not in os.environ
+    config.include_frontend = "RDFM_INCLUDE_FRONTEND_ENDPOINT" in os.environ
     if not configuration.parse_from_environment(config):
         raise RuntimeError(
             "Parsing variables from the environment failed, "

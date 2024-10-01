@@ -13,6 +13,7 @@ services:
       - RDFM_OAUTH_URL=http://keycloak:8080/realms/master/protocol/openid-connect/token/introspect
       - RDFM_OAUTH_CLIENT_ID=rdfm-server-introspection
       - RDFM_OAUTH_CLIENT_SEC=qPsZzvAUtDVREjJyuyAEu3SDBQElATgX
+      - RDFM_INCLUDE_FRONTEND_ENDPOINT=1
     networks:
       - rdfm
     ports:
