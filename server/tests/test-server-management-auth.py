@@ -7,7 +7,7 @@ from typing import Optional
 from mocks.oauth2_token_introspection import (start_token_mock,
                                               configure_token_mock,
                                               MockConfig)
-from api.v1.middleware import SCOPE_READ_ONLY, SCOPE_READ_WRITE
+from api.v1.middleware import SCOPE_READ_ONLY, SCOPE_READ_WRITE, SCOPE_SINGLE_FILE, SCOPE_ROOTFS_IMAGE
 from common import SERVER_WAIT_TIMEOUT, wait_for_api
 
 
@@ -78,16 +78,24 @@ SCOPE_RO_ACCESS_TEST_DATA = [
     (MockConfig(valid=False, scopes=[]), 401, "accessing a read-only endpoint with an invalid token should be rejected"),
     (MockConfig(valid=False, scopes=[SCOPE_READ_ONLY]), 401, "accessing a read-only endpoint with an invalid token should be rejected"),
     (MockConfig(valid=False, scopes=[SCOPE_READ_WRITE]), 401, "accessing a read-only endpoint with an invalid token should be rejected"),
+    (MockConfig(valid=False, scopes=[SCOPE_SINGLE_FILE]), 401, "accessing a read-only endpoint with an invalid token should be rejected"),
+    (MockConfig(valid=False, scopes=[SCOPE_ROOTFS_IMAGE]), 401, "accessing a read-only endpoint with an invalid token should be rejected"),
     (MockConfig(valid=True, scopes=[]), 403, _scope_error("read-only", "no", "rejected")),
     (MockConfig(valid=True, scopes=[SCOPE_READ_ONLY]), 200, _scope_error("read-only", "read-only", "accepted")),
+    (MockConfig(valid=True, scopes=[SCOPE_SINGLE_FILE]), 403, _scope_error("read-only", "upload-single-file", "rejected")),
+    (MockConfig(valid=True, scopes=[SCOPE_ROOTFS_IMAGE]), 403, _scope_error("read-only", "upload-rootfs-image", "rejected")),
     (MockConfig(valid=True, scopes=[SCOPE_READ_WRITE]), 200, _scope_error("read-only", "read-write", "accepted")),
 ]
 SCOPE_RW_ACCESS_TEST_DATA = [
     (MockConfig(valid=False, scopes=[]), 401, "accessing a read-write endpoint with an invalid token should be rejected"),
     (MockConfig(valid=False, scopes=[SCOPE_READ_ONLY]), 401, "accessing a read-write endpoint with an invalid token should be rejected"),
     (MockConfig(valid=False, scopes=[SCOPE_READ_WRITE]), 401, "accessing a read-write endpoint with an invalid token should be rejected"),
+    (MockConfig(valid=False, scopes=[SCOPE_SINGLE_FILE]), 401, "accessing a read-write endpoint with an invalid token should be rejected"),
+    (MockConfig(valid=False, scopes=[SCOPE_ROOTFS_IMAGE]), 401, "accessing a read-write endpoint with an invalid token should be rejected"),
     (MockConfig(valid=True, scopes=[]), 403, _scope_error("read-write", "no", "rejected")),
     (MockConfig(valid=True, scopes=[SCOPE_READ_ONLY]), 403, _scope_error("read-write", "read-only", "rejected")),
+    (MockConfig(valid=True, scopes=[SCOPE_SINGLE_FILE]), 403, _scope_error("read-only", "upload-single-file", "rejected")),
+    (MockConfig(valid=True, scopes=[SCOPE_ROOTFS_IMAGE]), 403, _scope_error("read-only", "upload-rootfs-image", "rejected")),
     (MockConfig(valid=True, scopes=[SCOPE_READ_WRITE]), 200, _scope_error("read-write", "read-write", "accepted")),
 ]
 

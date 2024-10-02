@@ -63,7 +63,7 @@ def db_postgres():
     temp_db = pg_temp.TempDB(databases=[dbname])
     yield f'postgresql:///{dbname}?host={temp_db.pg_socket_dir}'
     temp_db.cleanup()
-    
+
 
 @pytest.fixture()
 def process_config():
