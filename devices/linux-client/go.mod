@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/balena-os/librsync-go v0.8.5
 	github.com/bmatsuo/lmdb-go v1.8.0 // indirect
+	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/gorilla/websocket v1.5.0
 	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
