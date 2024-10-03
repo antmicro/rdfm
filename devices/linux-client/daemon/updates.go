@@ -17,8 +17,6 @@ import (
 const MIN_RETRY_INTERVAL = 1
 const MAX_RETRY_INTERVAL = 60
 
-var NotAuthorizedError = errors.New("Device did not provide authorization data, or the authorization has expired")
-
 func (d *Device) checkUpdate() error {
 	devType, err := d.rdfmCtx.GetCurrentDeviceType()
 	if err != nil {
@@ -45,7 +43,11 @@ func (d *Device) checkUpdate() error {
 		bytes.NewBuffer(serializedMetadata),
 	)
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer token="+d.deviceToken)
+	deviceToken, err := d.getDeviceToken()
+	if err != nil {
+		return errors.New("Failed to fetch the device token: " + err.Error())
+	}
+	req.Header.Add("Authorization", "Bearer token="+deviceToken)
 
 	log.Println("Checking updates...")
 
@@ -82,7 +84,7 @@ func (d *Device) checkUpdate() error {
 	case 400:
 		return errors.New("Device metadata is missing device type and/or software version")
 	case 401:
-		return NotAuthorizedError
+		return errors.New("Device did not provide authorization data, or the authorization has expired")
 	default:
 		return errors.New("Unexpected status code from the server: " + res.Status)
 	}
@@ -92,7 +94,6 @@ func (d *Device) checkUpdate() error {
 func (d *Device) updateCheckerLoop(done chan bool) {
 	var err error
 	var info string
-	var count int
 
 	// Recover the goroutine if it panics
 	defer func() {
@@ -112,27 +113,12 @@ func (d *Device) updateCheckerLoop(done chan bool) {
 
 	for {
 		err = d.checkUpdate()
-		if err == NotAuthorizedError {
-			log.Println(err)
-			err = d.authenticateDeviceWithServer()
-			if err == nil {
-				retryInterval := count * MIN_RETRY_INTERVAL
-				if retryInterval > MAX_RETRY_INTERVAL {
-					retryInterval = MAX_RETRY_INTERVAL
-				}
-				time.Sleep(time.Duration(retryInterval) * time.Second)
-				count = (count + 1) * 2
-				continue
-			}
-			err = errors.New("Failed to autheniticate with the server: " + err.Error())
-		}
 		if err != nil {
 			log.Println("Update check failed:", err)
 		}
 		updateDuration := time.Duration(d.rdfmCtx.RdfmConfig.UpdatePollIntervalSeconds) * time.Second
 		log.Printf("Next update check in %s\n", updateDuration)
 		time.Sleep(time.Duration(updateDuration))
-		count = 0
 	}
 	panic(err)
 }

@@ -36,8 +36,7 @@ const MSG_RECV_TIMEOUT_INTERVALS = 10
 const MSG_RECV_INTERVAL_S = 1
 const RSA_DEVICE_KEY_SIZE = 4096
 const MGMT_LOOP_RECOVERY_INTERVAL = 30
-
-var tokenMutex sync.Mutex
+const TOKEN_EXPIRY_MIN_ALLOWED = 5
 
 type Device struct {
 	name          string
@@ -48,6 +47,7 @@ type Device struct {
 	macAddr       string
 	rdfmCtx       *app.RDFM
 	deviceToken   string
+	tokenMutex    sync.Mutex
 	httpTransport *http.Transport
 }
 
@@ -192,12 +192,12 @@ func (d *Device) connect() error {
 	}
 
 	// Get device token
-	err = d.authenticateDeviceWithServer()
+	deviceToken, err := d.getDeviceToken()
 	if err != nil {
 		return err
 	}
 	authHeader := http.Header{
-		"Authorization": []string{"Bearer token=" + d.deviceToken},
+		"Authorization": []string{"Bearer token=" + deviceToken},
 	}
 
 	// Open a WebSocket connection
@@ -269,10 +269,33 @@ func (d *Device) managementWsLoop(done chan bool) {
 	panic(err)
 }
 
-func (d Device) getDeviceToken() string {
-	tokenMutex.Lock()
-	defer tokenMutex.Unlock()
-	return d.deviceToken
+func (d *Device) getDeviceToken() (string, error) {
+	d.tokenMutex.Lock()
+	defer d.tokenMutex.Unlock()
+
+	payload, err := netUtils.ExtractJwtPayload(d.deviceToken)
+	if err == nil {
+		// check if reauth needed in the next TOKEN_EXPIRY_MIN_ALLOWED or less seconds
+		if payload.CreatedAt+payload.Expires-TOKEN_EXPIRY_MIN_ALLOWED <= time.Now().Unix() {
+			log.Println("Device token expired, reauthenticating...")
+			err = d.authenticateDeviceWithServer()
+			if err != nil {
+				return "", err
+			}
+		} else {
+			log.Println("Device token up to date")
+		}
+	} else {
+		// extraction failed
+		log.Println("Device token missing or malformed, authenticating...")
+		err := d.authenticateDeviceWithServer()
+		if err != nil {
+			return "", err
+		}
+	}
+
+	// d.authenticateDeviceWithServer should have taken care of fetching the token if necessary
+	return d.deviceToken, nil
 }
 
 func getPublicKey(privateKey *rsa.PrivateKey) []byte {
@@ -406,8 +429,6 @@ func (d *Device) authenticateDeviceWithServer() error {
 				log.Println("Failed to deserialize package metadata", err)
 				return err
 			}
-			tokenMutex.Lock()
-			defer tokenMutex.Unlock()
 			d.deviceToken = response["token"].(string)
 			log.Println("Authorization token expires in", response["expires"], "seconds")
 			if len(d.deviceToken) == 0 {
