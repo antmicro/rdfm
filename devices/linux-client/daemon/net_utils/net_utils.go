@@ -1,7 +1,9 @@
 package netUtils
 
 import (
+	"encoding/json"
 	"errors"
+	"github.com/golang-jwt/jwt/v5"
 	"net"
 	"net/url"
 	"regexp"
@@ -66,4 +68,32 @@ func GetMacAddr() (string, error) {
 		return "", errors.New("Failed to get MAC address from a valid interface")
 	}
 	return "", errors.New("Failed to get MAC address")
+}
+
+type JwtPayload struct {
+	DeviceId  string `json:"device_id"`
+	CreatedAt int64  `json:"created_at"`
+	Expires   int64  `json:"expires"`
+}
+
+func ExtractJwtPayload(tokenStr string) (*JwtPayload, error) {
+	token, _, err := new(jwt.Parser).ParseUnverified(tokenStr, jwt.MapClaims{})
+	if err != nil {
+		return nil, err
+	}
+
+	if payload, ok := token.Claims.(jwt.MapClaims); ok {
+		var payloadStruct JwtPayload
+		claimsBytes, err := json.Marshal(payload)
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(claimsBytes, &payloadStruct)
+		if err != nil {
+			return nil, err
+		}
+		return &payloadStruct, nil
+	} else {
+		return nil, errors.New("Failed to extract JWT payload: false type assertion")
+	}
 }
