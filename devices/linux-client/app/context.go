@@ -8,6 +8,7 @@ import (
 	conf "github.com/antmicro/rdfm/conf"
 	"github.com/antmicro/rdfm/delta"
 	"github.com/antmicro/rdfm/helpers"
+	tconf "github.com/antmicro/rdfm/telemetry/conf"
 	"github.com/mendersoftware/mender/client"
 	mconf "github.com/mendersoftware/mender/conf"
 	"github.com/mendersoftware/mender/datastore"
@@ -19,10 +20,11 @@ import (
 )
 
 type RDFM struct {
-	RdfmConfig    *conf.RDFMConfig
-	menderConfig  *mconf.MenderConfig
-	store         *store.DBStore
-	deviceManager *device.DeviceManager
+	RdfmConfig          *conf.RDFMConfig
+	menderConfig        *mconf.MenderConfig
+	RdfmTelemetryConfig *map[string]tconf.RDFMLoggerConfiguration
+	store               *store.DBStore
+	deviceManager       *device.DeviceManager
 }
 
 // overlay mender config with shared rdfm config fields and return it
@@ -50,6 +52,11 @@ func NewRdfmContext() (*RDFM, error) {
 		return nil, err
 	}
 
+	rdfmTelemetryConfig, err := tconf.LoadConfig(conf.RdfmDefaultLoggersPath)
+	if err != nil {
+		return nil, err
+	}
+
 	store, err := loadDbStore()
 	if err != nil {
 		return nil, err
@@ -63,6 +70,7 @@ func NewRdfmContext() (*RDFM, error) {
 	ctx := RDFM{
 		rdfmConfig,
 		menderConfig,
+		rdfmTelemetryConfig,
 		store,
 		deviceManager,
 	}

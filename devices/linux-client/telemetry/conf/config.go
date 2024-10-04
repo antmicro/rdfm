@@ -5,16 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 )
 
-type LoggerConfiguration struct {
+type RDFMLoggerConfiguration struct {
 	Name string   `json:"name,omitempty"`
 	Path string   `json:"path,omitempty"`
 	Args []string `json:"args,omitempty"`
 	Tick int      `json:"tick,omitempty"`
 }
-
-type LoggerConfigurations map[string]LoggerConfiguration
 
 func checkConfigFilePermissions(path string) error {
 	fileInfo, err := os.Stat(path)
@@ -29,14 +29,20 @@ func checkConfigFilePermissions(path string) error {
 	return nil
 }
 
-func Parse(path string) (LoggerConfigurations, error) {
+func LoadConfig(path string) (*map[string]RDFMLoggerConfiguration, error) {
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		log.Warnf("telemetry: no configured loggers were found (missing %s)", path)
+		empty := make(map[string]RDFMLoggerConfiguration)
+		return &empty, nil
+	}
 
 	if err := checkConfigFilePermissions(path); err != nil {
+		log.Error("telemetry: config file: wrong permissions")
 		return nil, err
 	}
 
-	var config []LoggerConfiguration
-	unique_config := LoggerConfigurations{}
+	var config []RDFMLoggerConfiguration
+	unique_config := map[string]RDFMLoggerConfiguration{}
 	configFile, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -58,5 +64,5 @@ func Parse(path string) (LoggerConfigurations, error) {
 		unique_config[logger.Name] = logger
 	}
 
-	return unique_config, nil
+	return &unique_config, nil
 }

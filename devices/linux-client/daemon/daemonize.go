@@ -10,6 +10,7 @@ import (
 
 	"github.com/antmicro/rdfm/app"
 	"github.com/antmicro/rdfm/daemon/capabilities"
+	"github.com/antmicro/rdfm/telemetry"
 	libcli "github.com/urfave/cli/v2"
 )
 
@@ -36,6 +37,7 @@ func Daemonize(c *libcli.Context) error {
 		metadata:     nil,
 		caps:         caps,
 		rdfmCtx:      ctx,
+		logManager:   telemetry.MakeLogManager(),
 	}
 
 	err = device.connect()
@@ -50,6 +52,7 @@ func Daemonize(c *libcli.Context) error {
 
 	go device.updateCheckerLoop(done)
 	go device.managementWsLoop(done)
+	go device.telemetryLoop(done)
 
 	<-channel
 	log.Println("Daemon killed")

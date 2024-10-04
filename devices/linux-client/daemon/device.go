@@ -26,6 +26,7 @@ import (
 	"github.com/antmicro/rdfm/app"
 	"github.com/antmicro/rdfm/conf"
 	"github.com/antmicro/rdfm/daemon/capabilities"
+	"github.com/antmicro/rdfm/telemetry"
 	"github.com/gorilla/websocket"
 
 	netUtils "github.com/antmicro/rdfm/daemon/net_utils"
@@ -49,6 +50,7 @@ type Device struct {
 	deviceToken   string
 	tokenMutex    sync.Mutex
 	httpTransport *http.Transport
+	logManager    *telemetry.LogManager
 }
 
 func (d Device) recv() ([]byte, error) {

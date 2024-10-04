@@ -1,6 +1,13 @@
 package daemon
 
-import log "github.com/sirupsen/logrus"
+import (
+	"fmt"
+	"github.com/antmicro/rdfm/helpers"
+	"github.com/antmicro/rdfm/telemetry"
+	log "github.com/sirupsen/logrus"
+)
+
+var globalTelemetryChannel chan<- telemetry.LogEntry = nil
 
 type LoggerHook struct{}
 
@@ -8,14 +15,17 @@ func (hook *LoggerHook) Levels() []log.Level {
 	return []log.Level{
 		log.InfoLevel,
 		log.ErrorLevel,
-		log.FatalLevel,
-		log.PanicLevel,
 		log.WarnLevel,
-		log.TraceLevel,
 	}
 }
 
 func (hook *LoggerHook) Fire(entry *log.Entry) error {
-	// fmt.Println("hook caught:", entry.Message)
+	go func() {
+		globalTelemetryChannel <- telemetry.MakeLogEntry(
+			helpers.TimeToServerTime(entry.Time),
+			fmt.Sprintf("RDFM-%s", entry.Level.String()),
+			entry.Message,
+		)
+	}()
 	return nil
 }

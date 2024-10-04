@@ -16,6 +16,8 @@ const DEFAULT_RETRY_POLL_INTERVAL_S = 60
 const DEFAULT_HTTP_CACHE_ENABLED = true
 const DEFAULT_RECONNECT_RETRY_COUNT = 3
 const DEFAULT_RECONNECT_RETRY_TIME = 60
+const DEFAULT_TELEMETRY_ENABLE = false
+const DEFAULT_TELEMETRY_BATCH_SIZE = 50
 
 type RDFMConfig struct {
 	// Path to the device type file
@@ -43,6 +45,11 @@ type RDFMConfig struct {
 	ReconnectRetryCount int `json:",omitempty"`
 	// HTTP reconnect retry time
 	ReconnectRetryTime int `json:",omitempty"`
+
+	// Is telemetry enabled. Default: false
+	TelemetryEnable bool `json:",omitempty"`
+	// Number of log entries to be sent at a time. Default: 50
+	TelemetryBatchSize int `json:",omitempty"`
 }
 
 var rdfmConfigInstance *RDFMConfig
@@ -83,6 +90,8 @@ func LoadConfig(mainConfigFile string, overlayConfigFile string) (*RDFMConfig, *
 		HttpCacheEnabled:          DEFAULT_HTTP_CACHE_ENABLED,
 		ReconnectRetryCount:       DEFAULT_RECONNECT_RETRY_COUNT,
 		ReconnectRetryTime:        DEFAULT_RECONNECT_RETRY_TIME,
+		TelemetryEnable:           DEFAULT_TELEMETRY_ENABLE,
+		TelemetryBatchSize:        DEFAULT_TELEMETRY_BATCH_SIZE,
 	}
 
 	// Load Mender config

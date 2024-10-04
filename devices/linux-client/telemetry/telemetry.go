@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/antmicro/rdfm/telemetry/conf"
+	log "github.com/sirupsen/logrus"
 )
 
 type LoggerContext struct {
@@ -201,4 +204,41 @@ func (manager *LogManager) StopTask(name string) error {
 	}
 
 	return nil
+}
+
+// Utility function that starts all the loggers within the provided map
+func StartRecurringProcessLoggers(lm *LogManager, c *map[string]conf.RDFMLoggerConfiguration) chan LogEntry {
+	logs := make(chan LogEntry)
+	if c == nil {
+		return logs
+	}
+	for k, v := range *c {
+		err := lm.AddTask(
+			k,
+			RecurringProcessLogger,
+			time.Millisecond*time.Duration(v.Tick),
+		)
+		if err != nil {
+			log.Printf("Failed to start recurring process logger %s: %s", k, err.Error())
+			continue
+		}
+
+		args := LoggerArgs{k, v.Path, v.Args}
+		err = lm.StartTask(k, args, logs)
+
+		if err != nil {
+			log.Error(err)
+		}
+	}
+	return logs
+}
+
+// Utilty function that tries to stop all the loggers within the provided map
+func StopLoggers(lm *LogManager, c *map[string]conf.RDFMLoggerConfiguration) {
+	for k := range *c {
+		err := lm.StopTask(k)
+		if err != nil {
+			log.Printf("Failed to stop logger %s: %s", k, err.Error())
+		}
+	}
 }
