@@ -3,31 +3,13 @@ package telemetry
 import (
 	"bufio"
 	"context"
+	"github.com/antmicro/rdfm/helpers"
 	"io"
 	"os/exec"
 	"strings"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 )
-
-func makeLogEntry(timestamp string, name string, entry string) LogEntry {
-	return LogEntry{
-		Timestamp: timestamp,
-		Name:      name,
-		Entry:     entry,
-	}
-}
-
-func makeLogBatch(entries []LogEntry) LogBatch {
-	return LogBatch{
-		Batch: entries,
-	}
-}
-
-func now_as_server_time() string {
-	return time.Now().UTC().Format(time.RFC1123Z)
-}
 
 func readFromPipe(pipe io.ReadCloser, ch chan string) {
 	scanner := bufio.NewScanner(pipe)
@@ -86,8 +68,8 @@ var RecurringProcessLogger = RecurringLogger(
 				select {
 				case stdoutLine, ok := <-stdoutCh:
 					if ok {
-						ctx.Logs <- makeLogEntry(
-							now_as_server_time(),
+						ctx.Logs <- MakeLogEntry(
+							helpers.NowAsServerTime(),
 							ctx.Args.Name,
 							stdoutLine,
 						)
@@ -96,8 +78,8 @@ var RecurringProcessLogger = RecurringLogger(
 					}
 				case stderrLine, ok := <-stderrCh:
 					if ok {
-						ctx.Logs <- makeLogEntry(
-							now_as_server_time(),
+						ctx.Logs <- MakeLogEntry(
+							helpers.NowAsServerTime(),
 							ctx.Args.Name,
 							stderrLine,
 						)

@@ -16,3 +16,17 @@ type LogEntry struct {
 	Name      string `json:"name"`
 	Entry     string `json:"entry"`
 }
+
+func MakeLogEntry(timestamp string, name string, entry string) LogEntry {
+	return LogEntry{
+		Timestamp: timestamp,
+		Name:      name,
+		Entry:     entry,
+	}
+}
+
+func MakeLogBatch(entries []LogEntry) LogBatch {
+	return LogBatch{
+		Batch: entries,
+	}
+}
