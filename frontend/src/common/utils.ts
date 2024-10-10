@@ -14,6 +14,13 @@ import { type Ref } from 'vue';
 
 const SERVER_URL =
     import.meta.env.VITE_SERVER_URL || `${window.location.protocol}//${window.location.host}`;
+const OIDC_LOGIN_URL = import.meta.env.VITE_LOGIN_URL;
+const OIDC_LOGOUT_URL = import.meta.env.VITE_LOGOUT_URL;
+const OAUTH2_CLIENT = import.meta.env.VITE_OAUTH2_CLIENT;
+
+const FRONTEND_URL =
+    `${window.location.protocol}//${window.location.host}` +
+    (import.meta.env.VITE_RDFM_BACKEND === 'true' ? '/api/static/frontend' : '');
 
 /**
  * Endpoints for rdfm-server API
@@ -33,8 +40,8 @@ export const UPDATE_GROUP_PRIORITY_ENDPOINT = (id: number) => `${GROUPS_ENDPOINT
 export const PATCH_DEVICES_IN_GROUP_ENDPOINT = (id: number) => `${GROUPS_ENDPOINT}/${id}/devices`;
 export const ASSIGN_PACKAGE_IN_GROUP_ENDPOINT = (id: number) => `${GROUPS_ENDPOINT}/${id}/package`;
 
-export const LOGIN_PATH = SERVER_URL + '/api/login';
-export const LOGOUT_PATH = SERVER_URL + '/api/logout';
+export const LOGIN_PATH = `${OIDC_LOGIN_URL}?response_type=token&client_id=${OAUTH2_CLIENT}&redirect_uri=${FRONTEND_URL}/auth_data`;
+export const LOGOUT_PATH = `${OIDC_LOGOUT_URL}?client_id=${OAUTH2_CLIENT}&post_logout_redirect_uri=${FRONTEND_URL}/logout`;
 
 export const POLL_INTERVAL = 2500;
 

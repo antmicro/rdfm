@@ -19,8 +19,6 @@ ENV_S3_BUCKET = "RDFM_S3_BUCKET"
 ALLOWED_STORAGE_DRIVERS = ["local", "s3"]
 
 ENV_OAUTH_URL = "RDFM_OAUTH_URL"
-ENV_LOGIN_URL = "RDFM_LOGIN_URL"
-ENV_LOGOUT_URL = "RDFM_LOGOUT_URL"
 ENV_OAUTH_CLIENT_ID = "RDFM_OAUTH_CLIENT_ID"
 ENV_OAUTH_CLIENT_SECRET = "RDFM_OAUTH_CLIENT_SEC"
 
@@ -273,12 +271,6 @@ def parse_from_environment(config: ServerConfig) -> bool:
         oauth_url = try_get_env(
             ENV_OAUTH_URL, "RFC 7662 Token Introspection endpoint"
         )
-        login_url = try_get_env(
-            ENV_LOGIN_URL, "URL to redirect users to for login"
-        )
-        logout_url = try_get_env(
-            ENV_LOGOUT_URL, "URL to redirect users to for logout"
-        )
         oauth_client_id = try_get_env(
             ENV_OAUTH_CLIENT_ID,
             "OAuth2 client_id to authenticate introspection requests",
@@ -289,16 +281,12 @@ def parse_from_environment(config: ServerConfig) -> bool:
         )
         if None in [
             oauth_url,
-            login_url,
-            logout_url,
             oauth_client_id,
             oauth_client_secret,
         ]:
             return False
         else:
             config.token_introspection_url = str(oauth_url)
-            config.oauth_login_url = str(login_url)
-            config.oauth_logout_url = str(logout_url)
             config.token_introspection_client_id = str(oauth_client_id)
             config.token_introspection_client_secret = str(oauth_client_secret)
     return True

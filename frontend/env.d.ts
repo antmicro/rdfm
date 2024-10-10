@@ -10,6 +10,9 @@
 interface ImportMetaEnv {
     readonly VITE_SERVER_URL: string
     readonly VITE_RDFM_BACKEND: string
+    readonly VITE_LOGIN_URL: string
+    readonly VITE_LOGOUT_URL: string
+    readonly VITE_OAUTH2_CLIENT: string
 }
 
 interface ImportMeta {
