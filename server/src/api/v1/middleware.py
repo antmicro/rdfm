@@ -28,6 +28,9 @@ SCOPE_SINGLE_FILE = "rdfm_upload_single_file"
 """ Rootfs Image package write scope """
 SCOPE_ROOTFS_IMAGE = "rdfm_upload_rootfs_image"
 
+""" Rootfs Image package write scope """
+SCOPE_NONSTANDARD_ARTIFACT = "rdfm_upload_nonstandard_artifact"
+
 """ Text to append after the endpoint's docstring when an appropriate
     package write scope is required
 """
@@ -539,6 +542,8 @@ def artifact_type_to_scope(artifact_type: str) -> str:
         return SCOPE_SINGLE_FILE
     if artifact_type == "rootfs-image":
         return SCOPE_ROOTFS_IMAGE
+    if artifact_type == "nonstandard":
+        return SCOPE_NONSTANDARD_ARTIFACT
     return SCOPE_READ_WRITE
 
 

@@ -186,15 +186,18 @@ def upload_package(scopes: list[str] = []):
             # Verification of the artifact type
             # The artifact is a .tar file containing a 'header.tar' file,
             # which is also a .tar file that contains a 'header-info' JSON.
-            # TODO: Introduce validation that the input is a valid artifact
+            # In case the artifact is not a standard RDFM artifact
+            # we're checking permissions for non-standard packages
             if not conf.disable_api_auth:
-                package_tar = tarfile.open(f.name)
-                header_io = package_tar.extractfile('header.tar')
-                header_tar = tarfile.open(fileobj=header_io)
-                header_info_io = header_tar.extractfile('header-info')
-                header_info_json = json.load(header_info_io)
-                artifact_type: str = header_info_json['payloads'][0]['type']
-
+                try:
+                    package_tar = tarfile.open(f.name)
+                    header_io = package_tar.extractfile('header.tar')
+                    header_tar = tarfile.open(fileobj=header_io)
+                    header_info_io = header_tar.extractfile('header-info')
+                    header_info_json = json.load(header_info_io)
+                    artifact_type: str = header_info_json['payloads'][0]['type']
+                except (tarfile.ReadError, KeyError):
+                    artifact_type = "nonstandard"
                 required_scopes = get_scopes_for_upload_package(artifact_type)
                 # Checking if the user has any of the required scopes
                 if not any(scope in scopes for scope in required_scopes):
