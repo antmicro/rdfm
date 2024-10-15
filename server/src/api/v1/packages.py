@@ -188,25 +188,14 @@ def upload_package(scopes: list[str] = []):
             # which is also a .tar file that contains a 'header-info' JSON.
             # In case the artifact is not a standard RDFM artifact
             # we're checking permissions for non-standard packages
-            if not conf.disable_api_auth:
-                try:
-                    package_tar = tarfile.open(f.name)
-                    header_io = package_tar.extractfile('header.tar')
-                    header_tar = tarfile.open(fileobj=header_io)
-                    header_info_io = header_tar.extractfile('header-info')
-                    header_info_json = json.load(header_info_io)
-                    artifact_type: str = header_info_json['payloads'][0]['type']
-                except (tarfile.ReadError, KeyError):
-                    artifact_type = "nonstandard"
-                required_scopes = get_scopes_for_upload_package(artifact_type)
-                # Checking if the user has any of the required scopes
-                if not any(scope in scopes for scope in required_scopes):
-                    return api_error(
-                        "user does not have permission to upload this " +
-                        "package type. One of the scopes is required: " +
-                        ", ".join(required_scopes),
-                        403
-                    )
+            authorized, req_scopes = is_authorized_to_upload(f, scopes, conf)
+            if not authorized:
+                return api_error(
+                    "user does not have permission to upload this " +
+                    "package type. One of the scopes is required: " +
+                    ", ".join([str(i) for i in req_scopes]),
+                    403
+                )
             success = driver.upsert(meta, f.name, storage_directory)
             if not success:
                 return api_error("could not store artifact", 500)
@@ -227,6 +216,31 @@ def upload_package(scopes: list[str] = []):
         traceback.print_exc()
         print("Exception during package upload:", repr(e))
         return {}, 500
+
+
+def is_authorized_to_upload(file, scopes: list[str],
+                            conf: configuration.ServerConfig) -> bool:
+    if conf.disable_api_auth:
+        return (True, [])
+    artifact_types = []
+    try:
+        package_tar = tarfile.open(file.name)
+        header_io = package_tar.extractfile('header.tar')
+        header_tar = tarfile.open(fileobj=header_io)
+        header_info_io = header_tar.extractfile('header-info')
+        header_info_json = json.load(header_info_io)
+        for payload in header_info_json['payloads']:
+            artifact_types.append(payload['type'])
+    except (tarfile.ReadError, KeyError):
+        artifact_types.append('nonstandard')
+    # Checking if the user any of the required scopes
+    # for every payload
+    required_scopes = list(map(get_scopes_for_upload_package, artifact_types))
+    if not all(
+            any(scope in required_scope for scope in scopes)
+            for required_scope in required_scopes):
+        return (False, required_scopes)
+    return (True, required_scopes)
 
 
 @packages_blueprint.route("/api/v1/packages/<int:identifier>", methods=["GET"])
