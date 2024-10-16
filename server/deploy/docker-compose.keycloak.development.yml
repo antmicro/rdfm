@@ -37,6 +37,7 @@ services:
     volumes:
       - keycloak:/opt/keycloak/data/
       - ../keycloak-themes:/opt/keycloak/themes
+      - ../../common/images:/opt/keycloak/themes/rdfm/login/resources/img
 
 volumes:
   db:
