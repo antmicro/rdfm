@@ -136,6 +136,8 @@ def process_gunicorn(db, request):
             "gunicorn",
             "-k",
             "gevent",
+            "--timeout",    # On CPU constrained containers the workers may exceed the default timeout of 30 seconds, which fails the test.
+            "3600",         # HACK: Since this is a stress test, increasing the timeout to an arbitrary big value will suffice.
             "-b",
             "localhost:5000",
             "rdfm_mgmt_server:setup_with_config_from_env()",
