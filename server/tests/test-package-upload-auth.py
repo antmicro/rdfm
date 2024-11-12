@@ -88,15 +88,15 @@ def _scope_error(endpoint_type: str,
 
 
 SCOPES_UPLOAD_TEST_DATA = [
-    (MockConfig(valid=True, scopes=[SCOPE_READ_WRITE]), 200, _scope_error("upload-single-file, read-write", "read-write", "accepted"), TEST_SINGLE_FILE_DATA),
-    (MockConfig(valid=True, scopes=[SCOPE_SINGLE_FILE]), 200, _scope_error("upload-single-file, read-write", "upload-single-file", "accepted"), TEST_SINGLE_FILE_DATA),
-    (MockConfig(valid=True, scopes=[SCOPE_READ_ONLY]), 403, _scope_error("upload-single-file, read-write", "read-only", "rejected"), TEST_SINGLE_FILE_DATA),
-    (MockConfig(valid=True, scopes=[SCOPE_ROOTFS_IMAGE]), 403, _scope_error("upload-single-file, read-write", "upload-rootfs-image", "rejected"), TEST_SINGLE_FILE_DATA),
-    (MockConfig(valid=True, scopes=[SCOPE_READ_WRITE]), 200, _scope_error("upload-rootfs-image, read-write", "read-write", "accepted"), TEST_ROOTFS_IMAGE_DATA),
-    (MockConfig(valid=True, scopes=[SCOPE_ROOTFS_IMAGE]), 200, _scope_error("upload-rootfs-image, read-write", "upload-rootfs-image", "accepted"), TEST_ROOTFS_IMAGE_DATA),
-    (MockConfig(valid=True, scopes=[SCOPE_SINGLE_FILE]), 403, _scope_error("upload-rootfs-image, read-write", "upload-single-file", "rejected"), TEST_ROOTFS_IMAGE_DATA),
-    (MockConfig(valid=True, scopes=[SCOPE_READ_ONLY]), 403, _scope_error("upload-rootfs-image, read-write", "read-only", "rejected"), TEST_ROOTFS_IMAGE_DATA),
-    (MockConfig(valid=True, scopes=[]), 403, _scope_error("upload-single-file, read-write", "none", "rejected"), TEST_SINGLE_FILE_DATA),
+    (MockConfig(valid=True, scopes=[SCOPE_READ_WRITE], user_id="test-user-id"), 200, _scope_error("upload-single-file, read-write", "read-write", "accepted"), TEST_SINGLE_FILE_DATA),
+    (MockConfig(valid=True, scopes=[SCOPE_SINGLE_FILE], user_id="test-user-id"), 200, _scope_error("upload-single-file, read-write", "upload-single-file", "accepted"), TEST_SINGLE_FILE_DATA),
+    (MockConfig(valid=True, scopes=[SCOPE_READ_ONLY], user_id="test-user-id"), 403, _scope_error("upload-single-file, read-write", "read-only", "rejected"), TEST_SINGLE_FILE_DATA),
+    (MockConfig(valid=True, scopes=[SCOPE_ROOTFS_IMAGE], user_id="test-user-id"), 403, _scope_error("upload-single-file, read-write", "upload-rootfs-image", "rejected"), TEST_SINGLE_FILE_DATA),
+    (MockConfig(valid=True, scopes=[SCOPE_READ_WRITE], user_id="test-user-id"), 200, _scope_error("upload-rootfs-image, read-write", "read-write", "accepted"), TEST_ROOTFS_IMAGE_DATA),
+    (MockConfig(valid=True, scopes=[SCOPE_ROOTFS_IMAGE], user_id="test-user-id"), 200, _scope_error("upload-rootfs-image, read-write", "upload-rootfs-image", "accepted"), TEST_ROOTFS_IMAGE_DATA),
+    (MockConfig(valid=True, scopes=[SCOPE_SINGLE_FILE], user_id="test-user-id"), 403, _scope_error("upload-rootfs-image, read-write", "upload-single-file", "rejected"), TEST_ROOTFS_IMAGE_DATA),
+    (MockConfig(valid=True, scopes=[SCOPE_READ_ONLY], user_id="test-user-id"), 403, _scope_error("upload-rootfs-image, read-write", "read-only", "rejected"), TEST_ROOTFS_IMAGE_DATA),
+    (MockConfig(valid=True, scopes=[], user_id="test-user-id"), 403, _scope_error("upload-single-file, read-write", "none", "rejected"), TEST_SINGLE_FILE_DATA),
 ]
 
 @pytest.mark.parametrize('token_mock_config,expected_status,error_message,rdfm_artifact, ', SCOPES_UPLOAD_TEST_DATA, indirect=["rdfm_artifact"])

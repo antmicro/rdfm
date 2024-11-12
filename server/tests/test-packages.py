@@ -18,7 +18,7 @@ def test_packages(process):
     # Check if package endpoint returns data
     packages = requests.get(PACKAGES_ENDPOINT)
     assert packages.status_code == 200
-    assert packages.content == b"[]"
+    assert packages.content == b"[]\n"
 
     # Try uploading a package
     dummy_package = {

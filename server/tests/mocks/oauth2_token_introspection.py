@@ -21,9 +21,10 @@ class MockConfig():
     token_scopes: list[str]
 
 
-    def __init__(self, valid: bool = False, scopes: list[str] = [], **kwargs) -> None:
+    def __init__(self, valid: bool = False, scopes: list[str] = [], user_id: str = "", **kwargs) -> None:
         self.token_valid = valid
         self.token_scopes = scopes
+        self.user_id = user_id
         for key in kwargs:
             setattr(self, key, kwargs[key])
 
@@ -52,6 +53,7 @@ def token_introspection_endpoint():
     return {
         "active": data.token_valid,
         "scope": " ".join(data.token_scopes),
+        "sub": data.user_id,
     }, 200
 
 

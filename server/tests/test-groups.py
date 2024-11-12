@@ -12,7 +12,7 @@ def test_groups(process):
     # i.e empty database
     resp = requests.get(GROUPS_ENDPOINT)
     assert resp.status_code == 200, "fetching all groups works"
-    assert resp.content == b"[]", "empty database returns no groups"
+    assert resp.content == b"[]\n", "empty database returns no groups"
 
     # Creating groups
     test_json_group_default_priority = {
