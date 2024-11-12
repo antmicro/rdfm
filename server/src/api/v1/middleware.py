@@ -14,7 +14,17 @@ import server
 from simple_websocket import Server, ConnectionClosed
 from rdfm.ws import WebSocketException
 from device_mgmt.helpers import WS_PING_INTERVAL
+from typing import List
 
+from rdfm.permissions import (
+    READ_PERMISSION,
+    UPDATE_PERMISSION,
+    DELETE_PERMISSION,
+    PACKAGE_RESOURCE,
+    DEVICE_RESOURCE,
+    GROUP_RESOURCE,
+)
+import models.permission
 
 """ Read-write administrator scope """
 SCOPE_READ_WRITE = "rdfm_admin_rw"
@@ -526,6 +536,167 @@ def management_read_write_api(f):
     __add_scope_docs(f, DOCS_SCOPE_RW_TEXT)
 
     return __management_api(client_has_rw_scope)(f)
+
+
+def check_user_permissions(resource: str, user_id: str,
+                           resource_id: int, permission: str):
+    resource_perm = server.instance._permissions_db.fetch_one_by_attributes(
+                        resource, user_id, resource_id, permission)
+    permission_to_group = False
+
+    if resource == PACKAGE_RESOURCE:
+        for group in server.instance._packages_db.fetch_groups(resource_id):
+            permission_to_group = (permission_to_group or
+                                   server.instance._permissions_db.fetch_one_by_attributes(
+                                    GROUP_RESOURCE, user_id,
+                                    group, permission) is not None)
+    if resource == DEVICE_RESOURCE:
+        for group in server.instance._devices_db.fetch_groups(resource_id):
+            permission_to_group = (permission_to_group or
+                                   server.instance._permissions_db.fetch_one_by_attributes(
+                                    GROUP_RESOURCE, user_id,
+                                    group, permission) is not None)
+
+    return resource_perm is not None or permission_to_group
+
+
+def check_admin_rights(user_roles: List[str], check_ro: bool):
+    return ((check_ro and SCOPE_READ_ONLY in user_roles) or
+            SCOPE_READ_WRITE in user_roles)
+
+
+def check_permission(resource_name: str, permission: str):
+    def _check_permissions(f):
+        f.__rdfm_api_privileges__ = "management_permissions"
+
+        @functools.wraps(f)
+        @management_user_validation
+        def __check_permissions(
+                auth_enabled, user_id, user_roles, *args, **kwargs):
+
+            write_permission = permission in [
+                UPDATE_PERMISSION, DELETE_PERMISSION]
+
+            if (not auth_enabled or
+                    check_admin_rights(user_roles, not write_permission)):
+                return f(*args, **kwargs)
+
+            if write_permission:
+                if check_user_permissions(resource_name, user_id,
+                                          kwargs['identifier'], permission):
+                    return f(*args, **kwargs)
+                return api_error(f"insufficient permission to a resource", 403)
+
+            result, status_code = f(*args, **kwargs)
+
+            if status_code != 200:
+                return result, status_code
+
+            if permission == READ_PERMISSION:
+                many = type(result) is list
+                if many:
+                    lol = list(filter(
+                        lambda resource: check_user_permissions(
+                            resource_name, user_id,
+                            resource["id"], permission), result))
+                    return lol, status_code
+                if check_user_permissions(resource_name, user_id,
+                                          result["id"], permission):
+                    return result, status_code
+                return {}, 404
+
+            return result, status_code
+        return __check_permissions
+    return _check_permissions
+
+
+def add_permissions_for_new_resource(resource_name: str):
+    def _add_permissions_for_new_resource(f):
+        @functools.wraps(f)
+        @management_user_validation
+        def __add_permissions_for_new_resource(
+                auth_enabled, user_id, user_roles, *args, **kwargs):
+            new_resource, status_code = f(*args, **kwargs)
+            if user_id is None:
+                return new_resource, status_code
+
+            if status_code != 200:
+                return new_resource, status_code
+
+            for perm in [
+                READ_PERMISSION, DELETE_PERMISSION, UPDATE_PERMISSION
+                    ]:
+                permission = models.permission.Permission()
+                permission.resource = resource_name
+                permission.resource_id = new_resource["id"]
+                permission.user_id = user_id
+                permission.permission = perm
+                permission.created = datetime.datetime.utcnow()
+
+                err = server.instance._permissions_db.create(permission)
+                if err is not None:
+                    print(
+                        f"Error while adding permissions for {resource_name}"
+                    )
+            return new_resource, status_code
+        return __add_permissions_for_new_resource
+    return _add_permissions_for_new_resource
+
+
+def management_user_validation(f):
+    @functools.wraps(f)
+    def _management_user_validation(*args, **kwargs):
+        conf: configuration.ServerConfig = current_app.config[
+                "RDFM_CONFIG"
+            ]
+        if conf.disable_api_auth:
+            return f(auth_enabled=False, user_id=None,
+                     user_roles=None, *args, **kwargs)
+
+        # Extract token from the Authorization header
+        auth = request.authorization
+        if auth is None:
+            return api_error("no Authorization header was provided", 401)
+        if auth.type != "bearer":
+            return api_error(
+                "invalid authorization - expected authorization type"
+                "Bearer",
+                401,
+            )
+        if "token" not in auth:
+            return api_error(
+                "invalid authorization - missing field: token", 401
+            )
+        token: str = auth["token"]
+        client = OAuth2Session(
+            conf.token_introspection_client_id,
+            conf.token_introspection_client_secret,
+        )
+        resp: requests.models.Response = client.introspect_token(
+            conf.token_introspection_url, token=token
+        )
+        if resp.status_code != 200:
+            print(
+                "Error during token introspection: authorization server "
+                "responded with a non-success status.",
+                flush=True,
+            )
+            return api_error("introspection error", 401)
+
+        introspected_token = resp.json()
+        if "sub" not in introspected_token:
+            return api_error("invalid token", 401)
+        scopes = []
+        if "scope" in introspected_token:
+            scopes += scope_to_list(introspected_token["scope"])
+        if ("realm_access" in introspected_token and
+                "roles" in introspected_token["realm_access"]):
+            scopes += scope_to_list(
+                introspected_token["realm_access"]["roles"])
+        return f(auth_enabled=True, user_id=introspected_token['sub'],
+                 user_roles=scopes, *args, **kwargs)
+
+    return _management_user_validation
 
 
 def artifact_type_to_scope(artifact_type: str) -> str:

@@ -3,9 +3,14 @@ import json
 
 from api.v1.middleware import (
     management_upload_package_api,
-    management_read_only_api,
-    management_read_write_api,
     get_scopes_for_upload_package,
+    check_permission,
+    add_permissions_for_new_resource,
+)
+from rdfm.permissions import (
+    READ_PERMISSION,
+    DELETE_PERMISSION,
+    PACKAGE_RESOURCE,
 )
 from flask import request, abort, send_from_directory, Blueprint, current_app
 from pathlib import Path
@@ -45,7 +50,7 @@ def model_to_schema(package: models.package.Package) -> Package:
 
 
 @packages_blueprint.route("/api/v1/packages")
-@management_read_only_api
+@check_permission(PACKAGE_RESOURCE, READ_PERMISSION)
 def fetch_packages():
     """Fetch a list of packages uploaded to the server
 
@@ -94,7 +99,7 @@ def fetch_packages():
         packages = server.instance._packages_db.fetch_all()
         return Package.Schema().dump(
             [model_to_schema(package) for package in packages], many=True
-        )
+        ), 200
     except Exception as e:
         traceback.print_exc()
         print("Exception during package fetch:", repr(e))
@@ -103,6 +108,7 @@ def fetch_packages():
 
 @packages_blueprint.route("/api/v1/packages", methods=["POST"])
 @management_upload_package_api
+@add_permissions_for_new_resource(PACKAGE_RESOURCE)
 def upload_package(scopes: list[str] = []):
     """Upload an update package.
 
@@ -244,7 +250,7 @@ def is_authorized_to_upload(file, scopes: list[str],
 
 
 @packages_blueprint.route("/api/v1/packages/<int:identifier>", methods=["GET"])
-@management_read_only_api
+@check_permission(PACKAGE_RESOURCE, READ_PERMISSION)
 def fetch_package(identifier: int):
     """Fetch information about a single package given by the specified ID
 
@@ -304,7 +310,7 @@ def fetch_package(identifier: int):
 @packages_blueprint.route(
     "/api/v1/packages/<int:identifier>", methods=["DELETE"]
 )
-@management_read_write_api
+@check_permission(PACKAGE_RESOURCE, DELETE_PERMISSION)
 def delete_package(identifier: int):
     """Delete the specified package
 

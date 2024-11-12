@@ -5,7 +5,13 @@ import traceback
 import models.device
 import json
 from api.v1.common import api_error
-from api.v1.middleware import management_read_only_api
+from api.v1.middleware import (
+    check_permission,
+)
+from rdfm.permissions import (
+    READ_PERMISSION,
+    DEVICE_RESOURCE,
+)
 from rdfm.schema.v2.devices import Device
 
 
@@ -27,7 +33,7 @@ def model_to_schema(device: models.device.Device) -> Device:
 
 
 @devices_blueprint.route('/api/v2/devices')
-@management_read_only_api
+@check_permission(DEVICE_RESOURCE, READ_PERMISSION)
 def fetch_all():
     """Fetch a list of devices registered on the server
 
@@ -89,7 +95,7 @@ def fetch_all():
 
 
 @devices_blueprint.route('/api/v2/devices/<int:identifier>')
-@management_read_only_api
+@check_permission(DEVICE_RESOURCE, READ_PERMISSION)
 def fetch_one(identifier: int):
     """ Fetch information about a single device given by the identifier
 
