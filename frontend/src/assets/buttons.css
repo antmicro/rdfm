@@ -63,4 +63,9 @@
     &.small-padding {
         padding: 0.25em;
     }
+
+    &[disabled] {
+        opacity: 40%;
+        pointer-events: none;
+    }
 }

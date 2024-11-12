@@ -47,12 +47,24 @@ Component wraps functionality for displaying and working with rdfm packages.
                     </div>
 
                     <div class="buttons">
-                        <button class="action-button gray" @click="closeAddPackagePopup">
+                        <button
+                            :disabled="uploadInProgress"
+                            class="action-button gray"
+                            @click="closeAddPackagePopup"
+                        >
                             Cancel
                         </button>
-                        <button class="action-button blue white" @click="uploadPackage">
+                        <button
+                            :disabled="uploadInProgress"
+                            class="action-button blue white"
+                            @click="uploadPackage"
+                        >
                             Upload
                         </button>
+                    </div>
+
+                    <div v-if="uploadInProgress" class="progress-bar">
+                        <span></span>
                     </div>
                 </div>
             </div>
@@ -178,6 +190,7 @@ export default {
         // =======================
         // Add package functionality
         // =======================
+        const uploadInProgress = ref(false);
         const uploadedPackageFile: Ref<HTMLInputElement | null> = ref(null);
         const packageUploadData: Reactive<NewPackageData> = reactive({
             version: null,
@@ -192,17 +205,24 @@ export default {
             packageUploadData.version = null;
             packageUploadData.deviceType = null;
             popupOpen.value = PackagePopupOpen.None;
+            uploadInProgress.value = false;
         };
 
         const uploadPackage = async () => {
-            const { success, message } = await uploadPackageRequest(
-                uploadedPackageFile.value!,
-                packageUploadData,
-            );
-            if (!success) {
-                alert(message);
-            } else {
-                closeAddPackagePopup();
+            uploadInProgress.value = true;
+
+            try {
+                const { success, message } = await uploadPackageRequest(
+                    uploadedPackageFile.value!,
+                    packageUploadData,
+                );
+                if (!success) {
+                    alert(message);
+                } else {
+                    closeAddPackagePopup();
+                }
+            } finally {
+                uploadInProgress.value = false;
             }
         };
 
@@ -241,6 +261,8 @@ export default {
         });
 
         onUnmounted(() => {
+            uploadInProgress.value = false;
+
             if (intervalID !== undefined) {
                 clearInterval(intervalID);
             }
@@ -258,6 +280,7 @@ export default {
             uploadedPackageFile,
             packagesCount,
             popupOpen,
+            uploadInProgress,
             packageToRemove,
             closeAddPackagePopup,
             closeRemovePackagePopup,

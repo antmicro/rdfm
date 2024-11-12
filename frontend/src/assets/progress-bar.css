@@ -1,0 +1,23 @@
+.progress-bar {
+    height: 5px;
+    background-color: var(--accent-100);
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-bar span {
+    width: 100px;
+    position: absolute;
+    height: 5px;
+    background-color: var(--accent-800);
+    animation: progress-bar-animation 1s infinite linear;
+}
+
+@keyframes progress-bar-animation {
+    0% {
+        left: -100px;
+    }
+    100% {
+        left: 140%;
+    }
+}
