@@ -1,10 +1,13 @@
 from typing import Optional, List
 import models.package
+import models.group
 from sqlalchemy import select, delete, desc
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from rdfm.schema.v1.updates import META_DEVICE_TYPE
+import models.permission
+from rdfm.permissions import PACKAGE_RESOURCE
 
 
 class PackagesDB:
@@ -41,6 +44,7 @@ class PackagesDB:
             with Session(self.engine) as session:
                 session.add(package)
                 session.commit()
+                session.refresh(package)
                 return True
         except Exception as e:
             print("Package creation failed:", repr(e))
@@ -93,6 +97,18 @@ class PackagesDB:
             print("Package fetch failed:", repr(e))
             return []
 
+    def fetch_groups(self, identifier: int) -> List[int]:
+        """Fetch IDs of groups the package with a given identifier
+        is assigned to
+        """
+        with Session(self.engine) as session:
+            return session.scalars(
+                select(models.group.GroupPackageAssignment.group_id)
+                .where(
+                    models.group.GroupPackageAssignment.package_id == identifier
+                )
+            ).all()
+
     def delete(self, identifier: int) -> bool:
         """Delete a package with the specified ID
 
@@ -101,6 +117,12 @@ class PackagesDB:
         """
         try:
             with Session(self.engine) as session:
+                stmt = delete(
+                    models.permission.Permission).where(
+                        models.permission.Permission.resource == PACKAGE_RESOURCE
+                    ).where(
+                        models.permission.Permission.resource_id == identifier)
+                session.execute(stmt)
                 stmt = delete(models.package.Package).where(
                     models.package.Package.id == identifier
                 )

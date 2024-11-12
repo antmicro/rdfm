@@ -6,7 +6,9 @@ from sqlalchemy.exc import IntegrityError
 import models.group
 import models.device
 import models.package
+import models.permission
 import server
+from rdfm.permissions import GROUP_RESOURCE
 
 
 class GroupsDB:
@@ -80,6 +82,11 @@ class GroupsDB:
         """
         try:
             with Session(self.engine) as session:
+                stmt = delete(models.permission.Permission).where(
+                    models.permission.Permission.resource == GROUP_RESOURCE
+                ).where(
+                    models.permission.Permission.resource_id == identifier)
+                session.execute(stmt)
                 stmt = delete(models.group.Group).where(
                     models.group.Group.id == identifier
                 )
