@@ -7,6 +7,7 @@ import api.v1.update
 import api.v1.auth
 import api.v1.logs
 import api.v1.ws.device
+import api.v1.permissions
 
 
 def create_routes() -> Blueprint:
@@ -18,4 +19,5 @@ def create_routes() -> Blueprint:
     api_routes.register_blueprint(api.v1.auth.auth_blueprint)
     api_routes.register_blueprint(api.v1.logs.logs_blueprint)
     api_routes.register_blueprint(api.v1.ws.device.device_ws_blueprint)
+    api_routes.register_blueprint(api.v1.permissions.permissions_blueprint)
     return api_routes

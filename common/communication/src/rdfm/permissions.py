@@ -1,0 +1,8 @@
+READ_PERMISSION = "read"
+CREATE_PERMISSION = "create"
+UPDATE_PERMISSION = "update"
+DELETE_PERMISSION = "delete"
+
+GROUP_RESOURCE = "group"
+PACKAGE_RESOURCE = "package"
+DEVICE_RESOURCE = "device"

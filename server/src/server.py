@@ -9,6 +9,7 @@ import configuration
 from device_mgmt.containers import RemoteDevices, ShellSessions
 import datetime
 from models.device import Device
+from database.permissions import PermissionsDB
 
 
 class Server:
@@ -21,6 +22,7 @@ class Server:
         self._logs_db: LogsDB = LogsDB(self.db)
         self.remote_devices = RemoteDevices()
         self.shell_sessions = ShellSessions()
+        self._permissions_db = PermissionsDB(self.db)
 
     def create_mock_data(self):
         """Creates mock data
