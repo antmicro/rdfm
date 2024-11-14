@@ -187,7 +187,7 @@ export default {
             if (!newValue) {
                 window.location.href = LOGIN_PATH;
             }
-        }
+        },
     },
     mounted() {
         if (localStorage.getItem('access_token') !== null) {
