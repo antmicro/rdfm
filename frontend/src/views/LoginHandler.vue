@@ -3,6 +3,7 @@
 </template>
 
 <script lang="ts">
+import { LOGIN_PATH } from '@/common/utils';
 import { useRoute, useRouter } from 'vue-router';
 
 export default {
@@ -16,7 +17,9 @@ export default {
         const params = new URLSearchParams(this.route.hash);
         const token = params.get('access_token');
         if (!token) {
-            throw new Error('No token found. Make sure you are logged in.');
+            console.error('No token found. Make sure you are logged in.');
+            window.location.href = LOGIN_PATH;
+            return;
         }
 
         localStorage.setItem('access_token', token);

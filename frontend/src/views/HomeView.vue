@@ -182,6 +182,13 @@ export default {
             userRoles,
         };
     },
+    watch: {
+        loggedIn(newValue: boolean) {
+            if (!newValue) {
+                window.location.href = LOGIN_PATH;
+            }
+        }
+    },
     mounted() {
         if (localStorage.getItem('access_token') !== null) {
             this.loggedIn = true;

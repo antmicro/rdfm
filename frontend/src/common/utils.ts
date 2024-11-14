@@ -9,6 +9,7 @@
  * utility functions for obtaining the resources.
  */
 
+import { StatusCodes } from 'http-status-codes';
 import { ref } from 'vue';
 import { type Ref } from 'vue';
 
@@ -178,6 +179,8 @@ export const resourcesGetter = <T>(resources_url: string) => {
         if (out.success) {
             resources.value = out.data as T;
             pollingStatus.value = PollingStatus.ActivePolling;
+        } else if (out.code == StatusCodes.UNAUTHORIZED) {
+            window.location.href = LOGIN_PATH;
         } else {
             resources.value = undefined;
             pollingStatus.value = PollingStatus.UnreachableURL;
