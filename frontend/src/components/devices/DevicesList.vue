@@ -196,7 +196,7 @@ Component wraps functionality for displaying and working with rdfm devices.
 <script lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue';
 
-import { POLL_INTERVAL } from '../../common/utils';
+import { useNotifications, POLL_INTERVAL } from '../../common/utils';
 import TitleBar from '../TitleBar.vue';
 import {
     pendingDevicesResources,
@@ -209,13 +209,13 @@ export default {
         TitleBar,
     },
     setup() {
+        const notifications = useNotifications();
+
         let intervalID: undefined | number = undefined;
 
         const registerDevice = async (mac_address: string, public_key: string) => {
             const { success, message } = await registerDeviceRequest(mac_address, public_key);
-            if (!success) {
-                alert(message);
-            }
+            if (!success && message) notifications.notifyError(message);
         };
 
         const fetchResources = async () => {

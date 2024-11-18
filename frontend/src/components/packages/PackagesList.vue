@@ -168,7 +168,7 @@ Component wraps functionality for displaying and working with rdfm packages.
 <script lang="ts">
 import { computed, onMounted, onUnmounted, ref, type Ref, reactive, type Reactive } from 'vue';
 
-import { POLL_INTERVAL } from '../../common/utils';
+import { POLL_INTERVAL, useNotifications } from '../../common/utils';
 import BlurPanel from '../BlurPanel.vue';
 import RemovePopup from '../RemovePopup.vue';
 import TitleBar from '../TitleBar.vue';
@@ -193,6 +193,8 @@ export default {
     },
     setup() {
         let intervalID: undefined | number = undefined;
+
+        const notifications = useNotifications();
 
         const popupOpen = ref(PackagePopupOpen.None);
 
@@ -238,8 +240,9 @@ export default {
                 }
 
                 if (!success) {
-                    if (message) alert(message);
+                    if (message) notifications.notifyError(message);
                 } else {
+                    notifications.notifySuccess(`Package was uploaded.`);
                     closeAddPackagePopup();
                 }
             } finally {
@@ -265,9 +268,10 @@ export default {
         const removePackage = async () => {
             const { success, message } = await removePackageRequest(packageToRemove.value!);
             if (!success) {
-                alert(message);
+                if (message) notifications.notifyError(message);
             } else {
                 closeRemovePackagePopup();
+                notifications.notifySuccess('Package was removed');
             }
         };
 

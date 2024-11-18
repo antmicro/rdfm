@@ -12,6 +12,7 @@
 import { StatusCodes } from 'http-status-codes';
 import { ref } from 'vue';
 import { type Ref } from 'vue';
+import { useToast, type ToastPluginApi } from 'vue-toast-notification';
 
 const SERVER_URL =
     import.meta.env.VITE_SERVER_URL || `${window.location.protocol}//${window.location.host}`;
@@ -184,3 +185,22 @@ export const resourcesGetter = <T>(resources_url: string) => {
         fetchDELETE,
     };
 };
+
+export type ToastPluginApiExtended = ToastPluginApi & {
+    notifySuccess: (msg?: string) => void;
+    notifyError: (msg?: string) => void;
+};
+
+export function useNotifications(): ToastPluginApiExtended {
+    const $toast = useToast() as ToastPluginApiExtended;
+    const buildHTML = (prefix: string, msg?: string) => {
+        var html = `<p>${prefix}</p>`;
+        if (msg) {
+            html += `<p>${msg}</p>`;
+        }
+        return html;
+    };
+    $toast.notifySuccess = (msg?: string) => $toast.success(buildHTML('Success', msg));
+    $toast.notifyError = (msg?: string) => $toast.error(buildHTML('Error', msg));
+    return $toast;
+}

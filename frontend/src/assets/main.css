@@ -9,6 +9,7 @@
 @import './buttons.css';
 @import './tags.css';
 @import './progress-bar.css';
+@import './toast.css';
 
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,600;1,14..32,600&display=swap');
@@ -49,6 +50,8 @@
     --destructive-700: rgba(241, 50, 66, 1);
     --destructive-800: rgba(226, 22, 42, 1);
     --destructive-900: rgba(255, 86, 95, 1);
+    --success-bg: #0b2212;
+    --success-border: #0c451b;
 }
 
 html,

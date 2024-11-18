@@ -109,10 +109,10 @@ export const patchDevicesRequest = async (
                 return {
                     success: false,
                     message:
-                        'One of the conflict described below has occurred\n\n' +
-                        '- Any device identifier which does not match a registered device\n\n' +
-                        '- Any device identifier in additions which already has an assigned group which has the same priority as the group specified by identifier (even if the group is the same as specified by identifier\n\n' +
-                        '- Any device identifier in removals which is not currently assigned to the specified group',
+                        '<p>One of the conflict described below has occurred</p><ul>' +
+                        '<li> Any device identifier which does not match a registered device</li>' +
+                        '<li> Any device identifier in additions which already has an assigned group which has the same priority as the group specified by identifier (even if the group is the same as specified by identifier</li>' +
+                        '<li> Any device identifier in removals which is not currently assigned to the specified group</li></ul>',
                 };
             default:
                 return {

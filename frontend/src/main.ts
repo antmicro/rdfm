@@ -9,6 +9,7 @@ import './assets/main.css';
 import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
+import ToastPlugin from 'vue-toast-notification';
 
 if (import.meta.env.VITE_CUSTOM_FAVICON) {
     const link = document.getElementById('favicon') as HTMLLinkElement;
@@ -27,5 +28,5 @@ if (import.meta.env.VITE_CUSTOM_STYLESHEET) {
 const app = createApp(App);
 
 app.use(router);
-
+app.use(ToastPlugin);
 app.mount('#app');

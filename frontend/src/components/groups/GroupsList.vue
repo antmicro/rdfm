@@ -296,7 +296,7 @@ Component wraps functionality for displaying and working with rdfm groups.
 <script lang="ts">
 import { computed, onMounted, onUnmounted, ref, type Ref, reactive, type Reactive } from 'vue';
 
-import { POLL_INTERVAL, type Group } from '../../common/utils';
+import { POLL_INTERVAL, useNotifications, type Group } from '../../common/utils';
 import {
     addGroupRequest,
     devicesResources,
@@ -356,6 +356,8 @@ export default {
 
         const validationErrors: Reactive<Map<string, string>> = reactive(new Map());
 
+        const notifications = useNotifications();
+
         const openAddGroupPopup = () => {
             popupOpen.value = GroupPopupOpen.AddGroup;
             validationErrors.clear();
@@ -381,8 +383,9 @@ export default {
             }
 
             if (!success) {
-                if (message) alert(message);
+                if (message) notifications.notifyError(message);
             } else {
+                notifications.notifySuccess(`Group ${newGroupData.name} was added`)
                 closeAddGroupPopup();
             }
         };
@@ -395,8 +398,9 @@ export default {
         const removeGroup = async () => {
             const { success, message } = await removeGroupRequest(groupToRemove.value!);
             if (!success) {
-                alert(message);
+                if (message) notifications.notifyError(message);
             } else {
+                notifications.notifySuccess('Group was removed');
                 closeRemoveGroupPopup();
             }
         };
@@ -478,7 +482,9 @@ export default {
             );
 
             if (wasGroupModified(groupToModify!, initialGroupConfiguration!)) {
-                alert('Modification detected during configuration! Configuration is aborted.');
+                notifications.notifyError(
+                    'Modification detected during configuration! Configuration is aborted.',
+                );
                 return;
             }
 
@@ -489,7 +495,7 @@ export default {
                     groupConfiguration.priority!,
                 );
                 if (!success) {
-                    alert(message);
+                    notifications.notifyError(message);
                     return;
                 }
             }
@@ -511,7 +517,7 @@ export default {
                     removedDevices,
                 );
                 if (!success) {
-                    alert(message);
+                    notifications.notifyError(message);
                     return;
                 }
             }
@@ -529,11 +535,13 @@ export default {
                     newPackages,
                 );
                 if (!success) {
-                    alert(message);
+                    notifications.notifyError(message);
                     return;
                 }
             }
 
+            notifications.notifySuccess("Group configuration was updated");
+            
             closeConfigureGroupPopup();
         };
         // =======================
