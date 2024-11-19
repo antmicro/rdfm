@@ -70,6 +70,9 @@ Below there is a description of all available variables.
 * `VITE_LOGIN_URL` - OIDC login URL
 * `VITE_LOGOUT_URL` - OIDC logout URL
 * `VITE_OAUTH2_CLIENT` - OAUTH2 Client ID
+* `VITE_CUSTOM_FAVICON` - (Optional) An URL to an image. If supplied will override the default RDFM favicon
+* `VITE_CUSTOM_STYLESHEET` - (Optional) An URL to a CSS stylesheet. If supplied will be appended to page's head tag
+* `VITE_CUSTOM_LOGO` - (Optional) An URL to an image. If supplied will override the default RDFM logo
 
 ## Formatting
 

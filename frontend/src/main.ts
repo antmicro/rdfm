@@ -10,6 +10,20 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
 
+if (import.meta.env.VITE_CUSTOM_FAVICON) {
+    const link = document.getElementById('favicon') as HTMLLinkElement;
+    link.href = import.meta.env.VITE_CUSTOM_FAVICON;
+}
+
+if (import.meta.env.VITE_CUSTOM_STYLESHEET) {
+    const head = document.querySelector('head');
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.setAttribute('crossorigin', 'true');
+    link.href = import.meta.env.VITE_CUSTOM_STYLESHEET;
+    head!.appendChild(link);
+}
+
 const app = createApp(App);
 
 app.use(router);
