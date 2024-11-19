@@ -108,6 +108,7 @@ export interface Group {
 export interface RequestOutput {
     success: boolean;
     message?: string;
+    errors?: Map<string, string>;
 }
 
 /**

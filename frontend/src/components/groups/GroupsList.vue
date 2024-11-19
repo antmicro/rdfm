@@ -20,6 +20,9 @@ Component wraps functionality for displaying and working with rdfm groups.
                     <div class="entry">
                         <p>Name</p>
                         <input type="text" v-model="newGroupData.name" placeholder="New group" />
+                        <div v-if="validationErrors.get('name')" class="errors">
+                            <p>{{ validationErrors.get('name') }}</p>
+                        </div>
                     </div>
                     <div class="entry">
                         <p>Description</p>
@@ -28,10 +31,16 @@ Component wraps functionality for displaying and working with rdfm groups.
                             v-model="newGroupData.description"
                             placeholder="Group description"
                         />
+                        <div v-if="validationErrors.get('description')" class="errors">
+                            <p>{{ validationErrors.get('description') }}</p>
+                        </div>
                     </div>
                     <div class="entry">
                         <p>Priority</p>
                         <input type="number" v-model="newGroupData.priority" placeholder="10" />
+                        <div v-if="validationErrors.get('priority')" class="errors">
+                            <p>{{ validationErrors.get('priority') }}</p>
+                        </div>
                     </div>
 
                     <div class="buttons">
@@ -345,8 +354,11 @@ export default {
             priority: null,
         });
 
+        const validationErrors: Reactive<Map<string, string>> = reactive(new Map());
+
         const openAddGroupPopup = () => {
             popupOpen.value = GroupPopupOpen.AddGroup;
+            validationErrors.clear();
         };
 
         const closeAddGroupPopup = () => {
@@ -358,9 +370,18 @@ export default {
         };
 
         const addGroup = async () => {
-            const { success, message } = await addGroupRequest(newGroupData!);
+            validationErrors.clear();
+
+            const { success, message, errors } = await addGroupRequest(newGroupData!);
+
+            if (errors) {
+                for (let [field, error] of errors) {
+                    validationErrors.set(field, error);
+                }
+            }
+
             if (!success) {
-                alert(message);
+                if (message) alert(message);
             } else {
                 closeAddGroupPopup();
             }
@@ -592,6 +613,7 @@ export default {
             removeGroup,
             groups: groupResources.resources,
             newGroupData,
+            validationErrors,
             groupToRemove,
             closeRemoveGroupPopup,
             popupOpen,

@@ -32,6 +32,9 @@ Component wraps functionality for displaying and working with rdfm packages.
                     <div class="entry">
                         <p>Version</p>
                         <input type="text" v-model="packageUploadData.version" placeholder="1.0" />
+                        <div v-if="validationErrors.get('version')" class="errors">
+                            <p>{{ validationErrors.get('version') }}</p>
+                        </div>
                     </div>
                     <div class="entry">
                         <p>Device type</p>
@@ -40,10 +43,16 @@ Component wraps functionality for displaying and working with rdfm packages.
                             v-model="packageUploadData.deviceType"
                             placeholder="Robot"
                         />
+                        <div v-if="validationErrors.get('deviceType')" class="errors">
+                            <p>{{ validationErrors.get('deviceType') }}</p>
+                        </div>
                     </div>
                     <div class="entry">
                         <p>File</p>
                         <input type="file" ref="uploadedPackageFile" />
+                        <div v-if="validationErrors.get('file')" class="errors">
+                            <p>{{ validationErrors.get('file') }}</p>
+                        </div>
                     </div>
 
                     <div class="buttons">
@@ -197,6 +206,8 @@ export default {
             deviceType: null,
         });
 
+        const validationErrors = reactive<Map<string, string>>(new Map());
+
         const openAddPackagePopup = () => {
             popupOpen.value = PackagePopupOpen.AddPackage;
         };
@@ -206,18 +217,28 @@ export default {
             packageUploadData.deviceType = null;
             popupOpen.value = PackagePopupOpen.None;
             uploadInProgress.value = false;
+            validationErrors.clear();
         };
 
         const uploadPackage = async () => {
             uploadInProgress.value = true;
 
             try {
-                const { success, message } = await uploadPackageRequest(
+                validationErrors.clear();
+
+                const { success, message, errors } = await uploadPackageRequest(
                     uploadedPackageFile.value!,
                     packageUploadData,
                 );
+
+                if (errors) {
+                    for (let [field, error] of errors) {
+                        validationErrors.set(field, error);
+                    }
+                }
+
                 if (!success) {
-                    alert(message);
+                    if (message) alert(message);
                 } else {
                     closeAddPackagePopup();
                 }
@@ -276,6 +297,7 @@ export default {
             uploadPackage,
             pollingStatus: packageResources.pollingStatus,
             packageUploadData,
+            validationErrors,
             packages: packageResources.resources,
             uploadedPackageFile,
             packagesCount,

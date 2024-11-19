@@ -229,9 +229,15 @@ export const updatePriorityRequest = async (
  * https://antmicro.github.io/rdfm/api.html#post--api-v2-groups
  */
 export const addGroupRequest = async (newGroup: NewGroupData): Promise<RequestOutput> => {
-    if (!newGroup.name) return { success: false, message: 'No group name provided' };
-    if (!newGroup.description) return { success: false, message: 'No group description provided' };
-    if (!newGroup.priority) return { success: false, message: 'No group priority provided' };
+    const errors = new Map();
+
+    if (!newGroup.name) errors.set('name', 'No group name provided');
+    if (!newGroup.description) errors.set('description', 'No group description provided');
+    if (!newGroup.priority) errors.set('priority', 'No group priority provided');
+
+    if (errors.size > 0) {
+        return { success: false, errors };
+    }
 
     const body = JSON.stringify({
         priority: newGroup.priority!,
@@ -249,11 +255,13 @@ export const addGroupRequest = async (newGroup: NewGroupData): Promise<RequestOu
                     success: false,
                     message:
                         'User did not provide authorization data, or the authorization has expired',
+                    errors,
                 };
             case StatusCodes.FORBIDDEN:
                 return {
                     success: false,
                     message: 'User was authorized, but did not have permission to create groups',
+                    errors,
                 };
             case StatusCodes.NOT_FOUND:
                 return { success: false, message: 'The specified group does not exist' };
@@ -261,11 +269,12 @@ export const addGroupRequest = async (newGroup: NewGroupData): Promise<RequestOu
                 return {
                     success: false,
                     message: 'Failed to create a group. Got a response code of ' + out.code,
+                    errors,
                 };
         }
     }
     await groupResources.fetchResources();
-    return { success: true };
+    return { success: true, errors };
 };
 
 /**

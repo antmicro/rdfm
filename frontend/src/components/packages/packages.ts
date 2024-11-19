@@ -35,14 +35,15 @@ export const uploadPackageRequest = async (
     packageUploadData: NewPackageData,
 ): Promise<RequestOutput> => {
     const formData = new FormData();
-    if ((uploadedPackageFile?.files ?? []).length <= 0) {
-        return { success: false, message: 'No file provided' };
-    }
-    if (packageUploadData.version === null)
-        return { success: false, message: 'No package version provided' };
+    const errors = new Map();
 
-    if (packageUploadData.deviceType === null)
-        return { success: false, message: 'No device type provided' };
+    if ((uploadedPackageFile?.files ?? []).length <= 0) errors.set('file', 'No file provided');
+    if (!packageUploadData.version) errors.set('version', 'No package version provided');
+    if (!packageUploadData.deviceType) errors.set('deviceType', 'No device type provided');
+
+    if (errors.size > 0) {
+        return { success: false, errors };
+    }
 
     const file = uploadedPackageFile.files![0];
     formData.append('file', file);
