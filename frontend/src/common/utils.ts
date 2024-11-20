@@ -186,10 +186,41 @@ export const resourcesGetter = <T>(resources_url: string) => {
     };
 };
 
+/**
+ * Notification system
+ */
+
 export type ToastPluginApiExtended = ToastPluginApi & {
     notifySuccess: (msg?: string) => void;
     notifyError: (msg?: string) => void;
 };
+
+const N_MAX_NOTIF = 6;
+
+const enqueued: (() => void)[] = [];
+
+const countNotifications = () => document.querySelectorAll('.v-toast__item').length;
+
+/**
+ * Will call the provided function if the number of notifications is smaller than `N_MAX_NOTIF`.
+ * Otherwise the function will be added to a queue and called when the mentioned condition is satisfied.
+ *
+ * @param fn Function to call/enqueue
+ */
+const enqueue = (fn: () => void) => {
+    if (enqueued.length == 0 && countNotifications() < N_MAX_NOTIF) {
+        fn();
+    } else {
+        enqueued.push(fn);
+    }
+};
+
+setInterval(() => {
+    if (countNotifications() < N_MAX_NOTIF) {
+        const event = enqueued.shift();
+        if (event) event();
+    }
+}, 200);
 
 export function useNotifications(): ToastPluginApiExtended {
     const $toast = useToast() as ToastPluginApiExtended;
@@ -200,7 +231,8 @@ export function useNotifications(): ToastPluginApiExtended {
         }
         return html;
     };
-    $toast.notifySuccess = (msg?: string) => $toast.success(buildHTML('Success', msg));
-    $toast.notifyError = (msg?: string) => $toast.error(buildHTML('Error', msg));
+    $toast.notifySuccess = (msg?: string) =>
+        enqueue(() => $toast.success(buildHTML('Success', msg)));
+    $toast.notifyError = (msg?: string) => enqueue(() => $toast.error(buildHTML('Error', msg)));
     return $toast;
 }

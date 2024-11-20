@@ -385,7 +385,7 @@ export default {
             if (!success) {
                 if (message) notifications.notifyError(message);
             } else {
-                notifications.notifySuccess(`Group ${newGroupData.name} was added`)
+                notifications.notifySuccess(`Group ${newGroupData.name} was added`);
                 closeAddGroupPopup();
             }
         };
@@ -540,8 +540,8 @@ export default {
                 }
             }
 
-            notifications.notifySuccess("Group configuration was updated");
-            
+            notifications.notifySuccess('Group configuration was updated');
+
             closeConfigureGroupPopup();
         };
         // =======================
