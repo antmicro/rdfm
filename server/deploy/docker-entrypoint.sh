@@ -13,6 +13,7 @@ require_variable()
 }
 
 server_args=""
+gunicorn_args="-k gevent"
 encrypted=1
 if [ -n "${RDFM_DISABLE_ENCRYPTION}" ]; then
 	encrypted=0
@@ -65,13 +66,17 @@ if [ -n "${RDFM_INCLUDE_FRONTEND_ENDPOINT}" ]; then
 	server_args="${server_args} --include-frontend"
 fi
 
+if [ -n "${RDFM_GUNICORN_WORKER_TIMEOUT}" ]; then
+	gunicorn_args="${gunicorn_args} -t ${RDFM_GUNICORN_WORKER_TIMEOUT}"
+fi
+
 echo "Starting RDFM Management Server.."
 
 wsgi_server="${RDFM_WSGI_SERVER:-gunicorn}"
 if [ "${wsgi_server}" == "werkzeug" ]; then
 	exec poetry run python -m rdfm_mgmt_server ${server_args}
 elif [ "${wsgi_server}" == "gunicorn" ]; then
-	exec poetry run gunicorn -k gevent 'rdfm_mgmt_server:setup_with_config_from_env()'
+	exec poetry run gunicorn ${gunicorn_args} 'rdfm_mgmt_server:setup_with_config_from_env()'
 else
 	echo "ERROR: Unsupported WSGI server: ${wsgi_server}"
 	exit 1
