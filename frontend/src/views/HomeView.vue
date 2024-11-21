@@ -5,15 +5,38 @@ SPDX-License-Identifier: Apache-2.0
 -->
 
 <template>
-    <div id="main" v-if="loggedIn">
+    <div
+        v-if="loggedIn"
+        id="main"
+        @click="(e: MouseEvent) => (accMenuOpen = $refs.menu.contains(e.target as HTMLElement))"
+    >
         <div id="logobar">
             <Logo id="logo" />
 
             <div id="settings">
-                <div v-if="loggedIn" class="tags">
-                    <p>roles:</p>
-                    <div v-for="role in userRoles" :key="role">
+                <a v-if="!loggedIn" class="action-button gray" :href="LOGIN_PATH"> Login </a>
+
+                <div style="position: relative" ref="menu">
+                    <img
+                        src="../../public/assets/person.png"
+                        @click="() => (accMenuOpen = true)"
+                        style="cursor: pointer; height: 40px; border-radius: 50%"
+                    />
+
+                    <div :style="{ display: accMenuOpen ? 'grid' : 'none' }" class="menu">
+                        <div class="menu-section-header">Account</div>
+                        <div class="menu-row username">
+                            <span>username:</span>
+                            <span style="text-align: end">{{ userName }}</span>
+                        </div>
+                        <a :href="LOGOUT_PATH" class="menu-row">
+                            Logout
+                            <LogoutIcon style="float: right" />
+                        </a>
+                        <div class="menu-section-header">Roles</div>
                         <div
+                            v-for="role in userRoles"
+                            :key="role"
                             class="tag"
                             :style="{ border: '1px solid' + role.colour, color: role.colour }"
                         >
@@ -21,10 +44,6 @@ SPDX-License-Identifier: Apache-2.0
                         </div>
                     </div>
                 </div>
-                <div v-if="loggedIn">username: {{ userName }}</div>
-                <a class="action-button gray" :href="loggedIn ? LOGOUT_PATH : LOGIN_PATH">{{
-                    loggedIn ? 'Logout' : 'Login'
-                }}</a>
             </div>
         </div>
 
@@ -48,9 +67,76 @@ SPDX-License-Identifier: Apache-2.0
 </template>
 
 <style scoped>
+@keyframes animate-fade {
+    0% {
+        max-height: 0px;
+    }
+    100% {
+        max-height: 700px;
+    }
+}
+
 #main {
     background-color: var(--background-200);
     min-height: 100vh;
+
+    .menu {
+        position: absolute;
+        right: 0px;
+        top: 50px;
+
+        background-color: var(--background-200);
+        border: 1px solid var(--gray-400);
+        border-radius: 10px;
+        grid-template-rows: auto;
+        grid-template-columns: auto;
+        width: fit-content;
+        min-width: 260px;
+
+        overflow: hidden;
+
+        animation-duration: 0.5s;
+        animation-name: animate-fade;
+
+        .menu-row.username {
+            display: grid;
+            grid-template-columns: auto auto;
+            gap: 10px;
+            text-wrap: nowrap;
+        }
+
+        .menu-row {
+            padding: 10px;
+            display: block;
+        }
+
+        .tag {
+            display: block;
+            padding: 0px;
+            padding-left: 10px;
+            padding-right: 10px;
+            margin: 5px;
+            margin-left: 10px;
+            text-align: center;
+            line-height: 2em;
+            filter: brightness(130%);
+            border-radius: 20px;
+        }
+
+        a.menu-row {
+            cursor: pointer;
+            text-decoration: none;
+            color: white;
+            &:hover {
+                background-color: var(--gray-200);
+            }
+        }
+
+        .menu-section-header {
+            background-color: var(--gray-100);
+            padding: 10px;
+        }
+    }
 
     & > #navbar {
         display: flex;
@@ -104,6 +190,7 @@ import DevicesList from '../components/devices/DevicesList.vue';
 import PackagesList from '../components/packages/PackagesList.vue';
 import GroupsList from '../components/groups/GroupsList.vue';
 import Logo from '../images/Logo.vue';
+import LogoutIcon from '@/images/LogoutIcon.vue';
 
 const enum ActiveTab {
     Devices,
@@ -114,6 +201,7 @@ const enum ActiveTab {
 export default {
     components: {
         Logo,
+        LogoutIcon,
         DevicesList,
         PackagesList,
         GroupsList,
@@ -121,6 +209,7 @@ export default {
     setup() {
         const activeTab = ref(ActiveTab.Groups);
         const loggedIn = ref(false);
+        const accMenuOpen = ref(false);
 
         const navbarItemClasses = (tabName: number) => {
             return {
@@ -167,6 +256,7 @@ export default {
             if (loggedIn.value && parsedToken.value !== undefined) {
                 return parsedToken.value['realm_access']['roles']
                     .filter((role: string) => role.startsWith('rdfm'))
+                    .sort()
                     .map((role: string) => ({ name: role, colour: stringToColour(role) }));
             }
             return undefined;
@@ -176,6 +266,7 @@ export default {
             activeTab,
             navbarItemClasses,
             loggedIn,
+            accMenuOpen,
             LOGIN_PATH,
             LOGOUT_PATH,
             userName,
