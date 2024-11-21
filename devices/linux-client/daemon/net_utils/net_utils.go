@@ -65,7 +65,6 @@ func GetMacAddr() (string, error) {
 				return nifMAC, nil
 			}
 		}
-		return "", errors.New("Failed to get MAC address from a valid interface")
 	}
 	return "", errors.New("Failed to get MAC address")
 }
