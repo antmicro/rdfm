@@ -82,7 +82,21 @@ func (s *simpleSession) WriteImage(image []byte) error {
 	cmd.ImageNum = 0
 	cmd.Upgrade = false
 	cmd.LastOff = 0
-	cmd.MaxWinSz = 5
+	// NOTE: cmd.MaxWinSz being greater than xact.IMAGE_UPLOAD_START_WS
+	// runs the risk of deadlocking the client during image upload.
+	//
+	// Before the below fix the problem occurred frequently during
+	// CI runs. Devices were stopping the update and timing out randomly.
+	//
+	// A race condition in newtmgr caused a deadlock, specifically on this line:
+	// https://github.com/apache/mynewt-newtmgr/blob/d56acd2e28855562923ce901c55997822618a420/nmxact/xact/image.go#L347
+	// The channel `ch` not being read from causes the update loop to halt.
+	//
+	// HACK: Setting cmd.MaxWinSz to xact.IMAGE_UPLOAD_START_WS sidesteps this
+	// by preventing newtmgr's `ImageUploadIntTracker.WCap` variable from
+	// being incremented/decremented. Not allowing `WCap` to be modified
+	// prevents the race from occurring.
+	cmd.MaxWinSz = xact.IMAGE_UPLOAD_START_WS
 	cmd.ProgressCb = func(c *xact.ImageUploadCmd, r *nmp.ImageUploadRsp) {}
 
 	resp, err := cmd.Run(s.s)
