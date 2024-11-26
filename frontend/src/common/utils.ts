@@ -98,41 +98,27 @@ export interface Group {
     priority: number;
 }
 
-/**
- * Interface for wrapping request output.
- * @param success - boolean value indicating if request was successful
- * @param message - optional message with additional information.
- * If the `success` value is set to `true`, the message should be omitted.
- * Otherwise, the message should contain error information.
- */
+/** Interface for wrapping request output. */
 export interface RequestOutput {
+    /** Boolean value indicating if request was successful */
     success: boolean;
+    /**
+     * Optional message with additional information.
+     * If the `success` field is set to `true`, the message should be omitted.
+     * Otherwise, the message should contain error information.
+     */
     message?: string;
+    /** Mapping from field names to error descriptions */
     errors?: Map<string, string>;
 }
 
-/**
- * Interface for fetch requests.
- * @param success - boolean value indicating if request was successful
- * @param code - optional value with HTTP status code, if any returned
- * @param data - optional data obtained from the server
- */
-export interface FetchOutput {
-    success: boolean;
-    code?: number;
-    data?: any;
-}
-
-/**
- * Enum that describes resource state
- * @param InitialPoll - the getter did not try to fetch resources yet.
- * The status is set to this value initially.
- * @param UnreachableURL - the getter could not communicate with the server.
- * @param ActivePolling - the getter successfully fetched resources.
- */
+/** Enum that describes resource state */
 export enum PollingStatus {
+    /** The getter did not try to fetch resources yet. The status is set to this value initially. */
     InitialPoll,
+    /** the getter could not communicate with the server. */
     UnreachableURL,
+    /** the getter successfully fetched resources. */
     ActivePolling,
 }
 
@@ -145,7 +131,7 @@ export const resourcesGetter = <T>(resources_url: string) => {
         method: string,
         headers: Headers = new Headers(),
         body?: BodyInit,
-    ): Promise<FetchOutput> => {
+    ) => {
         let response;
         try {
             const accessToken = localStorage.getItem('access_token');
