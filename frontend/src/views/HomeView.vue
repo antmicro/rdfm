@@ -5,7 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 -->
 
 <template>
-    <div id="main">
+    <div id="main" v-if="loggedIn">
         <div id="logobar">
             <Logo id="logo" />
 
@@ -192,6 +192,8 @@ export default {
     mounted() {
         if (localStorage.getItem('access_token') !== null) {
             this.loggedIn = true;
+        } else {
+            window.location.href = LOGIN_PATH;
         }
     },
 };
