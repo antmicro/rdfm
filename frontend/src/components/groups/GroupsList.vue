@@ -90,10 +90,28 @@ Component wraps functionality for displaying and working with rdfm groups.
                             :columns="packageDropdownColumns"
                             :data="packageList"
                             :select="selectPackage"
-                            :toggleDropdown="() => toggleDropdown(0)"
+                            :toggleDropdown="() => toggleDropdown(DropDownOpen.Packages)"
                             :dropdownOpen="packageDropdownOpen"
                         />
                     </div>
+                    <div v-if="groupConfiguration.policy" class="entry policy-entry">
+                        <p>Update policy</p>
+                        <div class="policy-type" v-if="availablePolicies.length >= 1">
+                            <SimpleDropdown
+                                :initial="groupConfiguration.policy"
+                                :options="availablePolicies"
+                                :select="
+                                    (val: string) => {
+                                        groupConfiguration.policy = val;
+                                    }
+                                "
+                            />
+                            <p v-if="unapplicablePolicyWarning" class="warning">
+                                The selected update policy will not affect any device in this group
+                            </p>
+                        </div>
+                    </div>
+
                     <div class="entry">
                         <p>Devices</p>
                         <Dropdown
@@ -102,7 +120,7 @@ Component wraps functionality for displaying and working with rdfm groups.
                             :columns="deviceDropdownColumns"
                             :data="deviceList"
                             :select="selectDevice"
-                            :toggleDropdown="() => toggleDropdown(1)"
+                            :toggleDropdown="() => toggleDropdown(DropDownOpen.Devices)"
                             :dropdownOpen="deviceDropdownOpen"
                         />
                     </div>
@@ -224,6 +242,12 @@ Component wraps functionality for displaying and working with rdfm groups.
 </template>
 
 <style scoped>
+.warning {
+    color: yellow;
+    font-size: 0.8em;
+    margin-top: 5px;
+}
+
 .container {
     padding: 2em;
 
@@ -294,9 +318,23 @@ Component wraps functionality for displaying and working with rdfm groups.
 </style>
 
 <script lang="ts">
-import { computed, onMounted, onUnmounted, ref, type Ref, reactive, type Reactive } from 'vue';
-
-import { POLL_INTERVAL, useNotifications, type Group } from '../../common/utils';
+import {
+    computed,
+    onMounted,
+    onUnmounted,
+    ref,
+    type Ref,
+    reactive,
+    type Reactive,
+    effect,
+} from 'vue';
+import {
+    POLL_INTERVAL,
+    useNotifications,
+    type Group,
+    type Package,
+    type RegisteredDevice,
+} from '../../common/utils';
 import {
     addGroupRequest,
     devicesResources,
@@ -307,10 +345,12 @@ import {
     patchDevicesRequest,
     removeGroupRequest,
     updatePackagesRequest,
+    updatePolicyRequest,
     updatePriorityRequest,
     type GroupConfiguration,
     type InitialGroupConfiguration,
     type NewGroupData,
+    type PolicyType,
 } from './groups';
 
 import type { Column, DataEntry } from '../Dropdown.vue';
@@ -320,6 +360,7 @@ import RemovePopup from '../RemovePopup.vue';
 import TitleBar from '../TitleBar.vue';
 import Cross from '../icons/Cross.vue';
 import Dropdown from '../Dropdown.vue';
+import SimpleDropdown from '../SimpleDropdown.vue';
 
 export enum GroupPopupOpen {
     AddGroup,
@@ -341,6 +382,7 @@ export default {
         TitleBar,
         Cross,
         Dropdown,
+        SimpleDropdown,
     },
     setup() {
         const popupOpen = ref(GroupPopupOpen.None);
@@ -426,17 +468,76 @@ export default {
         const groupConfiguration: Reactive<GroupConfiguration> = reactive({
             id: null,
             priority: null,
+            policy: null,
             devices: null,
             packages: null,
         });
 
         let initialGroupConfiguration: InitialGroupConfiguration | null = null;
 
+        /**
+         * Packages selected in the group configuration. Might be different than the group' packages if there are unsubmitted changes.
+         */
+        const selectedPackages = computed(
+            () =>
+                (packageList.value
+                    .filter(({ selected }) => selected)
+                    ?.map(({ id }) => packagesResources.resources.value?.find((p) => p.id == id))
+                    .filter(Boolean) as Package[]) || [],
+        );
+
+        /**
+         * Devices selected in the group configuration. Might be different than the group's devices if there are unsubmitted changes.
+         */
+        const selectedDevices = computed(
+            () =>
+                (deviceList.value
+                    .filter(({ selected }) => selected)
+                    ?.map(({ id }) => devicesResources.resources.value?.find((d) => d.id == id))
+                    .filter(Boolean) as RegisteredDevice[]) || [],
+        );
+
+        /**
+         * Warn the user if the current policy has no effect on the selected devices.
+         */
+        const unapplicablePolicyWarning = computed(() => {
+            const policyArg = groupConfiguration.policy?.split(',')[1];
+            console.log(selectedDevices.value);
+
+            if (selectedDevices.value.length == 0) return false;
+            if (!policyArg) return false;
+
+            const matchingPackages = selectedPackages.value.filter(
+                (p) => p.metadata['rdfm.software.version'] == policyArg,
+            );
+
+            return selectedDevices.value.every((d) =>
+                matchingPackages.every(
+                    (p) =>
+                        p.metadata['rdfm.hardware.devtype'] != d.metadata['rdfm.hardware.devtype'],
+                ),
+            );
+        });
+
+        const availablePolicies = computed(() => {
+            const availableVersions = selectedPackages.value
+                .map((p) => p.metadata['rdfm.software.version'])
+                .sort((p1, p2) => p1.localeCompare(p2));
+            return [
+                { id: 'no_update,', display: 'No Update' },
+                ...[...new Set(availableVersions)].map((version) => ({
+                    id: `exact_match,${version}`,
+                    display: `Match version ${version}`,
+                })),
+            ];
+        });
+
         const openConfigureGroupPopup = async (group: Group) => {
             groupConfiguration.id = group.id;
             groupConfiguration.priority = group.priority;
             groupConfiguration.devices = [...group.devices];
             groupConfiguration.packages = [...group.packages];
+            groupConfiguration.policy = group.policy;
 
             packageList.value = (packagesResources.resources.value ?? []).map((v) => ({
                 id: v.id,
@@ -457,6 +558,7 @@ export default {
             initialGroupConfiguration = {
                 id: group.id,
                 priority: group.priority,
+                policy: group.policy,
                 packages: [...group.packages],
                 devices: [...group.devices],
             };
@@ -477,6 +579,7 @@ export default {
             return !(
                 original.id === initial.id &&
                 original.priority === initial.priority &&
+                original.policy === initial.policy &&
                 JSON.stringify(original.packages) === JSON.stringify(initial.packages) &&
                 JSON.stringify(original.devices) === JSON.stringify(initial.devices)
             );
@@ -561,6 +664,31 @@ export default {
                 }
             }
 
+            if (
+                JSON.stringify(groupConfiguration.policy) !=
+                JSON.stringify(initialGroupConfiguration!.policy)
+            ) {
+                if (!groupConfiguration.policy) {
+                    notifications.notifyError({
+                        headline: 'Error when updating group policy:',
+                        msg: 'Policy is a required field',
+                    });
+                    return false;
+                }
+
+                const { success, message } = await updatePolicyRequest(
+                    groupConfiguration.id!,
+                    groupConfiguration.policy,
+                );
+                if (!success) {
+                    notifications.notifyError({
+                        headline: 'Error when updating group update policy',
+                        msg: message || 'Updating group update policy failed',
+                    });
+                    return;
+                }
+            }
+
             if (requestWasMade)
                 notifications.notifySuccess({ headline: 'Group configuration was updated' });
 
@@ -636,6 +764,8 @@ export default {
         const groupsCount = computed(() => groupResources.resources.value?.length ?? 0);
 
         return {
+            DropDownOpen,
+            openDropdown,
             openRemoveGroupPopup,
             closeAddGroupPopup,
             addGroup,
@@ -666,6 +796,8 @@ export default {
             deviceDropdownOpen,
             closeDropdowns,
             toggleDropdown,
+            availablePolicies,
+            unapplicablePolicyWarning,
         };
     },
 };

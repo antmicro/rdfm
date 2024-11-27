@@ -17,6 +17,7 @@ import {
     PACKAGES_ENDPOINT,
     PATCH_DEVICES_IN_GROUP_ENDPOINT,
     resourcesGetter,
+    UPDATE_GROUP_POLICY_ENDPOINT,
     UPDATE_GROUP_PRIORITY_ENDPOINT,
     type Group,
     type Package,
@@ -26,16 +27,19 @@ import {
 
 import { StatusCodes } from 'http-status-codes';
 
+export type PolicyType = 'exact_match' | 'no_update';
 export type InitialGroupConfiguration = {
     id: number;
     priority: number;
     devices: number[];
+    policy: string | null;
     packages: number[];
 };
 
 export type GroupConfiguration = {
     id: number | null;
     priority: number | null;
+    policy: string | null;
     devices: number[] | null;
     packages: number[] | null;
 };
@@ -168,6 +172,59 @@ export const updatePackagesRequest = async (
                 return {
                     success: false,
                     message: 'Failed to update group packages. Got a response code of ' + out.code,
+                };
+        }
+    }
+    await groupResources.fetchResources();
+    return { success: true };
+};
+
+/**
+ * Request specified in
+ * https://antmicro.github.io/rdfm/api.html#post--api-v2-groups-(int-identifier)-policy
+ */
+export const updatePolicyRequest = async (
+    groupId: number,
+    policy: string,
+): Promise<RequestOutput> => {
+    if (!policy.includes(',') || policy.split(',').length !== 2) {
+        return {
+            success: false,
+            message: 'Invalid policy format: ' + policy,
+        };
+    }
+
+    const out = await groupResources.fetchPOST(
+        UPDATE_GROUP_POLICY_ENDPOINT(groupId),
+        headers,
+        JSON.stringify({ policy }),
+    );
+
+    if (!out.success) {
+        switch (out.code) {
+            case StatusCodes.BAD_REQUEST:
+                return {
+                    success: false,
+                    message: 'Invalid request schema, or an invalid policy schema was requested',
+                };
+
+            case StatusCodes.UNAUTHORIZED:
+                return {
+                    success: false,
+                    message:
+                        'User did not provide authorization data, or the authorization has expired',
+                };
+            case StatusCodes.FORBIDDEN:
+                return {
+                    success: false,
+                    message: 'User was authorized, but did not have permission to modify groups',
+                };
+            case StatusCodes.NOT_FOUND:
+                return { success: false, message: 'The specified group does not exist' };
+            default:
+                return {
+                    success: false,
+                    message: 'Failed to update group policy. Got a response code of ' + out.code,
                 };
         }
     }

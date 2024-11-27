@@ -39,6 +39,7 @@ export const REGISTER_DEVICE_ENDPOINT = `${SERVER_URL}/api/v1/auth/register`;
 export const GROUPS_ENDPOINT = `${SERVER_URL}/api/v2/groups`;
 export const DELETE_GROUP_ENDPOINT = (id: number) => `${GROUPS_ENDPOINT}/${id}`;
 export const UPDATE_GROUP_PRIORITY_ENDPOINT = (id: number) => `${GROUPS_ENDPOINT}/${id}/priority`;
+export const UPDATE_GROUP_POLICY_ENDPOINT = (id: number) => `${GROUPS_ENDPOINT}/${id}/policy`;
 export const PATCH_DEVICES_IN_GROUP_ENDPOINT = (id: number) => `${GROUPS_ENDPOINT}/${id}/devices`;
 export const ASSIGN_PACKAGE_IN_GROUP_ENDPOINT = (id: number) => `${GROUPS_ENDPOINT}/${id}/package`;
 
