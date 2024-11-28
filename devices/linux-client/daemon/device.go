@@ -280,13 +280,10 @@ func (d *Device) getDeviceToken() (string, error) {
 	if err == nil {
 		// check if reauth needed in the next TOKEN_EXPIRY_MIN_ALLOWED or less seconds
 		if d.deviceTokenAcquired+payload.Expires-TOKEN_EXPIRY_MIN_ALLOWED <= time.Now().Unix() {
-			log.Println("Device token expired, reauthenticating...")
 			err = d.authenticateDeviceWithServer()
 			if err != nil {
 				return "", err
 			}
-		} else {
-			log.Println("Device token up to date")
 		}
 	} else {
 		// extraction failed
