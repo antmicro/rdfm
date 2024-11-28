@@ -477,6 +477,8 @@ export default {
         };
 
         const configureGroup = async () => {
+            var requestWasMade = false;
+
             const groupToModify = groupResources.resources.value!.find(
                 (group) => group.id === groupConfiguration.id!,
             );
@@ -490,6 +492,7 @@ export default {
 
             // Updating priority
             if (groupConfiguration.priority! !== initialGroupConfiguration!.priority) {
+                requestWasMade = true;
                 const { success, message } = await updatePriorityRequest(
                     groupConfiguration.id!,
                     groupConfiguration.priority!,
@@ -511,6 +514,7 @@ export default {
             const addedDevices = newDevices.filter((device) => !initialDevices.includes(device));
 
             if (removedDevices.length > 0 || addedDevices.length > 0) {
+                requestWasMade = true;
                 const { success, message } = await patchDevicesRequest(
                     groupConfiguration.id!,
                     addedDevices,
@@ -530,6 +534,7 @@ export default {
                 .map(({ id }) => id);
 
             if (JSON.stringify(initialPackages) !== JSON.stringify(newPackages)) {
+                requestWasMade = true;
                 const { success, message } = await updatePackagesRequest(
                     groupConfiguration.id!,
                     newPackages,
@@ -540,7 +545,7 @@ export default {
                 }
             }
 
-            notifications.notifySuccess('Group configuration was updated');
+            if (requestWasMade) notifications.notifySuccess('Group configuration was updated');
 
             closeConfigureGroupPopup();
         };
