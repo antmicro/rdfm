@@ -261,7 +261,7 @@ export default defineComponent({
 
             const bottomOffset = 16;
             return {
-                height: `${window.innerHeight - tableRef.value?.getBoundingClientRect().top - bottomOffset}px`,
+                'max-height': `${window.innerHeight - tableRef.value?.getBoundingClientRect().top - bottomOffset}px`,
             };
         });
 
