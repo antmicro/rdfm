@@ -40,17 +40,18 @@ const MGMT_LOOP_RECOVERY_INTERVAL = 30
 const TOKEN_EXPIRY_MIN_ALLOWED = 5
 
 type Device struct {
-	name          string
-	fileMetadata  string
-	ws            *websocket.Conn
-	metadata      map[string]interface{}
-	caps          capabilities.DeviceCapabilities
-	macAddr       string
-	rdfmCtx       *app.RDFM
-	deviceToken   string
-	tokenMutex    sync.Mutex
-	httpTransport *http.Transport
-	logManager    *telemetry.LogManager
+	name                string
+	fileMetadata        string
+	ws                  *websocket.Conn
+	metadata            map[string]interface{}
+	caps                capabilities.DeviceCapabilities
+	macAddr             string
+	rdfmCtx             *app.RDFM
+	deviceToken         string
+	deviceTokenAcquired int64
+	tokenMutex          sync.Mutex
+	httpTransport       *http.Transport
+	logManager          *telemetry.LogManager
 }
 
 func (d Device) recv() ([]byte, error) {
@@ -278,7 +279,7 @@ func (d *Device) getDeviceToken() (string, error) {
 	payload, err := netUtils.ExtractJwtPayload(d.deviceToken)
 	if err == nil {
 		// check if reauth needed in the next TOKEN_EXPIRY_MIN_ALLOWED or less seconds
-		if payload.CreatedAt+payload.Expires-TOKEN_EXPIRY_MIN_ALLOWED <= time.Now().Unix() {
+		if d.deviceTokenAcquired+payload.Expires-TOKEN_EXPIRY_MIN_ALLOWED <= time.Now().Unix() {
 			log.Println("Device token expired, reauthenticating...")
 			err = d.authenticateDeviceWithServer()
 			if err != nil {
@@ -436,6 +437,7 @@ func (d *Device) authenticateDeviceWithServer() error {
 			if len(d.deviceToken) == 0 {
 				return errors.New("Got empty authorization token")
 			}
+			d.deviceTokenAcquired = time.Now().Unix()
 			return nil
 		case 400:
 			log.Println("Invalid message schema or signature")
