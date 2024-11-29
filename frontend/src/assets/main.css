@@ -14,6 +14,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,600;1,14..32,600&display=swap');
 
 :root {
+    color-scheme: dark;
+
     /* Color styles */
     --gray-100: rgba(26, 26, 26, 1);
     --gray-200: rgba(31, 31, 31, 1);
