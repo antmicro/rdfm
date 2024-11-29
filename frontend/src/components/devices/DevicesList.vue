@@ -140,6 +140,12 @@ Component wraps functionality for displaying and working with rdfm devices.
                                     </div>
                                 </td>
                                 <td class="entry">
+                                    <div class="title">Software version</div>
+                                    <div class="value">
+                                        {{ device.metadata['rdfm.software.version'] }}
+                                    </div>
+                                </td>
+                                <td class="entry">
                                     <div class="title">Last Accessed</div>
                                     <div class="value">{{ device.last_access }}</div>
                                 </td>
