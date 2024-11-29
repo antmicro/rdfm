@@ -383,9 +383,12 @@ export default {
             }
 
             if (!success) {
-                if (message) notifications.notifyError(message);
+                notifications.notifyError({
+                    headline: 'Error when adding group:',
+                    msg: message || 'Adding group failed',
+                });
             } else {
-                notifications.notifySuccess(`Group ${newGroupData.name} was added`);
+                notifications.notifySuccess({ headline: `Group ${newGroupData.name} was added` });
                 closeAddGroupPopup();
             }
         };
@@ -398,11 +401,14 @@ export default {
         const removeGroup = async () => {
             const { success, message } = await removeGroupRequest(groupToRemove.value!);
             if (!success) {
-                if (message) notifications.notifyError(message);
+                notifications.notifyError({
+                    headline: 'Error when removing group:',
+                    msg: message || 'Removing group failed',
+                });
             } else {
-                notifications.notifySuccess('Group was removed');
-                closeRemoveGroupPopup();
+                notifications.notifySuccess({ headline: 'Group was removed' });
             }
+            closeRemoveGroupPopup();
         };
 
         const openRemoveGroupPopup = async (groupId: number) => {
@@ -484,9 +490,10 @@ export default {
             );
 
             if (wasGroupModified(groupToModify!, initialGroupConfiguration!)) {
-                notifications.notifyError(
-                    'Modification detected during configuration! Configuration is aborted.',
-                );
+                notifications.notifyError({
+                    headline:
+                        'Modification detected during configuration! Configuration is aborted.',
+                });
                 return;
             }
 
@@ -498,7 +505,10 @@ export default {
                     groupConfiguration.priority!,
                 );
                 if (!success) {
-                    notifications.notifyError(message);
+                    notifications.notifyError({
+                        headline: 'Error when updating group priority:',
+                        msg: message || 'Updating group priority failed',
+                    });
                     return;
                 }
             }
@@ -521,7 +531,10 @@ export default {
                     removedDevices,
                 );
                 if (!success) {
-                    notifications.notifyError(message);
+                    notifications.notifyError({
+                        headline: 'Error when updating group devices:',
+                        msg: message || 'Updating group devices failed',
+                    });
                     return;
                 }
             }
@@ -540,12 +553,16 @@ export default {
                     newPackages,
                 );
                 if (!success) {
-                    notifications.notifyError(message);
+                    notifications.notifyError({
+                        headline: 'Error when updating group packages:',
+                        msg: message || 'Updating group packages failed',
+                    });
                     return;
                 }
             }
 
-            if (requestWasMade) notifications.notifySuccess('Group configuration was updated');
+            if (requestWasMade)
+                notifications.notifySuccess({ headline: 'Group configuration was updated' });
 
             closeConfigureGroupPopup();
         };

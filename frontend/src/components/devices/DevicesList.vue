@@ -215,7 +215,11 @@ export default {
 
         const registerDevice = async (mac_address: string, public_key: string) => {
             const { success, message } = await registerDeviceRequest(mac_address, public_key);
-            if (!success && message) notifications.notifyError(message);
+            if (!success)
+                notifications.notifyError({
+                    headline: 'Error when registering device:',
+                    msg: message || 'Registration of device failed',
+                });
         };
 
         const fetchResources = async () => {

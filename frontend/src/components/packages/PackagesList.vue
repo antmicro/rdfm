@@ -240,9 +240,12 @@ export default {
                 }
 
                 if (!success) {
-                    if (message) notifications.notifyError(message);
+                    notifications.notifyError({
+                        headline: 'Error when uploading package',
+                        msg: message || 'Uploading package failed',
+                    });
                 } else {
-                    notifications.notifySuccess(`Package was uploaded.`);
+                    notifications.notifySuccess({ headline: `Package was uploaded` });
                     closeAddPackagePopup();
                 }
             } finally {
@@ -268,11 +271,14 @@ export default {
         const removePackage = async () => {
             const { success, message } = await removePackageRequest(packageToRemove.value!);
             if (!success) {
-                if (message) notifications.notifyError(message);
+                notifications.notifyError({
+                    headline: 'Error when removing package:',
+                    msg: message || 'Removing package failed',
+                });
             } else {
-                closeRemovePackagePopup();
-                notifications.notifySuccess('Package was removed');
+                notifications.notifySuccess({ headline: 'Package was removed' });
             }
+            closeRemovePackagePopup();
         };
 
         // =======================

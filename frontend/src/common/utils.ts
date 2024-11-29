@@ -191,8 +191,8 @@ export const resourcesGetter = <T>(resources_url: string) => {
  */
 
 export type ToastPluginApiExtended = ToastPluginApi & {
-    notifySuccess: (msg?: string) => void;
-    notifyError: (msg?: string) => void;
+    notifySuccess: (opts: { headline: string; msg?: string }) => void;
+    notifyError: (opts: { headline: string; msg?: string }) => void;
 };
 
 const N_MAX_NOTIF = 6;
@@ -231,8 +231,9 @@ export function useNotifications(): ToastPluginApiExtended {
         }
         return html;
     };
-    $toast.notifySuccess = (msg?: string) =>
-        enqueue(() => $toast.success(buildHTML('Success', msg)));
-    $toast.notifyError = (msg?: string) => enqueue(() => $toast.error(buildHTML('Error', msg)));
+    $toast.notifySuccess = ({ headline, msg }) =>
+        enqueue(() => $toast.success(buildHTML(headline, msg)));
+    $toast.notifyError = ({ headline, msg }) =>
+        enqueue(() => $toast.error(buildHTML(headline, msg)));
     return $toast;
 }
