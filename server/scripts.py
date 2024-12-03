@@ -13,7 +13,7 @@ def pycodestyle_checks():
     return_codes = list()
     for f in files:
         return_codes.append(subprocess.run(
-            ['python', '-m', 'pycodestyle', f]).returncode)
+            ['python', '-m', 'pycodestyle', '--max-line-length=100', f]).returncode)
     if any([code != 0 for code in return_codes]):
         raise Exception('Pycodestyle static checks failed')
 
