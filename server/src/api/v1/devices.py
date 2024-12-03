@@ -79,7 +79,7 @@ def fetch_all():
         devices: List[
             models.device.Device
         ] = server.instance._devices_db.fetch_all()
-        return Device.Schema().dumps(
+        return Device.Schema().dump(
             [model_to_schema(device) for device in devices], many=True
         ), 200
     except Exception as e:
@@ -143,7 +143,7 @@ def fetch_one(identifier: int):
         if dev is None:
             return api_error("device does not exist", 404)
 
-        return Device.Schema().dumps(model_to_schema(dev)), 200
+        return Device.Schema().dump(model_to_schema(dev)), 200
     except Exception as e:
         traceback.print_exc()
         print("Exception during device fetch:", repr(e))

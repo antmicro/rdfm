@@ -144,7 +144,7 @@ def fetch_by_device_id(identifier: int, params: LogRouteParameters):
                                               if params.name else None,
                                               params.since, params.to)
 
-        return Log.Schema().dumps(
+        return Log.Schema().dump(
             [model_to_schema(log) for log in logs], many=True
         )
     except Exception as e:
@@ -192,7 +192,7 @@ def fetch_by_group_id(identifier: int, params: LogRouteParameters):
                                               if params.name else None,
                                               params.since, params.to)
 
-        return Log.Schema().dumps(
+        return Log.Schema().dump(
             [model_to_schema(log) for log in logs], many=True
         )
     except Exception as e:
@@ -218,7 +218,7 @@ def fetch_by_log_id(identifier: int):
         if log is None:
             return api_error("log does not exist", 404)
 
-        return Log.Schema().dumps(model_to_schema(log)), 200
+        return Log.Schema().dump(model_to_schema(log)), 200
     except Exception as e:
         traceback.print_exc()
         print("Exception during log fetch:", repr(e))

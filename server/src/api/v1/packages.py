@@ -92,7 +92,7 @@ def fetch_packages():
     """  # noqa: E501
     try:
         packages = server.instance._packages_db.fetch_all()
-        return Package.Schema().dumps(
+        return Package.Schema().dump(
             [model_to_schema(package) for package in packages], many=True
         )
     except Exception as e:
@@ -210,7 +210,7 @@ def upload_package(scopes: list[str] = []):
         if not success:
             return api_error("could not create package", 500)
 
-        return {}, 200
+        return Package.Schema().dump(model_to_schema(package)), 200
 
     except Exception as e:
         traceback.print_exc()
@@ -294,7 +294,7 @@ def fetch_package(identifier: int):
         if pkg is None:
             return api_error("specified package does not exist", 404)
 
-        return Package.Schema().dumps(model_to_schema(pkg)), 200
+        return Package.Schema().dump(model_to_schema(pkg)), 200
     except Exception as e:
         traceback.print_exc()
         print("Exception during package fetch:", repr(e))

@@ -91,7 +91,7 @@ def fetch_all():
         groups: List[
             models.group.Group
         ] = server.instance._groups_db.fetch_all()
-        return Group.Schema().dumps(
+        return Group.Schema().dump(
             [model_to_schema(group) for group in groups], many=True
         )
     except Exception as e:
@@ -149,7 +149,7 @@ def fetch_one(identifier: int):
         if group is None:
             return api_error("group does not exist", 404)
 
-        return Group.Schema().dumps(model_to_schema(group)), 200
+        return Group.Schema().dump(model_to_schema(group)), 200
     except Exception as e:
         traceback.print_exc()
         print("Exception during group fetch:", repr(e))
@@ -341,7 +341,7 @@ def create():
         group.priority = GROUP_DEFAULT_PRIORITY
         server.instance._groups_db.create(group)
 
-        return Group.Schema().dumps(model_to_schema(group)), 200
+        return Group.Schema().dump(model_to_schema(group)), 200
     except Exception as e:
         traceback.print_exc()
         print("Exception during group creation:", repr(e))
