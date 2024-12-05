@@ -77,7 +77,7 @@ SPDX-License-Identifier: Apache-2.0
 }
 
 #main {
-    background-color: var(--background-200);
+    background-color: var(--background-100);
     min-height: 100vh;
 
     .menu {
@@ -142,12 +142,14 @@ SPDX-License-Identifier: Apache-2.0
         display: flex;
         justify-content: left;
         gap: 0.5em;
-        padding: 0 3em;
+        background-color: var(--background-200);
+        padding: 0 1.8em;
 
         > .navbar-item {
             color: var(--gray-800);
             cursor: pointer;
             padding: 0.5em;
+            font-size: larger;
 
             &.active {
                 color: var(--gray-1000);
@@ -163,13 +165,16 @@ SPDX-License-Identifier: Apache-2.0
     & > #logobar {
         color: white;
         padding: 2em;
+        padding-bottom: 0em;
+        background-color: var(--background-200);
 
         display: flex;
         justify-content: space-between;
         align-items: center;
 
         & > #logo {
-            height: 3em;
+            height: 4em;
+            width: 10em;
         }
 
         & > #settings {

@@ -10,7 +10,7 @@
 @import './progress-bar.css';
 @import './toast.css';
 
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Mona+Sans&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,600;1,14..32,600&display=swap');
 
 :root {
@@ -57,7 +57,9 @@ html,
 body {
     min-height: 100%;
     background-color: var(--background-100);
-    font-family: 'Noto Sans';
+    * {
+        font-family: 'Mona Sans';
+    }
     font-weight: 400;
 }
 body {

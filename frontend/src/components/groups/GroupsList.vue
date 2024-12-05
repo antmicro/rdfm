@@ -147,7 +147,7 @@ Component wraps functionality for displaying and working with rdfm groups.
 
     <div class="container">
         <p>Overview</p>
-        <div class="resources-table-wrapper">
+        <div class="resources-table-wrapper checked">
             <table class="resources-table">
                 <tbody>
                     <tr class="resources-table-row">
@@ -209,8 +209,10 @@ Component wraps functionality for displaying and working with rdfm groups.
                     </div>
                     <div class="group-row single-item">
                         <div class="entry">
-                            <div class="title" v-if="group.packages.length == 1">1 Package</div>
-                            <div class="title" v-else>{{ group.packages.length }} Packages</div>
+                            <div class="title" v-if="group.packages.length == 1">Package</div>
+                            <div class="title" v-else>
+                                Packages <span class="count">{{ group.packages.length }}</span>
+                            </div>
                             <div class="values">
                                 <div v-for="pckg in group.packages" :key="pckg" class="item">
                                     <div class="item-layout">
@@ -235,8 +237,10 @@ Component wraps functionality for displaying and working with rdfm groups.
                     </div>
                     <div class="group-row single-item">
                         <div class="entry">
-                            <div class="title" v-if="group.devices.length == 1">1 Device</div>
-                            <div class="title" v-else>{{ group.devices.length }} Devices</div>
+                            <div class="title" v-if="group.devices.length == 1">Device</div>
+                            <div class="title" v-else>
+                                Devices <span class="count">{{ group.devices.length }}</span>
+                            </div>
                             <div class="values">
                                 <div
                                     v-for="device in group.devices.map((d) => ({
@@ -289,6 +293,7 @@ Component wraps functionality for displaying and working with rdfm groups.
 
 .container {
     padding: 2em;
+    padding-top: 0em;
 
     & > p {
         color: var(--gray-1000);
@@ -296,6 +301,8 @@ Component wraps functionality for displaying and working with rdfm groups.
     }
 
     .group {
+        background: var(--background-200);
+
         display: flex;
         flex-direction: column;
 
@@ -308,6 +315,7 @@ Component wraps functionality for displaying and working with rdfm groups.
             display: grid;
             grid-template-columns: 60px repeat(5, auto) 220px;
             border-bottom: 2px solid var(--gray-400);
+            padding: 12px;
 
             &:last-child {
                 border: none;
@@ -324,7 +332,6 @@ Component wraps functionality for displaying and working with rdfm groups.
 
                 .entry {
                     display: block !important;
-                    width: 100%;
                 }
 
                 .button-wrapper {
@@ -341,6 +348,15 @@ Component wraps functionality for displaying and working with rdfm groups.
                 & > .title {
                     color: var(--gray-900);
                     text-wrap: nowrap;
+
+                    .count {
+                        margin-left: 5px;
+                        padding-left: 15px;
+                        padding-right: 15px;
+                        border-radius: 30px;
+                        color: white;
+                        background-color: var(--gray-100);
+                    }
                 }
 
                 & > .value {
@@ -348,11 +364,13 @@ Component wraps functionality for displaying and working with rdfm groups.
                 }
 
                 & > .values {
+                    margin-top: 10px;
+
                     & > .item {
                         border: 1px solid var(--gray-400);
                         border-radius: 5px;
                         background-color: var(--gray-100);
-                        margin: 0.25em 1em;
+                        margin: 0.25em;
                         padding: 0.25em 0.5em;
                         display: inline-block;
 
@@ -362,7 +380,6 @@ Component wraps functionality for displaying and working with rdfm groups.
                         }
 
                         .item-layout {
-                            font-family: monospace;
                             font-size: large;
                             margin-left: 2px;
 
@@ -375,6 +392,7 @@ Component wraps functionality for displaying and working with rdfm groups.
                                 height: 1.25em;
                                 margin: 0px;
                                 text-align: left;
+                                font-family: monospace;
                             }
 
                             p:nth-child(2) {
@@ -382,10 +400,6 @@ Component wraps functionality for displaying and working with rdfm groups.
                             }
                         }
                     }
-                }
-
-                &:last-child {
-                    flex-grow: 1;
                 }
 
                 & > .button-wrapper {

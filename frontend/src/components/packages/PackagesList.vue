@@ -89,7 +89,7 @@ Component wraps functionality for displaying and working with rdfm packages.
 
     <div class="container">
         <p>Overview</p>
-        <div class="resources-table-wrapper">
+        <div class="resources-table-wrapper checked">
             <table class="resources-table">
                 <tbody>
                     <tr class="resources-table-row">
@@ -157,6 +157,7 @@ Component wraps functionality for displaying and working with rdfm packages.
 <style scoped>
 .container {
     padding: 2em;
+    padding-top: 0em;
 
     & > p {
         color: var(--gray-1000);

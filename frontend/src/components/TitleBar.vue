@@ -32,17 +32,17 @@ with a title, subtitle and an optional action button.
     & > #titlebar {
         display: flex;
         flex-direction: column;
+        font-family: 'Mona Sans', sans-serif;
 
         & > #title {
             color: var(--gray-1000);
-            font-family: 'Inter', sans-serif;
+            font-weight: 700;
             font-size: 3em;
         }
 
         & > #subtitle {
             color: var(--gray-900);
-            font-family: 'Inter', sans-serif;
-            font-size: 1.1em;
+            font-size: 1.3em;
         }
     }
 

@@ -8,10 +8,23 @@
     overflow-x: auto;
 }
 
+.resources-table-wrapper.checked {
+    pointer-events: none;
+
+    tbody tr:nth-child(even) {
+        background-color: var(--background-100);
+    }
+
+    tbody tr:nth-child(odd) {
+        background-color: var(--background-200);
+    }
+}
+
 .resources-table {
     border: 2px solid var(--gray-400);
     border-radius: 5px;
-    padding: 0.5em;
+    padding: 12px;
+    background-color: var(--background-200);
 
     border-collapse: separate;
     border-spacing: 0;

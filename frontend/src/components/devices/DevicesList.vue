@@ -22,7 +22,7 @@ Component wraps functionality for displaying and working with rdfm devices.
             <div id="device-list">
                 <div id="device-list-overview">
                     <p>Overview</p>
-                    <div class="resources-table-wrapper">
+                    <div class="resources-table-wrapper checked">
                         <table class="resources-table">
                             <tbody>
                                 <tr class="resources-table-row no-border">
@@ -186,9 +186,15 @@ Component wraps functionality for displaying and working with rdfm devices.
             flex-direction: column;
             gap: 1em;
             width: 20%;
+            margin-right: 20px;
 
             & > a {
                 color: inherit;
+                text-decoration: none;
+                padding: 10px;
+                &:hover {
+                    background-color: var(--background-200);
+                }
             }
         }
 
