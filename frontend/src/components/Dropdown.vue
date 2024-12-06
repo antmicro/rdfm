@@ -188,6 +188,13 @@ tbody tr:active {
     align-items: center;
     padding: 0;
 }
+
+.tags {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
 </style>
 
 <script lang="ts">
