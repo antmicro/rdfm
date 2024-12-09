@@ -213,7 +213,22 @@ Component wraps functionality for displaying and working with rdfm groups.
                             <div class="title" v-else>{{ group.packages.length }} Packages</div>
                             <div class="values">
                                 <div v-for="pckg in group.packages" :key="pckg" class="item">
-                                    #{{ pckg }}
+                                    <div class="item-layout">
+                                        <p title="Package version">
+                                            {{
+                                                findPackage(pckg)?.metadata[
+                                                    'rdfm.software.version'
+                                                ] || ' - '
+                                            }}
+                                        </p>
+                                        <p title="Device type">
+                                            {{
+                                                findPackage(pckg)?.metadata[
+                                                    'rdfm.hardware.devtype'
+                                                ] || ' - '
+                                            }}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -223,14 +238,38 @@ Component wraps functionality for displaying and working with rdfm groups.
                             <div class="title" v-if="group.devices.length == 1">1 Device</div>
                             <div class="title" v-else>{{ group.devices.length }} Devices</div>
                             <div class="values">
-                                <div v-for="device in group.devices" :key="device" class="item">
-                                    #{{ device }} - {{ findDevice(device) }}
-                                    <button
-                                        class="action-button red small-padding"
-                                        @click="patchDevicesRequest(group.id, [], [device])"
-                                    >
-                                        <Cross></Cross>
-                                    </button>
+                                <div
+                                    v-for="device in group.devices.map((d) => ({
+                                        id: d,
+                                        ...findDevice(d),
+                                    }))"
+                                    :key="device.id"
+                                    class="item"
+                                >
+                                    <div class="item-layout grid">
+                                        <div>
+                                            <p title="MAC address">
+                                                {{ device.mac_address || ' - ' }}
+                                            </p>
+                                            <p title="Device type">
+                                                {{
+                                                    device.metadata?.['rdfm.hardware.devtype'] ||
+                                                    ' - '
+                                                }}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <button
+                                                style="margin: 10px"
+                                                class="action-button red small-padding"
+                                                @click="
+                                                    patchDevicesRequest(group.id, [], [device.id])
+                                                "
+                                            >
+                                                <Cross></Cross>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -316,6 +355,32 @@ Component wraps functionality for displaying and working with rdfm groups.
                         margin: 0.25em 1em;
                         padding: 0.25em 0.5em;
                         display: inline-block;
+
+                        .item-layout.grid {
+                            display: grid;
+                            grid-template-columns: auto 35px;
+                        }
+
+                        .item-layout {
+                            font-family: monospace;
+                            font-size: large;
+                            margin-left: 2px;
+
+                            & > div {
+                                align-content: center;
+                            }
+
+                            p {
+                                line-height: 1.25em;
+                                height: 1.25em;
+                                margin: 0px;
+                                text-align: left;
+                            }
+
+                            p:nth-child(2) {
+                                color: var(--gray-700);
+                            }
+                        }
                     }
                 }
 

@@ -61,19 +61,11 @@ export const groupResources = resourcesGetter<Group[]>(GROUPS_ENDPOINT);
 export const packagesResources = resourcesGetter<Package[]>(PACKAGES_ENDPOINT);
 export const devicesResources = resourcesGetter<RegisteredDevice[]>(DEVICES_ENDPOINT);
 
-export const findPackage = (packageId: number) => {
-    if (packagesResources.resources.value === undefined) return 'NOT FOUND';
+export const findPackage = (packageId: number) =>
+    packagesResources.resources.value?.find((pckg) => pckg.id === packageId);
 
-    const pckg = packagesResources.resources.value.find((pckg) => pckg.id === packageId);
-    return pckg!.id;
-};
-
-export const findDevice = (deviceId: number) => {
-    if (devicesResources.resources.value === undefined) return 'NOT FOUND';
-
-    const device = devicesResources.resources.value.find((device) => device.id === deviceId);
-    return device!.mac_address;
-};
+export const findDevice = (deviceId: number) =>
+    devicesResources.resources.value?.find((device) => device.id === deviceId);
 
 /**
  * Request specified in
