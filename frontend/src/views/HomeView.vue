@@ -49,20 +49,19 @@ SPDX-License-Identifier: Apache-2.0
 
         <!-- Navbar for navigation between views -->
         <div id="navbar">
-            <div class="navbar-item" :class="navbarItemClasses(0)" @click="activeTab = 0">
-                Devices
-            </div>
-            <div class="navbar-item" :class="navbarItemClasses(1)" @click="activeTab = 1">
-                Packages
-            </div>
-            <div class="navbar-item" :class="navbarItemClasses(2)" @click="activeTab = 2">
-                Groups
+            <div
+                v-for="tab in Object.values(ActiveTab)"
+                class="navbar-item"
+                :class="{ active: route.name === tab }"
+                @click="router.push(tab)"
+            >
+                {{ tab }}
             </div>
         </div>
 
-        <DevicesList v-if="activeTab === 0" />
-        <PackagesList v-if="activeTab === 1" />
-        <GroupsList v-if="activeTab === 2" />
+        <DevicesList v-if="route.name === ActiveTab.Devices" />
+        <PackagesList v-if="route.name === ActiveTab.Packages" />
+        <GroupsList v-if="route.name === ActiveTab.Groups" />
     </div>
 </template>
 
@@ -150,6 +149,7 @@ SPDX-License-Identifier: Apache-2.0
             cursor: pointer;
             padding: 0.5em;
             font-size: larger;
+            text-transform: capitalize;
 
             &.active {
                 color: var(--gray-1000);
@@ -188,22 +188,26 @@ SPDX-License-Identifier: Apache-2.0
 </style>
 
 <script lang="ts">
-import { ref, computed } from 'vue';
-import { LOGIN_PATH, LOGOUT_PATH } from '../common/utils';
+import { ref, computed, type PropType } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
+import { LOGIN_PATH, LOGOUT_PATH } from '../common/utils';
 import DevicesList from '../components/devices/DevicesList.vue';
 import PackagesList from '../components/packages/PackagesList.vue';
 import GroupsList from '../components/groups/GroupsList.vue';
 import Logo from '../images/Logo.vue';
 import LogoutIcon from '@/images/LogoutIcon.vue';
 
-const enum ActiveTab {
-    Devices,
-    Packages,
-    Groups,
+export enum ActiveTab {
+    Devices = 'devices',
+    Packages = 'packages',
+    Groups = 'groups',
 }
 
 export default {
+    props: {
+        activeTab: Object as PropType<ActiveTab>,
+    },
     components: {
         Logo,
         LogoutIcon,
@@ -211,16 +215,11 @@ export default {
         PackagesList,
         GroupsList,
     },
-    setup() {
-        const activeTab = ref(ActiveTab.Groups);
+    setup(props) {
+        const router = useRouter();
+        const route = useRoute();
         const loggedIn = ref(false);
         const accMenuOpen = ref(false);
-
-        const navbarItemClasses = (tabName: number) => {
-            return {
-                active: activeTab.value === tabName,
-            };
-        };
 
         const parseJWT = (token: string) => {
             const binaryString = atob(token.split('.')[1]);
@@ -268,14 +267,16 @@ export default {
         });
 
         return {
-            activeTab,
-            navbarItemClasses,
+            ...props,
             loggedIn,
             accMenuOpen,
             LOGIN_PATH,
             LOGOUT_PATH,
             userName,
             userRoles,
+            ActiveTab,
+            router,
+            route,
         };
     },
     watch: {

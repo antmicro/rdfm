@@ -5,7 +5,7 @@
  */
 
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
-import HomeView from '../views/HomeView.vue';
+import HomeView, { ActiveTab } from '../views/HomeView.vue';
 import LoginHandler from '../views/LoginHandler.vue';
 import LogoutHandler from '../views/LogoutHandler.vue';
 
@@ -20,9 +20,14 @@ const routes: RouteRecordRaw[] = [
         // This is needed for when the built application
         // is served from a subdirectory
         path: '/',
-        name: 'home',
-        component: HomeView,
+        redirect: '/groups',
     },
+    ...Object.values(ActiveTab).map((activeTab) => ({
+        path: `/${activeTab}`,
+        name: activeTab,
+        component: HomeView,
+        props: { activeTab },
+    })),
     {
         path: '/auth_data',
         name: 'login',
