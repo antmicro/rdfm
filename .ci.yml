@@ -1,5 +1,10 @@
 image: $CI_REGISTRY_IMAGE:rdfm-ci-base-bookworm
 
+.common_only: &common_only
+  only:
+    - main
+    - merge_requests
+
 variables:
   SSL_CERT_DIR: "certs"
   PIP_CACHE_DIR: $CI_PROJECT_DIR/.cache/pip
@@ -9,6 +14,7 @@ variables:
   SCALENODE_DISK: 20
 
 .build:
+  <<: *common_only
   variables:
     JWT_SECRET: testsecret123123123
     POSTGRES_MAJOR_VERSION: 15
@@ -57,10 +63,6 @@ python-pycodestyle-check:
   script:
     - (cd server && poetry run test-pycodestyle)
     - (cd manager && poetry run test-pycodestyle)
-  only:
-    refs:
-      - merge_requests
-      - main
 
 python-mypy-check:
   extends: .build
@@ -68,10 +70,6 @@ python-mypy-check:
   script:
     - (cd server && poetry run test-mypy)
     - (cd manager && poetry run test-mypy)
-  only:
-    refs:
-      - merge_requests
-      - main
   allow_failure: true
 
 test-package-api:
@@ -80,10 +78,6 @@ test-package-api:
   script:
     - cd server
     - poetry run pytest tests/test-packages.py
-  only:
-    refs:
-      - merge_requests
-      - main
 
 test-group-api:
   extends: .build
@@ -91,10 +85,6 @@ test-group-api:
   script:
     - cd server
     - poetry run pytest tests/test-groups.py
-  only:
-    refs:
-      - merge_requests
-      - main
 
 test-server-update-policies:
   extends: .build
@@ -103,10 +93,6 @@ test-server-update-policies:
     - cd server
     - poetry run pytest tests/test-update-policies.py --sqlite
     - poetry run pytest tests/test-update-policies.py --postgres
-  only:
-    refs:
-      - merge_requests
-      - main
 
 test-server-update-resolver:
   extends: .build
@@ -114,10 +100,6 @@ test-server-update-resolver:
   script:
     - cd server
     - poetry run pytest tests/test-update-resolver.py
-  only:
-    refs:
-      - merge_requests
-      - main
 
 test-server-update-api:
   extends: .build
@@ -126,10 +108,6 @@ test-server-update-api:
     - cd server
     - poetry run pytest tests/test-update-checker.py --sqlite
     - poetry run pytest tests/test-update-checker.py --postgres
-  only:
-    refs:
-      - merge_requests
-      - main
 
 test-server-device-auth-api:
   extends: .build
@@ -140,10 +118,6 @@ test-server-device-auth-api:
     - cd server
     - poetry run pytest tests/test-server-auth.py --sqlite
     - poetry run pytest tests/test-server-auth.py --postgres
-  only:
-    refs:
-      - merge_requests
-      - main
 
 test-server-s3-storage:
   extends: .build
@@ -151,10 +125,6 @@ test-server-s3-storage:
   script:
     - cd server
     - poetry run pytest tests/test-server-s3-storage.py
-  only:
-    refs:
-      - merge_requests
-      - main
 
 test-server-management-auth:
   extends: .build
@@ -165,10 +135,6 @@ test-server-management-auth:
     - cd server
     - poetry run pytest tests/test-server-management-auth.py --sqlite
     - poetry run pytest tests/test-server-management-auth.py --postgres
-  only:
-    refs:
-      - merge_requests
-      - main
 
 test-package-upload-auth:
   extends: .build
@@ -179,10 +145,6 @@ test-package-upload-auth:
     - cd server
     - poetry run pytest tests/test-package-upload-auth.py --sqlite
     - poetry run pytest tests/test-package-upload-auth.py --postgres
-  only:
-    refs:
-      - merge_requests
-      - main
 
 test-server-route-correctness:
   extends: .build
@@ -190,10 +152,6 @@ test-server-route-correctness:
   script:
     - cd server
     - poetry run pytest tests/test-server-route-correctness.py
-  only:
-    refs:
-      - merge_requests
-      - main
 
 test-server-websocket:
   extends: .build
@@ -202,10 +160,6 @@ test-server-websocket:
     - cd server
     - poetry run pytest tests/test-server-ws.py --sqlite
     - poetry run pytest tests/test-server-ws.py --postgres
-  only:
-    refs:
-      - merge_requests
-      - main
 
 test-manager:
   extends: .build
@@ -216,10 +170,6 @@ test-manager:
     - cd server
     - poetry run pytest tests/test-manager.py --sqlite
     - poetry run pytest tests/test-manager.py --postgres
-  only:
-    refs:
-      - merge_requests
-      - main
 
 test-server-stress:
   extends: .build
@@ -230,10 +180,6 @@ test-server-stress:
   script:
     - cd server
     - poetry run pytest tests/test-stress.py -vs
-  only:
-    refs:
-      - merge_requests
-      - main
   artifacts:
     paths:
       - server/tests/logs/*
@@ -246,21 +192,19 @@ test-server-logs:
     - cd server
     - poetry run pytest tests/test-server-logs.py --sqlite
     - poetry run pytest tests/test-server-logs.py --postgres
-  only:
-    refs:
-      - merge_requests
-      - main
 
 # ===== rdfm-client ===== #
 
 build-rdfm-client:
   stage: build
+  <<: *common_only
   script:
     - cd devices/linux-client
     - make
 
 test-rdfm-client:
   stage: local-tests
+  <<: *common_only
   script:
     # Build and install rdfm-artifact, which is required for the tests
     - cd tools/rdfm-artifact
@@ -268,13 +212,10 @@ test-rdfm-client:
     - make install
     - cd ../../devices/linux-client
     - make test
-  only:
-    refs:
-      - merge_requests
-      - main
 
 test-rdfm-client-docker:
   stage: local-tests
+  <<: *common_only
   script:
     - export PATH=$HOME/go/bin/:$PATH
     # Build and install rdfm-artifact, which is required for the tests
@@ -306,15 +247,12 @@ test-rdfm-client-docker:
     - cd ../../
     - ./scripts/test-docker/test-deltas.sh
     - ./scripts/test-docker/test-delta-over-http.sh
-  only:
-    refs:
-      - merge_requests
-      - main
 
 # ===== rdfm-mcumgr-client ===== #
 
 build-mcumgr-client:
   stage: build
+  <<: *common_only
   before_script:
     # Currently CI ships Go 1.19, while the client needs 1.22+
     - wget --quiet -O - "https://go.dev/dl/go1.22.3.linux-amd64.tar.gz" | tar xz
@@ -333,6 +271,7 @@ build-mcumgr-test-samples:
     ZEPHYR_WORKSPACE: $CI_PROJECT_DIR/zephyr
     ZEPHYR_BASE: $CI_PROJECT_DIR/zephyr/zephyr
     ZEPHYR_SDK_INSTALL_DIR: $CI_PROJECT_DIR/zephyr/sdk
+  <<: *common_only
   stage: build
   before_script:
     - apt update
@@ -344,16 +283,13 @@ build-mcumgr-test-samples:
     expire_in: 1 day
     paths:
       - devices/mcumgr-client/tests/out
-  only:
-    refs:
-      - merge_requests
-      - main
 
 test-mcumgr-client:
   variables:
     SCALENODE_CPU: 4
     SCALENODE_RAM: 6144
     SCALENODE_DISK: 10
+  <<: *common_only
   dependencies:
     - build-mcumgr-client
     - build-mcumgr-test-samples
@@ -374,10 +310,6 @@ test-mcumgr-client:
     - cd devices/mcumgr-client
     # Run the test
     - ./tests/end2end/test.sh
-  only:
-    refs:
-      - merge_requests
-      - main
 
 # ===== rdfm-artifact ===== #
 
@@ -387,6 +319,7 @@ test-mcumgr-client:
 
 build-rdfm-artifact:
   extends: .rdfm-artifact
+  <<: *common_only
   stage: build
   script:
     - cd tools/rdfm-artifact
@@ -397,30 +330,23 @@ build-rdfm-artifact:
 
 test-rdfm-artifact:
   extends: .rdfm-artifact
+  <<: *common_only
   stage: local-tests
   script:
     - cd tools/rdfm-artifact
     - make test
-  only:
-    refs:
-      - merge_requests
-      - main
-
 
 # ===== rdfm-frontend ===== #
 
 build-rdfm-frontend:
   image: node:20
   stage: static-checks
+  <<: *common_only
   script:
     - cd frontend
     - npm install
     - npm run format-check
     - npm run build
-  only:
-    refs:
-      - merge_requests
-      - main
   artifacts:
     paths:
       - frontend/dist
@@ -429,6 +355,7 @@ build-rdfm-frontend:
 
 docs-build:
   stage: docs-build
+  <<: *common_only
   before_script:
     # Disable venvs and just install everything globally
     # The server module must be accessible by Sphinx to
@@ -444,10 +371,6 @@ docs-build:
     - cp build/latex/*.pdf build/html/
     # Make sure the docs archive lands in the root of the repository
     - tar cf ../$CI_DOCS_ARCHIVE -C build/html/ .
-  only:
-    refs:
-      - merge_requests
-      - main
   artifacts:
     paths:
       - documentation/build
@@ -456,6 +379,7 @@ docs-build:
 docs-deploy:
   variables:
     GIT_STRATEGY: none
+  <<: *common_only
   dependencies:
     - docs-build
   stage: docs-deploy
