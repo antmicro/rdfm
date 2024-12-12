@@ -140,6 +140,14 @@ Component wraps functionality for displaying and working with rdfm packages.
                             <!-- TODO: Display metadata of the package -->
                             <td class="entry">
                                 <button
+                                    class="action-button gray"
+                                    @click="downloadPackage(pckg.id)"
+                                >
+                                    Download
+                                </button>
+                            </td>
+                            <td class="entry">
+                                <button
                                     class="action-button red"
                                     @click="openRemovePackagePopup(pckg.id)"
                                 >
@@ -177,6 +185,7 @@ import {
     packageResources,
     removePackageRequest,
     uploadPackageRequest,
+    downloadPackageRequest,
     type NewPackageData,
 } from './packages';
 
@@ -283,6 +292,21 @@ export default {
         };
 
         // =======================
+        // Download package functionality
+        // =======================
+
+        const downloadPackage = async (packageId: number) => {
+            const { success, message } = await downloadPackageRequest(packageId);
+            if (!success) {
+                notifications.notifyError({
+                    headline: 'Error when downloading the package:',
+                    msg: message || 'Could not get the download link',
+                });
+            }
+            window.open(message!);
+        };
+
+        // =======================
 
         onMounted(async () => {
             await packageResources.fetchResources();
@@ -318,6 +342,7 @@ export default {
             closeAddPackagePopup,
             closeRemovePackagePopup,
             openAddPackagePopup,
+            downloadPackage,
         };
     },
 };

@@ -11,6 +11,7 @@
 
 import {
     DELETE_PACKAGE_ENDPOINT,
+    DOWNLOAD_PACKAGE_ENDPOINT,
     PACKAGES_ENDPOINT,
     resourcesGetter,
     type Package,
@@ -121,4 +122,39 @@ export const removePackageRequest = async (packageId: number): Promise<RequestOu
     }
     await packageResources.fetchResources();
     return { success: true };
+};
+
+/**
+ * Request specified in
+ * https://antmicro.github.io/rdfm/api.html#get--api-v1-packages-(int-identifier)-download
+ */
+export const downloadPackageRequest = async (packageId: number): Promise<RequestOutput> => {
+    const out = await packageResources.fetchGET(DOWNLOAD_PACKAGE_ENDPOINT(packageId));
+    if (!out.success) {
+        switch (out.code) {
+            case StatusCodes.UNAUTHORIZED:
+                return {
+                    success: false,
+                    message:
+                        'User did not provide authorization data, or the authorization has expired',
+                };
+            case StatusCodes.FORBIDDEN:
+                return {
+                    success: false,
+                    message: 'User was authorized, but did not have permission to download packages',
+                };
+            case StatusCodes.NOT_FOUND:
+                return {
+                    success: false,
+                    message: 'Specified package does not exist',
+                };
+            default:
+                return {
+                    success: false,
+                    message: 'Failed to download package. Got a response code of ' + out.code,
+                };
+        }
+    }
+    await packageResources.fetchResources();
+    return { success: true, message: out.data.download_url };
 };

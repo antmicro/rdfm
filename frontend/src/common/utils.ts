@@ -31,6 +31,7 @@ const FRONTEND_URL =
 
 export const PACKAGES_ENDPOINT = `${SERVER_URL}/api/v1/packages`;
 export const DELETE_PACKAGE_ENDPOINT = (id: number) => `${PACKAGES_ENDPOINT}/${id}`;
+export const DOWNLOAD_PACKAGE_ENDPOINT = (id: number) => `${PACKAGES_ENDPOINT}/${id}/download`;
 
 export const DEVICES_ENDPOINT = `${SERVER_URL}/api/v2/devices`;
 export const PENDING_ENDPOINT = `${SERVER_URL}/api/v1/auth/pending`;
@@ -226,7 +227,7 @@ setInterval(() => {
 export function useNotifications(): ToastPluginApiExtended {
     const $toast = useToast() as ToastPluginApiExtended;
     const buildHTML = (prefix: string, msg?: string) => {
-        var html = `<p>${prefix}</p>`;
+        let html = `<p>${prefix}</p>`;
         if (msg) {
             html += `<p>${msg}</p>`;
         }
