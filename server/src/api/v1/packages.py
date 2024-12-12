@@ -249,6 +249,63 @@ def is_authorized_to_upload(file, scopes: list[str],
     return (True, required_scopes)
 
 
+@packages_blueprint.route("/api/v1/packages/<int:identifier>/download", methods=["GET"])
+@check_permission(PACKAGE_RESOURCE, READ_PERMISSION)
+def download_package(identifier: int):
+    """Create a download link for a given package. The link expires after an hour.
+
+    :param identifier: package identifier
+    :status 200: no error
+    :status 401: user did not provide authorization data,
+                 or the authorization has expired
+    :status 403: user was authorized, but did not have permission
+                 to download packages
+    :status 404: specified package does not exist
+
+    :>json string download_url: the generated download link
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        GET /api/v1/packages/1/download HTTP/1.1
+        Accept: application/json, text/javascript
+
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+
+        {
+            download_url: "http://rdfm-server:5000/local_storage/073a9de3-ced4-4089-a5fa-81953781c0e6"
+        }
+    """  # noqa: E501
+
+    try:
+        pkg = server.instance._packages_db.fetch_one(identifier)
+        if pkg is None:
+            return api_error("specified package does not exist", 404)
+
+        conf: configuration.ServerConfig = current_app.config["RDFM_CONFIG"]
+        driver = storage.driver_by_name(pkg.driver, conf)
+        if driver is None:
+            return api_error("invalid storage driver", 500)
+
+        link_expiry_time = 3600
+
+        return {
+            "download_url": driver.generate_url(pkg.info, link_expiry_time)
+        }, 200
+
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception when generating package download link:", repr(e))
+        return {}, 500
+
+
 @packages_blueprint.route("/api/v1/packages/<int:identifier>", methods=["GET"])
 @check_permission(PACKAGE_RESOURCE, READ_PERMISSION)
 def fetch_package(identifier: int):
