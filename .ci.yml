@@ -8,11 +8,7 @@ variables:
   SCALENODE_RAM: 2048
   SCALENODE_DISK: 20
 
-.ace: &ace
-  tags: ['ace-x86_64']
-
 .build:
-  <<: *ace
   variables:
     JWT_SECRET: testsecret123123123
     POSTGRES_MAJOR_VERSION: 15
@@ -258,14 +254,12 @@ test-server-logs:
 # ===== rdfm-client ===== #
 
 build-rdfm-client:
-  <<: *ace
   stage: build
   script:
     - cd devices/linux-client
     - make
 
 test-rdfm-client:
-  <<: *ace
   stage: local-tests
   script:
     # Build and install rdfm-artifact, which is required for the tests
@@ -280,7 +274,6 @@ test-rdfm-client:
       - main
 
 test-rdfm-client-docker:
-  <<: *ace
   stage: local-tests
   script:
     - export PATH=$HOME/go/bin/:$PATH
@@ -320,11 +313,7 @@ test-rdfm-client-docker:
 
 # ===== rdfm-mcumgr-client ===== #
 
-.mcumgr-client:
-  <<: *ace
-
 build-mcumgr-client:
-  extends: .mcumgr-client
   stage: build
   before_script:
     # Currently CI ships Go 1.19, while the client needs 1.22+
@@ -338,7 +327,6 @@ build-mcumgr-client:
       - devices/mcumgr-client/rdfm-mcumgr-client
 
 build-mcumgr-test-samples:
-  <<: *ace
   variables:
     SCALENODE_CPU: 4
     SCALENODE_RAM: 8192
@@ -362,7 +350,6 @@ build-mcumgr-test-samples:
       - main
 
 test-mcumgr-client:
-  extends: .mcumgr-client
   variables:
     SCALENODE_CPU: 4
     SCALENODE_RAM: 6144
@@ -395,7 +382,6 @@ test-mcumgr-client:
 # ===== rdfm-artifact ===== #
 
 .rdfm-artifact:
-  <<: *ace
   before_script:
     - export PATH=$HOME/go/bin/:$PATH
 
@@ -424,7 +410,6 @@ test-rdfm-artifact:
 # ===== rdfm-frontend ===== #
 
 build-rdfm-frontend:
-  <<: *ace
   image: node:20
   stage: static-checks
   script:
@@ -443,7 +428,6 @@ build-rdfm-frontend:
 # ===== documentation ===== #
 
 docs-build:
-  <<: *ace
   stage: docs-build
   before_script:
     # Disable venvs and just install everything globally
