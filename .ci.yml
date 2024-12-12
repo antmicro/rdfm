@@ -461,9 +461,6 @@ docs-deploy:
   stage: docs-deploy
   tags: ["docs"]
   script: echo 'Deploying docs'
-  only:
-    refs:
-      - main
   artifacts:
     paths:
       - $CI_DOCS_ARCHIVE
