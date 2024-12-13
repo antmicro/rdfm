@@ -156,12 +156,12 @@ td {
     transform: scale(1);
 }
 
-tbody tr:hover {
+.table-holder tbody tr:hover {
     background: var(--gray-400);
     cursor: pointer;
 }
 
-tbody tr:active {
+.table-holder tbody tr:active {
     background: var(--gray-500);
 }
 
