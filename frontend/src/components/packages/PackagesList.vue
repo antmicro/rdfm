@@ -138,20 +138,18 @@ Component wraps functionality for displaying and working with rdfm packages.
                                 <div class="value">{{ pckg.driver }}</div>
                             </td>
                             <!-- TODO: Display metadata of the package -->
-                            <td class="entry">
-                                <button
-                                    class="action-button gray"
-                                    @click="downloadPackage(pckg.id)"
-                                >
-                                    Download
-                                </button>
-                            </td>
-                            <td class="entry">
+                            <td class="entry buttons">
                                 <button
                                     class="action-button red"
                                     @click="openRemovePackagePopup(pckg.id)"
                                 >
                                     Remove
+                                </button>
+                                <button
+                                    class="action-button gray"
+                                    @click="downloadPackage(pckg.id)"
+                                >
+                                    Download
                                 </button>
                             </td>
                         </tr>
@@ -170,6 +168,15 @@ Component wraps functionality for displaying and working with rdfm packages.
     & > p {
         color: var(--gray-1000);
         font-size: 1.5em;
+    }
+}
+
+.entry.buttons {
+    button {
+        float: right;
+        width: 105px;
+        text-align: center !important;
+        margin-left: 10px !important;
     }
 }
 </style>

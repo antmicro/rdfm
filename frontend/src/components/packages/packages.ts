@@ -141,7 +141,8 @@ export const downloadPackageRequest = async (packageId: number): Promise<Request
             case StatusCodes.FORBIDDEN:
                 return {
                     success: false,
-                    message: 'User was authorized, but did not have permission to download packages',
+                    message:
+                        'User was authorized, but did not have permission to download packages',
                 };
             case StatusCodes.NOT_FOUND:
                 return {
@@ -155,6 +156,5 @@ export const downloadPackageRequest = async (packageId: number): Promise<Request
                 };
         }
     }
-    await packageResources.fetchResources();
     return { success: true, message: out.data.download_url };
 };
