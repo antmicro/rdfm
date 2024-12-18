@@ -13,8 +13,7 @@ variables:
   SCALENODE_RAM: 2048
   SCALENODE_DISK: 20
 
-.build:
-  <<: *common_only
+.build-base:
   variables:
     JWT_SECRET: testsecret123123123
     POSTGRES_MAJOR_VERSION: 15
@@ -43,6 +42,9 @@ variables:
     - chmod -R 777 /var/lib/rdfm
     - server/tests/certgen.sh
 
+.build:
+  <<: *common_only
+  extends: .build-base
 
 stages:
   - docs-build
@@ -52,7 +54,7 @@ stages:
   - local-tests
 
 build:
-  extends: .build
+  extends: .build-base
   stage: build
   script:
     - echo "Build finished"
@@ -197,7 +199,6 @@ test-server-logs:
 
 build-rdfm-client:
   stage: build
-  <<: *common_only
   script:
     - cd devices/linux-client
     - make
@@ -252,7 +253,6 @@ test-rdfm-client-docker:
 
 build-mcumgr-client:
   stage: build
-  <<: *common_only
   before_script:
     # Currently CI ships Go 1.19, while the client needs 1.22+
     - wget --quiet -O - "https://go.dev/dl/go1.22.3.linux-amd64.tar.gz" | tar xz
@@ -319,7 +319,6 @@ test-mcumgr-client:
 
 build-rdfm-artifact:
   extends: .rdfm-artifact
-  <<: *common_only
   stage: build
   script:
     - cd tools/rdfm-artifact
