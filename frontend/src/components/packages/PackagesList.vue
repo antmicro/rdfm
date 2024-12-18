@@ -106,7 +106,7 @@ Component wraps functionality for displaying and working with rdfm packages.
         <template v-if="(packages?.length ?? 0) > 0">
             <p>Packages</p>
             <div class="resources-table-wrapper">
-                <table class="resources-table">
+                <table class="resources-table packages">
                     <tbody>
                         <tr v-for="pckg in packages" :key="pckg.id" class="resources-table-row">
                             <td class="entry">
@@ -216,6 +216,19 @@ Component wraps functionality for displaying and working with rdfm packages.
     & > p {
         color: var(--gray-1000);
         font-size: 1.5em;
+    }
+}
+
+table.resources-table.packages {
+    width: fit-content;
+    overflow-x: unset;
+
+    &:has(.resources-table-row:nth-last-child(2) #main-button:focus) {
+        margin-bottom: 30px;
+    }
+
+    &:has(.resources-table-row:last-child #main-button:focus) {
+        margin-bottom: 130px;
     }
 }
 
