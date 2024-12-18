@@ -10,23 +10,28 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
 import ToastPlugin from 'vue-toast-notification';
+import { LOGIN_PATH } from './common/utils';
 
-if (import.meta.env.VITE_CUSTOM_FAVICON) {
-    const link = document.getElementById('favicon') as HTMLLinkElement;
-    link.href = import.meta.env.VITE_CUSTOM_FAVICON;
+if (!localStorage.getItem('access_token') && !window.location.pathname.endsWith('/auth_data')) {
+    window.location.href = LOGIN_PATH;
+} else {
+    if (import.meta.env.VITE_CUSTOM_FAVICON) {
+        const link = document.getElementById('favicon') as HTMLLinkElement;
+        link.href = import.meta.env.VITE_CUSTOM_FAVICON;
+    }
+
+    if (import.meta.env.VITE_CUSTOM_STYLESHEET) {
+        const head = document.querySelector('head');
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.setAttribute('crossorigin', 'true');
+        link.href = import.meta.env.VITE_CUSTOM_STYLESHEET;
+        head!.appendChild(link);
+    }
+
+    const app = createApp(App);
+
+    app.use(router);
+    app.use(ToastPlugin);
+    app.mount('#app');
 }
-
-if (import.meta.env.VITE_CUSTOM_STYLESHEET) {
-    const head = document.querySelector('head');
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.setAttribute('crossorigin', 'true');
-    link.href = import.meta.env.VITE_CUSTOM_STYLESHEET;
-    head!.appendChild(link);
-}
-
-const app = createApp(App);
-
-app.use(router);
-app.use(ToastPlugin);
-app.mount('#app');
