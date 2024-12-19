@@ -5,7 +5,7 @@
  */
 
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
-import HomeView, { ActiveTab } from '../views/HomeView.vue';
+import HomeView, { ActiveTab, SECTIONS } from '../views/HomeView.vue';
 import LoginHandler from '../views/LoginHandler.vue';
 import LogoutHandler from '../views/LogoutHandler.vue';
 
@@ -22,12 +22,18 @@ const routes: RouteRecordRaw[] = [
         path: '/',
         redirect: '/groups',
     },
-    ...Object.values(ActiveTab).map((activeTab) => ({
+    ...SECTIONS.map((activeTab) => ({
         path: `/${activeTab}`,
         name: activeTab,
         component: HomeView,
         props: { activeTab },
     })),
+    {
+        path: '/devices/:id',
+        name: ActiveTab.Device,
+        component: HomeView,
+        props: { activeTab: ActiveTab.Device },
+    },
     {
         path: '/auth_data',
         name: 'login',

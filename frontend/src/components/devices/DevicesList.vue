@@ -158,7 +158,14 @@ Component wraps functionality for displaying and working with rdfm devices.
                                 </td>
 
                                 <!-- Last auxiliary entry to fill up the space -->
-                                <td class="entry"></td>
+                                <td class="entry">
+                                    <button
+                                        class="action-button gray"
+                                        @click="() => router.push('/devices/' + device.id)"
+                                    >
+                                        View
+                                    </button>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -215,6 +222,8 @@ import {
     registerDeviceRequest,
     registeredDevicesResources,
 } from './devices';
+import router from '@/router';
+import { useRouter } from 'vue-router';
 
 export default {
     components: {
@@ -222,6 +231,7 @@ export default {
     },
     setup() {
         const notifications = useNotifications();
+        const router = useRouter();
 
         let intervalID: undefined | number = undefined;
 
@@ -266,6 +276,7 @@ export default {
         return {
             pendingDevices: pendingDevicesResources.resources,
             registeredDevices: registeredDevicesResources.resources,
+            router,
             pendingDevicesCount,
             registeredDevicesCount,
             devicesCount,

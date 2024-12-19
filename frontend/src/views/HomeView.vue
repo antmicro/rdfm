@@ -50,10 +50,10 @@ SPDX-License-Identifier: Apache-2.0
         <!-- Navbar for navigation between views -->
         <div id="navbar">
             <div
-                v-for="tab in Object.values(ActiveTab)"
+                v-for="tab in SECTIONS"
                 class="navbar-item"
-                :class="{ active: route.name === tab }"
-                @click="router.push(tab)"
+                :class="{ active: tab.startsWith(route.name!.toString()) }"
+                @click="router.push('/' + tab)"
             >
                 {{ tab }}
             </div>
@@ -62,6 +62,7 @@ SPDX-License-Identifier: Apache-2.0
         <DevicesList v-if="route.name === ActiveTab.Devices" />
         <PackagesList v-if="route.name === ActiveTab.Packages" />
         <GroupsList v-if="route.name === ActiveTab.Groups" />
+        <Device v-if="route.name === ActiveTab.Device" />
     </div>
 </template>
 
@@ -197,12 +198,16 @@ import PackagesList from '../components/packages/PackagesList.vue';
 import GroupsList from '../components/groups/GroupsList.vue';
 import Logo from '../images/Logo.vue';
 import LogoutIcon from '@/images/LogoutIcon.vue';
+import Device from '@/components/devices/Device.vue';
 
 export enum ActiveTab {
+    Device = 'device',
     Devices = 'devices',
     Packages = 'packages',
     Groups = 'groups',
 }
+
+export const SECTIONS = [ActiveTab.Devices, ActiveTab.Packages, ActiveTab.Groups];
 
 export default {
     props: {
@@ -214,6 +219,7 @@ export default {
         DevicesList,
         PackagesList,
         GroupsList,
+        Device,
     },
     setup(props) {
         const router = useRouter();
@@ -272,6 +278,7 @@ export default {
             accMenuOpen,
             LOGIN_PATH,
             LOGOUT_PATH,
+            SECTIONS,
             userName,
             userRoles,
             ActiveTab,
