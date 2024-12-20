@@ -219,6 +219,12 @@ Component wraps functionality for displaying and working with rdfm packages.
     }
 }
 
+@supports (-moz-box-align: unset) {
+    table.resources-table.packages .entry:has(.buttons) {
+        width: 100vw;
+    }
+}
+
 table.resources-table.packages {
     width: fit-content;
     overflow-x: unset;
