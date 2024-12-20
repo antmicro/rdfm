@@ -229,11 +229,11 @@ table.resources-table.packages {
     width: fit-content;
     overflow-x: unset;
 
-    &:has(.resources-table-row:nth-last-child(2) #main-button:focus) {
+    &:has(.resources-table-row:nth-last-child(2) .buttons:focus-within) {
         margin-bottom: 30px;
     }
 
-    &:has(.resources-table-row:last-child #main-button:focus) {
+    &:has(.resources-table-row:last-child .buttons:focus-within) {
         margin-bottom: 130px;
     }
 }
