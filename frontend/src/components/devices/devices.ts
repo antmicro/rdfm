@@ -11,9 +11,11 @@
 
 import {
     DEVICES_ENDPOINT,
+    GROUPS_ENDPOINT,
     PENDING_ENDPOINT,
     REGISTER_DEVICE_ENDPOINT,
     resourcesGetter,
+    type Group,
     type PendingDevice,
     type RegisteredDevice,
     type RequestOutput,
@@ -23,6 +25,7 @@ import { StatusCodes } from 'http-status-codes';
 
 export const pendingDevicesResources = resourcesGetter<PendingDevice[]>(PENDING_ENDPOINT);
 export const registeredDevicesResources = resourcesGetter<RegisteredDevice[]>(DEVICES_ENDPOINT);
+export const groupResources = resourcesGetter<Group[]>(GROUPS_ENDPOINT);
 
 /**
  * Request specified in

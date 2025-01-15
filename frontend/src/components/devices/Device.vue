@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2025 Antmicro <www.antmicro.com>
+Copyright (c) 2024-2025 Antmicro <www.antmicro.com>
 
 SPDX-License-Identifier: Apache-2.0
 -->
@@ -36,8 +36,9 @@ Component wraps functionality for displaying and working with a single rdfm devi
                     <span
                         class="groupname"
                         v-if="(device.groups || []).length > 0"
-                        v-for="group in device.groups"
-                        >{{ group }}
+                        v-for="group in groups"
+                        :title="group.metadata['rdfm.group.description']"
+                        >{{ group.metadata['rdfm.group.name'] }}
                     </span>
                     <span v-if="(device.groups || []).length == 0"
                         >This device is not assigned to any group</span
@@ -121,9 +122,9 @@ Component wraps functionality for displaying and working with a single rdfm devi
 <script lang="ts">
 import { computed, effect, ref } from 'vue';
 
-import { POLL_INTERVAL, type RegisteredDevice } from '../../common/utils';
+import { POLL_INTERVAL, type Group, type RegisteredDevice } from '../../common/utils';
 import TitleBar from '../TitleBar.vue';
-import { registeredDevicesResources } from './devices';
+import { registeredDevicesResources, groupResources } from './devices';
 import { useRoute } from 'vue-router';
 
 const MAC_ADDR_REGEX = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
@@ -139,6 +140,7 @@ export default {
         const route = useRoute();
         const interval = ref<number | null>(null);
 
+        groupResources.fetchResources();
         registeredDevicesResources.fetchResources();
         interval.value = setInterval(
             () => registeredDevicesResources.fetchResources(),
@@ -152,6 +154,7 @@ export default {
         // If there are 2 matches then the order above applies (e.g. MAC Address is prioritized over device name)
         const routeId = route.params.id.toString();
         const device = ref<RegisteredDevice>();
+        const groups = ref<Group[]>();
         const pattern = ref<string>();
         effect(() => {
             if (!registeredDevicesResources.resources.value) return;
@@ -179,6 +182,12 @@ export default {
             }
 
             device.value = foundDevice;
+            groups.value = foundDevice?.groups
+                ?.map(
+                    (deviceGroupId) =>
+                        groupResources.resources.value?.find((g) => g.id == deviceGroupId)!,
+                )
+                .filter(Boolean);
             pattern.value = foundPattern;
         });
 
@@ -190,6 +199,7 @@ export default {
             devicesLoaded,
             device,
             pattern,
+            groups,
         };
     },
 };
