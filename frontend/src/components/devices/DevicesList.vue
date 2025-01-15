@@ -59,116 +59,95 @@ Component wraps functionality for displaying and working with rdfm devices.
                 </div>
                 <div id="device-list-unregistered" v-if="pendingDevicesCount !== 0">
                     <p>Unregistered</p>
-                    <div class="resources-table-wrapper">
-                        <table class="resources-table">
-                            <tbody>
-                                <tr
-                                    v-for="device in pendingDevices"
-                                    :key="device.mac_address"
-                                    class="resources-table-row"
+                    <div class="device-list">
+                        <div v-for="device in pendingDevices" :key="device.mac_address" class="row">
+                            <div class="entry">
+                                <div class="title">MAC Address</div>
+                                <div class="value">{{ device.mac_address }}</div>
+                            </div>
+                            <div class="entry">
+                                <div class="title">Last appeared</div>
+                                <div class="value">{{ device.last_appeared }}</div>
+                            </div>
+                            <div class="entry">
+                                <div class="title">Device type</div>
+                                <div class="value">
+                                    {{ device.metadata['rdfm.hardware.devtype'] }}
+                                </div>
+                            </div>
+                            <div class="entry">
+                                <div class="title">Software version</div>
+                                <div class="value">
+                                    {{ device.metadata['rdfm.software.version'] }}
+                                </div>
+                            </div>
+                            <div class="entry">
+                                <div class="title">Public key</div>
+                                <div class="value">{{ device.public_key.slice(0, 15) }}...</div>
+                            </div>
+                            <div class="entry">
+                                <button
+                                    class="action-button blue"
+                                    @click="registerDevice(device.mac_address, device.public_key)"
                                 >
-                                    <td class="entry">
-                                        <div class="title">MAC Address</div>
-                                        <div class="value">{{ device.mac_address }}</div>
-                                    </td>
-                                    <td class="entry">
-                                        <div class="title">Last appeared</div>
-                                        <div class="value">{{ device.last_appeared }}</div>
-                                    </td>
-                                    <td class="entry">
-                                        <div class="title">Device type</div>
-                                        <div class="value">
-                                            {{ device.metadata['rdfm.hardware.devtype'] }}
-                                        </div>
-                                    </td>
-                                    <td class="entry">
-                                        <div class="title">Software version</div>
-                                        <div class="value">
-                                            {{ device.metadata['rdfm.software.version'] }}
-                                        </div>
-                                    </td>
-                                    <td class="entry">
-                                        <div class="title">Public key</div>
-                                        <div class="value">
-                                            {{ device.public_key.slice(0, 15) }}...
-                                        </div>
-                                    </td>
-                                    <td class="entry">
-                                        <button
-                                            class="action-button blue"
-                                            @click="
-                                                registerDevice(
-                                                    device.mac_address,
-                                                    device.public_key,
-                                                )
-                                            "
-                                        >
-                                            Register
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                                    Register
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div id="device-list-registered" v-if="registeredDevicesCount !== 0">
                     <p>Registered</p>
-                    <table class="resources-table">
-                        <tbody>
-                            <tr
-                                v-for="device in registeredDevices"
-                                :key="device.id"
-                                class="resources-table-row"
-                            >
-                                <td class="entry">
-                                    <div class="title">ID</div>
-                                    <div class="value">#{{ device.id }}</div>
-                                </td>
-                                <td class="entry">
-                                    <div class="title">Name</div>
-                                    <div class="value">{{ device.name }}</div>
-                                </td>
-                                <td class="entry">
-                                    <div class="title">Capabilities</div>
-                                    <div class="value">{{ device.capabilities }}</div>
-                                </td>
-                                <td class="entry">
-                                    <div class="title">MAC Address</div>
-                                    <div class="value">
-                                        {{ device.mac_address }}
-                                    </div>
-                                </td>
-                                <td class="entry">
-                                    <div class="title">Software version</div>
-                                    <div class="value">
-                                        {{ device.metadata['rdfm.software.version'] }}
-                                    </div>
-                                </td>
-                                <td class="entry">
-                                    <div class="title">Last Accessed</div>
-                                    <div class="value">{{ device.last_access }}</div>
-                                </td>
-                                <td class="entry">
-                                    <div class="title">Groups</div>
-                                    <div class="value" v-if="device.groups!.length > 0">
-                                        {{ device.groups }}
-                                    </div>
-                                    <div class="value" v-else>-</div>
-                                </td>
+                    <div class="device-list">
+                        <div v-for="device in registeredDevices" :key="device.id" class="row">
+                            <div class="entry">
+                                <div class="title">ID</div>
+                                <div class="value">#{{ device.id }}</div>
+                            </div>
+                            <div class="entry">
+                                <div class="title">Name</div>
+                                <div class="value">{{ device.name }}</div>
+                            </div>
+                            <div class="entry">
+                                <div class="title">Capabilities</div>
+                                <div class="value">{{ device.capabilities }}</div>
+                            </div>
+                            <div class="entry">
+                                <div class="title">MAC Address</div>
+                                <div class="value">
+                                    {{ device.mac_address }}
+                                </div>
+                            </div>
+                            <div class="entry">
+                                <div class="title">Software version</div>
+                                <div class="value">
+                                    {{ device.metadata['rdfm.software.version'] }}
+                                </div>
+                            </div>
+                            <div class="entry">
+                                <div class="title">Last Accessed</div>
+                                <div class="value">{{ device.last_access }}</div>
+                            </div>
+                            <div class="entry">
+                                <div class="title">Groups</div>
+                                <div class="value" v-if="device.groups!.length > 0">
+                                    {{ device.groups }}
+                                </div>
+                                <div class="value" v-else>-</div>
+                            </div>
 
-                                <!-- Last auxiliary entry to fill up the space -->
-                                <td class="entry">
-                                    <button
-                                        class="action-button gray"
-                                        @click="() => router.push('/devices/' + device.id)"
-                                    >
-                                        View
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                            <!-- Last auxiliary entry to fill up the space -->
+                            <div class="entry">
+                                <button
+                                    class="action-button gray"
+                                    @click="() => router.push('/devices/' + device.id)"
+                                >
+                                    View
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -180,6 +159,20 @@ Component wraps functionality for displaying and working with rdfm devices.
     p {
         color: var(--gray-1000);
         font-size: 1.5em;
+    }
+
+    @media screen and (max-width: 1600px) {
+        #container {
+            display: block !important;
+
+            #overview {
+                display: block !important;
+            }
+
+            #device-list {
+                width: 100% !important;
+            }
+        }
     }
 
     & > #container {
@@ -199,6 +192,7 @@ Component wraps functionality for displaying and working with rdfm devices.
                 color: inherit;
                 text-decoration: none;
                 padding: 10px;
+
                 &:hover {
                     background-color: var(--background-200);
                 }
@@ -207,6 +201,79 @@ Component wraps functionality for displaying and working with rdfm devices.
 
         & > #device-list {
             width: 80%;
+            --default-col-width: 170px;
+
+            /* Default columns widths */
+            #device-list-registered .row {
+                grid-template-columns: 80px repeat(4, var(--default-col-width)) 300px auto auto;
+            }
+            #device-list-unregistered .row {
+                grid-template-columns: 200px 300px repeat(3, var(--default-col-width)) auto;
+            }
+
+            /* Smaller columns widths */
+            @media screen and (max-width: 1670px) {
+                #device-list-registered .row {
+                    grid-template-columns: 80px repeat(4, var(--default-col-width)) 200px auto auto;
+                }
+                #device-list-unregistered .row {
+                    grid-template-columns:
+                        var(--default-col-width) 200px repeat(3, var(--default-col-width))
+                        auto;
+                }
+            }
+
+            /* Columns collapsed into rows */
+            @media screen and (max-width: 1250px) {
+                #device-list-registered .row,
+                #device-list-unregistered .row {
+                    grid-template-columns: none;
+                    grid-template-rows: repeat(auto-fit, auto);
+                    position: relative;
+
+                    .entry:last-child {
+                        button {
+                            position: absolute;
+                            right: 10px;
+                            top: 10px;
+                        }
+                    }
+                }
+            }
+
+            .device-list {
+                border: 2px solid var(--gray-400);
+                border-radius: 5px;
+                padding: 12px;
+                background-color: var(--background-200);
+            }
+
+            .row {
+                display: grid;
+
+                &:not(:last-child) {
+                    border-bottom: 2px solid var(--gray-400);
+                }
+
+                .entry {
+                    padding: 0.5em 1em;
+
+                    .title {
+                        color: var(--gray-900);
+                        text-wrap: nowrap;
+                    }
+
+                    .value {
+                        max-height: 100px;
+                        text-overflow: ellipsis;
+                        overflow: hidden;
+                    }
+
+                    button {
+                        float: right;
+                    }
+                }
+            }
         }
     }
 }
