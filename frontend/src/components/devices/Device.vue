@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2024 Antmicro <www.antmicro.com>
+Copyright (c) 2025 Antmicro <www.antmicro.com>
 
 SPDX-License-Identifier: Apache-2.0
 -->
@@ -10,8 +10,12 @@ Component wraps functionality for displaying and working with a single rdfm devi
 
 <template>
     <div v-if="devicesLoaded">
-        <TitleBar v-if="device" :title="'Device ' + id" :subtitle="device.name" />
-        <TitleBar v-if="!device" :title="`Device with id '${id}' was not found`" :subtitle="''" />
+        <TitleBar v-if="device" :title="'Device ' + device.mac_address" :subtitle="device.name" />
+        <TitleBar
+            v-if="!device"
+            :title="`Device with ${pattern} '${id}' was not found`"
+            :subtitle="''"
+        />
 
         <div class="device-container" v-if="device">
             <div class="block">
@@ -115,12 +119,14 @@ Component wraps functionality for displaying and working with a single rdfm devi
 </style>
 
 <script lang="ts">
-import { computed, ref } from 'vue';
+import { computed, effect, ref } from 'vue';
 
 import { POLL_INTERVAL, type RegisteredDevice } from '../../common/utils';
 import TitleBar from '../TitleBar.vue';
-import { pendingDevicesResources, registeredDevicesResources } from './devices';
-import { useRoute, useRouter } from 'vue-router';
+import { registeredDevicesResources } from './devices';
+import { useRoute } from 'vue-router';
+
+const MAC_ADDR_REGEX = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
 
 export default {
     components: {
@@ -131,28 +137,59 @@ export default {
     },
     setup() {
         const route = useRoute();
-        const deviceId = Number.parseInt(route.params.id.toString());
         const interval = ref<number | null>(null);
 
         registeredDevicesResources.fetchResources();
-        pendingDevicesResources.fetchResources();
-
-        interval.value = setInterval(() => {
-            registeredDevicesResources.fetchResources();
-            pendingDevicesResources.fetchResources();
-        }, POLL_INTERVAL);
-
-        const device = computed<RegisteredDevice | undefined>(() =>
-            registeredDevicesResources.resources.value?.find((d) => d.id == deviceId),
+        interval.value = setInterval(
+            () => registeredDevicesResources.fetchResources(),
+            POLL_INTERVAL,
         );
+
+        // Parse the route and find the relavant device. The id can be one of:
+        //   * MAC address
+        //   * URL-encoded device name
+        //   * Device id from the RDFM Management Server
+        // If there are 2 matches then the order above applies (e.g. MAC Address is prioritized over device name)
+        const routeId = route.params.id.toString();
+        const device = ref<RegisteredDevice>();
+        const pattern = ref<string>();
+        effect(() => {
+            if (!registeredDevicesResources.resources.value) return;
+
+            let foundDevice: RegisteredDevice | undefined;
+            let foundPattern;
+
+            if (routeId.match(MAC_ADDR_REGEX)) {
+                foundDevice = registeredDevicesResources.resources.value.find(
+                    (d) => d.mac_address == routeId,
+                );
+                foundPattern = 'MAC address';
+            } else {
+                foundDevice = registeredDevicesResources.resources.value.find(
+                    (d) => d.name == decodeURIComponent(routeId),
+                );
+                foundPattern = 'name';
+            }
+
+            if (!foundDevice) {
+                foundDevice = registeredDevicesResources.resources.value.find(
+                    (d) => d.id == Number(routeId),
+                );
+                foundPattern = 'id';
+            }
+
+            device.value = foundDevice;
+            pattern.value = foundPattern;
+        });
 
         const devicesLoaded = computed(() => !!registeredDevicesResources.resources.value);
 
         return {
             id: route.params.id,
             interval,
-            device,
             devicesLoaded,
+            device,
+            pattern,
         };
     },
 };
