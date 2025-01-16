@@ -14,10 +14,14 @@ class PermissionsDB:
     def __init__(self, db: Engine):
         self.engine = db
 
-    def fetch_all(self) -> List[models.permission.Permission]:
+    def fetch_all(self, user_id: Optional[str] = None) -> List[models.permission.Permission]:
         """Fetches all permissions from the database"""
         with Session(self.engine) as session:
             stmt = select(models.permission.Permission)
+
+            if user_id is not None:
+                stmt = stmt.where(models.permission.Permission.user_id == user_id)
+
             permissions = session.scalars(stmt)
             if permissions is None:
                 return []

@@ -6,9 +6,11 @@ from api.v1.common import (
     wrap_api_exception,
 )
 from api.v1.middleware import (
+    management_user_validation,
     management_read_only_api,
     management_read_write_api,
     deserialize_schema,
+    check_admin_rights
 )
 from typing import List, Optional
 import server
@@ -34,9 +36,9 @@ def model_to_schema(
 
 
 @permissions_blueprint.route("/api/v1/permissions")
-@management_read_only_api
+@management_user_validation
 @wrap_api_exception("permissions fetching failed")
-def fetch_all():
+def fetch_all(**kwargs):
     """Fetch all permissions 
 
     :status 200: no error
@@ -78,10 +80,12 @@ def fetch_all():
         ]
     """  # noqa: E501
 
+    has_admin_rights = check_admin_rights(kwargs.get('user_roles', []), True)
+    user_id = kwargs.get('user_id') if not has_admin_rights else None
+
     permissions: List[
         models.permission.
-        Permission] = server.instance._permissions_db.fetch_all(
-        )
+        Permission] = server.instance._permissions_db.fetch_all(user_id=user_id)
     return Permission.Schema().dump([
         model_to_schema(perms) for perms in permissions
     ], many=True), 200
