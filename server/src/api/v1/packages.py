@@ -297,6 +297,7 @@ def download_package(identifier: int):
         link_expiry_time = 3600
 
         return {
+            "id": identifier,
             "download_url": driver.generate_url(pkg.info, link_expiry_time)
         }, 200
 
