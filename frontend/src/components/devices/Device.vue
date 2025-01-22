@@ -34,11 +34,13 @@ Component wraps functionality for displaying and working with a single rdfm devi
                 <p class="title">Groups</p>
                 <p class="value">
                     <span
-                        class="groupname"
+                        class="group-block"
                         v-if="(device.groups || []).length > 0"
                         v-for="group in groups"
                         :title="group.metadata['rdfm.group.description']"
-                        >{{ group.metadata['rdfm.group.name'] }}
+                    >
+                        <span class="groupid">#{{ group.id }}</span>
+                        {{ group.metadata['rdfm.group.name'] }}
                     </span>
                     <span v-if="(device.groups || []).length == 0"
                         >This device is not assigned to any group</span
@@ -105,15 +107,6 @@ Component wraps functionality for displaying and working with a single rdfm devi
             padding: 0px;
             color: var(--gray-900);
             text-wrap: nowrap;
-        }
-
-        .groupname {
-            border: 1px solid var(--gray-400);
-            border-radius: 5px;
-            background-color: var(--gray-100);
-            margin: 0.25em;
-            padding: 0.25em 0.5em;
-            display: inline-block;
         }
     }
 }

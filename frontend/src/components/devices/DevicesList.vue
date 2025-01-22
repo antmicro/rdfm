@@ -12,13 +12,6 @@ Component wraps functionality for displaying and working with rdfm devices.
     <div id="devices">
         <TitleBar title="Devices" subtitle="manage your devices" />
         <div id="container">
-            <div id="overview">
-                <a href="#device-list-overview">Overview</a>
-                <a href="#device-list-unregistered" v-if="pendingDevicesCount !== 0"
-                    >Unregistered</a
-                >
-                <a href="#device-list-registered" v-if="registeredDevicesCount !== 0">Registered</a>
-            </div>
             <div id="device-list">
                 <div id="device-list-overview">
                     <p>Overview</p>
@@ -100,7 +93,12 @@ Component wraps functionality for displaying and working with rdfm devices.
                 <div id="device-list-registered" v-if="registeredDevicesCount !== 0">
                     <p>Registered</p>
                     <div class="device-list">
-                        <div v-for="device in registeredDevices" :key="device.id" class="row">
+                        <div
+                            v-for="device in registeredDevices"
+                            :key="device.id"
+                            class="row"
+                            @click="() => router.push('/devices/' + device.id)"
+                        >
                             <div class="entry">
                                 <div class="title">ID</div>
                                 <div class="value">#{{ device.id }}</div>
@@ -129,22 +127,22 @@ Component wraps functionality for displaying and working with rdfm devices.
                                 <div class="title">Last Accessed</div>
                                 <div class="value">{{ device.last_access }}</div>
                             </div>
-                            <div class="entry">
+                            <div class="entry groups">
                                 <div class="title">Groups</div>
-                                <div class="value" v-if="device.groups!.length > 0">
-                                    {{ device.groups }}
+                                <div class="value" v-if="!(device.groups!.length > 0)">-</div>
+                                <div class="value" v-if="groups && device.groups!.length > 0">
+                                    <div
+                                        class="group-block"
+                                        v-for="group in device.groups!.map((devGroup) =>
+                                            groups!.find((g) => g.id == devGroup),
+                                        )"
+                                    >
+                                        <span class="groupid">#{{ group?.id }}</span>
+                                        {{
+                                            group?.metadata?.['rdfm.group.name'] || 'Unnamed group'
+                                        }}
+                                    </div>
                                 </div>
-                                <div class="value" v-else>-</div>
-                            </div>
-
-                            <!-- Last auxiliary entry to fill up the space -->
-                            <div class="entry">
-                                <button
-                                    class="action-button gray"
-                                    @click="() => router.push('/devices/' + device.id)"
-                                >
-                                    View
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -161,51 +159,22 @@ Component wraps functionality for displaying and working with rdfm devices.
         font-size: 1.5em;
     }
 
-    @media screen and (max-width: 1600px) {
-        #container {
-            display: block !important;
-
-            #overview {
-                display: block !important;
-            }
-
-            #device-list {
-                width: 100% !important;
-            }
-        }
-    }
-
     & > #container {
-        display: flex;
-        flex-direction: row;
         color: var(--gray-1000);
         padding: 2em;
 
-        & > #overview {
-            display: flex;
-            flex-direction: column;
-            gap: 1em;
-            width: 20%;
-            margin-right: 20px;
-
-            & > a {
-                color: inherit;
-                text-decoration: none;
-                padding: 10px;
-
-                &:hover {
-                    background-color: var(--background-200);
-                }
-            }
-        }
-
         & > #device-list {
-            width: 80%;
+            width: 100%;
             --default-col-width: 170px;
+
+            #device-list-registered .row:hover {
+                background-color: var(--gray-200);
+                cursor: pointer;
+            }
 
             /* Default columns widths */
             #device-list-registered .row {
-                grid-template-columns: 80px repeat(4, var(--default-col-width)) 300px auto auto;
+                grid-template-columns: 80px repeat(4, var(--default-col-width)) 300px auto;
             }
             #device-list-unregistered .row {
                 grid-template-columns: 200px 300px repeat(3, var(--default-col-width)) auto;
@@ -214,7 +183,7 @@ Component wraps functionality for displaying and working with rdfm devices.
             /* Smaller columns widths */
             @media screen and (max-width: 1670px) {
                 #device-list-registered .row {
-                    grid-template-columns: 80px repeat(4, var(--default-col-width)) 200px auto auto;
+                    grid-template-columns: 80px repeat(4, var(--default-col-width)) 200px auto;
                 }
                 #device-list-unregistered .row {
                     grid-template-columns:
@@ -244,12 +213,12 @@ Component wraps functionality for displaying and working with rdfm devices.
             .device-list {
                 border: 2px solid var(--gray-400);
                 border-radius: 5px;
-                padding: 12px;
                 background-color: var(--background-200);
             }
 
             .row {
                 display: grid;
+                transition: 500ms;
 
                 &:not(:last-child) {
                     border-bottom: 2px solid var(--gray-400);
@@ -258,15 +227,23 @@ Component wraps functionality for displaying and working with rdfm devices.
                 .entry {
                     padding: 0.5em 1em;
 
+                    &:has(button) {
+                        align-content: center;
+                    }
+
                     .title {
                         color: var(--gray-900);
                         text-wrap: nowrap;
                     }
 
                     .value {
-                        max-height: 100px;
+                        max-height: 400px;
                         text-overflow: ellipsis;
                         overflow: hidden;
+
+                        &:not(:has(.group-block)) {
+                            padding-top: 10px;
+                        }
                     }
 
                     button {
@@ -285,6 +262,7 @@ import { computed, onMounted, onUnmounted } from 'vue';
 import { useNotifications, POLL_INTERVAL } from '../../common/utils';
 import TitleBar from '../TitleBar.vue';
 import {
+    groupResources,
     pendingDevicesResources,
     registerDeviceRequest,
     registeredDevicesResources,
@@ -314,6 +292,7 @@ export default {
         const fetchResources = async () => {
             await registeredDevicesResources.fetchResources();
             await pendingDevicesResources.fetchResources();
+            await groupResources.fetchResources();
         };
 
         onMounted(async () => {
@@ -343,6 +322,7 @@ export default {
         return {
             pendingDevices: pendingDevicesResources.resources,
             registeredDevices: registeredDevicesResources.resources,
+            groups: groupResources.resources,
             router,
             pendingDevicesCount,
             registeredDevicesCount,
