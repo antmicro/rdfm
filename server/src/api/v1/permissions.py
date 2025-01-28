@@ -37,8 +37,47 @@ def model_to_schema(
 @management_read_only_api
 @wrap_api_exception("permissions fetching failed")
 def fetch_all():
-    """Fetch all permissions
-    """
+    """Fetch all permissions 
+
+    :status 200: no error
+    :status 401: user did not provide authorization data,
+                 or the authorization has expired
+    :status 403: user was authorized, but did not have permission
+                 to read permissions
+
+    :>jsonarr string created: UTC creation date (RFC822)
+    :>jsonarr integer id: permission identifier
+    :>jsonarr str permission: permission type (read/update/delete)
+    :>jsonarr str resource: type of resource (group/device/package)
+    :>jsonarr str user_id: id of the user to whom this permission applies
+    :>jsonarr integer resource_id: id of the resource to which this permission applies
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        GET /api/v1/permissions HTTP/1.1
+        Accept: application/json
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+
+        [
+            { 
+                "created": "Thu, 16 Jan 2025 13:31:53 -0000",
+                "id": 1,
+                "permission": "read",
+                "resource": "group",
+                "resource_id": 2,
+                "user_id": "095e4160-9017-4868-82a5-fe0a0c44d34c"
+            }
+        ]
+    """  # noqa: E501
+
     permissions: List[
         models.permission.
         Permission] = server.instance._permissions_db.fetch_all(
@@ -54,7 +93,46 @@ def fetch_all():
 @deserialize_schema(schema_dataclass=Permission, key="perm")
 def create(perm: Permission):
     """Create a new permission
-    """
+
+    :status 200: no error
+    :status 401: user did not provide authorization data,
+                 or the authorization has expired
+    :status 403: user was authorized, but did not have permission
+                 to create permissions
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        POST /api/v1/permissions HTTP/1.1
+        Content-Type: application/json
+        Accept: application/json
+
+        {
+            "resource": "group",
+            "resource_id": 5,
+            "user_id": "095e4160-9017-4868-82a5-fe0a0c44d34c",
+            "permission": "read"
+        }
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+
+        {
+            "created": "Thu, 23 Jan 2025 13:03:44 -0000",
+            "id": 26,
+            "permission": "read",
+            "resource": "group",
+            "resource_id": 5,
+            "user_id": "095e4160-9017-4868-82a5-fe0a0c44d34c"
+        }
+
+    """  # noqa: E501
+
     permission = models.permission.Permission()
     permission.created = datetime.datetime.utcnow()
     permission.resource = perm.resource
@@ -76,7 +154,37 @@ def create(perm: Permission):
 @wrap_api_exception("permission fetching failed")
 def fetch_one(identifier: int):
     """Fetch permission
-    """
+
+    :status 200: no error
+    :status 401: user did not provide authorization data,
+                 or the authorization has expired
+    :status 403: user was authorized, but did not have permission
+                 to read permissions
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        GET /api/v1/permissions/26 HTTP/1.1
+        Accept: application/json
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+        
+        {
+            "created": "Thu, 23 Jan 2025 13:03:44 -0000",
+            "id": 26,
+            "permission": "read",
+            "resource": "group", 
+            "resource_id": 5,
+            "user_id": "095e4160-9017-4868-82a5-fe0a0c44d34c"
+        }
+    """  # noqa: E501
+
     permission: Optional[
         models.permission.Permission
     ] = server.instance._permissions_db.fetch_one(identifier)
@@ -92,7 +200,29 @@ def fetch_one(identifier: int):
 @wrap_api_exception("permission deletion failed")
 def delete_one(identifier: int):
     """Delete permission
+
+    :status 200: no error
+    :status 401: user did not provide authorization data,
+                 or the authorization has expired
+    :status 403: user was authorized, but did not have permission
+                 to delete permissions
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        DELETE /api/v1/permissions/26 HTTP/1.1
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+
+        {}
     """
+
     permission: Optional[
         models.permission.Permission
     ] = server.instance._permissions_db.fetch_one(identifier)

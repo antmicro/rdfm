@@ -96,3 +96,11 @@ Device Authorization API
    :modules: api.v1.auth
    :undoc-static:
    :order: path
+
+Permissions API
+~~~~~~~~~~~~~~~
+
+.. autoflask:: rdfm_mgmt_server:create_docs_app()
+   :modules: api.v1.permissions
+   :undoc-static:
+   :order: path

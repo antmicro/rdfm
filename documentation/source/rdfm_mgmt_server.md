@@ -154,9 +154,16 @@ The authorization server is configured using the following environment variables
 
 For accessing the management API, the RDFM server does not issue any tokens itself.
 This task is delegated to the authorization server that is used in conjunction with RDFM.
+
+### Users' and applications' permissions
+
+The authorization server needs to implement certain applications' scopes and users' permissions for users and applications to access RDFM API.
+
+#### Scopes
+
 The following scopes are used for controlling access to different methods of the RDFM API:
-- `rdfm_admin_ro` - read-only access to the API (fetching devices, groups, packages)
-- `rdfm_admin_rw` - complete administrative access to the API with modification rights
+- `rdfm_admin_ro` - read-only access to the API (fetching devices, groups, packages).
+- `rdfm_admin_rw` - complete administrative access to the API with modification rights.
 
 Additional rules are defined for package uploading route from [Packages API](api.rst#Packages_API).
 - `rdfm_upload_single_file` - allows uploading an artifact of type `single-file`.
@@ -164,6 +171,34 @@ Additional rules are defined for package uploading route from [Packages API](api
 Each package type requires its corresponding scope, or the complete admin access - `rdfm_admin_rw`.
 
 Refer to the [RDFM Server API Reference chapter](api.rst) for a breakdown of the scopes required for accessing each API method.
+
+#### Permissions
+
+In addition to the above, you can assign specific permissions to users for specific resources (devices, groups, packages).
+There are three types of permissions:
+
+* **`read`** permission – Allows listing devices, groups, and packages, as well as downloading packages.
+* **`update`** permission – Allows changing, adding, and updating groups and packages.
+* **`delete`** permission – Allows deleting groups and packages.
+
+Those permissions are not mutually exclusive and have no hierarchy (none of the above permissions imply or contain the other).
+
+Permissions to a group also apply to the devices and packages within that group.
+For example, if you assign a user an `update` permission to a group, they will also be able to update any resources within that group.
+These propagated permissions are implicit and are not stored in the RDFM Management Server.
+
+You can inspect the current permissions of each user using the [Permissions API](api.rst#Permissions_API).
+
+##### Assigning a Permission
+
+To assign a permission to a user, you must have the `rdfm_admin_rw` scope and you will need the following information:
+* The **ID of the user** you want to assign the permission to, which you can obtain from your OAuth2 provider’s administration panel.
+* The **ID of the resource**, which can be retrieved via:
+  * The [RDFM Manager](rdfm_manager.md) – Use the `rdfm-mgmt {devices,packages,groups} list` command to get a list of resources and their IDs.
+  * The [RDFM Server API](api.rst) – The `/api/{v2,v1}/{devices,packages,groups}` endpoints will return a list of resources and their IDs.
+
+Permissions can be assigned via a POST request to `/api/v1/permissions`.
+For an example of such request, see this [endpoint's documentation](api.rst#post--api-v1-permissions).
 
 ### API authentication using Keycloak
 
