@@ -1,6 +1,6 @@
 # Remote Device Fleet Manager - RDFM
 
-Copyright (c) 2023 - 2024 [Antmicro](https://www.antmicro.com)
+Copyright (c) 2023 - 2025 [Antmicro](https://www.antmicro.com)
 
 ![Remote Device Fleet Manager logo](./images/rdfm-logo.png) 
 
