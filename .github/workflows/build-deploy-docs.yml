@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Get repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python environment
         uses: actions/setup-python@v4
@@ -30,14 +30,14 @@ jobs:
 
       - name: Install RDFM server in venv
         run: |
-          poetry -C server/ install
+          poetry --project server/ install
 
       - name: Build RDFM documentation
         run: |
-          poetry -C server/ run .github/scripts/build-docs.sh
+          poetry --project server/ run .github/scripts/build-docs.sh
 
       - name: "Upload artifact: Sphinx HTML and PDF"
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Documentation
           path: documentation/build/
