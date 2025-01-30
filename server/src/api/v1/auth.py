@@ -191,6 +191,7 @@ def fetch_registrations():
         return api_error("fetching registrations failed", 500)
 
 
+# TODO: add a mechanism (via roles/permissions) which would allow non-admins to register devices
 @auth_blueprint.route("/api/v1/auth/register", methods=["POST"])
 @management_read_write_api
 def set_registration():

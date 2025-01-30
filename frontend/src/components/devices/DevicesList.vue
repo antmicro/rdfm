@@ -79,8 +79,10 @@ Component wraps functionality for displaying and working with rdfm devices.
                                 <div class="value">{{ device.public_key.slice(0, 15) }}...</div>
                             </div>
                             <div class="entry">
+                                <!-- TODO: Check a specific permission/role for registering devices once it's implemented server-side -->
                                 <button
                                     class="action-button blue"
+                                    v-if="hasAdminRole(AdminRole.RW)"
                                     @click="registerDevice(device.mac_address, device.public_key)"
                                 >
                                     Register
@@ -139,7 +141,7 @@ Component wraps functionality for displaying and working with rdfm devices.
                                     >
                                         <span class="groupid">#{{ group?.id }}</span>
                                         {{
-                                            group?.metadata?.['rdfm.group.name'] || 'Unnamed group'
+                                            group?.metadata?.['rdfm.group.name'] || 'Unknown group'
                                         }}
                                     </div>
                                 </div>
@@ -259,7 +261,7 @@ Component wraps functionality for displaying and working with rdfm devices.
 <script lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue';
 
-import { useNotifications, POLL_INTERVAL } from '../../common/utils';
+import { useNotifications, POLL_INTERVAL, hasAdminRole, AdminRole } from '../../common/utils';
 import TitleBar from '../TitleBar.vue';
 import {
     groupResources,
@@ -327,6 +329,8 @@ export default {
             pendingDevicesCount,
             registeredDevicesCount,
             devicesCount,
+            hasAdminRole,
+            AdminRole,
             registerDevice,
         };
     },

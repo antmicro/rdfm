@@ -35,6 +35,7 @@ export const DOWNLOAD_PACKAGE_ENDPOINT = (id: number) => `${PACKAGES_ENDPOINT}/$
 
 export const DEVICES_ENDPOINT = `${SERVER_URL}/api/v2/devices`;
 export const PENDING_ENDPOINT = `${SERVER_URL}/api/v1/auth/pending`;
+export const PERMISSIONS_ENDPOINT = `${SERVER_URL}/api/v1/permissions`;
 export const REGISTER_DEVICE_ENDPOINT = `${SERVER_URL}/api/v1/auth/register`;
 
 export const GROUPS_ENDPOINT = `${SERVER_URL}/api/v2/groups`;
@@ -48,6 +49,71 @@ export const LOGIN_PATH = `${OIDC_LOGIN_URL}?response_type=token&client_id=${OAU
 export const LOGOUT_PATH = `${OIDC_LOGOUT_URL}?client_id=${OAUTH2_CLIENT}&post_logout_redirect_uri=${FRONTEND_URL}/logout`;
 
 export const POLL_INTERVAL = 2500;
+
+/**
+ * RDFM roles specified in
+ * https://antmicro.github.io/rdfm/rdfm_mgmt_server.html#basic-configuration
+ */
+export enum AdminRole {
+    RW = 'rdfm_admin_rw',
+    RO = 'rdfm_admin_ro',
+    UPLOAD_ROOTFS_IMAGE = 'rdfm_upload_rootfs_image',
+    UPLOAD_SINGLE_FILE = 'rdfm_upload_single_file',
+}
+
+/**
+ * RDFM permissions specified in
+ * https://antmicro.github.io/rdfm/rdfm_mgmt_server.html#permissions
+ */
+export type Permission = {
+    permission: 'read' | 'update' | 'delete';
+    resource: 'package' | 'group' | 'device';
+    resource_id: number;
+    user_id: string;
+};
+
+export const adminRoles = ref<AdminRole[]>([]);
+export const permissions = ref<Permission[]>([]);
+
+export const hasPermission = (
+    permission: Permission['permission'],
+    resource: Permission['resource'],
+    resource_id?: number,
+) =>
+    permissions.value.some(
+        (p) => p.resource == resource && resource_id == p.resource_id && permission == p.permission,
+    );
+
+export const hasAdminRole = (r: AdminRole) => adminRoles.value.includes(r);
+
+export const allowedTo = (
+    permission: Permission['permission'],
+    resource: Permission['resource'],
+    id?: number,
+    groups?: Group[],
+) => {
+    if (hasAdminRole(AdminRole.RW) || (hasAdminRole(AdminRole.RO) && permission == 'read')) {
+        return true;
+    }
+
+    if (hasPermission(permission, resource, id)) {
+        return true;
+    }
+
+    if (id != null && groups) {
+        const hasGroupPermission = groups
+            .filter(
+                (g) =>
+                    (resource == 'package' && g.packages.includes(id)) ||
+                    (resource == 'device' && g.devices.includes(id)),
+            )
+            .some((g) => allowedTo(permission, 'group', g.id));
+
+        return hasGroupPermission;
+    }
+
+    return false;
+};
 
 /**
  * Package interface specified in
@@ -125,34 +191,34 @@ export enum PollingStatus {
     ActivePolling,
 }
 
+export const fetchWrapper = async (
+    url: string,
+    method: string,
+    headers: Headers = new Headers(),
+    body?: BodyInit,
+) => {
+    let response;
+    try {
+        const accessToken = localStorage.getItem('access_token');
+
+        if (accessToken) {
+            headers.append('Authorization', `Bearer token=${accessToken}`);
+        }
+        response = await fetch(url, { method, body, headers: headers });
+        if (!response.ok) {
+            throw new Error(`Fetch returned status ${response.status}`);
+        }
+        const data = await response.json();
+        return { success: true, code: response.status, data };
+    } catch (e) {
+        console.error(`Failed to fetch ${url} - ${e}`);
+        return { success: false, code: response?.status, data: undefined };
+    }
+};
+
 export const resourcesGetter = <T>(resources_url: string) => {
     const resources: Ref<T | undefined> = ref(undefined);
     const pollingStatus: Ref<PollingStatus> = ref(PollingStatus.InitialPoll);
-
-    const fetchWrapper = async (
-        url: string,
-        method: string,
-        headers: Headers = new Headers(),
-        body?: BodyInit,
-    ) => {
-        let response;
-        try {
-            const accessToken = localStorage.getItem('access_token');
-
-            if (accessToken) {
-                headers.append('Authorization', `Bearer token=${accessToken}`);
-            }
-            response = await fetch(url, { method, body, headers: headers });
-            if (!response.ok) {
-                throw new Error(`Fetch returned status ${response.status}`);
-            }
-            const data = await response.json();
-            return { success: true, code: response.status, data };
-        } catch (e) {
-            console.error(`Failed to fetch ${url} - ${e}`);
-            return { success: false, code: response?.status, data: undefined };
-        }
-    };
 
     const fetchGET = (url: string) => fetchWrapper(url, 'GET');
 

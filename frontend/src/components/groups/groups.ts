@@ -97,7 +97,7 @@ export const patchDevicesRequest = async (
             case StatusCodes.FORBIDDEN:
                 return {
                     success: false,
-                    message: 'User was authorized, but did not have permission to delete groups',
+                    message: 'User was authorized, but did not have permission to update groups',
                 };
             case StatusCodes.NOT_FOUND:
                 return { success: false, message: 'Group does not exist' };
@@ -348,7 +348,7 @@ export const removeGroupRequest = async (groupId: number): Promise<RequestOutput
             case StatusCodes.CONFLICT:
                 return {
                     success: false,
-                    message: 'At least one device is still assigned to the group',
+                    message: 'At least one device or package is still assigned to the group',
                 };
             case StatusCodes.NOT_FOUND:
                 return { success: false, message: 'The specified group does not exist' };

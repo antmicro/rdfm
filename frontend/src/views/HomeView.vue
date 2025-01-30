@@ -191,8 +191,16 @@ SPDX-License-Identifier: Apache-2.0
 <script lang="ts">
 import { ref, computed, type PropType } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import {
+    fetchWrapper,
+    LOGIN_PATH,
+    LOGOUT_PATH,
+    permissions,
+    PERMISSIONS_ENDPOINT,
+    adminRoles,
+    type Permission,
+} from '../common/utils';
 
-import { LOGIN_PATH, LOGOUT_PATH } from '../common/utils';
 import DevicesList from '../components/devices/DevicesList.vue';
 import PackagesList from '../components/packages/PackagesList.vue';
 import GroupsList from '../components/groups/GroupsList.vue';
@@ -284,9 +292,19 @@ export default {
             ActiveTab,
             router,
             route,
+            parsedToken,
         };
     },
     watch: {
+        userRoles(newValue) {
+            adminRoles.value = newValue.map((role: { name: string }) => role.name);
+            fetchWrapper(PERMISSIONS_ENDPOINT, 'GET').then(
+                (response) =>
+                    (permissions.value = response.data.filter(
+                        (p: Permission) => p.user_id == this.parsedToken.sub,
+                    )),
+            );
+        },
         loggedIn(newValue: boolean) {
             if (!newValue) {
                 window.location.href = LOGIN_PATH;

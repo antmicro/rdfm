@@ -140,7 +140,11 @@ Component wraps functionality for displaying and working with rdfm packages.
                             <!-- TODO: Display metadata of the package -->
                             <td class="entry">
                                 <div class="buttons">
-                                    <div class="drdn-wrapper" style="position: relative">
+                                    <div
+                                        v-if="allowedTo('read', 'package', pckg.id, groups)"
+                                        class="drdn-wrapper"
+                                        style="position: relative"
+                                    >
                                         <button id="main-button" class="action-button gray">
                                             Download
                                             <span class="caret-down"> <CaretDown /> </span>
@@ -193,6 +197,7 @@ Component wraps functionality for displaying and working with rdfm packages.
                                         </div>
                                     </div>
                                     <button
+                                        v-if="allowedTo('delete', 'package', pckg.id, groups)"
                                         class="action-button red"
                                         @click="openRemovePackagePopup(pckg.id)"
                                     >
@@ -331,13 +336,13 @@ table.resources-table.packages {
 
 <script lang="ts">
 import { computed, onMounted, onUnmounted, ref, type Ref, reactive, type Reactive } from 'vue';
-
-import { POLL_INTERVAL, useNotifications } from '../../common/utils';
+import { POLL_INTERVAL, useNotifications, allowedTo } from '../../common/utils';
 import BlurPanel from '../BlurPanel.vue';
 import RemovePopup from '../RemovePopup.vue';
 import TitleBar from '../TitleBar.vue';
 import {
     packageResources,
+    groupsResources,
     removePackageRequest,
     uploadPackageRequest,
     downloadPackageRequest,
@@ -479,6 +484,7 @@ export default {
 
         onMounted(async () => {
             await packageResources.fetchResources();
+            await groupsResources.fetchResources();
 
             if (intervalID === undefined) {
                 intervalID = setInterval(packageResources.fetchResources, POLL_INTERVAL);
@@ -503,6 +509,7 @@ export default {
             packageUploadData,
             validationErrors,
             packages: packageResources.resources,
+            groups: groupsResources.resources,
             uploadedPackageFile,
             packagesCount,
             popupOpen,
@@ -513,6 +520,7 @@ export default {
             openAddPackagePopup,
             copyDownloadLink,
             download,
+            allowedTo,
         };
     },
 };

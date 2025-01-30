@@ -12,8 +12,10 @@
 import {
     DELETE_PACKAGE_ENDPOINT,
     DOWNLOAD_PACKAGE_ENDPOINT,
+    GROUPS_ENDPOINT,
     PACKAGES_ENDPOINT,
     resourcesGetter,
+    type Group,
     type Package,
     type RequestOutput,
 } from '../../common/utils';
@@ -26,6 +28,7 @@ export type NewPackageData = {
 };
 
 export const packageResources = resourcesGetter<Package[]>(PACKAGES_ENDPOINT);
+export const groupsResources = resourcesGetter<Group[]>(GROUPS_ENDPOINT);
 
 /**
  * Request specified in

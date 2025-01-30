@@ -142,7 +142,7 @@ Component wraps functionality for displaying and working with rdfm groups.
         title="Groups"
         subtitle="manage your groups"
         actionButtonName="Create new group"
-        :buttonCallback="openAddGroupPopup"
+        :buttonCallback="hasAdminRole(AdminRole.RW) ? openAddGroupPopup : undefined"
     />
 
     <div class="container">
@@ -194,12 +194,14 @@ Component wraps functionality for displaying and working with rdfm groups.
                             <div class="button-wrapper">
                                 <button
                                     class="action-button gray"
+                                    v-if="allowedTo('update', 'group', group.id)"
                                     @click="openConfigureGroupPopup(group)"
                                 >
                                     Configure
                                 </button>
                                 <button
                                     class="action-button red"
+                                    v-if="allowedTo('delete', 'group', group.id)"
                                     @click="openRemoveGroupPopup(group.id)"
                                 >
                                     Remove
@@ -250,7 +252,10 @@ Component wraps functionality for displaying and working with rdfm groups.
                                     :key="device.id"
                                     class="item"
                                 >
-                                    <div class="item-layout grid">
+                                    <div
+                                        class="item-layout"
+                                        :class="{ grid: allowedTo('update', 'group', group.id) }"
+                                    >
                                         <div>
                                             <p title="MAC address">
                                                 {{ device.mac_address || ' - ' }}
@@ -266,6 +271,7 @@ Component wraps functionality for displaying and working with rdfm groups.
                                             <button
                                                 style="margin: 10px"
                                                 class="action-button red small-padding"
+                                                v-if="allowedTo('update', 'group', group.id)"
                                                 @click="
                                                     patchDevicesRequest(group.id, [], [device.id])
                                                 "
@@ -416,22 +422,16 @@ Component wraps functionality for displaying and working with rdfm groups.
 </style>
 
 <script lang="ts">
-import {
-    computed,
-    onMounted,
-    onUnmounted,
-    ref,
-    type Ref,
-    reactive,
-    type Reactive,
-    effect,
-} from 'vue';
+import { computed, onMounted, onUnmounted, ref, type Ref, reactive, type Reactive } from 'vue';
 import {
     POLL_INTERVAL,
     useNotifications,
+    allowedTo,
     type Group,
     type Package,
     type RegisteredDevice,
+    hasAdminRole,
+    AdminRole,
 } from '../../common/utils';
 import {
     addGroupRequest,
@@ -896,6 +896,9 @@ export default {
             toggleDropdown,
             availablePolicies,
             unapplicablePolicyWarning,
+            hasAdminRole,
+            AdminRole,
+            allowedTo,
         };
     },
 };
