@@ -44,6 +44,10 @@ def wrap_api_error(response: requests.Response, prefix: str) -> Optional[str]:
             )
         case 404:
             msg = "Resource not found"
+            try:
+                msg += f" (server says: {response.json()['error']})"
+            except requests.exceptions.JSONDecodeError:
+                msg += " (could not retrieve response error string)"
         case 500:
             try:
                 error: ApiError = ApiError.Schema().load(response.json())
