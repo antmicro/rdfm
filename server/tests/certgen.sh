@@ -1,24 +1,25 @@
 #! /bin/bash
 
-# Copyright 2023 Antmicro, based on Linaro Ltd's
+# Copyright 2023-2025 Antmicro, based on Linaro Ltd's
 # (https://gist.github.com/microbuilder/cf928ea5b751e6ea467cc0cd51d2532f#file-certg)
 # License: Apache-2.0
 
-# Arguments = server IP, certificate dirs
-SERVER_IP=${1:-127.0.0.1}
-CERTS_DIR=${2:-certs/}
+set -e
+set -x
 
-HOSTNAME=IP.1:"$SERVER_IP"
-#HOSTNAME=x
+# Arguments = server IP, certificate dirs
+DIR=$1
+# SERVER_IP can be e.g. DNS.1:rdfm.com or IP.1:127.0.0.1
+HOSTNAME=$2
+
 ORGNAME=Test
-DIR="$CERTS_DIR"
 
 # Generate a device ID.
 # BSD's uuidgen outputs uppercase, so convert that here.
 DEVID=$(uuidgen | tr '[:upper:]' '[:lower:]')
 
 mkdir "$DIR"
-cd "$DIR"
+pushd "$DIR"
 
 # Certificate Authority
 # ---------------------
@@ -66,28 +67,56 @@ openssl x509 -req -sha256 \
 rm server.ext
 rm SERVER.csr
 
-# Device Key/Cert
-# ---------------
+shift 2
 
-# Generate a private key for this device
-openssl ecparam -name prime256v1 -genkey -out DEVICE.key
+while (( "$#" )); do
 
-# Generate a CSR for this key
-openssl req -new \
-    -key DEVICE.key \
-    -out DEVICE.csr \
-    -subj "/O=$ORGNAME/CN=$DEVID/OU=Device Cert"
+    NAME=$1
+    ADDR=$2
 
-# Process the CSR using the CA cert/key
-openssl x509 -req -sha256 \
-    -CA CA.crt \
-    -CAkey CA.key \
-    -days 3560 \
-    -in DEVICE.csr \
-    -out DEVICE.crt
+    # Device Key/Cert
+    # ---------------
 
-# Clean up
-rm DEVICE.csr
+    # Generate a private key for this device
+    openssl ecparam -name prime256v1 -genkey -out $NAME.key
+
+    # Generate a CSR for this key
+    openssl req -new \
+        -key $NAME.key \
+        -out $NAME.csr \
+        -subj "/O=$ORGNAME/CN=$DEVID/OU=Device Cert"
+
+    if [[ $ADDR == "no" ]]; then
+        # Process the CSR using the CA cert/key
+        openssl x509 -req -sha256 \
+            -CA CA.crt \
+            -CAkey CA.key \
+            -days 3560 \
+            -in $NAME.csr \
+            -out $NAME.crt
+    else
+        echo "subjectKeyIdentifier=hash" > $NAME.ext
+        echo "authorityKeyIdentifier=keyid,issuer" >> $NAME.ext
+        echo "basicConstraints = critical, CA:FALSE" >> $NAME.ext
+        echo "keyUsage = critical, digitalSignature" >> $NAME.ext
+        echo "extendedKeyUsage = serverAuth" >> $NAME.ext
+        echo "subjectAltName = $ADDR" >> $NAME.ext
+        # Process the CSR using the CA cert/key
+        openssl x509 -req -sha256 \
+            -CA CA.crt \
+            -CAkey CA.key \
+            -days 3560 \
+            -in $NAME.csr \
+            -out $NAME.crt \
+            -extfile $NAME.ext
+        rm $NAME.ext
+    fi
+
+    # Clean up
+    rm $NAME.csr
+
+    shift 2
+done
 
 # C Conversion
 # ------------
@@ -100,3 +129,5 @@ sed 's/.*/"&\\r\\n"/' DEVICE.crt > device_crt.txt
 
 # Convert the device private key in DER format to a text file
 openssl ec -in DEVICE.key -outform DER | xxd -i > device_key.txt
+
+popd

@@ -40,7 +40,7 @@ variables:
       echo "device_type=dummy" > /var/lib/rdfm/device_type
     - chmod -R 777 /etc/rdfm
     - chmod -R 777 /var/lib/rdfm
-    - server/tests/certgen.sh
+    - server/tests/certgen.sh certs IP.1:127.0.0.1 DEVICE no
 
 .build:
   <<: *common_only
