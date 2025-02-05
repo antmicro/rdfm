@@ -10,7 +10,8 @@ from api.v1.middleware import (
     management_read_only_api,
     management_read_write_api,
     deserialize_schema,
-    check_admin_rights
+    check_admin_rights,
+    authenticated_api
 )
 from typing import List, Optional
 import server
@@ -36,7 +37,7 @@ def model_to_schema(
 
 
 @permissions_blueprint.route("/api/v1/permissions")
-@management_user_validation
+@authenticated_api
 @wrap_api_exception("permissions fetching failed")
 def fetch_all(**kwargs):
     """Fetch all permissions 

@@ -47,7 +47,7 @@ def test_authorization_on_all_routes(endpoint, func):
     # Check for the presence of a decorator
     # The device/management API decorators add a special field for identification
     error_string = (f"route function {func.__name__} should be decorated using "
-                    "a management, device or public API decorator, but none was found")
+                    "a management, authenticated, device or public API decorator, but none was found")
     assert hasattr(func, "__rdfm_api_privileges__"), error_string
 
 

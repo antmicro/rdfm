@@ -67,6 +67,12 @@ DOCS_SCOPE_RW_TEXT = """.. warning:: Accessing this endpoint requires """ \
                      """providing a management token with read-write scope""" \
                      f""" ``{SCOPE_READ_WRITE}``."""
 
+""" Text to append after the endpoint's docstring when a token
+    with zero or more scopes is required
+"""
+DOCS_AUTHENTICATED_API_TEXT = """.. warning:: Accessing this endpoint requires """ \
+                              """providing an authorization token"""
+
 """ Unprotected API routes
 """
 DOCS_PUBLIC_API_TEXT = """.. note:: This is a public API route; no """ \
@@ -747,6 +753,17 @@ def management_upload_package_api(f):
     __add_scope_docs(f, DOCS_SCOPE_PACKAGE_TEXT)
 
     return __management_api(scope_check_callback, append_scopes=True)(f)
+
+
+def authenticated_api(f):
+    """Decorator to be used for API routes available to every
+    authenticated user
+    """
+
+    f.__rdfm_api_privileges__ = "authenticated"
+    __add_scope_docs(f, DOCS_AUTHENTICATED_API_TEXT)
+
+    return management_user_validation(f)
 
 
 def public_api(f):
