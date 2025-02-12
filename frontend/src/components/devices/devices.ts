@@ -10,6 +10,8 @@
  */
 
 import {
+    DEVICE_ACTIONS_ENDPOINT,
+    DEVICE_ACTIONS_EXEC_ENDPOINT,
     DEVICES_ENDPOINT,
     GROUPS_ENDPOINT,
     PENDING_ENDPOINT,
@@ -26,6 +28,13 @@ import { StatusCodes } from 'http-status-codes';
 export const pendingDevicesResources = resourcesGetter<PendingDevice[]>(PENDING_ENDPOINT);
 export const registeredDevicesResources = resourcesGetter<RegisteredDevice[]>(DEVICES_ENDPOINT);
 export const groupResources = resourcesGetter<Group[]>(GROUPS_ENDPOINT);
+
+export type Action = {
+    action_id: string;
+    action_name: string;
+    command: string[];
+    description: string;
+};
 
 /**
  * Request specified in
@@ -75,4 +84,38 @@ export const registerDeviceRequest = async (
     await pendingDevicesResources.fetchResources();
     await registeredDevicesResources.fetchResources();
     return { success: true };
+};
+
+export const execAction = async (macAddress: string, actionId: string) => {
+    const out = await registeredDevicesResources.fetchGET(
+        DEVICE_ACTIONS_EXEC_ENDPOINT(macAddress, actionId),
+    );
+
+    if (!out.success) {
+        return {
+            success: false,
+            message: 'Failed to execute action. Got a response code of ' + out.code,
+        };
+    }
+
+    return {
+        success: true,
+        data: out.data,
+    };
+};
+
+export const getDeviceActions = async (macAddress: string) => {
+    const out = await registeredDevicesResources.fetchGET(DEVICE_ACTIONS_ENDPOINT(macAddress));
+
+    if (!out.success) {
+        return {
+            success: false,
+            message: 'Failed to obtain device actions. Got a response code of ' + out.code,
+        };
+    }
+
+    return {
+        success: true,
+        data: out.data as Action[],
+    };
 };

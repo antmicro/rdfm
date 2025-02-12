@@ -38,6 +38,11 @@ export const PENDING_ENDPOINT = `${SERVER_URL}/api/v1/auth/pending`;
 export const PERMISSIONS_ENDPOINT = `${SERVER_URL}/api/v1/permissions`;
 export const REGISTER_DEVICE_ENDPOINT = `${SERVER_URL}/api/v1/auth/register`;
 
+export const DEVICE_ACTIONS_ENDPOINT = (mac: string) =>
+    `${SERVER_URL}/api/v2/devices/${mac}/action/list`;
+export const DEVICE_ACTIONS_EXEC_ENDPOINT = (mac: string, actionId: string) =>
+    `/api/v2/devices/${mac}/action/exec/${actionId}`;
+
 export const GROUPS_ENDPOINT = `${SERVER_URL}/api/v2/groups`;
 export const DELETE_GROUP_ENDPOINT = (id: number) => `${GROUPS_ENDPOINT}/${id}`;
 export const UPDATE_GROUP_PRIORITY_ENDPOINT = (id: number) => `${GROUPS_ENDPOINT}/${id}/priority`;
