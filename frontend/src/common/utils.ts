@@ -296,7 +296,7 @@ setInterval(() => {
 }, 200);
 
 export function useNotifications(): ToastPluginApiExtended {
-    const $toast = useToast() as ToastPluginApiExtended;
+    const $toast = useToast({ duration: 8_000 }) as ToastPluginApiExtended;
     const buildHTML = (prefix: string, msg?: string) => {
         let html = `<p>${prefix}</p>`;
         if (msg) {

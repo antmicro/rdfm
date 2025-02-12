@@ -232,7 +232,7 @@ Component wraps functionality for displaying and working with a single rdfm devi
 </style>
 
 <script lang="ts">
-import { computed, effect, ref } from 'vue';
+import { computed, effect, ref, watch } from 'vue';
 
 import {
     POLL_INTERVAL,
@@ -248,7 +248,8 @@ import {
     execAction,
     type Action,
 } from './devices';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
+import { ActiveTab } from '@/views/HomeView.vue';
 
 const MAC_ADDR_REGEX = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
 
@@ -263,6 +264,8 @@ export default {
     },
     setup() {
         const route = useRoute();
+        const router = useRouter();
+        const notify = useNotifications();
         const interval = ref<number | null>(null);
 
         groupResources.fetchResources();
@@ -281,40 +284,52 @@ export default {
         const device = ref<RegisteredDevice>();
         const groups = ref<Group[]>();
         const pattern = ref<string>();
-        effect(() => {
-            if (!registeredDevicesResources.resources.value) return;
+        const stop = watch(
+            () => registeredDevicesResources.resources.value,
+            async () => {
+                if (!registeredDevicesResources.resources.value) return;
+                if (device.value) return;
 
-            let foundDevice: RegisteredDevice | undefined;
-            let foundPattern;
+                let foundDevice: RegisteredDevice | undefined;
+                let foundPattern;
 
-            if (routeId.match(MAC_ADDR_REGEX)) {
-                foundDevice = registeredDevicesResources.resources.value.find(
-                    (d) => d.mac_address == routeId,
-                );
-                foundPattern = 'MAC address';
-            } else {
-                foundDevice = registeredDevicesResources.resources.value.find(
-                    (d) => d.name == decodeURIComponent(routeId),
-                );
-                foundPattern = 'name';
-            }
+                if (routeId.match(MAC_ADDR_REGEX)) {
+                    foundDevice = registeredDevicesResources.resources.value.find(
+                        (d) => d.mac_address == routeId,
+                    );
+                    foundPattern = 'MAC address';
+                } else {
+                    foundDevice = registeredDevicesResources.resources.value.find(
+                        (d) => d.name == decodeURIComponent(routeId),
+                    );
+                    foundPattern = 'name';
+                }
 
-            if (!foundDevice) {
-                foundDevice = registeredDevicesResources.resources.value.find(
-                    (d) => d.id == Number(routeId),
-                );
-                foundPattern = 'id';
-            }
+                if (!foundDevice && /^\d+$/g.test(routeId)) {
+                    foundDevice = registeredDevicesResources.resources.value.find(
+                        (d) => d.id == Number(routeId),
+                    );
+                    foundPattern = 'id';
+                }
 
-            device.value = foundDevice;
-            groups.value = foundDevice?.groups
-                ?.map(
-                    (deviceGroupId) =>
-                        groupResources.resources.value?.find((g) => g.id == deviceGroupId)!,
-                )
-                .filter(Boolean);
-            pattern.value = foundPattern;
-        });
+                if (foundDevice) {
+                    device.value = foundDevice;
+                    groups.value = foundDevice?.groups
+                        ?.map(
+                            (deviceGroupId) =>
+                                groupResources.resources.value?.find((g) => g.id == deviceGroupId)!,
+                        )
+                        .filter(Boolean);
+                    pattern.value = foundPattern;
+                } else {
+                    await router.push({ name: ActiveTab.Devices.toString() });
+                    notify.notifyError({
+                        headline: `Device with ${foundPattern} '${routeId}' not found.`,
+                    });
+                    stop();
+                }
+            },
+        );
 
         const devicesLoaded = computed(() => !!registeredDevicesResources.resources.value);
 
