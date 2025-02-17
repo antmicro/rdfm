@@ -1,6 +1,9 @@
 package writers
 
 import (
+	"strings"
+
+	"github.com/antmicro/rdfm/tools/rdfm-artifact/delta_engine"
 	"github.com/antmicro/rdfm/tools/rdfm-artifact/deltas"
 	"github.com/mendersoftware/mender-artifact/artifact"
 	"github.com/mendersoftware/mender-artifact/awriter"
@@ -52,7 +55,7 @@ func (d *RootfsArtifactWriter) WithFullRootfsPayload(pathToRootfs string) error 
 	return nil
 }
 
-func (d *ArtifactWriter) WithDeltaRootfsPayload(baseArtifactPath string, targetArtifactPath string) error {
+func (d *ArtifactWriter) WithDeltaRootfsPayload(baseArtifactPath string, targetArtifactPath string, deltaEngine delta_engine.DeltaAlgorithmEngine) error {
 	// First, clone the target artifact metadata into the writer
 	// This is so we get an identical set of provides/depends, as if we had installed
 	// a full rootfs artifact.
@@ -76,7 +79,24 @@ func (d *ArtifactWriter) WithDeltaRootfsPayload(baseArtifactPath string, targetA
 		})
 	}
 
-	p := deltas.NewArtifactDelta(baseArtifactPath, targetArtifactPath)
+	// grab the raw RDFM metadata and split into Depends vs Provides
+	for key, val := range deltaEngine.Metadata() {
+		switch {
+		case strings.HasPrefix(key, "requires:"):
+			depKey := strings.TrimPrefix(key, "requires:")
+			d.args.TypeInfoV3.ArtifactDepends[depKey] = val
+
+		case strings.HasPrefix(key, "provides:"):
+			provKey := strings.TrimPrefix(key, "provides:")
+			if d.args.TypeInfoV3.ArtifactProvides != nil {
+				d.args.TypeInfoV3.ArtifactProvides[provKey] = val
+			} else {
+				d.WithPayloadProvides(map[string]string{provKey: val})
+			}
+		}
+	}
+
+	p := deltas.NewArtifactDelta(baseArtifactPath, targetArtifactPath, deltaEngine)
 	deltaFilename, err := p.Delta()
 	if err != nil {
 		return err

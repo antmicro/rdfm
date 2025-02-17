@@ -20,10 +20,16 @@ variables:
   before_script:
     - python -V
     - (apt update &&
-        apt-get -y install make netcat-openbsd openssl telnet uuid-runtime xxd postgresql-$POSTGRES_MAJOR_VERSION postgresql-contrib &&
+        apt-get -y install make netcat-openbsd openssl telnet uuid-runtime xxd postgresql-$POSTGRES_MAJOR_VERSION postgresql-contrib cmake &&
         service postgresql start &&
         ln -s /usr/lib/postgresql/$POSTGRES_MAJOR_VERSION/bin/initdb /bin/initdb &&
         ln -s /usr/lib/postgresql/$POSTGRES_MAJOR_VERSION/bin/postgres /bin/postgres)
+    - git clone https://github.com/antmicro/go-xdelta xdelta
+    - cd xdelta
+    - cmake -B build/ -DCGO_INTEGRATION=ON -DENCODER=ON
+    - cmake --build build/
+    - cmake --install build/
+    - cd ../
     - (cd server && poetry build && poetry install)
     - (cd manager && poetry build && poetry install)
     - server/tests/certgen.sh certs IP.1:127.0.0.1 DEVICE no
@@ -31,6 +37,17 @@ variables:
 .build:
   <<: *common_only
   extends: .build-base
+
+.install-xdelta:
+  before_script:
+    - apt-get update
+    - apt-get install -y cmake
+    - git clone https://github.com/antmicro/go-xdelta xdelta
+    - cd xdelta
+    - cmake -B build/ -DENCODER=ON -DCGO_INTEGRATION=ON
+    - cmake --build build/
+    - cmake --install build/
+    - cd ../
 
 stages:
   - docs-build
@@ -196,34 +213,33 @@ build-rdfm-logging-tool:
 test-rdfm-client:
   stage: local-tests
   <<: *common_only
-  before_script:
+  dependencies:
+    - build-rdfm-artifact
+  script:
+    # Install rdfm-artifact, which is required for the tests
+    - mv tools/rdfm-artifact/rdfm-artifact /usr/bin/
     # Currently CI ships Go 1.19, while the client needs 1.20+
     - wget --quiet -O - "https://go.dev/dl/go1.22.3.linux-amd64.tar.gz" | tar xz
-  script:
     - export PATH=`pwd`/go/bin:$PATH
-    # Build and install rdfm-artifact, which is required for the tests
-    - cd tools/rdfm-artifact
-    - make
-    - make install
-    - cd ../../devices/linux-client
+    - cd devices/linux-client
     - make test
 
 test-rdfm-client-docker:
   stage: local-tests
   <<: *common_only
+  dependencies:
+    - build-rdfm-artifact
   before_script:
     # Currently CI ships Go 1.19, while the client needs 1.20+
     - wget --quiet -O - "https://go.dev/dl/go1.22.3.linux-amd64.tar.gz" | tar xz
   script:
     - export PATH=$HOME/go/bin/:$PATH
     - export PATH=`pwd`/go/bin:$PATH
-    # Build and install rdfm-artifact, which is required for the tests
-    -  cd tools/rdfm-artifact
-    -  make
-    -  make install
-    -  cd ../../devices/linux-client
+    # Install rdfm-artifact, which is required for the tests
+    - mv tools/rdfm-artifact/rdfm-artifact /usr/bin/
     # The tests are running in a Docker container, install and set up
     # the Docker daemon
+    - cd devices/linux-client
     - apt update
     - apt -qq -y --no-install-recommends install docker.io cgroupfs-mount crun fuse-overlayfs pigz ca-certificates
     - cgroupfs-mount
@@ -311,14 +327,11 @@ test-mcumgr-client:
 
 # ===== rdfm-artifact ===== #
 
-.rdfm-artifact:
-  before_script:
-    - export PATH=$HOME/go/bin/:$PATH
-
 build-rdfm-artifact:
-  extends: .rdfm-artifact
   stage: build
+  extends: .install-xdelta
   script:
+    - export PATH=$HOME/go/bin/:$PATH
     - cd tools/rdfm-artifact
     - make
   artifacts:
@@ -326,10 +339,11 @@ build-rdfm-artifact:
       - tools/rdfm-artifact/rdfm-artifact
 
 test-rdfm-artifact:
-  extends: .rdfm-artifact
   <<: *common_only
   stage: local-tests
+  extends: .install-xdelta
   script:
+    - export PATH=$HOME/go/bin/:$PATH
     - cd tools/rdfm-artifact
     - make test
 

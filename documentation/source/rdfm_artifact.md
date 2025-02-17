@@ -25,6 +25,7 @@ In order to support robust updates and rollback, the RDFM Client requires proper
 * Go compiler
 * C Compiler
 * liblzma-dev and libglib2.0-dev packages
+* [go-xdelta](https://github.com/antmicro/go-xdelta) library
 
 ### Steps
 
@@ -34,6 +35,8 @@ To build `rdfm-artifact` on a device from source, clone the repository and build
 git clone https://github.com/antmicro/rdfm.git && cd tools/rdfm-artifact/
 make
 ```
+
+Ensure the go-xdelta library is installed beforehand. You can install it by following the instructions in the go-xdelta repository. Use the CMake options `-DCGO_INTEGRATION=ON -DENCODER=ON` during the build process.
 
 ## Basic usage
 
@@ -76,13 +79,23 @@ For creating a delta artifact, you should have already created two separate full
 - base artifact - the rootfs image that the deltas will be applied on top of, or in other words: the currently running rootfs on the device
 - target artifact - the updated rootfs image that will be installed on the device
 
-Given these two artifacts, a delta artifact can be generated like this:
+RDFM Artifact tool provides two algortihms for delta artifact generation:
+
+- **rsync** - produces larger delta sizes with slower encoding but faster decoding (default).
+- **xdelta** - produces smaller delta sizes with faster encoding but slower decoding.
+
+Choose **rsync** to minimize computational load during update application on the target device, or **xdelta** to prioritize a smaller update package size.
+
+The delta algorithm can be specified using `--delta-algorithm` flag. If no algorithm is specified, RDFM defaults to **rsync**.
+
+For example, to generate an `rsync` delta artifact:
 
 ```
 rdfm-artifact write delta-rootfs-image \
     --base-artifact "base.rdfm" \
     --target-artifact "target.rdfm" \
-    --output-path "base-to-target.rdfm"
+    --output-path "base-to-target.rdfm" \
+    --delta-algorithm "rsync"
 ```
 
 ### Creating a Zephyr MCUboot artifact

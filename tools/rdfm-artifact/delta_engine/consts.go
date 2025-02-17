@@ -1,4 +1,4 @@
-package deltas
+package delta_engine
 
 import "github.com/balena-os/librsync-go"
 

@@ -8,6 +8,9 @@ const (
 	rdfmRootfsProvidesChecksum = "rootfs-image.checksum"
 	rdfmRootfsProvidesVersion  = "rootfs-image.version"
 
+	rdfmRootfsDependsXdelta = "rdfm.software.supports_xdelta"
+	rdfmRootfsDependsRsync  = "rdfm.software.supports_rsync"
+
 	rdfmZephyrProvidesChecksum = "zephyr-image.checksum"
 	rdfmZephyrProvidesVersion  = "zephyr-image.version"
 

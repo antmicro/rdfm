@@ -3,6 +3,7 @@ package cli
 import (
 	"log"
 
+	"github.com/antmicro/rdfm/tools/rdfm-artifact/delta_engine"
 	"github.com/antmicro/rdfm/tools/rdfm-artifact/writers"
 	"github.com/urfave/cli"
 )
@@ -10,6 +11,7 @@ import (
 const (
 	flagBaseArtifactPath   = "base-artifact"
 	flagTargetArtifactPath = "target-artifact"
+	flagDeltaAlgorithm     = "delta-algorithm"
 )
 
 func makeDeltaRootfsFlags() []cli.Flag {
@@ -32,6 +34,17 @@ func makeDeltaRootfsFlags() []cli.Flag {
 			Usage:    "Path to the target artifact",
 			Required: true,
 		},
+		cli.StringFlag{
+			Name: flagDeltaAlgorithm,
+			Value: "rsync", // default
+			// Skipping Value field to avoid implicitly appending "(default: rsync)"
+			// in help output. Default value is handled in parseDeltaAlgorithm function
+			Usage: "Algorithm for delta encoding (default: rsync).\n" +
+				"      Available options:\n" +
+				"        - rsync  : larger delta sizes and slower encoding, faster decoding (default)\n" +
+				"        - xdelta : smaller delta sizes and faster encoding, slower decoding\n" +
+				"      Use 'rsync' to minimize computational load during update application on the target device, or 'xdelta' to prioritize a smaller update package size.",
+		},
 	)
 }
 
@@ -40,8 +53,14 @@ func writeDeltaRootfs(c *cli.Context) error {
 	targetArtifact := c.String(flagTargetArtifactPath)
 	outputPath := parseOutputPath(c)
 
+	deltaEngine, err := delta_engine.ParseDeltaEngine(c.String(flagDeltaAlgorithm))
+	if err != nil {
+		return err
+	}
+
 	log.Println("Base artifact:", baseArtifact)
 	log.Println("Target artifact:", targetArtifact)
+	log.Println("Delta algorithm:", deltaEngine.Name())
 
 	payloadProvides, err := parsePayloadProvides(c)
 	if err != nil {
@@ -61,7 +80,10 @@ func writeDeltaRootfs(c *cli.Context) error {
 	writer.WithPayloadProvides(payloadProvides)
 	writer.WithPayloadDepends(payloadDepends)
 	writer.WithPayloadClearsProvides(payloadClearsProvides)
-	writer.WithDeltaRootfsPayload(baseArtifact, targetArtifact)
+	err = writer.WithDeltaRootfsPayload(baseArtifact, targetArtifact, deltaEngine)
+	if err != nil {
+		return err
+	}
 
 	log.Println("Writing delta artifact...")
 	return writer.Write()

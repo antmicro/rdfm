@@ -8,8 +8,10 @@ require (
 )
 
 require (
+	github.com/antmicro/go-xdelta/xdelta3/go_api v0.0.0-20250728100644-2e147d195b14
 	github.com/balena-os/librsync-go v0.8.5
 	github.com/pkg/errors v0.9.1
+	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	github.com/urfave/cli v1.22.12
 )
@@ -69,7 +71,6 @@ require (
 	github.com/remyoudompheng/go-liblzma v0.0.0-20190506200333-81bf2d431b96 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
-	github.com/sirupsen/logrus v1.9.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/crypto v0.7.0 // indirect

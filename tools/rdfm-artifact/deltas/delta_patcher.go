@@ -2,11 +2,10 @@ package deltas
 
 import (
 	"fmt"
-	"io"
 	"os"
 
+	"github.com/antmicro/rdfm/tools/rdfm-artifact/delta_engine"
 	"github.com/antmicro/rdfm/tools/rdfm-artifact/extractors"
-	"github.com/balena-os/librsync-go"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -14,13 +13,15 @@ type ArtifactDelta struct {
 	baseArtifactPath   string
 	targetArtifactPath string
 	outputDeltaPath    string
+	deltaEngine        delta_engine.DeltaAlgorithmEngine
 }
 
-func NewArtifactDelta(basePath string, targetPath string) ArtifactDelta {
+func NewArtifactDelta(basePath string, targetPath string, engine delta_engine.DeltaAlgorithmEngine) ArtifactDelta {
 	return ArtifactDelta{
 		baseArtifactPath:   basePath,
 		targetArtifactPath: targetPath,
-		outputDeltaPath:    "",
+		outputDeltaPath:    "", // Set later during Delta()
+		deltaEngine:        engine,
 	}
 }
 
@@ -32,43 +33,62 @@ func (d *ArtifactDelta) Delta() (string, error) {
 	if err := baseImage.Open(d.baseArtifactPath); err != nil {
 		return "", err
 	}
-	defer baseImage.Close()
 
 	targetImage := extractors.NewArtifactExtractor()
 	if err := targetImage.Open(d.targetArtifactPath); err != nil {
 		return "", err
 	}
-	defer targetImage.Close()
 
 	var g errgroup.Group
 
 	g.Go(func() error {
 		// Extraction must happen on a separate goroutine
-		return baseImage.Extract()
+		err := baseImage.Extract()
+		// Close immediately if an error occurs to avoid deadlock
+		if err != nil {
+			baseImage.Close()
+		}
+		return err
 	})
+
 	g.Go(func() error {
 		// Same as above
-		return targetImage.Extract()
-	})
-	g.Go(func() error {
-		// Calculate the signature
-		signature, err := librsync.Signature(baseImage.Reader(), io.Discard, DeltaBlockLength, DeltaStrongLength, DeltaSignatureType)
+		err := targetImage.Extract()
 		if err != nil {
-			return err
+			targetImage.Close()
 		}
+		return err
+	})
+
+	g.Go(func() error {
+		// Delta generation
+		defer baseImage.Close()
+		defer targetImage.Close()
 
 		// Save the deltas to a temporary file
 		// This is required, as RDFM expects a specific file name format for proper
 		// detection of deltas
-		f, err := os.CreateTemp(os.TempDir(), fmt.Sprintf("rootfs-image-delta-*.%d.delta", baseImage.PayloadSize()))
+		f, err := os.CreateTemp(os.TempDir(), fmt.Sprintf("rootfs-image-delta-*"))
 		if err != nil {
 			return err
 		}
-		defer f.Close()
-		d.outputDeltaPath = f.Name()
 
-		// Generate the deltas
-		return librsync.Delta(signature, targetImage.Reader(), f)
+		err = d.deltaEngine.Delta(baseImage.Reader(), targetImage.Reader(), f)
+		f.Close()
+		if err != nil {
+			return err
+		}
+
+		// Change the filename, as RDFM requires the payload size in the filename,
+		// but the payload size was unknown before the extraction end.
+		newDeltaPath := fmt.Sprintf("%s.%d.%s", f.Name(), baseImage.PayloadSize(), d.deltaEngine.Name())
+		err = os.Rename(f.Name(), newDeltaPath)
+		if err != nil {
+			return err
+		}
+
+		d.outputDeltaPath = newDeltaPath
+		return nil
 	})
 
 	if err := g.Wait(); err != nil {

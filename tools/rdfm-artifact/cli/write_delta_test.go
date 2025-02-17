@@ -12,9 +12,11 @@ const (
 	testDeltaRootfsBase   = "../tests/data/delta-base.rdfm"
 	testDeltaRootfsTarget = "../tests/data/delta-target.rdfm"
 	testDeltaRootfsOut    = "../tests/data/delta-output-test.rdfm"
+	rsyncSupportFlag      = "rdfm.software.supports_rsync"
+	xdeltaSupportFlag     = "rdfm.software.supports_xdelta"
 )
 
-func TestWriteDeltaRootfsArtifact(t *testing.T) {
+func testWriteDeltaRootfsArtifact(t *testing.T, algorithm string, algSupportFlag string) {
 	defer os.Remove(testDeltaRootfsOut)
 
 	app := NewApp()
@@ -25,6 +27,7 @@ func TestWriteDeltaRootfsArtifact(t *testing.T) {
 		"--base-artifact", testDeltaRootfsBase,
 		"--target-artifact", testDeltaRootfsTarget,
 		"--output-path", testDeltaRootfsOut,
+		"--delta-algorithm", algorithm,
 	})
 	assert.Nil(t, err)
 
@@ -52,9 +55,19 @@ func TestWriteDeltaRootfsArtifact(t *testing.T) {
 	// invalid base image
 	depends, err := reader.MergeArtifactDepends()
 	assert.Nil(t, err)
-	assert.Equal(t, map[string]interface{}{
+	expectedDepends := map[string]interface{}{
 		"BBBBBBBB":              "22222222",
 		"device_type":           []interface{}{"some-device-type"},
+		algSupportFlag:          "true",
 		"rootfs-image.checksum": "f0f37130db8accd0ef87b03dc65a3e085b15a90185100589038e4eb98e452ba7",
-	}, depends)
+	}
+	assert.Equal(t, expectedDepends, depends)
+}
+
+func TestWriteRsyncDeltaRootfsArtifact(t *testing.T) {
+	testWriteDeltaRootfsArtifact(t, "rsync", rsyncSupportFlag)
+}
+
+func TestWriteXDeltaRootfsArtifact(t *testing.T) {
+	testWriteDeltaRootfsArtifact(t, "xdelta", xdeltaSupportFlag)
 }
