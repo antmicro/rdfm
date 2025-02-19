@@ -1,5 +1,15 @@
+import threading
 from typing import Optional
-from request_models import Request, CapabilityReport, Alert
+from request_models import (
+    Request,
+    CapabilityReport,
+    Alert,
+    Action,
+    ActionExecResult,
+    ActionExecControl,
+    ActionListUpdate,
+)
+
 import simple_websocket
 from auth.token import DeviceToken
 import rdfm.ws
@@ -8,6 +18,7 @@ from rdfm.ws import (
     RDFM_WS_MISSING_CAPABILITIES,
     WebSocketException,
 )
+import device_mgmt.action
 
 
 class RemoteDevice:
@@ -20,6 +31,8 @@ class RemoteDevice:
     ws: simple_websocket.Client
     token: DeviceToken
     capabilities: dict[str, bool]
+    actions: dict[str, Action]
+    actions_updated: threading.Event
 
     def __init__(
         self, ws: simple_websocket.Client, token: DeviceToken
@@ -27,6 +40,8 @@ class RemoteDevice:
         self.ws = ws
         self.token = token
         self.capabilities = {}
+        self.actions = {}
+        self.actions_updated = threading.Event()
 
     def receive_message(self, timeout: Optional[float] = None) -> Request:
         """Receive a message from the device and decode it
@@ -64,6 +79,39 @@ class RemoteDevice:
                 flush=True,
             )
             self.capabilities = request.capabilities
+        elif isinstance(request, ActionExecResult):
+            print(
+                "Action execution result for",
+                self.token.device_id,
+                request.execution_id,
+                request.status_code,
+                request.output,
+                flush=True,
+            )
+            device_mgmt.action.execute_action_result(
+                request.execution_id,
+                request.status_code,
+                request.output,
+            )
+        elif isinstance(request, ActionExecControl):
+            print(
+                "Action execution control for",
+                self.token.device_id,
+                request.execution_id,
+                request.status,
+                flush=True,
+            )
+            device_mgmt.action.execute_action_control(request.execution_id, request.status)
+        elif isinstance(request, ActionListUpdate):
+            print(
+                "Actions update for",
+                self.token.device_id,
+                "reporting actions:",
+                request.actions,
+                flush=True,
+            )
+            self.actions = {x.action_id: x for x in request.actions}
+            self.actions_updated.set()
         else:
             print("Unknown request:", request, flush=True)
             raise WebSocketException(

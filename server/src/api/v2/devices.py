@@ -10,10 +10,11 @@ from api.v1.middleware import (
 )
 from rdfm.permissions import (
     READ_PERMISSION,
+    UPDATE_PERMISSION,
     DEVICE_RESOURCE,
 )
 from rdfm.schema.v2.devices import Device
-
+import device_mgmt.action
 
 devices_blueprint: Blueprint = Blueprint("rdfm-server-devices", __name__)
 
@@ -154,3 +155,113 @@ def fetch_one(identifier: int):
         traceback.print_exc()
         print("Exception during device fetch:", repr(e))
         return api_error("device fetching failed", 500)
+
+
+@devices_blueprint.route(
+    "/api/v2/devices/<string:mac_address>/action/list"
+)
+@check_permission(DEVICE_RESOURCE, READ_PERMISSION)
+def list_actions(
+    mac_address: str
+):
+    """ Fetch the list of actions executable on the device.
+
+    :status 200: no error
+
+    :>json string action_id: action identifier
+    :>json string action_name: human readable name
+    :>json array[string] command: command to execute
+    :>json string description: human readable description
+    :>json number timeout: command timeout
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        GET /api/v2/devices/d8:5e:d3:86:02:f2/action/list HTTP/1.1
+        Accept: application/json, text/javascript
+
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+
+        [
+        {
+            "action_id": "echo",
+            "action_name": "Echo",
+            "command": [
+            "echo",
+            "Executing echo action"
+            ],
+            "description": "Description of echo action",
+            "timeout": 1.0
+        },
+        {
+            "action_id": "sleepTwoSeconds",
+            "action_name": "Sleep 2",
+            "command": [
+            "sleep",
+            "2"
+            ],
+            "description": "Description of sleep 2 seconds action",
+            "timeout": 3.0
+        },
+        {
+            "action_id": "sleepFiveSeconds",
+            "action_name": "Sleep 5",
+            "command": [
+            "sleep",
+            "5"
+            ],
+            "description": "This action will timeout",
+            "timeout": 3.0
+        }
+        ]
+
+    """
+
+    return [x.model_dump() for x in device_mgmt.action.ensure_actions(mac_address)], 200
+
+
+@devices_blueprint.route(
+    "/api/v2/devices/<string:mac_address>/action/exec/<string:action_id>"
+)
+@check_permission(DEVICE_RESOURCE, UPDATE_PERMISSION)
+def exec_action(
+    mac_address: str,
+    action_id: str
+):
+    """ Execute action on the device.
+
+    :status 200: no error
+    :status 500: action doesn't exist
+
+    :>json string output: base64 encoded action output
+    :>json integer status_code: action exit status
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        GET /api/v2/devices/d8:5e:d3:86:02:f2/action/exec/echo HTTP/1.1
+        Accept: application/json, text/javascript
+
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+
+        {
+          "output": "RXhlY3V0aW5nIGVjaG8gYWN0aW9uCg==",
+          "status_code": 0
+        }
+    """
+    status_code, output = device_mgmt.action.execute_action(mac_address, action_id)
+    return {"status_code": status_code, "output": output}, 200

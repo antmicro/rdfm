@@ -40,8 +40,5 @@ certs/
 # Auth tokens
 auth_token.*
 
-# Device capabilities
-capabilities.toml
-
 # Databases
 *.db

@@ -27,6 +27,8 @@ __required_capabilities_by_method_name: dict[str, list[str]] = {
     'device_hello': [],
     'shell_attach': ['shell'],
     'alert': [],
+    'action_exec': ['action'],
+    'action_list_query': ['action'],
 }
 
 

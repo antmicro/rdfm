@@ -1,6 +1,7 @@
 from typing import Optional
 from device_mgmt.models.remote_device import RemoteDevice
 from device_mgmt.models.reverse_shell import ReverseShell
+from device_mgmt.models.action_execution import ActionExecution
 from uuid import UUID
 
 
@@ -45,4 +46,24 @@ class ShellSessions:
         """Get a shell session specified by the device MAC and UUID"""
         return self._shell_sessions.get(
             _format_shell_key(mac_address, uuid), None
+        )
+
+
+class ActionExecutions:
+    """Container for tracking action executions"""
+
+    _action_executions: dict[str, ActionExecution] = {}
+
+    def add(self, execution: ActionExecution):
+        """Add a new action execution."""
+        self._action_executions[execution.execution_id] = execution
+
+    def remove(self, execution: ActionExecution):
+        """Remove the specified action execution."""
+        self._action_executions.pop(execution.execution_id)
+
+    def get(self, execution_id: str) -> Optional[ActionExecution]:
+        """Get action execution by its identifier."""
+        return self._action_executions.get(
+            execution_id, None
         )
