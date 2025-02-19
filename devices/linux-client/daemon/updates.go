@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -91,7 +92,7 @@ func (d *Device) checkUpdate() error {
 	return nil
 }
 
-func (d *Device) updateCheckerLoop(done chan bool) {
+func (d *Device) updateCheckerLoop(cancelCtx context.Context) {
 	var err error
 	var info string
 
@@ -103,12 +104,12 @@ func (d *Device) updateCheckerLoop(done chan bool) {
 			info = "unexpected goroutine completion"
 		}
 		select {
-		case <-done:
+		case <-cancelCtx.Done():
 			return
 		default:
 		}
 		log.Println("Updater loop recovery from", info)
-		d.updateCheckerLoop(done)
+		d.updateCheckerLoop(cancelCtx)
 	}()
 
 	for {
@@ -118,7 +119,11 @@ func (d *Device) updateCheckerLoop(done chan bool) {
 		}
 		updateDuration := time.Duration(d.rdfmCtx.RdfmConfig.UpdatePollIntervalSeconds) * time.Second
 		log.Printf("Next update check in %s\n", updateDuration)
-		time.Sleep(time.Duration(updateDuration))
+		select {
+		case <-time.After(time.Duration(updateDuration)):
+		case <-cancelCtx.Done():
+			return
+		}
 	}
 	panic(err)
 }

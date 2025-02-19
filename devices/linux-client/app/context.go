@@ -6,6 +6,7 @@ import (
 	"path"
 
 	conf "github.com/antmicro/rdfm/conf"
+	dconf "github.com/antmicro/rdfm/daemon/conf"
 	"github.com/antmicro/rdfm/delta"
 	"github.com/antmicro/rdfm/helpers"
 	tconf "github.com/antmicro/rdfm/telemetry/conf"
@@ -23,6 +24,7 @@ type RDFM struct {
 	RdfmConfig          *conf.RDFMConfig
 	menderConfig        *mconf.MenderConfig
 	RdfmTelemetryConfig *map[string]tconf.RDFMLoggerConfiguration
+	RdfmActionsConfig   *[]dconf.RDFMActionsConfiguration
 	store               *store.DBStore
 	deviceManager       *device.DeviceManager
 }
@@ -57,6 +59,11 @@ func NewRdfmContext() (*RDFM, error) {
 		return nil, err
 	}
 
+	rdfmActionsConfig, err := dconf.LoadActionsConfig(conf.RdfmDefaultActionsPath)
+	if err != nil {
+		return nil, err
+	}
+
 	store, err := loadDbStore()
 	if err != nil {
 		return nil, err
@@ -71,6 +78,7 @@ func NewRdfmContext() (*RDFM, error) {
 		rdfmConfig,
 		menderConfig,
 		rdfmTelemetryConfig,
+		rdfmActionsConfig,
 		store,
 		deviceManager,
 	}

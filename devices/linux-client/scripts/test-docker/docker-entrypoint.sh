@@ -34,6 +34,32 @@ cat >/var/lib/rdfm/rdfm.conf <<EOF
 }
 EOF
 
+cat >/var/lib/rdfm/actions.conf <<EOF
+[
+{
+    "Id": "echo",
+    "Name": "Echo",
+    "Command": ["echo", "Executing echo action"],
+    "Description": "Description of echo action",
+    "Timeout": 1.0
+},
+{
+    "Id": "sleepTwoSeconds",
+    "Name": "Sleep 2",
+    "Command": ["sleep", "2"],
+    "Description": "Description of sleep 2 seconds action",
+    "Timeout": 3.0
+},
+{
+    "Id": "sleepFiveSeconds",
+    "Name": "Sleep 5",
+    "Command": ["sleep", "5"],
+    "Description": "This action will timeout",
+    "Timeout": 3.0
+}
+]
+EOF
+
 # Creating an entry in /etc/hosts for the server
 IP=$(echo $SERVER_URL | awk -F"://|:" '{print $2}')
 echo "$IP rdfm-server" >> /etc/hosts

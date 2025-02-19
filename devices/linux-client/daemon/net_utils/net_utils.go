@@ -3,10 +3,12 @@ package netUtils
 import (
 	"encoding/json"
 	"errors"
-	"github.com/golang-jwt/jwt/v5"
 	"net"
 	"net/url"
 	"regexp"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -95,4 +97,46 @@ func ExtractJwtPayload(tokenStr string) (*JwtPayload, error) {
 	} else {
 		return nil, errors.New("Failed to extract JWT payload: false type assertion")
 	}
+}
+
+type ExpBackoff struct {
+	MinDelay     time.Duration
+	MaxDelay     time.Duration
+	currentDelay time.Duration
+	base         float64
+}
+
+func NewExpBackoff(minDelay time.Duration, maxDelay time.Duration, base float64) *ExpBackoff {
+	if base < 1 {
+		return nil
+	}
+
+	eb := new(ExpBackoff)
+	eb.MinDelay = minDelay
+	eb.MaxDelay = maxDelay
+	eb.base = base
+	eb.Reset()
+	return eb
+}
+
+func (eb *ExpBackoff) updateDelay() {
+	newDelay := time.Duration(float64(eb.currentDelay.Nanoseconds()) * eb.base)
+	if eb.MaxDelay < newDelay {
+		eb.currentDelay = eb.MaxDelay
+	} else {
+		eb.currentDelay = newDelay
+	}
+}
+
+func (eb *ExpBackoff) Retry() time.Duration {
+	delay := eb.currentDelay
+	eb.updateDelay()
+	return delay
+}
+
+func (eb *ExpBackoff) Peek() time.Duration {
+	return eb.currentDelay
+}
+func (eb *ExpBackoff) Reset() {
+	eb.currentDelay = eb.MinDelay
 }

@@ -47,6 +47,62 @@ func (r DeviceAttachToManager) method() string {
 	return r.Method
 }
 
+type Action struct {
+	ActionId    string   `json:"action_id"`
+	ActionName  string   `json:"action_name"`
+	Description string   `json:"description"`
+	Command     []string `json:"command"`
+	Timeout     float32  `json:"timeout"`
+}
+
+type ActionExec struct {
+	Method      string `json:"method"`
+	ExecutionId string `json:"execution_id"`
+	ActionId    string `json:"action_id"`
+}
+
+func (r ActionExec) method() string {
+	return r.Method
+}
+
+type ActionExecResult struct {
+	Method      string `json:"method"`
+	ExecutionId string `json:"execution_id"`
+	StatusCode  int    `json:"status_code"`
+	Output      string `json:"output"`
+}
+
+func (r ActionExecResult) method() string {
+	return r.Method
+}
+
+type ActionExecControl struct {
+	Method      string `json:"method"`
+	ExecutionId string `json:"execution_id"`
+	Status      string `json:"status"`
+}
+
+func (r ActionExecControl) method() string {
+	return r.Method
+}
+
+type ActionListQuery struct {
+	Method string `json:"method"`
+}
+
+func (r ActionListQuery) method() string {
+	return r.Method
+}
+
+type ActionListUpdate struct {
+	Method  string   `json:"method"`
+	Actions []Action `json:"actions"`
+}
+
+func (r ActionListUpdate) method() string {
+	return r.Method
+}
+
 func CantHandleRequest() Request {
 	res := Alert{
 		Method: "alert",
@@ -64,9 +120,17 @@ func Parse(r string) (Request, error) {
 	case "alert":
 		var parsed Alert
 		err = json.Unmarshal([]byte(r), &parsed)
-		return parsed, nil
+		return parsed, err
 	case "shell_attach":
 		// TODO: reverse shell support
+	case "action_exec":
+		var parsed ActionExec
+		err = json.Unmarshal([]byte(r), &parsed)
+		return parsed, err
+	case "action_list_query":
+		var parsed ActionListQuery
+		err = json.Unmarshal([]byte(r), &parsed)
+		return parsed, err
 	}
 	if err != nil {
 		return nil, nil

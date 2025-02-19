@@ -9,7 +9,8 @@ import (
 )
 
 type DeviceCapabilities struct {
-	ShellConnect bool `json:"shell"         mapstructure:"shell"`
+	ShellConnect bool `json:"shell" mapstructure:"shell"`
+	Action       bool `json:"action" mapstructure:"action"`
 }
 
 func LoadCapabilities(path string) (caps DeviceCapabilities, err error) {

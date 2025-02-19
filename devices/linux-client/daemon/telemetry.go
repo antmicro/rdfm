@@ -2,13 +2,15 @@ package daemon
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/antmicro/rdfm/telemetry"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/antmicro/rdfm/telemetry"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -47,7 +49,7 @@ func (d *Device) sendLogEntries(entries *[]telemetry.LogEntry, client *http.Clie
 	return d.sendLogBatch(telemetry.MakeLogBatch(*entries), client, endpoint)
 }
 
-func (d *Device) logSendLoop(entries *[]telemetry.LogEntry, done chan bool, logs <-chan telemetry.LogEntry) {
+func (d *Device) logSendLoop(entries *[]telemetry.LogEntry, cancelCtx context.Context, logs <-chan telemetry.LogEntry) {
 	log.Println("Telemetry loop running")
 	client := &http.Client{Transport: d.httpTransport}
 	batchSize := d.rdfmCtx.RdfmConfig.TelemetryBatchSize
@@ -55,7 +57,7 @@ func (d *Device) logSendLoop(entries *[]telemetry.LogEntry, done chan bool, logs
 
 	for {
 		select {
-		case <-done:
+		case <-cancelCtx.Done():
 			telemetry.StopLoggers(d.logManager, d.rdfmCtx.RdfmTelemetryConfig)
 			err := d.sendLogEntries(entries, client, endpoint)
 			if err != nil {
@@ -83,7 +85,7 @@ func (d *Device) logSendLoop(entries *[]telemetry.LogEntry, done chan bool, logs
 	}
 }
 
-func (d *Device) telemetryLoop(done chan bool) {
+func (d *Device) telemetryLoop(cancelCtx context.Context) {
 	if !d.rdfmCtx.RdfmConfig.TelemetryEnable {
 		return
 	}
@@ -108,7 +110,7 @@ func (d *Device) telemetryLoop(done chan bool) {
 				info = "unexpected goroutine completion"
 			}
 			select {
-			case <-done:
+			case <-cancelCtx.Done():
 				return
 			default:
 			}
@@ -119,7 +121,7 @@ func (d *Device) telemetryLoop(done chan bool) {
 			loop()
 		}()
 
-		d.logSendLoop(&entries, done, logs)
+		d.logSendLoop(&entries, cancelCtx, logs)
 	}
 	loop()
 }

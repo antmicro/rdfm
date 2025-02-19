@@ -1,9 +1,11 @@
 package daemon
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	log "github.com/sirupsen/logrus"
@@ -40,27 +42,56 @@ func Daemonize(c *libcli.Context) error {
 		logManager:   telemetry.MakeLogManager(),
 	}
 
-	err = device.connect()
+	err = device.setupConnection()
 	if err != nil {
 		log.Println(err)
 		return err
 	}
+	device.setupActionRunner()
 
-	done := make(chan bool, 1)
 	channel := make(chan os.Signal)
 	signal.Notify(channel, syscall.SIGINT, syscall.SIGTERM)
 
-	go device.updateCheckerLoop(done)
-	go device.managementWsLoop(done)
-	go device.telemetryLoop(done)
+	cancelCtx, cancelFunc := context.WithCancel(context.Background())
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		defer func() {
+			log.Infoln("Finished updateCheckerLoop.")
+			wg.Done()
+		}()
+		log.Infoln("Starting updateCheckerLoop...")
+		device.updateCheckerLoop(cancelCtx)
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer func() {
+			log.Infoln("Finished telemtryLoop.")
+			wg.Done()
+		}()
+		log.Infoln("Starting telemtryLoop...")
+		device.telemetryLoop(cancelCtx)
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer func() {
+			log.Println("Finished managementWsLoop.")
+			wg.Done()
+		}()
+		log.Infoln("Starting managementWsLoop...")
+		device.managementWsLoop(cancelCtx)
+	}()
 
 	<-channel
 	log.Println("Daemon killed")
 
-	done <- true
+	cancelFunc()
 	log.Println("Closing daemon...")
-
-	device.disconnect()
+	wg.Wait()
 
 	exitInfo := "Daemon exited"
 	if err != nil {

@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"bytes"
+	"context"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
@@ -15,7 +16,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"sync"
@@ -33,16 +33,12 @@ import (
 	requests "github.com/antmicro/rdfm/daemon/requests"
 )
 
-const MSG_RECV_TIMEOUT_INTERVALS = 10
-const MSG_RECV_INTERVAL_S = 1
 const RSA_DEVICE_KEY_SIZE = 4096
-const MGMT_LOOP_RECOVERY_INTERVAL = 30
 const TOKEN_EXPIRY_MIN_ALLOWED = 5
 
 type Device struct {
 	name                string
 	fileMetadata        string
-	ws                  *websocket.Conn
 	metadata            map[string]interface{}
 	caps                capabilities.DeviceCapabilities
 	macAddr             string
@@ -52,37 +48,8 @@ type Device struct {
 	tokenMutex          sync.Mutex
 	httpTransport       *http.Transport
 	logManager          *telemetry.LogManager
-}
-
-func (d Device) recv() ([]byte, error) {
-	var msg []byte
-	var err error
-
-	for i := 0; i < MSG_RECV_TIMEOUT_INTERVALS; i++ {
-		_, msg, err = d.ws.ReadMessage()
-		if err != nil {
-			return nil, err
-		}
-		if len(msg) > 0 {
-			break
-		}
-		time.Sleep(MSG_RECV_INTERVAL_S * time.Second)
-	}
-	return msg, nil
-}
-
-func (d Device) send(req requests.Request) error {
-	msg, err := json.Marshal(req)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	err = d.ws.WriteMessage(websocket.TextMessage, []byte(msg))
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	return nil
+	conn                *DeviceConnection
+	actionRunner        *ActionRunner
 }
 
 func (d *Device) handleRequest(msg []byte) (requests.Request, error) {
@@ -90,12 +57,12 @@ func (d *Device) handleRequest(msg []byte) (requests.Request, error) {
 
 	err := json.Unmarshal(msg, &msgMap)
 	if err != nil {
-		log.Println("Failed to deserialize request", err)
+		log.Errorln("Dropping request. Failed to deserialize:", err)
 		return nil, err
 	}
 	requestName := msgMap["method"]
 
-	log.Printf("Handling '%s' request...\n", requestName)
+	log.Infof("Handling '%s' request...", requestName)
 
 	request, err := requests.Parse(string(msg[:]))
 	if err != nil {
@@ -107,40 +74,117 @@ func (d *Device) handleRequest(msg []byte) (requests.Request, error) {
 		for key, val := range r.Alert {
 			log.Printf("Server sent %s: %s", key, val)
 		}
+	case requests.ActionExec:
+		response := requests.ActionExecControl{
+			Method:      "action_exec_control",
+			ExecutionId: r.ExecutionId,
+			Status:      "ok",
+		}
+
+		ok := d.actionRunner.Execute(r.ExecutionId, r.ActionId)
+		if !ok {
+			response.Status = "full"
+			log.Warnln("Refusing action execution:", r.ExecutionId)
+		} else {
+			log.Infoln("Accepting action execution:", r.ExecutionId)
+		}
+
+		return response, nil
+	case requests.ActionListQuery:
+		actions := d.actionRunner.List()
+		var reqActions []requests.Action
+		for _, action := range actions {
+			reqAction := requests.Action{
+				ActionId:    action.Id,
+				ActionName:  action.Name,
+				Description: action.Description,
+				Command:     action.Command,
+				Timeout:     action.Timeout,
+			}
+
+			reqActions = append(reqActions, reqAction)
+		}
+		response := requests.ActionListUpdate{
+			Method:  "action_list_update",
+			Actions: reqActions,
+		}
+		return response, nil
 	//case requests.DeviceAttachToManager:
 	// TODO: Handle shell_attach
 	default:
-		log.Printf("Request '%s' is unsupported", requestName)
+		log.Warnf("Request '%s' is unsupported", requestName)
 		response := requests.CantHandleRequest()
 		return response, nil
 	}
 	return nil, nil
 }
 
-func (d *Device) communicationCycle() error {
-	msg, err := d.recv()
+func (d *Device) marshalSendRetry(req requests.Request, cancelCtx context.Context) error {
+	msg, err := json.Marshal(req)
 	if err != nil {
 		return err
 	}
-	res, err := d.handleRequest(msg)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	if res != nil {
-		err := d.send(res)
-		if err != nil {
-			log.Println(err)
-			return err
+
+	expBackoff := netUtils.NewExpBackoff(200*time.Millisecond, 10*time.Second, 2)
+
+	for {
+		err := d.conn.Send(msg)
+		if err == nil {
+			break
+		}
+
+		log.Warnf("Sending response failed. Retrying in %.3fs.", expBackoff.Peek().Seconds())
+		select {
+		case <-time.After(expBackoff.Retry()):
+		case <-cancelCtx.Done():
+			log.Warnln("Dropping response due to cancel.")
+			return nil
 		}
 	}
 	return nil
 }
 
-func (d *Device) connect() error {
-	var dialer websocket.Dialer
-	var scheme string
+func (d *Device) getTlsConf() (*tls.Config, error) {
+	if d.rdfmCtx.RdfmConfig.ServerCertificate == "" {
+		log.Fatalf("No server certificate path in %s!", conf.RdfmOverlayConfigPath)
+	}
+	cert, err := os.ReadFile(d.rdfmCtx.RdfmConfig.ServerCertificate)
+	if err != nil {
+		log.Fatal("Failed to read certificate file: ",
+			d.rdfmCtx.RdfmConfig.ServerCertificate, err)
+		return nil, err
+	}
+	os.Setenv("SSL_CERT_DIR",
+		filepath.Dir(string(d.rdfmCtx.RdfmConfig.ServerCertificate)))
+	log.Infof("Set $SSL_CERT_DIR to \"%s\"\n",
+		os.Getenv("SSL_CERT_DIR"))
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(cert)
+	if len(cert) < 1 {
+		return nil, errors.New("certificate empty")
+	}
+	return &tls.Config{
+		RootCAs: caCertPool,
+	}, nil
+}
 
+func (d *Device) prepareHttpTransport(tlsConf *tls.Config) *http.Transport {
+	if tlsConf != nil {
+		return &http.Transport{TLSClientConfig: tlsConf}
+	} else {
+		return &http.Transport{}
+	}
+}
+
+func (d *Device) prepareWsDialer(tlsConf *tls.Config) *websocket.Dialer {
+	if tlsConf != nil {
+		return &websocket.Dialer{TLSClientConfig: tlsConf}
+	} else {
+		return websocket.DefaultDialer
+	}
+}
+
+func (d *Device) setupConnection() error {
 	// Get MAC address
 	mac, err := netUtils.GetMacAddr()
 	if err != nil {
@@ -153,123 +197,190 @@ func (d *Device) connect() error {
 	if serverUrl == "" {
 		log.Fatalf("No server URL in %s!", conf.RdfmOverlayConfigPath)
 	}
-	encrypt, err := netUtils.ShouldEncryptProxy(serverUrl)
+	shouldEncrypt, err := netUtils.ShouldEncryptProxy(serverUrl)
 	if err != nil {
 		return err
 	}
 
-	if encrypt {
-		if d.rdfmCtx.RdfmConfig.ServerCertificate == "" {
-			log.Fatalf("No server certificate path in %s!", conf.RdfmOverlayConfigPath)
-		}
-		cert, err := os.ReadFile(d.rdfmCtx.RdfmConfig.ServerCertificate)
+	var tlsConf *tls.Config = nil
+	if shouldEncrypt {
+		tlsConf, err = d.getTlsConf()
 		if err != nil {
-			log.Fatal("Failed to read certificate file: ",
-				d.rdfmCtx.RdfmConfig.ServerCertificate, err)
 			return err
 		}
-		conf := &tls.Config{}
-		os.Setenv("SSL_CERT_DIR",
-			filepath.Dir(string(d.rdfmCtx.RdfmConfig.ServerCertificate)))
-		log.Printf("Set $SSL_CERT_DIR to \"%s\"\n",
-			os.Getenv("SSL_CERT_DIR"))
-		caCertPool := x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(cert)
-		if len(cert) < 1 {
-			return errors.New("Certificate empty")
-		}
-		conf = &tls.Config{
-			RootCAs: caCertPool,
-		}
-		d.httpTransport = &http.Transport{TLSClientConfig: conf}
-		scheme = "wss"
-		dialer = websocket.Dialer{
-			TLSClientConfig: conf,
-		}
-		log.Println("Creating WebSocket over TLS")
-	} else {
-		d.httpTransport = &http.Transport{}
-		scheme = "ws"
-		dialer = *websocket.DefaultDialer
-		log.Println("Creating WebSocket")
 	}
 
-	// Get device token
-	deviceToken, err := d.getDeviceToken()
-	if err != nil {
-		return err
-	}
-	authHeader := http.Header{
-		"Authorization": []string{"Bearer token=" + deviceToken},
-	}
-
-	// Open a WebSocket connection
-	var needPort = true
-	addr, err := netUtils.HostWithOrWithoutPort(serverUrl, needPort)
-	if err != nil {
-		return err
-	}
-	u := url.URL{Scheme: scheme, Host: addr, Path: "/api/v1/devices/ws"}
-	log.Println("Connecting to", u.String())
-
-	d.ws, _, err = dialer.Dial(u.String(), authHeader)
-	if err != nil {
-		log.Println("Failed to create WebSocket", err)
-		return err
-	}
-	log.Println("WebSocket created")
-
-	// Get a response from the server
-	err = d.communicationCycle()
-	if err != nil {
-		return err
-	}
-
-	// Send capabilities
-	err = d.send(requests.CapabilityReport{
-		Method:       "capability_report",
-		Capabilities: d.caps,
-	})
-	if err != nil {
-		log.Println("Failed to send device capabilities to the server")
-		return err
-	}
-
+	d.httpTransport = d.prepareHttpTransport(tlsConf)
+	wsDialer := d.prepareWsDialer(tlsConf)
+	d.conn = NewDeviceConnection(serverUrl, *wsDialer, 1024)
 	return nil
 }
 
-func (d *Device) disconnect() {
-	defer d.ws.Close()
+func (d *Device) setupActionRunner() {
+	d.actionRunner = NewActionRunner(d.rdfmCtx, 32)
 }
 
-func (d *Device) managementWsLoop(done chan bool) {
-	var err error
-	var info string
-
-	// Recover the goroutine if it panics
-	defer func() {
-		if r := recover(); r != nil {
-			info = fmt.Sprintf("error: %v", r)
-		} else {
-			info = "unexpected goroutine completion"
-		}
+func (d *Device) maintainDeviceConnection(greeter func() error, cancelCtx context.Context) {
+	expBackoff := netUtils.NewExpBackoff(200*time.Millisecond, 5*time.Second, 2)
+	expBackoffResetThreshold := 10 * time.Second
+	for {
 		select {
-		case <-done:
+		case <-time.After(expBackoff.Retry()):
+		case <-cancelCtx.Done():
 			return
-		default:
 		}
-		log.Println("Management loop recovery from", info)
-		recoveryTime := MGMT_LOOP_RECOVERY_INTERVAL * time.Second
-		log.Println("Reconnecting to management WebSocket in", recoveryTime)
-		time.Sleep(recoveryTime)
-		d.connect()
-		d.managementWsLoop(done)
+
+		deviceToken, err := d.getDeviceToken()
+		if err != nil {
+			log.Warnln("Restarting device connection. Couldn't obtain device token:", err)
+			continue
+		}
+
+		startTime := time.Now()
+		err = d.conn.CreateConnection(deviceToken, greeter, cancelCtx)
+		if err != nil {
+			log.Warnln("Restarting device connection due to:", err)
+		}
+		if time.Since(startTime) > expBackoffResetThreshold {
+			expBackoff.Reset()
+		}
+	}
+}
+
+func (d *Device) communicationLoop(cancelCtx context.Context) error {
+	quitCh := make(chan bool, 1)
+	defer close(quitCh)
+
+	go func() {
+		select {
+		case <-cancelCtx.Done():
+		case <-quitCh:
+		}
 	}()
 
-	for err == nil {
-		err = d.communicationCycle()
+	for {
+		select {
+		case <-cancelCtx.Done():
+			return nil
+		default:
+		}
+
+		msg := d.conn.Recv(cancelCtx)
+		if msg == nil {
+			continue
+		}
+
+		res, err := d.handleRequest(msg)
+		if err != nil {
+			return err
+		}
+		if res != nil {
+			err := d.marshalSendRetry(res, cancelCtx)
+			if err != nil {
+				return err
+			}
+		}
 	}
-	panic(err)
+}
+
+func (d *Device) resultSendLoop(cancelCtx context.Context) error {
+	quitCh := make(chan bool, 1)
+	defer close(quitCh)
+
+	go func() {
+		select {
+		case <-cancelCtx.Done():
+		case <-quitCh:
+		}
+	}()
+
+	for {
+		select {
+		case <-cancelCtx.Done():
+			return nil
+		default:
+		}
+
+		execution_id, status, output := d.actionRunner.Fetch(cancelCtx)
+		if execution_id == nil {
+			return nil
+		}
+
+		res := requests.ActionExecResult{
+			Method:      "action_exec_result",
+			ExecutionId: *execution_id,
+			StatusCode:  status,
+			Output:      *output,
+		}
+
+		if err := d.marshalSendRetry(res, cancelCtx); err != nil {
+			return err
+		}
+	}
+}
+
+func (d *Device) managementWsLoop(cancelCtx context.Context) {
+	var wg sync.WaitGroup
+
+	greeter := func() error {
+		res := requests.CapabilityReport{
+			Method:       "capability_report",
+			Capabilities: d.caps,
+		}
+
+		msg, err := json.Marshal(res)
+		if err != nil {
+			return err
+		}
+
+		d.conn.Send(msg)
+		return nil
+	}
+
+	wg.Add(1)
+	go func() {
+		defer func() {
+			log.Infoln("Device connection finished.")
+			wg.Done()
+		}()
+		log.Infoln("Starting device connection...")
+		d.maintainDeviceConnection(greeter, cancelCtx)
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer func() {
+			log.Infoln("Action runner finished.")
+			wg.Done()
+		}()
+		log.Infoln("Starting action runner...")
+		d.actionRunner.StartWorker(cancelCtx)
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer func() {
+			log.Infoln("Communication loop finished.")
+			wg.Done()
+		}()
+		log.Infoln("Starting communication loop...")
+		if err := d.communicationLoop(cancelCtx); err != nil {
+			panic(err)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer func() {
+			log.Infoln("Result send loop finished.")
+			wg.Done()
+		}()
+		log.Infoln("Starting result send loop...")
+		if err := d.resultSendLoop(cancelCtx); err != nil {
+			panic(err)
+		}
+	}()
+	wg.Wait()
 }
 
 func (d *Device) getDeviceToken() (string, error) {
@@ -287,7 +398,7 @@ func (d *Device) getDeviceToken() (string, error) {
 		}
 	} else {
 		// extraction failed
-		log.Println("Device token missing or malformed, authenticating...")
+		log.Warnln("Device token missing or malformed, authenticating...")
 		err := d.authenticateDeviceWithServer()
 		if err != nil {
 			return "", err
