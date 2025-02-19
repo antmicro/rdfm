@@ -132,7 +132,7 @@ Consider the following example:
 ]
 ```
 
-:::{note} Since the file gives the capacity to run arbitrary binaries, its permissions should be set to `-rw-r--r--`.
+:::{note} Since the file gives the capacity to run arbitrary binaries, its permissions must be set to `-rw-r--r--`.
 :::
 
 #### name `string`
@@ -150,6 +150,64 @@ A list of arguments for the given executable.
 #### tick `int`
 
 Number of milliseconds between each time a logger is ran. In the case of a logger taking more than `tick` to execute, it is killed and the client reports a timeout error.
+
+### RDFM actions config
+
+The JSON structured `/var/lib/rdfm/actions.conf` file contains a list of actions that can be executed on the device.
+Each action contains a command to execute and a timeout.
+Identifiers are used in `action_exec` messages sent from the server to select the action to execute.
+Name and description can be used for user-friendly display.
+Actions defined in the configuration can be queried using `action_list_query`.
+
+Example configuration:
+```json
+[
+{
+    "Id": "echo",
+    "Name": "Echo",
+    "Command": ["echo", "Executing echo action"],
+    "Description": "Description of echo action",
+    "Timeout": 1.0
+},
+{
+    "Id": "sleepTwoSeconds",
+    "Name": "Sleep 2",
+    "Command": ["sleep", "2"],
+    "Description": "Description of sleep 2 seconds action",
+    "Timeout": 3.0
+},
+{
+    "Id": "sleepFiveSeconds",
+    "Name": "Sleep 5",
+    "Command": ["sleep", "5"],
+    "Description": "This action will timeout",
+    "Timeout": 3.0
+}
+]
+```
+
+:::{note} Since the file gives the capacity to run arbitrary binaries, its permissions must be set to `-rw-r--r--`.
+:::
+
+#### Id `string`
+
+Identifier used in execution requests, must be unique.
+
+#### Name `string`
+
+Human readable name, should be unique.
+
+#### Command `[]string`
+
+Command to execute, the first elements is an executable, others are arguments.
+
+#### Description `string`
+
+Human readable action description.
+
+#### Timeout `float`
+
+Maximum duration of command execution in seconds, command is killed if it doesn't finish in the time provided.
 
 ## Testing server-device integration with a demo Linux device client
 

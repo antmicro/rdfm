@@ -102,10 +102,24 @@ By default it is assumed that the device does not provide any capabilities.
 
 This capability indicates that a device supports spawning a reverse shell.
 The following methods must be supported by the device:
-- `shell_attach`
+
+##### Method - `shell_attach`
 
 A device with the `shell` capability should react to `shell_attach` messages by connecting to a shell WebSocket at `/api/v1/devices/<shell_attach.mac_addr>/shell/attach/<shell_attach.uuid>`.
 This establishes a connection between the requesting manager and the device.
 This WebSocket can then be used to stream the contents of the shell session and receive user input.
 The format of messages sent over this endpoint is implementation defined.
 However, generally the shell output/input are simply sent as binary WebSocket messages containing the standard output/input as raw bytes.
+
+#### Capability - `action`
+
+This capability indicates that a device supports execution of predefined actions.
+The following methods must be supported by the device:
+
+##### Method - `action_list_query`
+
+Return a list of actions supported by the device.
+
+##### Method - `action_exec`
+
+Attempt to queue action execution and immediately respond with the `action_exec_control` message indicating success or failure. Action execution result is sent later via `action_exec_result` message.
