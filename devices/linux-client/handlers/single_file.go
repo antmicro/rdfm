@@ -189,3 +189,7 @@ func (s *SingleFileUpdater) RestoreState(store store.Store) error {
 	store.Remove(SingleFileDataStoreKey)
 	return nil
 }
+
+func (s *SingleFileUpdater) GetUpdateClearsProvides() []string {
+	return []string{"this-key-cannot-appear-in-provides-80030197597109825875732137944464795696111936699651028614245931085587374788033687"}
+}
