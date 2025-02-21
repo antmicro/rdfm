@@ -98,7 +98,7 @@ func DoInstallStates(art io.ReadCloser,
 		log.Infof("Use 'commit' to update, or 'rollback' to roll back the update.")
 	} else {
 		log.Infof("Artifact doesn't support rollback. Committing immediately.")
-		installHandler.Commit()
+		DoCommit(device)
 	}
 
 	if installHandler.IsRebootNeeded() {
