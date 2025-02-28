@@ -50,6 +50,8 @@ type RDFMConfig struct {
 	TelemetryEnable bool `json:",omitempty"`
 	// Number of log entries to be sent at a time. Default: 50
 	TelemetryBatchSize int `json:",omitempty"`
+	// Log levels from within the client to be captured
+	TelemetryLogLevel string `json:",omitempty"`
 }
 
 var rdfmConfigInstance *RDFMConfig

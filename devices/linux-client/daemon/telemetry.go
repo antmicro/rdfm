@@ -95,8 +95,10 @@ func (d *Device) telemetryLoop(cancelCtx context.Context) {
 		d.rdfmCtx.RdfmTelemetryConfig,
 	)
 
-	globalTelemetryChannel = logs
-	log.AddHook(&LoggerHook{})
+	err := telemetry.ConfigureLogrusHook(d.rdfmCtx.RdfmConfig.TelemetryLogLevel, logs)
+	if err != nil {
+		log.Warnln("Telemetry: logrus hook configuration:", err.Error())
+	}
 
 	entries := make([]telemetry.LogEntry, 0, d.rdfmCtx.RdfmConfig.TelemetryBatchSize)
 
