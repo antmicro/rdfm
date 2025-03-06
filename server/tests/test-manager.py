@@ -1,11 +1,11 @@
 import signal
 import subprocess
+import sys
 import pytest
 import tempfile
 from typing import List, Tuple
 import time
 import pexpect
-
 
 GROUP_NAME = "dummy_group"
 GROUP_DESCRIPTION = "dummy_group_description"
@@ -88,14 +88,12 @@ def device_shell():
     manager.kill(signal.SIGINT)
 
 
-def drain_stdout(p: pexpect.spawn):
-    """ Drain stdout of the given pexpect spawn process to allow child to terminate
-    """
-    try:
-        while True:
-            _ = p.read_nonblocking(4096, timeout=1.0)
-    except:
-        pass
+@pytest.fixture
+def device_shell_no_teardown():
+    manager = subprocess.Popen(format_manager_args(["--no-api-auth", "devices", "shell", DEVICE_MAC]), stdout=sys.stderr, stderr=sys.stderr, stdin=subprocess.PIPE)
+    time.sleep(5.0)
+
+    return manager
 
 
 def test_list_devices(process, install_manager_to_venv):
@@ -233,21 +231,21 @@ def test_shell_to_device_command(start_shell_mock, device_shell: pexpect.spawn):
         pytest.fail("running a simple echo command should work")
 
 
-def test_shell_to_device_sigint(start_shell_mock, device_shell: pexpect.spawn):
+def test_shell_to_device_sigint(start_shell_mock, device_shell_no_teardown: subprocess.Popen):
     """ Tests if Ctrl-C causes the shell to exit cleanly
     """
-    device_shell.kill(signal.SIGINT)
-    drain_stdout(device_shell)
+    device_shell_no_teardown.send_signal(signal.SIGINT)
 
-    assert not device_shell.isalive(), "rdfm-mgmt should have terminated after Ctrl-C"
-    assert device_shell.wait() == 0, "Ctrl-C should be a clean exit"
+    time.sleep(1.0)
+    assert device_shell_no_teardown.poll() is not None, "rdfm-mgmt should have terminated after Ctrl-C"
+    assert device_shell_no_teardown.wait() == 0, "Ctrl-C should be a clean exit"
 
 
-def test_shell_to_device_eof_stdin(start_shell_mock, device_shell: pexpect.spawn):
+def test_shell_to_device_eof_stdin(start_shell_mock, device_shell_no_teardown: subprocess.Popen):
     """ Tests if Ctrl-d causes the shell to exit cleanly
     """
-    device_shell.sendeof()
-    drain_stdout(device_shell)
+    device_shell_no_teardown.communicate(input=0x04.to_bytes(1), timeout=1.0) # Sends End-of-Transmission character
 
-    assert not device_shell.isalive(), "rdfm-mgmt should have terminated after Ctrl-D"
-    assert device_shell.wait() == 0, "Ctrl-D should be a clean exit"
+    assert device_shell_no_teardown.poll() is not None, "rdfm-mgmt should have terminated after Ctrl-D"
+    assert device_shell_no_teardown.wait() == 0, "Ctrl-D should be a clean exit"
+
