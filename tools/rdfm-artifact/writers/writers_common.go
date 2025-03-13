@@ -142,7 +142,7 @@ func readArtifactPayloadProvides(artifact string) (map[string]string, error) {
 
 // Writes the artifact and saves it to the specified file
 func (d *ArtifactWriter) Write() error {
-	f, err := os.OpenFile(d.outputPath, os.O_CREATE|os.O_WRONLY, 0664)
+	f, err := os.OpenFile(d.outputPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0664)
 	if err != nil {
 		return err
 	}
