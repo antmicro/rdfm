@@ -203,6 +203,12 @@ build-rdfm-client:
     - cd devices/linux-client
     - make
 
+build-rdfm-logging-tool:
+  stage: build
+  script:
+    - cd tools/loggers
+    - make
+
 test-rdfm-client:
   stage: local-tests
   <<: *common_only
