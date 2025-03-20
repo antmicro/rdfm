@@ -75,8 +75,8 @@ Refer to the [Management Server chapter](https://antmicro.github.io/rdfm/rdfm_mg
 
 We provide two README files containing sample tutorials for running an RDFM Linux client to update the SiFive HiFive Unmatched board:
 
-* [Updating the HiFive Unmatched in a physical setup](https://github.com/antmicro/meta-antmicro/blob/master/system-releases/rdfm-unmatched-demo/README.md)
-* [Updating the HiFive Unmatched simulated in Renode](https://github.com/antmicro/meta-antmicro/tree/master/system-releases/rdfm-unmatched-demo/renode)
+* [Updating the HiFive Unmatched in a physical setup](https://github.com/antmicro/meta-antmicro/blob/master/demos/rdfm-unmatched-demo/README.md)
+* [Updating the HiFive Unmatched simulated in Renode](https://github.com/antmicro/meta-antmicro/tree/master/demos/rdfm-unmatched-demo/renode)
 
 For detailed information regarding client setup, refer to the following chapters in the [RDFM documentation](https://antmicro.github.io/rdfm):
 
