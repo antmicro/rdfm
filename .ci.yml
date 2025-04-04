@@ -331,7 +331,9 @@ build-rdfm-artifact:
   stage: build
   extends: .install-xdelta
   script:
-    - export PATH=$HOME/go/bin/:$PATH
+    # Currently CI ships Go 1.19, while the rdfm-artifact needs 1.20+
+    - wget --quiet -O - "https://go.dev/dl/go1.22.3.linux-amd64.tar.gz" | tar xz
+    - export PATH=`pwd`/go/bin:$PATH
     - cd tools/rdfm-artifact
     - make
   artifacts:
@@ -343,7 +345,9 @@ test-rdfm-artifact:
   stage: local-tests
   extends: .install-xdelta
   script:
-    - export PATH=$HOME/go/bin/:$PATH
+    # Currently CI ships Go 1.19, while the rdfm-artifact needs 1.20+
+    - wget --quiet -O - "https://go.dev/dl/go1.22.3.linux-amd64.tar.gz" | tar xz
+    - export PATH=`pwd`/go/bin:$PATH
     - cd tools/rdfm-artifact
     - make test
 

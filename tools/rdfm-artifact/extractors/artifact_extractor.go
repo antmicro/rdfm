@@ -1,7 +1,7 @@
 package extractors
 
 import (
-	"fmt"
+	"errors"
 	"io"
 	"os"
 
@@ -67,10 +67,5 @@ func (e *ArtifactRootfsReader) Extract() error {
 func (e *ArtifactRootfsReader) Close() error {
 	errArtifact := e.artifact.Close()
 	errPipe := e.storer.FileContentReader.Close()
-	if errArtifact != nil && errPipe != nil {
-		return fmt.Errorf("closing artifact: %w; closing pipe: %w", errArtifact, errPipe)
-	} else if errArtifact != nil {
-		return errArtifact
-	}
-	return errPipe
+	return errors.Join(errArtifact, errPipe)
 }

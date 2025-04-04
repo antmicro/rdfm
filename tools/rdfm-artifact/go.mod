@@ -1,6 +1,6 @@
 module github.com/antmicro/rdfm/tools/rdfm-artifact
 
-go 1.17
+go 1.20
 
 require (
 	github.com/mendersoftware/mender-artifact v0.0.0-20230207074115-080582777c68
