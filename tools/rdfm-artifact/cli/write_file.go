@@ -158,7 +158,5 @@ func writeSingleFile(c *cli.Context) error {
 	writer.WithPayloadClearsProvides(payloadClearsProvides)
 
 	log.Info("Writing single file artifact...")
-	writer.Write()
-
-	return nil
+	return writer.Write()
 }

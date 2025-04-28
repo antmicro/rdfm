@@ -55,7 +55,10 @@ func writeFullRootfs(c *cli.Context) error {
 	writer.WithPayloadProvides(payloadProvides)
 	writer.WithPayloadDepends(payloadDepends)
 	writer.WithPayloadClearsProvides(payloadClearsProvides)
-	writer.WithFullRootfsPayload(inputRootfsImage)
+	err = writer.WithFullRootfsPayload(inputRootfsImage)
+	if err != nil {
+		return err
+	}
 
 	log.Println("Writing full rootfs artifact...")
 	return writer.Write()
