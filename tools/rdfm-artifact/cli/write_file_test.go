@@ -35,6 +35,23 @@ func TestWriteSingleFileConflictingName(t *testing.T) {
 	}
 }
 
+func TestWriteSingleFileNonexistentSourceFile(t *testing.T) {
+	app := NewApp()
+
+	filename := "somefilethatdoesnotexist"
+	err := app.Run([]string{
+		"rdfm-artifact",
+		"write",
+		"single-file",
+		"--artifact-name", "dummy_name",
+		"--device-type", "dummy_type",
+		"--file", filename,
+		"--dest-dir", "/dummy/dir",
+	})
+
+	assert.ErrorContains(t, err, fmt.Sprintf("can not open data file: %v", filename))
+}
+
 // Test writing a single file artifact, along with its metadata
 func TestWriteSingleFileArtifact(t *testing.T) {
 	defer os.Remove(testFileArtifactPath)

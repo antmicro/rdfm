@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -13,6 +14,22 @@ const (
 	testRootfsPayload      = "../tests/data/dummy-rootfs.img"
 	testRootfsArtifactPath = "../tests/data/full-rootfs-test.rdfm"
 )
+
+func TestWriteFullRootfsArtifactNonexistentSourceFile(t *testing.T) {
+	app := NewApp()
+
+	filename := "somefilethatdoesnotexist"
+	err := app.Run([]string{
+		"rdfm-artifact",
+		"write",
+		"rootfs-image",
+		"--artifact-name", "dummy_name",
+		"--device-type", "dummy_type",
+		"--file", filename,
+	})
+
+	assert.ErrorContains(t, err, fmt.Sprintf("open %v: no such file or directory", filename))
+}
 
 // Test writing a full rootfs artifact, along with its metadata
 func TestWriteFullRootfsArtifact(t *testing.T) {
