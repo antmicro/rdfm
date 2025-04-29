@@ -138,7 +138,7 @@ func (d *Device) marshalSendRetry(req requests.Request, cancelCtx context.Contex
 		case <-time.After(expBackoff.Retry()):
 		case <-cancelCtx.Done():
 			log.Warnln("Dropping response due to cancel.")
-			return nil
+			return context.Canceled
 		}
 	}
 	return nil
