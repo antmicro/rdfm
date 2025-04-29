@@ -23,6 +23,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/antmicro/rdfm/actions"
 	"github.com/antmicro/rdfm/app"
 	"github.com/antmicro/rdfm/conf"
 	"github.com/antmicro/rdfm/daemon/capabilities"
@@ -49,7 +50,7 @@ type Device struct {
 	httpTransport       *http.Transport
 	logManager          *telemetry.LogManager
 	conn                *DeviceConnection
-	actionRunner        *ActionRunner
+	actionRunner        *actions.ActionRunner
 }
 
 func (d *Device) handleRequest(msg []byte) (requests.Request, error) {
@@ -216,8 +217,29 @@ func (d *Device) setupConnection() error {
 	return nil
 }
 
-func (d *Device) setupActionRunner() {
-	d.actionRunner = NewActionRunner(d.rdfmCtx, 32)
+func (d *Device) setupActionRunner() error {
+	actionRunner, err := actions.NewActionRunner(d.rdfmCtx, 32, d.actionResultCallback, conf.RdfmActionDataPath)
+	if err != nil {
+		return err
+	}
+	d.actionRunner = actionRunner
+	return nil
+}
+
+func (d *Device) actionResultCallback(result actions.ActionResult, cancelCtx context.Context) bool {
+	res := requests.ActionExecResult{
+		Method:      "action_exec_result",
+		ExecutionId: result.ExecId,
+		StatusCode:  result.StatusCode,
+		Output:      *result.Output,
+	}
+
+	err := d.marshalSendRetry(res, cancelCtx)
+	if err != nil {
+		log.Warnln("Sending action result failed:", err)
+		return false
+	}
+	return true
 }
 
 func (d *Device) maintainDeviceConnection(greeter func() error, cancelCtx context.Context) {
@@ -283,42 +305,6 @@ func (d *Device) communicationLoop(cancelCtx context.Context) error {
 	}
 }
 
-func (d *Device) resultSendLoop(cancelCtx context.Context) error {
-	quitCh := make(chan bool, 1)
-	defer close(quitCh)
-
-	go func() {
-		select {
-		case <-cancelCtx.Done():
-		case <-quitCh:
-		}
-	}()
-
-	for {
-		select {
-		case <-cancelCtx.Done():
-			return nil
-		default:
-		}
-
-		execution_id, status, output := d.actionRunner.Fetch(cancelCtx)
-		if execution_id == nil {
-			return nil
-		}
-
-		res := requests.ActionExecResult{
-			Method:      "action_exec_result",
-			ExecutionId: *execution_id,
-			StatusCode:  status,
-			Output:      *output,
-		}
-
-		if err := d.marshalSendRetry(res, cancelCtx); err != nil {
-			return err
-		}
-	}
-}
-
 func (d *Device) managementWsLoop(cancelCtx context.Context) {
 	var wg sync.WaitGroup
 
@@ -369,17 +355,6 @@ func (d *Device) managementWsLoop(cancelCtx context.Context) {
 		}
 	}()
 
-	wg.Add(1)
-	go func() {
-		defer func() {
-			log.Infoln("Result send loop finished.")
-			wg.Done()
-		}()
-		log.Infoln("Starting result send loop...")
-		if err := d.resultSendLoop(cancelCtx); err != nil {
-			panic(err)
-		}
-	}()
 	wg.Wait()
 }
 
