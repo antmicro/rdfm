@@ -5,6 +5,7 @@ import (
 	b64 "encoding/base64"
 	"os/exec"
 	"path"
+	"strings"
 	"sync"
 	"time"
 
@@ -36,6 +37,7 @@ func (r *ActionRunner) runCommand(req ActionRequest, cancelCtx context.Context) 
 		ctx, cancel = context.WithTimeout(cancelCtx, duration)
 		defer cancel()
 	}
+	log.Debugf("Executing action command: ['%s']", strings.Join(action.Command, "', '"))
 	cmd := exec.CommandContext(ctx, action.Command[0], action.Command[1:]...)
 
 	outputBytes, _ := cmd.CombinedOutput()
