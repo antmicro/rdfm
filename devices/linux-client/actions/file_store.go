@@ -14,15 +14,16 @@ import (
 
 type FileBlob []byte
 
+// File-backed item queue. Items are stored as byte blobs.
 type FileStore struct {
-	rootDir        string
-	itemsByIdx     map[int]FileBlob
-	readIdx        int
-	writeIdx       int
-	itemsLock      sync.Mutex
-	capacity       int
-	availableSlots *semaphore.Weighted
-	availableItems *semaphore.Weighted
+	rootDir        string              // Base directory path to queue data.
+	itemsByIdx     map[int]FileBlob    // In-memory cache of items currently stored on-disk.
+	readIdx        int                 // Current read index.
+	writeIdx       int                 // Current write index.
+	itemsLock      sync.Mutex          // Protects the items map and indexes.
+	capacity       int                 // Max items that can be queued.
+	availableSlots *semaphore.Weighted // Used as wake-up signal for writers.
+	availableItems *semaphore.Weighted // Used as wake-up signal for readers.
 }
 
 var (
