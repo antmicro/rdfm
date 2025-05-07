@@ -125,10 +125,7 @@ func (q *FileStore) removeFile(idx int) error {
 }
 
 func (q *FileStore) Reload() error {
-	q.itemsByIdx = nil
-
 	itemsByIdx := make(map[int]FileBlob)
-
 	files, err := ioutil.ReadDir(q.itemsPath())
 	if err != nil {
 		return err
@@ -168,6 +165,11 @@ func (q *FileStore) Reload() error {
 			maxIdx = idx
 		}
 	}
+
+	// After everything was loaded from the filesystem, we can populate the FileStore.
+	// At this point, no errors can happen so we can update the entire object atomically.
+	q.itemsLock.Lock()
+	defer q.itemsLock.Unlock()
 
 	if minIdx == -1 {
 		q.writeIdx = 0
