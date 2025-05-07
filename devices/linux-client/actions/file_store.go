@@ -32,6 +32,12 @@ var (
 	ErrorStoreCannotQueueNil = errors.New("trying to enqueue nil")
 )
 
+const (
+	DataDirDefaultPerms = 0755
+	// Explicitly forbid queue items from being world-readable.
+	DataFileDefaultPerms = 0600
+)
+
 // Instantiate a FileStore object stored in the directory rootDir with the given
 // maximum capacity.
 func NewFileStore(rootDir string, capacity int) (*FileStore, error) {
@@ -59,12 +65,12 @@ func NewFileStore(rootDir string, capacity int) (*FileStore, error) {
 }
 
 func (q *FileStore) ensureDirs() error {
-	err := os.MkdirAll(q.rootDir, 0700)
+	err := os.MkdirAll(q.rootDir, DataDirDefaultPerms)
 	if err != nil {
 		return err
 	}
 
-	err = os.MkdirAll(q.itemsPath(), 0700)
+	err = os.MkdirAll(q.itemsPath(), DataDirDefaultPerms)
 	if err != nil {
 		return err
 	}
@@ -88,7 +94,7 @@ func (q *FileStore) itemsPath() string {
 func (q *FileStore) writeFile(idx int, item FileBlob) error {
 	itemPath := q.pathFromIdx(idx)
 
-	err := os.WriteFile(itemPath, item, 0600)
+	err := os.WriteFile(itemPath, item, DataFileDefaultPerms)
 	if err != nil {
 		return err
 	}
