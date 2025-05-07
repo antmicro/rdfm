@@ -11,6 +11,25 @@ This allows for performing robust Over-The-Air (OTA) updates of the running syst
 
 In order to support robust updates and rollback, the RDFM Client requires proper partition layout and integration with the U-Boot bootloader. To make it easy to integrate the RDFM Client into your Yocto image-building project, it's recommended to use the [meta-rdfm](https://github.com/antmicro/meta-antmicro/tree/master/meta-rdfm) Yocto layer when building the BSPs.
 
+## Management functionality
+
+Other than the always-available OTA component, `rdfm-client` implements some additional remote management functionality.
+
+### Actions
+
+Actions allow execution of predefined sets of commands remotely via the RDFM server.
+These commands are defined in an `actions.conf` JSON configuration file found in the daemon's configuration directory.
+For the configuration schema, see the [RDFM actions config](#rdfm-actions-config) section.
+
+The action list is synchronized with the server, and is available for querying via the [Action List API](api.rst#get--api-v2-devices-\(string-mac_address\)-action-list) endpoint.
+Actions can be executed using the [Action Execute API](api.rst#get--api-v2-devices-(string-mac_address)-action-exec-(string-action_id)) endpoint.
+
+All action execution requests are stored in a persistent queue on a disk and fulfilled in a First-In, First-Out order.
+By default, there can be a maximum of **32 action requests** in the queue, and any further action execution requests are rejected by the client.
+This limit is currently hardcoded and not configurable via `rdfm.conf`.
+An identical queue is also present for action responses, and action status is reported to the server as soon as it is possible to do so.
+This allows actions to remain usable, even when the device faces connectivity or power loss issues.
+
 ## Installing from source
 
 ### Requirements
