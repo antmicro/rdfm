@@ -5,10 +5,12 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"sync"
 
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -136,6 +138,8 @@ func (q *FileStore) Reload() error {
 		var item FileBlob
 		idx, err := q.idxFromPath(file.Name())
 		if err != nil {
+			log.Warnln("Unparsable file found in FileStore directory:", path.Join(q.rootDir, file.Name()))
+			log.Warnln("FileStore may be pointing to a directory containing files not created by it, this is not allowed.")
 			continue
 		}
 
