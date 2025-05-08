@@ -9,6 +9,9 @@ from wsproto.frame_protocol import CloseReason
 from rdfm.api import wrap_api_error
 import urllib
 import rdfm.ws
+import tty
+import termios
+import os
 
 
 def shell_ws_url(server_url: str, device: str) -> str:
@@ -99,6 +102,7 @@ class ReverseShell:
         self.writer_thread = threading.Thread(
             target=self.__writer_thread, daemon=True
         )
+        self.termattrs = None
 
     def __reader_thread(self):
         """WebSocket reader thread
@@ -117,25 +121,42 @@ class ReverseShell:
         ):
             self.closed.set()
 
+    def __prepare_tty(self):
+        """Put the terminal into raw mode and preserve previous terminal
+           attributes.
+        """
+        fd = sys.stdin.fileno()
+        if os.isatty(fd):
+            self.termattrs = termios.tcgetattr(fd)
+            tty.setraw(fd)
+
+    def __restore_tty(self):
+        """Restore the previous state of the terminal after shell was
+           finished.
+        """
+        fd = sys.stdin.fileno()
+        if os.isatty(fd):
+            termios.tcsetattr(fd, termios.TCSADRAIN, self.termattrs)
+
     def __writer_thread(self):
         """STDIN reader thread
 
         This reads user input from STDIN and sends it to the shell WS
         """
+        fd = sys.stdin.fileno()
         try:
-            # Avoid blocking on readline(). Otherwise, when the connection is
+            # Avoid blocking on read(). Otherwise, when the connection is
             # already closed, the writer thread will be blocked in a kernel
             # call to read(). By avoiding the read call until we know data is
             # there, we can avoid an annoying input prompt when rdfm-mgmt is
             # closing.
-            # FIXME: select does not allow for monitoring file fd's on Windows
             while True:
-                r, _, _ = select.select([sys.stdin.fileno()], [], [], 1.0)
+                r, _, _ = select.select([fd], [], [], 1.0)
                 if len(r) > 0:
-                    data = sys.stdin.readline()
+                    data = os.read(fd, 4096)
                     if len(data) == 0:
                         break
-                    self.ws.send(data.encode())
+                    self.ws.send(data)
                 if self.closed.is_set():
                     break
         finally:
@@ -148,6 +169,7 @@ class ReverseShell:
         (either by the server/device disconnecting, or user interrupting with
          Ctrl-C/Ctrl-D).
         """
+        self.__prepare_tty()
         self.reader_thread.start()
         self.writer_thread.start()
 
@@ -155,6 +177,7 @@ class ReverseShell:
             self.closed.wait()
         except (KeyboardInterrupt, EOFError):
             pass
+        self.__restore_tty()
 
         if self.ws.connected:
             # Normal exit (Ctrl-C / EOF on STDIN)
