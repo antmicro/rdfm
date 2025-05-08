@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/url"
 	"sync"
@@ -19,14 +20,15 @@ const (
 )
 
 type DeviceConnection struct {
-	ws        *websocket.Conn
-	rx        chan []byte
-	txMut     sync.Mutex
-	wsMut     sync.RWMutex
-	serverUrl string
-	dialer    websocket.Dialer
-	stateCnd  *sync.Cond
-	state     deviceConnectionState
+	ws           *websocket.Conn
+	rx           chan []byte
+	txMut        sync.Mutex
+	wsMut        sync.RWMutex
+	serverUrl    string
+	dialer       websocket.Dialer
+	stateCnd     *sync.Cond
+	state        deviceConnectionState
+	capabilities map[string]bool
 }
 
 type ConnClosedError struct {
@@ -82,7 +84,22 @@ func (d *DeviceConnection) setState(state deviceConnectionState) {
 	d.stateCnd.L.Unlock()
 }
 
-func (d *DeviceConnection) CreateConnection(deviceToken string, greeter func() error, cancelCtx context.Context) error {
+func (d *DeviceConnection) announceCapabilities() error {
+	res := map[string]interface{}{
+		"method":       "capability_report",
+		"capabilities": d.capabilities,
+	} 
+
+	msg, err := json.Marshal(res)
+	if err != nil {
+		return err
+	}
+
+	d.Send(msg)
+	return nil
+}
+
+func (d *DeviceConnection) CreateConnection(deviceToken string, cancelCtx context.Context) error {
 	var wg sync.WaitGroup
 
 	defer func() {
@@ -122,7 +139,7 @@ func (d *DeviceConnection) CreateConnection(deviceToken string, greeter func() e
 		var err error
 		defer wg.Done()
 		log.Infoln("Starting greeter...")
-		err = greeter()
+		err = d.announceCapabilities()
 		if err != nil {
 			log.Errorln("Closing connection. Greeter error:", err)
 			d.tryClose()
@@ -146,6 +163,7 @@ func NewDeviceConnection(serverUrl string, dialer websocket.Dialer, buffer_size 
 	dc.dialer = dialer
 	dc.state = stateDisconnected
 	dc.stateCnd = sync.NewCond(&sync.Mutex{})
+	dc.capabilities = make(map[string]bool)
 	return dc
 }
 
@@ -216,4 +234,8 @@ func (d *DeviceConnection) prepareWs(deviceToken string) error {
 	ws, _, err := d.dialer.Dial(u.String(), authHeader)
 	d.ws = ws
 	return err
+}
+
+func (d *DeviceConnection) SetCapability(cap string, value bool) {
+	d.capabilities[cap] = value
 }

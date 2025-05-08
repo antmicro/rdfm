@@ -91,11 +91,6 @@ func makeCommands() []*libcli.Command {
 					Usage: "File containing device metadata",
 					Value: "tests/testdata.json",
 				},
-				&libcli.StringFlag{
-					Name:  "config",
-					Usage: "Capabilities config file",
-					Value: "capabilities.toml",
-				},
 			},
 		},
 	}

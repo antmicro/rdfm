@@ -26,7 +26,6 @@ import (
 	"github.com/antmicro/rdfm/actions"
 	"github.com/antmicro/rdfm/app"
 	"github.com/antmicro/rdfm/conf"
-	"github.com/antmicro/rdfm/daemon/capabilities"
 	"github.com/antmicro/rdfm/telemetry"
 	"github.com/gorilla/websocket"
 
@@ -41,7 +40,6 @@ type Device struct {
 	name                string
 	fileMetadata        string
 	metadata            map[string]interface{}
-	caps                capabilities.DeviceCapabilities
 	macAddr             string
 	rdfmCtx             *app.RDFM
 	deviceToken         string
@@ -214,6 +212,11 @@ func (d *Device) setupConnection() error {
 	d.httpTransport = d.prepareHttpTransport(tlsConf)
 	wsDialer := d.prepareWsDialer(tlsConf)
 	d.conn = NewDeviceConnection(serverUrl, *wsDialer, 1024)
+	// TODO: Hardcode capabilities right now. This should be read from the
+	// config file instead, but we don't have any configuration options that
+	// determine whether action/shell should be enabled or not.
+	d.conn.SetCapability("action", true)
+	d.conn.SetCapability("shell", false)
 	return nil
 }
 
@@ -242,7 +245,7 @@ func (d *Device) actionResultCallback(result actions.ActionResult, cancelCtx con
 	return true
 }
 
-func (d *Device) maintainDeviceConnection(greeter func() error, cancelCtx context.Context) {
+func (d *Device) maintainDeviceConnection(cancelCtx context.Context) {
 	expBackoff := netUtils.NewExpBackoff(200*time.Millisecond, 5*time.Second, 2)
 	expBackoffResetThreshold := 10 * time.Second
 	for {
@@ -259,7 +262,7 @@ func (d *Device) maintainDeviceConnection(greeter func() error, cancelCtx contex
 		}
 
 		startTime := time.Now()
-		err = d.conn.CreateConnection(deviceToken, greeter, cancelCtx)
+		err = d.conn.CreateConnection(deviceToken, cancelCtx)
 		if err != nil {
 			log.Warnln("Restarting device connection due to:", err)
 		}
@@ -308,21 +311,6 @@ func (d *Device) communicationLoop(cancelCtx context.Context) error {
 func (d *Device) managementWsLoop(cancelCtx context.Context) {
 	var wg sync.WaitGroup
 
-	greeter := func() error {
-		res := requests.CapabilityReport{
-			Method:       "capability_report",
-			Capabilities: d.caps,
-		}
-
-		msg, err := json.Marshal(res)
-		if err != nil {
-			return err
-		}
-
-		d.conn.Send(msg)
-		return nil
-	}
-
 	wg.Add(1)
 	go func() {
 		defer func() {
@@ -330,7 +318,7 @@ func (d *Device) managementWsLoop(cancelCtx context.Context) {
 			wg.Done()
 		}()
 		log.Infoln("Starting device connection...")
-		d.maintainDeviceConnection(greeter, cancelCtx)
+		d.maintainDeviceConnection(cancelCtx)
 	}()
 
 	wg.Add(1)

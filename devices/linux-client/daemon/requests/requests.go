@@ -3,8 +3,6 @@ package requests
 import (
 	"encoding/json"
 
-	"github.com/antmicro/rdfm/daemon/capabilities"
-
 	"github.com/thedevsaddam/gojsonq"
 )
 
@@ -29,8 +27,8 @@ func (r Alert) method() string {
 }
 
 type CapabilityReport struct {
-	Method       string                          `json:"method"`
-	Capabilities capabilities.DeviceCapabilities `json:"capabilities"`
+	Method       string          `json:"method"`
+	Capabilities map[string]bool `json:"capabilities"`
 }
 
 func (r CapabilityReport) method() string {

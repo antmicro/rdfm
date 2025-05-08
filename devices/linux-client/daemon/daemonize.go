@@ -11,7 +11,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/antmicro/rdfm/app"
-	"github.com/antmicro/rdfm/daemon/capabilities"
 	"github.com/antmicro/rdfm/telemetry"
 	libcli "github.com/urfave/cli/v2"
 )
@@ -19,7 +18,6 @@ import (
 func Daemonize(c *libcli.Context) error {
 	name := c.String("name")
 	fileMetadata := c.String("file-metadata")
-	config := c.String("config")
 
 	ctx, err := app.NewRdfmContext()
 	if err != nil {
@@ -27,17 +25,10 @@ func Daemonize(c *libcli.Context) error {
 		return err
 	}
 
-	caps, err := capabilities.LoadCapabilities(config)
-	if err != nil {
-		log.Fatal("Failed to load config:", err)
-		return err
-	}
-
 	device := Device{
 		name:         name,
 		fileMetadata: fileMetadata,
 		metadata:     nil,
-		caps:         caps,
 		rdfmCtx:      ctx,
 		logManager:   telemetry.MakeLogManager(),
 	}
