@@ -120,7 +120,9 @@ func Parse(r string) (Request, error) {
 		err = json.Unmarshal([]byte(r), &parsed)
 		return parsed, err
 	case "shell_attach":
-		// TODO: reverse shell support
+		var parsed DeviceAttachToManager
+		err = json.Unmarshal([]byte(r), &parsed)
+		return parsed, err
 	case "action_exec":
 		var parsed ActionExec
 		err = json.Unmarshal([]byte(r), &parsed)

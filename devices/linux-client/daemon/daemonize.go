@@ -43,6 +43,11 @@ func Daemonize(c *libcli.Context) error {
 		log.Errorln("Failed to setup action runner:", err)
 		return err
 	}
+	err = device.setupShellRunner()
+	if err != nil {
+		log.Errorln("Failed to setup shell runner:", err)
+		return err
+	}
 
 	channel := make(chan os.Signal)
 	signal.Notify(channel, syscall.SIGINT, syscall.SIGTERM)

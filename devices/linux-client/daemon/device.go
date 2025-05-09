@@ -27,6 +27,7 @@ import (
 	"github.com/antmicro/rdfm/app"
 	"github.com/antmicro/rdfm/conf"
 	"github.com/antmicro/rdfm/serverws"
+	"github.com/antmicro/rdfm/shell"
 	"github.com/antmicro/rdfm/telemetry"
 
 	netUtils "github.com/antmicro/rdfm/daemon/net_utils"
@@ -48,6 +49,7 @@ type Device struct {
 	logManager          *telemetry.LogManager
 	conn                *serverws.DeviceManagementConnection
 	actionRunner        *actions.ActionRunner
+	shellRunner         *shell.ShellRunner
 }
 
 func (d *Device) handleRequest(msg []byte) (serverws.Request, error) {
@@ -107,8 +109,40 @@ func (d *Device) handleRequest(msg []byte) (serverws.Request, error) {
 			Actions: reqActions,
 		}
 		return response, nil
-	//case serverws.DeviceAttachToManager:
-	// TODO: Handle shell_attach
+	case serverws.DeviceAttachToManager:
+		tlsConf, err := d.getTlsConf()
+		if err != nil {
+			log.Warnln("Failed to get TLS configuration:", err)
+			return nil, nil
+		}
+
+		go func() {
+			token, err := d.getDeviceToken()
+			if err != nil {
+				log.Warnln("Failed to acquire device token:", err)
+				return
+			}
+
+			session, err := d.shellRunner.Spawn(r.Uuid)
+			if err != nil {
+				log.Warnln("Failed to spawn shell session:", err)
+				return
+			}
+			defer d.shellRunner.Terminate(session.Uuid())
+
+			conn := serverws.NewShellConnection(d.rdfmCtx.RdfmConfig.ServerURL, tlsConf)
+			err = conn.Connect(token, r.MacAddr, r.Uuid)
+			if err != nil {
+				log.Warnln("Failed to connect to shell WebSocket:", err)
+				return
+			}
+			defer conn.Close()
+
+			err = session.Run(conn)
+			log.Debugf("Shell session %s exited with err: %s", session.Uuid(), err)
+		}()
+
+		return nil, nil
 	default:
 		log.Warnf("Request '%s' is unsupported", requestName)
 		response := serverws.CantHandleRequest()
@@ -206,7 +240,7 @@ func (d *Device) setupConnection() error {
 	// config file instead, but we don't have any configuration options that
 	// determine whether action/shell should be enabled or not.
 	d.conn.SetCapability("action", true)
-	d.conn.SetCapability("shell", false)
+	d.conn.SetCapability("shell", true)
 	return nil
 }
 
@@ -216,6 +250,15 @@ func (d *Device) setupActionRunner() error {
 		return err
 	}
 	d.actionRunner = actionRunner
+	return nil
+}
+
+func (d *Device) setupShellRunner() error {
+	sr, err := shell.NewShellRunner(1)
+	if err != nil {
+		return err
+	}
+	d.shellRunner = sr
 	return nil
 }
 
