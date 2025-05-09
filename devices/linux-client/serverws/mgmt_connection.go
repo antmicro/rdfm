@@ -1,13 +1,11 @@
-package daemon
+package serverws
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
-	"net/http"
-	"net/url"
 	"sync"
 
-	netUtils "github.com/antmicro/rdfm/daemon/net_utils"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 )
@@ -19,7 +17,7 @@ const (
 	stateConnected
 )
 
-type DeviceConnection struct {
+type DeviceManagementConnection struct {
 	ws           *websocket.Conn
 	rx           chan []byte
 	txMut        sync.Mutex
@@ -39,7 +37,7 @@ func (e *ConnClosedError) Error() string {
 	return e.message
 }
 
-func (d *DeviceConnection) startRecvLoop(cancelCtx context.Context) error {
+func (d *DeviceManagementConnection) startRecvLoop(cancelCtx context.Context) error {
 	for {
 		d.wsMut.RLock()
 		if d.ws == nil {
@@ -58,7 +56,7 @@ func (d *DeviceConnection) startRecvLoop(cancelCtx context.Context) error {
 	}
 }
 
-func (d *DeviceConnection) Close() error {
+func (d *DeviceManagementConnection) Close() error {
 	d.stateCnd.L.Lock()
 	defer d.stateCnd.L.Unlock()
 	err := d.tryClose()
@@ -68,7 +66,7 @@ func (d *DeviceConnection) Close() error {
 	return err
 }
 
-func (d *DeviceConnection) tryClose() error {
+func (d *DeviceManagementConnection) tryClose() error {
 	d.wsMut.RLock()
 	defer d.wsMut.RUnlock()
 	if d.ws != nil {
@@ -77,18 +75,18 @@ func (d *DeviceConnection) tryClose() error {
 	return nil
 }
 
-func (d *DeviceConnection) setState(state deviceConnectionState) {
+func (d *DeviceManagementConnection) setState(state deviceConnectionState) {
 	d.stateCnd.L.Lock()
 	d.state = state
 	d.stateCnd.Broadcast()
 	d.stateCnd.L.Unlock()
 }
 
-func (d *DeviceConnection) announceCapabilities() error {
+func (d *DeviceManagementConnection) announceCapabilities() error {
 	res := map[string]interface{}{
 		"method":       "capability_report",
 		"capabilities": d.capabilities,
-	} 
+	}
 
 	msg, err := json.Marshal(res)
 	if err != nil {
@@ -99,7 +97,7 @@ func (d *DeviceConnection) announceCapabilities() error {
 	return nil
 }
 
-func (d *DeviceConnection) CreateConnection(deviceToken string, cancelCtx context.Context) error {
+func (d *DeviceManagementConnection) CreateConnection(deviceToken string, cancelCtx context.Context) error {
 	var wg sync.WaitGroup
 
 	defer func() {
@@ -107,7 +105,11 @@ func (d *DeviceConnection) CreateConnection(deviceToken string, cancelCtx contex
 		d.setState(stateDisconnected)
 	}()
 
-	err := d.prepareWs(deviceToken)
+	endpoint, err := formatDeviceWsUrl(d.serverUrl)
+	if err != nil {
+		return err
+	}
+	d.ws, err = ConnectToRdfmWs(d.dialer, endpoint, deviceToken)
 	if err != nil {
 		return err
 	}
@@ -156,18 +158,18 @@ func (d *DeviceConnection) CreateConnection(deviceToken string, cancelCtx contex
 	return err
 }
 
-func NewDeviceConnection(serverUrl string, dialer websocket.Dialer, buffer_size int) *DeviceConnection {
-	dc := new(DeviceConnection)
+func NewDeviceConnection(serverUrl string, tlsConf *tls.Config, buffer_size int) *DeviceManagementConnection {
+	dc := new(DeviceManagementConnection)
 	dc.rx = make(chan []byte, buffer_size)
 	dc.serverUrl = serverUrl
-	dc.dialer = dialer
+	dc.dialer = *prepareWsDialer(tlsConf)
 	dc.state = stateDisconnected
 	dc.stateCnd = sync.NewCond(&sync.Mutex{})
 	dc.capabilities = make(map[string]bool)
 	return dc
 }
 
-func (d *DeviceConnection) Recv(cancelCtx context.Context) []byte {
+func (d *DeviceManagementConnection) Recv(cancelCtx context.Context) []byte {
 	select {
 	case msg, ok := <-d.rx:
 		if ok {
@@ -178,7 +180,7 @@ func (d *DeviceConnection) Recv(cancelCtx context.Context) []byte {
 	return nil
 }
 
-func (d *DeviceConnection) Send(msg []byte) error {
+func (d *DeviceManagementConnection) Send(msg []byte) error {
 	d.txMut.Lock()
 	d.wsMut.RLock()
 	defer d.txMut.Unlock()
@@ -195,7 +197,7 @@ func (d *DeviceConnection) Send(msg []byte) error {
 	return nil
 }
 
-func (d *DeviceConnection) EnsureReady() {
+func (d *DeviceManagementConnection) EnsureReady() {
 	d.stateCnd.L.Lock()
 	defer d.stateCnd.L.Unlock()
 	for d.state != stateConnected {
@@ -203,39 +205,6 @@ func (d *DeviceConnection) EnsureReady() {
 	}
 }
 
-func (d *DeviceConnection) prepareWs(deviceToken string) error {
-	d.wsMut.Lock()
-	defer d.wsMut.Unlock()
-
-	// Get the endpoint URL
-	addr, err := netUtils.HostWithOrWithoutPort(d.serverUrl, true)
-	if err != nil {
-		return err
-	}
-
-	scheme := "ws"
-	if d.dialer.TLSClientConfig != nil {
-		scheme = "wss"
-	}
-
-	u := url.URL{
-		Scheme: scheme,
-		Host:   addr,
-		Path:   "/api/v1/devices/ws",
-	}
-
-	// Connect to the endpoint
-	log.Infoln("Connecting to", u.String())
-
-	authHeader := http.Header{
-		"Authorization": []string{"Bearer token=" + deviceToken},
-	}
-
-	ws, _, err := d.dialer.Dial(u.String(), authHeader)
-	d.ws = ws
-	return err
-}
-
-func (d *DeviceConnection) SetCapability(cap string, value bool) {
+func (d *DeviceManagementConnection) SetCapability(cap string, value bool) {
 	d.capabilities[cap] = value
 }

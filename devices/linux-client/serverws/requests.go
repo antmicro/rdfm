@@ -1,4 +1,4 @@
-package requests
+package serverws
 
 import (
 	"encoding/json"

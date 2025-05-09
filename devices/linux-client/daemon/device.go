@@ -26,11 +26,10 @@ import (
 	"github.com/antmicro/rdfm/actions"
 	"github.com/antmicro/rdfm/app"
 	"github.com/antmicro/rdfm/conf"
+	"github.com/antmicro/rdfm/serverws"
 	"github.com/antmicro/rdfm/telemetry"
-	"github.com/gorilla/websocket"
 
 	netUtils "github.com/antmicro/rdfm/daemon/net_utils"
-	requests "github.com/antmicro/rdfm/daemon/requests"
 )
 
 const RSA_DEVICE_KEY_SIZE = 4096
@@ -47,11 +46,11 @@ type Device struct {
 	tokenMutex          sync.Mutex
 	httpTransport       *http.Transport
 	logManager          *telemetry.LogManager
-	conn                *DeviceConnection
+	conn                *serverws.DeviceManagementConnection
 	actionRunner        *actions.ActionRunner
 }
 
-func (d *Device) handleRequest(msg []byte) (requests.Request, error) {
+func (d *Device) handleRequest(msg []byte) (serverws.Request, error) {
 	var msgMap map[string]interface{}
 
 	err := json.Unmarshal(msg, &msgMap)
@@ -63,18 +62,18 @@ func (d *Device) handleRequest(msg []byte) (requests.Request, error) {
 
 	log.Infof("Handling '%s' request...", requestName)
 
-	request, err := requests.Parse(string(msg[:]))
+	request, err := serverws.Parse(string(msg[:]))
 	if err != nil {
 		return nil, err
 	}
 
 	switch r := request.(type) {
-	case requests.Alert:
+	case serverws.Alert:
 		for key, val := range r.Alert {
 			log.Printf("Server sent %s: %s", key, val)
 		}
-	case requests.ActionExec:
-		response := requests.ActionExecControl{
+	case serverws.ActionExec:
+		response := serverws.ActionExecControl{
 			Method:      "action_exec_control",
 			ExecutionId: r.ExecutionId,
 			Status:      "ok",
@@ -89,11 +88,11 @@ func (d *Device) handleRequest(msg []byte) (requests.Request, error) {
 		}
 
 		return response, nil
-	case requests.ActionListQuery:
+	case serverws.ActionListQuery:
 		actions := d.actionRunner.List()
-		var reqActions []requests.Action
+		var reqActions []serverws.Action
 		for _, action := range actions {
-			reqAction := requests.Action{
+			reqAction := serverws.Action{
 				ActionId:    action.Id,
 				ActionName:  action.Name,
 				Description: action.Description,
@@ -103,22 +102,22 @@ func (d *Device) handleRequest(msg []byte) (requests.Request, error) {
 
 			reqActions = append(reqActions, reqAction)
 		}
-		response := requests.ActionListUpdate{
+		response := serverws.ActionListUpdate{
 			Method:  "action_list_update",
 			Actions: reqActions,
 		}
 		return response, nil
-	//case requests.DeviceAttachToManager:
+	//case serverws.DeviceAttachToManager:
 	// TODO: Handle shell_attach
 	default:
 		log.Warnf("Request '%s' is unsupported", requestName)
-		response := requests.CantHandleRequest()
+		response := serverws.CantHandleRequest()
 		return response, nil
 	}
 	return nil, nil
 }
 
-func (d *Device) marshalSendRetry(req requests.Request, cancelCtx context.Context) error {
+func (d *Device) marshalSendRetry(req serverws.Request, cancelCtx context.Context) error {
 	msg, err := json.Marshal(req)
 	if err != nil {
 		return err
@@ -175,14 +174,6 @@ func (d *Device) prepareHttpTransport(tlsConf *tls.Config) *http.Transport {
 	}
 }
 
-func (d *Device) prepareWsDialer(tlsConf *tls.Config) *websocket.Dialer {
-	if tlsConf != nil {
-		return &websocket.Dialer{TLSClientConfig: tlsConf}
-	} else {
-		return websocket.DefaultDialer
-	}
-}
-
 func (d *Device) setupConnection() error {
 	// Get MAC address
 	mac, err := netUtils.GetMacAddr()
@@ -210,8 +201,7 @@ func (d *Device) setupConnection() error {
 	}
 
 	d.httpTransport = d.prepareHttpTransport(tlsConf)
-	wsDialer := d.prepareWsDialer(tlsConf)
-	d.conn = NewDeviceConnection(serverUrl, *wsDialer, 1024)
+	d.conn = serverws.NewDeviceConnection(serverUrl, tlsConf, 1024)
 	// TODO: Hardcode capabilities right now. This should be read from the
 	// config file instead, but we don't have any configuration options that
 	// determine whether action/shell should be enabled or not.
@@ -230,7 +220,7 @@ func (d *Device) setupActionRunner() error {
 }
 
 func (d *Device) actionResultCallback(result actions.ActionResult, cancelCtx context.Context) bool {
-	res := requests.ActionExecResult{
+	res := serverws.ActionExecResult{
 		Method:      "action_exec_result",
 		ExecutionId: result.ExecId,
 		StatusCode:  result.StatusCode,

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net"
-	"net/url"
 	"regexp"
 	"time"
 
@@ -12,19 +11,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 )
-
-func HostWithOrWithoutPort(addr string, withPort bool) (string, error) {
-	host, err := url.Parse(addr)
-	if err != nil {
-		return "", err
-	}
-	if !withPort {
-		re := regexp.MustCompile(`:\d+`)
-		result := re.Split(host.Host, -1)
-		return result[0], nil
-	}
-	return host.Host, nil
-}
 
 func ShouldEncryptProxy(addr string) (bool, error) {
 	pattern := `http`
