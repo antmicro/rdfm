@@ -2,6 +2,7 @@ package serverws
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -13,11 +14,27 @@ func formatDeviceWsUrl(serverUrl string) (string, error) {
 	return url.JoinPath(serverUrl, "/api/v1/devices/ws")
 }
 
-func prepareWsDialer(tlsConf *tls.Config) *websocket.Dialer {
-	if tlsConf != nil {
-		return &websocket.Dialer{TLSClientConfig: tlsConf}
-	} else {
+func formatShellWsUrl(serverUrl string, macAddr string, shellUuid string) (string, error) {
+	return url.JoinPath(serverUrl,
+		fmt.Sprintf("/api/v1/devices/%s/shell/attach/%s", macAddr, shellUuid))
+}
+
+func prepareWsDialer(serverUrl string, tlsConf *tls.Config) *websocket.Dialer {
+	url, err := url.Parse(serverUrl)
+	if err != nil {
 		return websocket.DefaultDialer
+	}
+	switch url.Scheme {
+	default:
+		fallthrough
+	case "http":
+		{
+			return websocket.DefaultDialer
+		}
+	case "https":
+		{
+			return &websocket.Dialer{TLSClientConfig: tlsConf}
+		}
 	}
 }
 

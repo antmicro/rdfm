@@ -162,7 +162,7 @@ func NewDeviceConnection(serverUrl string, tlsConf *tls.Config, buffer_size int)
 	dc := new(DeviceManagementConnection)
 	dc.rx = make(chan []byte, buffer_size)
 	dc.serverUrl = serverUrl
-	dc.dialer = *prepareWsDialer(tlsConf)
+	dc.dialer = *prepareWsDialer(serverUrl, tlsConf)
 	dc.state = stateDisconnected
 	dc.stateCnd = sync.NewCond(&sync.Mutex{})
 	dc.capabilities = make(map[string]bool)
