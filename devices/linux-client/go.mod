@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/balena-os/librsync-go v0.8.5
+	github.com/creack/pty v1.1.24
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.0
