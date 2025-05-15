@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/balena-os/librsync-go"
+	"github.com/antmicro/rdfm/tools/rdfm-artifact/delta_engine"
 	"github.com/mendersoftware/mender-artifact/artifact"
 	"github.com/mendersoftware/mender-artifact/handlers"
 	"github.com/mendersoftware/mender/installer"
@@ -63,7 +63,7 @@ func (d DeltaRootfsInstaller) openInactiveForWriting(imageSize int64) (*BlockDev
 	return inactiveDevice, nil
 }
 
-func (d DeltaRootfsInstaller) writeDeltaToInactive(delta io.Reader, inferredImageSize int64) error {
+func (d DeltaRootfsInstaller) writeDeltaToInactive(delta io.Reader, inferredImageSize int64, deltaEngine delta_engine.DeltaAlgorithmEngine) error {
 	// Partition the delta is applied on top of
 	activePartition, err := d.openActiveForReading()
 	if err != nil {
@@ -77,9 +77,8 @@ func (d DeltaRootfsInstaller) writeDeltaToInactive(delta io.Reader, inferredImag
 		return err
 	}
 
-	// Apply the patch
-	err = librsync.Patch(activePartition, delta, inactivePartition)
-	if err != nil {
+	// Apply the patch via the deltaEngine
+	if err := deltaEngine.Patch(activePartition, delta, inactivePartition); err != nil {
 		inactivePartition.Close()
 		return err
 	}
@@ -98,15 +97,31 @@ func (d DeltaRootfsInstaller) writeDeltaToInactive(delta io.Reader, inferredImag
 
 func (d DeltaRootfsInstaller) storeUpdateDelta(r io.Reader, info os.FileInfo) error {
 	// Hacky: the file name for delta signature is some-file-name.1048576.delta,
-	// where 1048576 is the original image size.  Artifact installer needs to know
+	// where 1048576 is the original image size. Artifact installer needs to know
 	// the original size for some of its checks.
 	deltaSigParts := strings.Split(info.Name(), ".")
+
+	// Extract the image size from the second-to-last part of the filename
 	imageSize, err := strconv.ParseInt(deltaSigParts[len(deltaSigParts)-2], 10, 64)
 	if err != nil {
 		return errors.Wrapf(err, "Unable to infer original image size from delta file name: %s", info.Name())
 	}
 
-	return d.writeDeltaToInactive(r, imageSize)
+	// Extract the delta algorithm from the last part of the filename
+	deltaAlgo := deltaSigParts[len(deltaSigParts)-1]
+	if deltaAlgo == "delta" {
+		// Legacy format defaults to rsync
+		deltaAlgo = "rsync"
+	}
+
+	// Get the delta algorithm engine
+	deltaEngine, err := delta_engine.ParseDeltaEngine(deltaAlgo)
+	if err != nil {
+		return err
+	}
+	log.Infof("Parsed delta file: size=%d, algorithm=%s", imageSize, deltaEngine.Name())
+	return d.writeDeltaToInactive(r, imageSize, deltaEngine)
+
 }
 
 func (d DeltaRootfsInstaller) Reboot() error {
@@ -122,7 +137,7 @@ func (d DeltaRootfsInstaller) PrepareStoreUpdate() error {
 }
 
 func (d DeltaRootfsInstaller) StoreUpdate(r io.Reader, info os.FileInfo) error {
-	isDelta := strings.HasSuffix(info.Name(), ".delta") || strings.HasSuffix(info.Name(), ".rsync")
+	isDelta := strings.HasSuffix(info.Name(), ".delta") || strings.HasSuffix(info.Name(), ".xdelta") || strings.HasSuffix(info.Name(), ".rsync")
 	if isDelta {
 		fmt.Println("The artifact is a delta update:", info.Name())
 		return d.storeUpdateDelta(r, info)

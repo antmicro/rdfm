@@ -29,5 +29,11 @@ rdfm-artifact write rootfs-image \
 rdfm-artifact write delta-rootfs-image \
 	--base-artifact vloop0.rdfm \
 	--target-artifact vloop1.rdfm \
-	--output-path vloop0_to_vloop1.delta.rdfm
+	--output-path vloop0_to_vloop1.rsync.rdfm \
+	--delta-algorithm rsync
 
+rdfm-artifact write delta-rootfs-image \
+	--base-artifact vloop0.rdfm \
+	--target-artifact vloop1.rdfm \
+	--output-path vloop0_to_vloop1.xdelta.rdfm \
+	--delta-algorithm xdelta

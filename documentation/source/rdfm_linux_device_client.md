@@ -55,6 +55,7 @@ Shell functionality can be disabled entirely via the [ShellEnable](#shellenable-
 * C compiler
 * Go compiler
 * liblzma-dev, libssl-dev and libglib2.0-dev packages
+* [go-xdelta](https://github.com/antmicro/go-xdelta) library
 
 ### Steps
 
@@ -68,6 +69,8 @@ Then run the install command:
 ```
 make install
 ```
+
+Ensure the go-xdelta library is installed beforehand. You can install it by following the instructions in the go-xdelta repository. Use the CMake options `-DCGO_INTEGRATION=ON -DENCODER=ON` during the build process.
 
 ### Installation notes
 

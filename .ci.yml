@@ -196,10 +196,10 @@ test-server-logs:
 
 build-rdfm-client:
   stage: build
-  before_script:
+  extends: .install-xdelta
+  script:
     # Currently CI ships Go 1.19, while the client needs 1.20+
     - wget --quiet -O - "https://go.dev/dl/go1.22.3.linux-amd64.tar.gz" | tar xz
-  script:
     - export PATH=`pwd`/go/bin:$PATH
     - cd devices/linux-client
     - make
@@ -215,6 +215,7 @@ test-rdfm-client:
   <<: *common_only
   dependencies:
     - build-rdfm-artifact
+  extends: .install-xdelta
   script:
     # Install rdfm-artifact, which is required for the tests
     - mv tools/rdfm-artifact/rdfm-artifact /usr/bin/
@@ -229,11 +230,10 @@ test-rdfm-client-docker:
   <<: *common_only
   dependencies:
     - build-rdfm-artifact
-  before_script:
+  extends: .install-xdelta
+  script:
     # Currently CI ships Go 1.19, while the client needs 1.20+
     - wget --quiet -O - "https://go.dev/dl/go1.22.3.linux-amd64.tar.gz" | tar xz
-  script:
-    - export PATH=$HOME/go/bin/:$PATH
     - export PATH=`pwd`/go/bin:$PATH
     # Install rdfm-artifact, which is required for the tests
     - mv tools/rdfm-artifact/rdfm-artifact /usr/bin/

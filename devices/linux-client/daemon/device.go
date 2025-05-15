@@ -467,22 +467,10 @@ func (d *Device) authenticateDeviceWithServer() error {
 	if len(publicKeyString) == 0 {
 		return errors.New("Failed to get device key. Authentication impossible")
 	}
-	devType, err := d.rdfmCtx.GetCurrentDeviceType()
-	if err != nil {
-		log.Println("Error getting current device type")
-		return err
-	}
-	swVer, err := d.rdfmCtx.GetCurrentArtifactName()
-	if err != nil {
-		log.Println("Error getting current software version")
-		return err
-	}
 
-	log.Println("Device authentication...")
-	metadata := map[string]string{
-		"rdfm.hardware.devtype": devType,
-		"rdfm.software.version": swVer,
-		"rdfm.hardware.macaddr": d.macAddr,
+	metadata, err := d.collectMetadata()
+	if err != nil {
+		return err
 	}
 	msg := map[string]interface{}{
 		"metadata":   metadata,
@@ -551,4 +539,34 @@ func (d *Device) authenticateDeviceWithServer() error {
 			log.Println("Unexpected status code from the server:", res.StatusCode)
 		}
 	}
+}
+
+// collectMetadata gathers the RDFM metadata for this device.
+func (d *Device) collectMetadata() (map[string]interface{}, error) {
+	// make sure we have a MAC
+	if d.macAddr == "" {
+		mac, err := netUtils.GetUniqueId()
+		if err != nil {
+			return nil, fmt.Errorf("Error collecting metadata: failed to get MAC address: %w", err)
+		}
+		d.macAddr = *mac
+	}
+
+	devType, err := d.rdfmCtx.GetCurrentDeviceType()
+	if err != nil {
+		return nil, fmt.Errorf("Error collecting metadata: failed to get current device type: %w", err)
+	}
+
+	swVer, err := d.rdfmCtx.GetCurrentArtifactName()
+	if err != nil {
+		return nil, fmt.Errorf("Error collecting metadata: failed to get current software version: %w", err)
+	}
+
+	return map[string]interface{}{
+		"rdfm.hardware.devtype":         devType,
+		"rdfm.software.version":         swVer,
+		"rdfm.hardware.macaddr":         d.macAddr,
+		"rdfm.software.supports_rsync":  "true",
+		"rdfm.software.supports_xdelta": "true",
+	}, nil
 }

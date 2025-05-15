@@ -69,6 +69,10 @@ func DoInstallStates(art io.ReadCloser,
 	}
 
 	currentProvides, err := datastore.LoadProvides(device.Store)
+	// inject our RDFM “provides” so Mender will see that the device supports xdelta/rsync
+	currentProvides["rdfm.software.supports_rsync"] = "true"
+	currentProvides["rdfm.software.supports_xdelta"] = "true"
+
 	err = installHandler.VerifyDependencies(currentProvides)
 
 	if err != nil {

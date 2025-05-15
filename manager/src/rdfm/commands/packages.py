@@ -5,7 +5,12 @@ import rdfm.config
 import rdfm.helpers
 import progressbar
 import os.path
-from rdfm.schema.v1.updates import META_SOFT_VER, META_DEVICE_TYPE
+from rdfm.schema.v1.updates import (
+    META_SOFT_VER,
+    META_DEVICE_TYPE,
+    META_XDELTA_SUPPORT,
+    META_RSYNC_SUPPORT,
+)
 from rdfm.schema.v1.packages import META_STORAGE_DIRECTORY
 from rdfm.helpers import utc_to_local
 
@@ -61,6 +66,10 @@ def upload_package(config: rdfm.config.Config, args) -> Optional[str]:
     )
     metadata[META_SOFT_VER] = version
     metadata[META_DEVICE_TYPE] = device
+    if args.requires_rsync:
+        metadata[META_RSYNC_SUPPORT] = "true"
+    if args.requires_xdelta:
+        metadata[META_XDELTA_SUPPORT] = "true"
     # For backwards compatibility, only attach the storage directory metadata
     # when the option is explicitly used.
     if storage_directory:
@@ -142,6 +151,16 @@ def add_packages_parser(parser: argparse._SubParsersAction):
         action="append",
         help="append extra metadata to the package, specified as key=value "
         "pairs",
+    )
+    upload.add_argument(
+        "--requires-xdelta",
+        action="store_true",
+        help="indicate that the package requires xdelta support",
+    )
+    upload.add_argument(
+        "--requires-rsync",
+        action="store_true",
+        help="indicate that the package requires rsync support",
     )
     directory_group = upload.add_mutually_exclusive_group(required=False)
     directory_group.add_argument(

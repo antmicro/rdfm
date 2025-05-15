@@ -98,7 +98,7 @@ After successful installation, during the next update check on the newly install
 As the device is now reporting a version field of `v1` and the package's `requires:` clause passes, package `P1` becomes the next candidate package available for installation.
 After successful instalation of `P1`, no more packages are available and the device is considered to be up-to-date.
 
-## Example scenario: delta updatess
+## Example scenario: delta updates
 
 Consider a group with the following packages assigned:
 - P0 (delta) - `devtype=foo`, `version=v5`, `rootfs=e6e2531..`, `requires:version=v0`, `requires:rootfs=2f646ac..`

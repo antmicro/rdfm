@@ -3,7 +3,7 @@ module github.com/antmicro/rdfm/devices/linux-client
 go 1.20
 
 require (
-	github.com/balena-os/librsync-go v0.8.5
+	github.com/antmicro/rdfm/tools/rdfm-artifact v0.0.0-20250805081032-9c3f3147301f
 	github.com/creack/pty v1.1.24
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
@@ -19,7 +19,9 @@ require (
 )
 
 require (
+	github.com/antmicro/go-xdelta/xdelta3/go_api v0.0.0-20250728100644-2e147d195b14 // indirect
 	github.com/balena-os/circbuf v0.1.3 // indirect
+	github.com/balena-os/librsync-go v0.8.5 // indirect
 	github.com/bmatsuo/lmdb-go v1.8.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect

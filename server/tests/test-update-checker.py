@@ -18,6 +18,8 @@ DUMMY_DEVICE_MAC = "00:00:00:00:00:00"
 META_SOFT_VER = "rdfm.software.version"
 META_DEV_TYPE = "rdfm.hardware.devtype"
 META_MAC_ADDR = "rdfm.hardware.macaddr"
+META_XDELTA_SUPPORT = "rdfm.software.supports_xdelta"
+META_RSYNC_SUPPORT = "rdfm.software.supports_rsync"
 
 
 @pytest.fixture
@@ -119,3 +121,86 @@ def test_package_accessible(prepare_simple_sequential):
     url = package_data["uri"]
     response = requests.get(url)
     assert response.status_code == 200, "the package should be accessible"
+
+
+"""
+    Delta algorithm support scenario
+
+    This tests whether devices receive correct delta update packages based on
+    their support for XDELTA or RSYNC algorithms:
+        v0 --> v1 (XDELTA or RSYNC delta)
+"""
+
+
+@pytest.fixture
+def prepare_delta_algorithm_support(create_dummy_group):
+    package_create_dummy({
+        META_SOFT_VER: "v0",
+        META_DEV_TYPE: "dummy",
+    })
+    package_create_dummy({
+        META_SOFT_VER: "v1",
+        META_DEV_TYPE: "dummy",
+        f"requires:{META_XDELTA_SUPPORT}": "true",
+        f"requires:{META_SOFT_VER}": "v0",
+    })
+    package_create_dummy({
+        META_SOFT_VER: "v1",
+        META_DEV_TYPE: "dummy",
+        f"requires:{META_RSYNC_SUPPORT}": "true",
+        f"requires:{META_SOFT_VER}": "v0",
+    })
+    package_create_dummy({
+        META_SOFT_VER: "v1",
+        META_DEV_TYPE: "dummy",
+    })
+    group_assign_packages(create_dummy_group, [1, 2, 3, 4])
+    group_change_policy(create_dummy_group, "exact_match,v1")
+
+
+def test_delta_algorithm_support(prepare_delta_algorithm_support):
+    """ This tests whether devices receive correct delta update packages based
+        on their support for XDELTA or RSYNC algorithms, or a full update if no
+        delta support is available.
+    """
+    # Device with XDELTA support gets XDELTA delta package
+    assert update_check({
+                META_SOFT_VER: "v0",
+                META_DEV_TYPE: "dummy",
+                META_MAC_ADDR: DUMMY_DEVICE_MAC,
+                META_XDELTA_SUPPORT: "true",
+            }) == 2, "device should receive XDELTA delta package"
+
+    # Device with RSYNC support gets RSYNC delta package
+    assert update_check({
+                META_SOFT_VER: "v0",
+                META_DEV_TYPE: "dummy",
+                META_MAC_ADDR: DUMMY_DEVICE_MAC,
+                META_RSYNC_SUPPORT: "true",
+            }) == 3, "device should receive RSYNC delta package"
+
+    # Device with both XDELTA and RSYNC support gets either delta package
+    result = update_check({
+                META_SOFT_VER: "v0",
+                META_DEV_TYPE: "dummy",
+                META_MAC_ADDR: DUMMY_DEVICE_MAC,
+                META_XDELTA_SUPPORT: "true",
+                META_RSYNC_SUPPORT: "true",
+            })
+    assert result in [2, 3], "device should receive either any delta package"
+
+    # Device without delta support gets full update package
+    assert update_check({
+                META_SOFT_VER: "v0",
+                META_DEV_TYPE: "dummy",
+                META_MAC_ADDR: DUMMY_DEVICE_MAC,
+            }) == 4, "device should receive full update package"
+
+    # Device already on v1 gets no update
+    assert update_check({
+                META_SOFT_VER: "v1",
+                META_DEV_TYPE: "dummy",
+                META_MAC_ADDR: DUMMY_DEVICE_MAC,
+                META_XDELTA_SUPPORT: "true",
+                META_RSYNC_SUPPORT: "true",
+            }) is None, "device should be up-to-date"

@@ -15,6 +15,12 @@ META_DEVICE_TYPE = "rdfm.hardware.devtype"
 """ Metadata key for the device's MAC address """
 META_MAC_ADDRESS = "rdfm.hardware.macaddr"
 
+""" Metadata key for the device xdelta support """
+META_XDELTA_SUPPORT = "rdfm.software.supports_xdelta"
+
+""" Metadata key for the device rsync support """
+META_RSYNC_SUPPORT = "rdfm.software.supports_rsync"
+
 
 @marshmallow_dataclass.dataclass
 class UpdateCheckRequest():

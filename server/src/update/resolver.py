@@ -1,6 +1,11 @@
 from typing import List, Optional, Type
 import networkx as nx
-from rdfm.schema.v1.updates import META_DEVICE_TYPE, META_SOFT_VER
+from rdfm.schema.v1.updates import (
+    META_SOFT_VER,
+    META_DEVICE_TYPE,
+    META_XDELTA_SUPPORT,
+    META_RSYNC_SUPPORT,
+)
 from update.policies.base import BasePolicy
 
 

@@ -10,6 +10,7 @@ RUN apt-get update \
     libssl-dev \
     git \
     ca-certificates \
+    cmake \
     && apt-get autoremove && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ARG GOVERSION="go1.22.3"
@@ -19,5 +20,15 @@ RUN tar xzf /opt/${GOVERSION}/${GOVERSION}.linux-amd64.tar.gz
 ENV PATH="$PATH:/opt/${GOVERSION}/go/bin"
 
 RUN useradd -u 1000 rdfm-builder
+
+WORKDIR /tmp
+RUN git clone https://github.com/antmicro/go-xdelta xdelta \
+    && cd xdelta \
+    && cmake -B build/ -DCGO_INTEGRATION=ON -DENCODER=ON \
+    && cmake --build build/ \
+    && cmake --install build/ \
+    && cd ../ \
+    && rm -rf /tmp/xdelta
+
 RUN mkdir /home/rdfm-builder
 RUN chown rdfm-builder:rdfm-builder /home/rdfm-builder

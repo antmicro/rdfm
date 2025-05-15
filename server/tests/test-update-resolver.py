@@ -1,7 +1,15 @@
 import pytest
 from update.resolver import PackageResolver
-from rdfm.schema.v1.updates import META_DEVICE_TYPE, META_SOFT_VER
+from rdfm.schema.v1.updates import (
+    META_SOFT_VER,
+    META_DEVICE_TYPE,
+    META_XDELTA_SUPPORT,
+    META_RSYNC_SUPPORT,
+)
 from update.policies.exact_match import ExactMatch
+
+XDELTA = {META_XDELTA_SUPPORT: "true"}
+RSYNC = {META_RSYNC_SUPPORT: "true"}
 
 def dummy_device(ver: str):
     """ Creates a dummy device metadata object
@@ -171,3 +179,73 @@ def test_ambiguous_packages():
 
     assert PackageResolver(dummy_device("v0"), packages, policy).resolve() is not None, "device should receive any package"
 
+
+def test_delta_algorithm_support():
+    packages = [
+        {
+            META_SOFT_VER: "v5",
+            META_DEVICE_TYPE: "dummy",
+            f"requires:{META_RSYNC_SUPPORT}": "true",
+            f"requires:{META_SOFT_VER}": "v0",
+        },
+        {
+            META_SOFT_VER: "v5",
+            META_DEVICE_TYPE: "dummy",
+            f"requires:{META_XDELTA_SUPPORT}": "true",
+            f"requires:{META_SOFT_VER}": "v0",
+        },
+    ]
+    policy = ExactMatch("v5")
+
+    # RSYNC-only device -> RSYNC delta (idx 0)
+    assert PackageResolver(dummy_device("v0") | RSYNC, packages, policy).resolve() == 0
+
+    # XDELTA-only device -> XDELTA delta (idx 1)
+    assert PackageResolver(dummy_device("v0") | XDELTA, packages, policy).resolve() == 1
+
+
+def test_device_without_delta_support():
+    packages = [
+        {
+            META_SOFT_VER: "v5",
+            META_DEVICE_TYPE: "dummy",
+            f"requires:{META_RSYNC_SUPPORT}": "true",
+            f"requires:{META_SOFT_VER}": "v0",
+        },
+        {
+            META_SOFT_VER: "v5",
+            META_DEVICE_TYPE: "dummy",
+            f"requires:{META_XDELTA_SUPPORT}": "true",
+            f"requires:{META_SOFT_VER}": "v0",
+        },
+    ]
+    policy = ExactMatch("v5")
+
+    # device without delta support -> no match
+    assert PackageResolver(dummy_device("v0"), packages, policy).resolve() is None
+
+
+def test_device_without_delta_support_full_update():
+    packages = [
+        {
+            META_SOFT_VER: "v5",
+            META_DEVICE_TYPE: "dummy",
+            f"requires:{META_RSYNC_SUPPORT}": "true",
+            f"requires:{META_SOFT_VER}": "v0",
+        },
+        {
+            META_SOFT_VER: "v5",
+            META_DEVICE_TYPE: "dummy",
+            f"requires:{META_XDELTA_SUPPORT}": "true",
+            f"requires:{META_SOFT_VER}": "v0",
+        },
+        {
+            META_SOFT_VER: "v5",
+            META_DEVICE_TYPE: "dummy",
+            f"requires:{META_SOFT_VER}": "v0",
+        },
+    ]
+    policy = ExactMatch("v5")
+
+    # device without delta support -> full update (idx 2)
+    assert PackageResolver(dummy_device("v0"), packages, policy).resolve() == 2

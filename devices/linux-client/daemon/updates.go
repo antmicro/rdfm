@@ -19,18 +19,9 @@ const MIN_RETRY_INTERVAL = 1
 const MAX_RETRY_INTERVAL = 60
 
 func (d *Device) checkUpdate() error {
-	devType, err := d.rdfmCtx.GetCurrentDeviceType()
+	metadata, err := d.collectMetadata()
 	if err != nil {
-		return errors.New("Error getting current device type: " + err.Error())
-	}
-	swVer, err := d.rdfmCtx.GetCurrentArtifactName()
-	if err != nil {
-		return errors.New("Error getting current software version: " + err.Error())
-	}
-	metadata := map[string]string{
-		"rdfm.hardware.devtype": devType,
-		"rdfm.software.version": swVer,
-		"rdfm.hardware.macaddr": d.macAddr,
+		return err
 	}
 	log.Println("Metadata to check updates: ", metadata)
 

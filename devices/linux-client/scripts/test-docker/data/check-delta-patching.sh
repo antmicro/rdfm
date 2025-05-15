@@ -66,20 +66,40 @@ EOF
 	sed -i "s;/dev/dummydevB;$PART_B;" /etc/rdfm/rdfm.conf
 }
 
+# Reset the environment to its initial state
+reset_environment()
+{
+	# Remove database files
+	rm -f /var/lib/rdfm/*-store
+
+	# Restore default provides_info
+	cat >/etc/rdfm/provides_info << EOF
+$PROVIDES_DUMMY
+EOF
+
+	# Restore default artifact_info
+	cat >/etc/rdfm/artifact_info << EOF
+artifact_name=$ARTIFACT_DUMMY
+EOF
+}
+
 # This tests the dependency tracking for delta updates
 # The install should fail at this point, as the rootfs-image.checksum does not contain the
 # correct checksum.
 test_dependency_tracking()
 {
+	local delta_algorithm=$1
+	local artifact_path=$2
+
 	set +e
-	OUT="$(rdfm --log-level debug install ./scripts/test-docker/vloop0_to_vloop1.delta.rdfm 2>&1)"
+	OUT="$(rdfm --log-level debug install $artifact_path 2>&1)"
 	if echo -ne "$OUT" | grep "not satisfied"; then
-		log_info "test dependency tracking: OK"
+		log_info "test dependency tracking for $delta_algorithm: OK"
 		set -e
 		return 0
 	fi
 
-	log_info "test dependency tracking: FAIL"
+	log_info "test dependency tracking for $delta_algorithm: FAIL"
 	set -e
 	return 1
 }
@@ -92,7 +112,6 @@ setup_test_delta_installation()
 	CHECKSUM=($(sha256sum $PART_A))
 	cat >/etc/rdfm/provides_info << EOF
 rootfs-image.checksum=$CHECKSUM
-rdfm.software.supports_rsync=true
 EOF
 	rm /var/lib/rdfm/*-store
 
@@ -125,34 +144,38 @@ EOF
 # Install the delta artifact and validate the checksum on the secondary partition
 test_delta_installation()
 {
+	local delta_algorithm=$1
+	local artifact_path=$2
+	local target_image=$3
+
 	if [[ $IS_HTTP == 0 ]]; then
-		if ! rdfm install ./scripts/test-docker/vloop0_to_vloop1.delta.rdfm; then
-			log_info "test delta installation: FAIL"
+		if ! rdfm install $artifact_path; then
+			log_info "test delta installation for $delta_algorithm: FAIL"
 			return 1
 		fi
 	else
 		set +e
-		log_info "Running first update"
-		timeout 5 rdfm install http://127.0.0.1:8000/vloop0_to_vloop1.delta.rdfm
-		log_info "Killed first update"
+		log_info "Running first update for $delta_algorithm"
+		timeout 5 rdfm install http://127.0.0.1:8000/$artifact_path
+		log_info "Killed first update for $delta_algorithm"
 		set -e
-		log_info "Running second update"
-		if ! rdfm install http://127.0.0.1:8000/vloop0_to_vloop1.delta.rdfm; then
-			log_info "test delta installation: FAIL"
+		log_info "Running second update for $delta_algorithm"
+		if ! rdfm install http://127.0.0.1:8000/$artifact_path; then
+			log_info "test delta installation for $delta_algorithm: FAIL"
 			return 1
 		fi
 	fi
 
 	# Validate the checksum of the secondary partition
 	CHECKSUM=($(sha256sum $PART_B))
-	TARGET=($(sha256sum ./scripts/test-docker/vloop1good.img))
+	TARGET=($(sha256sum $target_image))
 
 	if [[ "$CHECKSUM" != "$TARGET" ]]; then
-		log_info "test delta installation: FAIL"
+		log_info "test delta installation for $delta_algorithm: FAIL"
 		return 1
 	fi
 
-	log_info "test delta installation: OK"
+	log_info "test delta installation for $delta_algorithm: OK"
 	return 0
 }
 
@@ -167,19 +190,37 @@ setup_http_server()
 	popd
 }
 
+# Main test function for a given delta algorithm (rsync or xdelta)
+run_tests_for_algorithm()
+{
+    local delta_algorithm=$1
+    local artifact_file="vloop0_to_vloop1.$delta_algorithm.rdfm"
+    local local_artifact_path="./scripts/test-docker/$artifact_file"
+    local artifact_path="$local_artifact_path"
+    local target_image="./scripts/test-docker/vloop1good.img"
+
+    if [[ $IS_HTTP == 1 ]]; then
+        artifact_path="$artifact_file"
+    fi
+
+    reset_environment
+
+    test_dependency_tracking "$delta_algorithm" "$local_artifact_path"
+    setup_test_delta_installation
+    test_delta_installation "$delta_algorithm" "$artifact_path" "$target_image"
+}
+
 # =====================================================
-
+# Main execution flow
 setup_environment
-
-test_dependency_tracking
 
 if [[ $IS_HTTP == 1 ]]; then
 	setup_http_server
 fi
 
-setup_test_delta_installation
-test_delta_installation
+# Run tests for both algorithms
+run_tests_for_algorithm "rsync"
+run_tests_for_algorithm "xdelta"
 
-log_info "Test successful"
+log_info "All tests successful"
 exit 0
-
