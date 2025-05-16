@@ -242,7 +242,7 @@ func (d *Device) setupConnection() error {
 }
 
 func (d *Device) setupActionRunner() error {
-	actionRunner, err := actions.NewActionRunner(d.rdfmCtx, 32, d.actionResultCallback, conf.RdfmActionDataPath)
+	actionRunner, err := actions.NewActionRunner(d.rdfmCtx, d.rdfmCtx.RdfmConfig.ActionQueueSize, d.actionResultCallback, conf.RdfmActionDataPath)
 	if err != nil {
 		return err
 	}
