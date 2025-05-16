@@ -20,6 +20,8 @@ const DEFAULT_TELEMETRY_ENABLE = false
 const DEFAULT_TELEMETRY_BATCH_SIZE = 50
 const DEFAULT_SHELL_ENABLE = true
 const DEFAULT_SHELL_CONCURRENT_MAX_COUNT = 5
+const DEFAULT_ACTION_ENABLE = true
+const DEFAULT_ACTION_QUEUE_SIZE = 32
 
 type RDFMConfig struct {
 	// Path to the device type file
@@ -59,6 +61,11 @@ type RDFMConfig struct {
 	ShellEnable bool `json:",omitempty"`
 	// Maximum amount of concurrent shells. Default: 5
 	ShellConcurrentMaxCount int `json:",omitempty"`
+
+	// Is action support enabled? Default: true
+	ActionEnable bool `json:",omitempty"`
+	// Incoming/outgoing action queue size. Default: 32
+	ActionQueueSize int `json:",omitempty"`
 }
 
 var rdfmConfigInstance *RDFMConfig
@@ -103,6 +110,8 @@ func LoadConfig(mainConfigFile string, overlayConfigFile string) (*RDFMConfig, *
 		TelemetryBatchSize:        DEFAULT_TELEMETRY_BATCH_SIZE,
 		ShellEnable:               DEFAULT_SHELL_ENABLE,
 		ShellConcurrentMaxCount:   DEFAULT_SHELL_CONCURRENT_MAX_COUNT,
+		ActionEnable:              DEFAULT_ACTION_ENABLE,
+		ActionQueueSize:           DEFAULT_ACTION_QUEUE_SIZE,
 	}
 
 	// Load Mender config
