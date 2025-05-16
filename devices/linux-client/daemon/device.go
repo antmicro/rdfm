@@ -251,7 +251,7 @@ func (d *Device) setupActionRunner() error {
 }
 
 func (d *Device) setupShellRunner() error {
-	sr, err := shell.NewShellRunner(1)
+	sr, err := shell.NewShellRunner(d.rdfmCtx.RdfmConfig.ShellConcurrentMaxCount)
 	if err != nil {
 		return err
 	}
