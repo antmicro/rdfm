@@ -18,6 +18,8 @@ const DEFAULT_RECONNECT_RETRY_COUNT = 3
 const DEFAULT_RECONNECT_RETRY_TIME = 60
 const DEFAULT_TELEMETRY_ENABLE = false
 const DEFAULT_TELEMETRY_BATCH_SIZE = 50
+const DEFAULT_SHELL_ENABLE = true
+const DEFAULT_SHELL_CONCURRENT_MAX_COUNT = 5
 
 type RDFMConfig struct {
 	// Path to the device type file
@@ -52,6 +54,11 @@ type RDFMConfig struct {
 	TelemetryBatchSize int `json:",omitempty"`
 	// Log levels from within the client to be captured
 	TelemetryLogLevel string `json:",omitempty"`
+
+	// Is shell support enabled? Default: true
+	ShellEnable bool `json:",omitempty"`
+	// Maximum amount of concurrent shells. Default: 5
+	ShellConcurrentMaxCount int `json:",omitempty"`
 }
 
 var rdfmConfigInstance *RDFMConfig
@@ -94,6 +101,8 @@ func LoadConfig(mainConfigFile string, overlayConfigFile string) (*RDFMConfig, *
 		ReconnectRetryTime:        DEFAULT_RECONNECT_RETRY_TIME,
 		TelemetryEnable:           DEFAULT_TELEMETRY_ENABLE,
 		TelemetryBatchSize:        DEFAULT_TELEMETRY_BATCH_SIZE,
+		ShellEnable:               DEFAULT_SHELL_ENABLE,
+		ShellConcurrentMaxCount:   DEFAULT_SHELL_CONCURRENT_MAX_COUNT,
 	}
 
 	// Load Mender config
