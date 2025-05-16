@@ -236,11 +236,8 @@ func (d *Device) setupConnection() error {
 
 	d.httpTransport = d.prepareHttpTransport(tlsConf)
 	d.conn = serverws.NewDeviceConnection(serverUrl, tlsConf, 1024)
-	// TODO: Hardcode capabilities right now. This should be read from the
-	// config file instead, but we don't have any configuration options that
-	// determine whether action/shell should be enabled or not.
-	d.conn.SetCapability("action", true)
-	d.conn.SetCapability("shell", true)
+	d.conn.SetCapability("action", d.rdfmCtx.RdfmConfig.ActionEnable)
+	d.conn.SetCapability("shell", d.rdfmCtx.RdfmConfig.ShellEnable)
 	return nil
 }
 
