@@ -32,6 +32,22 @@ This allows actions to remain usable, even when the device faces connectivity or
 
 Action functionality can be disabled entirely via the [ActionEnable](#actionenable-bool) configuration key.
 
+### Reverse shell
+
+The client supports spawning a reverse shell that can be accessed via the RDFM server.
+This utilizes an on-demand WebSocket connection between the server and the device to stream contents of the shell session.
+To connect to the device, [`rdfm-mgmt`](./rdfm_manager.md) can be used to request a shell session:
+
+```bash
+rdfm-mgmt devices shell <device-identifier>
+```
+
+By default, a maximum of 5 concurrent shell sessions can be opened.
+This limit can be configured via the [ShellConcurrentMaxCount](#shellconcurrentmaxcount-int) configuration key.
+Further shell session requests will be rejected by the client.
+
+Shell functionality can be disabled entirely via the [ShellEnable](#shellenable-bool) configuration key.
+
 ## Installing from source
 
 ### Requirements
@@ -157,6 +173,16 @@ True by default.
 
 Specifies the size of the action queue.
 `32` by default.
+
+#### ShellEnable `bool`
+
+Allows enabling/disabling reverse shell functionality.
+True by default.
+
+#### ShellConcurrentMaxCount `int`
+
+Specifies how many concurrent shell sessions can be spawned.
+`5` by default.
 
 ### RDFM telemetry config
 
