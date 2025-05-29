@@ -26,9 +26,11 @@ Actions can be executed using the [Action Execute API](api.rst#get--api-v2-devic
 
 All action execution requests are stored in a persistent queue on a disk and fulfilled in a First-In, First-Out order.
 By default, there can be a maximum of **32 action requests** in the queue, and any further action execution requests are rejected by the client.
-This limit is currently hardcoded and not configurable via `rdfm.conf`.
+This limit can be configured via the [ActionQueueSize](#actionqueuesize-int) configuration key.
 An identical queue is also present for action responses, and action status is reported to the server as soon as it is possible to do so.
 This allows actions to remain usable, even when the device faces connectivity or power loss issues.
+
+Action functionality can be disabled entirely via the [ActionEnable](#actionenable-bool) configuration key.
 
 ## Installing from source
 
@@ -145,6 +147,16 @@ Denotes which log levels produced by the client should be captured provided that
 7. panic
 
 Setting a level encapsulates all the levels that are above it in severity. For example, setting this to `"fatal"` will capture all fatal *and* panic level logs. This config entry is not case sensitive. In the case of this field being left empty or with an incorrect value, the daemon will produce a warning and continue running normally.
+
+#### ActionEnable `bool`
+
+Allows enabling/disabling action functionality.
+True by default.
+
+#### ActionQueueSize `int`
+
+Specifies the size of the action queue.
+`32` by default.
 
 ### RDFM telemetry config
 
