@@ -1,0 +1,70 @@
+services:
+  broker:
+    image: kafka-for-rdfm
+    hostname: broker
+    container_name: broker
+    networks:
+      - rdfm
+    ports:
+      - '9093:9093'
+      - '9094:9094'
+    env_file: "secrets.env"
+    environment:
+      CLUSTER_ID: foobarbaz
+      KAFKA_NODE_ID: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: DEV:SASL_SSL,MGMT:SASL_SSL,CONTROLLER:SSL,INT_SSL:SSL
+      KAFKA_LISTENERS: DEV://:9093,MGMT://:9094,INT_SSL://:19093,CONTROLLER://:29093
+      # At least one of the listeners needs to satisfy this check:
+      # [[ $KAFKA_ADVERTISED_LISTENERS == *"SSL://"* ]]
+      # since the configure script inside the docker image doesn't expand
+      # the listener.security.protocol.map. If this check fails in the config
+      # script the keystore/truststore path config entries won't be propagated
+      KAFKA_ADVERTISED_LISTENERS: DEV://localhost:9093,MGMT://localhost:9094,INT_SSL://broker:19093
+
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:29093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      # By setting this you don't need security.inter.broker.protocol=SSL, it is inferred since INT_SSL maps to SSL
+      KAFKA_INTER_BROKER_LISTENER_NAME: INT_SSL
+
+      # broker principal is derived from certificate, the device mac as superuser is for testing(scripts/README.md for JWT generation)
+      KAFKA_SUPER_USERS: User:broker;User:00:00:00:00:00:00
+      # Even though we're using listener scoped configuration inside server.properties, the below envar still needs to be
+      # here to signal the configure script(/etc/kafka/docker/configure) that we're using SSL so it sets up its trustsore
+      KAFKA_SSL_CLIENT_AUTH: required
+      KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: ""
+
+      KAFKA_SASL_ENABLED_MECHANISMS: OAUTHBEARER,PLAIN
+
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+
+    volumes:
+      - ./broker:/etc/kafka/secrets
+      - ./server.properties:/mnt/shared/config/server.properties
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2.1
+    restart: unless-stopped
+    env_file: "secrets.env"
+    networks:
+      - rdfm
+    ports:
+      - "8080:8080"
+    command:
+      - start-dev
+    volumes:
+      - keycloak:/opt/keycloak/data
+
+volumes:
+  keycloak:
+
+networks:
+  rdfm:
