@@ -16,6 +16,13 @@ import (
 	dconf "github.com/antmicro/rdfm/daemon/conf"
 )
 
+const (
+	// Additional time to wait for fds of the action command to be closed. This
+	// prevents the action runner from getting stuck waiting for a child that
+	// has already terminated, but did not close its file descriptors.
+	ActionCommandWaitDelay = time.Duration(time.Second * 5)
+)
+
 type ActionResultCallback func(ActionResult, context.Context) bool
 
 type ActionRunner struct {
@@ -39,6 +46,7 @@ func (r *ActionRunner) runCommand(req ActionRequest, cancelCtx context.Context) 
 	}
 	log.Debugf("Executing action command: ['%s']", strings.Join(action.Command, "', '"))
 	cmd := exec.CommandContext(ctx, action.Command[0], action.Command[1:]...)
+	cmd.WaitDelay = time.Duration(ActionCommandWaitDelay)
 
 	outputBytes, _ := cmd.CombinedOutput()
 
