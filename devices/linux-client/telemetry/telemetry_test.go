@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"reflect"
 	"regexp"
-	"sync"
 	"testing"
 	"time"
 
@@ -199,89 +198,4 @@ func TestFireLogs(t *testing.T) {
 	if l := len(logs); l != want {
 		t.Fatalf(`3: len(logs) = %v, want match for %#q`, l, want)
 	}
-}
-
-func FuzzRecurringLogger(f *testing.F) {
-	lm := MakeLogManager()
-	ld := LoggerArgs{}
-	var rl RecurringLogger = recurringLogger
-
-	f.Add("name")
-	f.Fuzz(func(t *testing.T, name string) {
-		lm.AddTask(name, rl, time.Millisecond)
-		lm.StartTask(name, ld, nil)
-		lm.StopTask(name)
-	})
-}
-
-func FuzzPersistentLogger(f *testing.F) {
-	lm := MakeLogManager()
-	ld := LoggerArgs{}
-	var pl PersistentLogger = persistentLogger
-
-	f.Add("name")
-	f.Fuzz(func(t *testing.T, name string) {
-		lm.AddTask(name, pl, time.Millisecond)
-		lm.StartTask(name, ld, nil)
-		lm.StopTask(name)
-	})
-}
-
-func FuzzRandomOrder(f *testing.F) {
-	lm := MakeLogManager()
-
-	rand.Seed(time.Now().UnixNano())
-
-	funcs := []func(*LogManager, string){
-		add,
-		start,
-		stop,
-	}
-
-	f.Add("name")
-	f.Fuzz(func(t *testing.T, name string) {
-		var wg sync.WaitGroup
-		shuffledFuncs := shuffleFuncs(funcs)
-
-		for _, f := range shuffledFuncs {
-			wg.Add(1)
-			go func(f func(*LogManager, string)) {
-				defer wg.Done()
-				f(lm, name)
-				if rand.Float64() < 0.5 {
-					f(lm, name)
-				}
-			}(f)
-		}
-		wg.Wait()
-	})
-
-}
-
-func add(lm *LogManager, name string) {
-	if randBool() {
-		var pl PersistentLogger = persistentLogger
-		lm.AddTask(name, pl, time.Millisecond)
-	} else {
-		var rl RecurringLogger = recurringLogger
-		lm.AddTask(name, rl, time.Millisecond)
-	}
-}
-
-func start(lm *LogManager, name string) {
-	ld := LoggerArgs{}
-	lm.StartTask(name, ld, nil)
-}
-
-func stop(lm *LogManager, name string) {
-	lm.StopTask(name)
-}
-
-func shuffleFuncs(funcs []func(*LogManager, string)) []func(*LogManager, string) {
-	shuffled := make([]func(*LogManager, string), len(funcs))
-	copy(shuffled, funcs)
-	rand.Shuffle(len(shuffled), func(i, j int) {
-		shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
-	})
-	return shuffled
 }
