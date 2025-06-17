@@ -1,0 +1,98 @@
+{
+  "allowRemoteResourceManagement": true,
+  "policyEnforcementMode": "ENFORCING",
+  "resources": [
+    {
+      "name": "Topic:quickstart-events",
+      "type": "Topic",
+      "ownerManagedAccess": false,
+      "displayName": "Topic:quickstart-events",
+      "attributes": {},
+      "uris": [],
+      "scopes": [
+        {
+          "name": "Create"
+        },
+        {
+          "name": "Delete"
+        },
+        {
+          "name": "Describe"
+        },
+        {
+          "name": "Write"
+        },
+        {
+          "name": "IdempotentWrite"
+        },
+        {
+          "name": "Read"
+        },
+        {
+          "name": "DescribeConfigs"
+        },
+        {
+          "name": "AlterConfigs"
+        }
+      ],
+      "icon_uri": ""
+    }
+  ],
+  "policies": [
+    {
+      "name": "quickstart-events-rw",
+      "description": "read write",
+      "type": "client",
+      "logic": "POSITIVE",
+      "decisionStrategy": "UNANIMOUS",
+      "config": {
+        "clients": "[\"test-client\"]"
+      }
+    },
+    {
+      "name": "test-client-quickstart-events",
+      "description": "",
+      "type": "scope",
+      "logic": "POSITIVE",
+      "decisionStrategy": "UNANIMOUS",
+      "config": {
+        "resources": "[\"Topic:quickstart-events\"]",
+        "scopes": "[\"Create\",\"Describe\",\"Read\",\"Write\"]",
+        "applyPolicies": "[\"quickstart-events-rw\"]"
+      }
+    }
+  ],
+  "scopes": [
+    {
+      "name": "Create"
+    },
+    {
+      "name": "Read"
+    },
+    {
+      "name": "Write"
+    },
+    {
+      "name": "Delete"
+    },
+    {
+      "name": "Alter"
+    },
+    {
+      "name": "Describe"
+    },
+    {
+      "name": "ClusterAction"
+    },
+    {
+      "name": "DescribeConfigs"
+    },
+    {
+      "name": "AlterConfigs"
+    },
+    {
+      "name": "IdempotentWrite"
+    }
+  ],
+  "decisionStrategy": "AFFIRMATIVE"
+}
