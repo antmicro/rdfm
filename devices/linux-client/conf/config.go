@@ -67,6 +67,8 @@ type RDFMConfig struct {
 	TelemetryBatchSize int `json:",omitempty"`
 	// Log levels from within the client to be captured
 	TelemetryLogLevel string `json:",omitempty"`
+	// Broker addresses
+	TelemetryBootstrapServers string `json:",omitempty"`
 
 	// Is shell support enabled? Default: true
 	ShellEnable bool `json:",omitempty"`
