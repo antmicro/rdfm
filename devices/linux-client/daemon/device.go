@@ -210,7 +210,7 @@ func (d *Device) prepareHttpTransport(tlsConf *tls.Config) *http.Transport {
 
 func (d *Device) setupConnection() error {
 	// Get MAC address
-	mac, err := netUtils.GetMacAddr()
+	mac, err := netUtils.GetMacAddr(d.rdfmCtx.RdfmConfig.MacAddressInterfaceRegex)
 	if err != nil {
 		return err
 	}

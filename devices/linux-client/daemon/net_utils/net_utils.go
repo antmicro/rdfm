@@ -5,11 +5,17 @@ import (
 	"errors"
 	"net"
 	"regexp"
+	"sort"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 
 	log "github.com/sirupsen/logrus"
+)
+
+var (
+	ErrInvalidRegexp = errors.New("Invalid regular expression")
+	ErrNoMatchingInterface = errors.New("No matching interfaces found")
 )
 
 func ShouldEncryptProxy(addr string) (bool, error) {
@@ -29,10 +35,28 @@ func ShouldEncryptProxy(addr string) (bool, error) {
 	return false, nil
 }
 
-func GetMacAddr() (string, error) {
-	var nifMAC string
-
+// Return an array of network interfaces sorted by their name.
+func getSortedInterfaces() ([]net.Interface, error) {
 	interfaces, err := net.Interfaces()
+	if err != nil {
+		return nil, err
+	}
+	sort.Slice(interfaces, func(i, j int) bool {
+		return interfaces[i].Name < interfaces[j].Name
+	})
+	return interfaces, nil
+}
+
+// Iterate over available network interfaces and find the first non-empty MAC
+// address of the interface whose name matches the specified regular expression.
+func GetMacAddr(pattern string) (string, error) {
+	var nifMAC string
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return "", ErrInvalidRegexp
+	}
+
+	interfaces, err := getSortedInterfaces()
 	if err != nil {
 		log.Println("Couldn't get network interface", err)
 		return "", err
@@ -42,19 +66,17 @@ func GetMacAddr() (string, error) {
 	for _, nif := range interfaces {
 		nifMAC = nif.HardwareAddr.String()
 		nifName := nif.Name
-		nifAddrs, _ := nif.Addrs()
 		if nifMAC == "" {
 			continue
 		}
-		for _, a := range nifAddrs {
-			ipAddr, _, _ := net.ParseCIDR(a.String())
-			if !(ipAddr.IsLoopback() || ipAddr.IsLinkLocalMulticast() || ipAddr.IsLinkLocalUnicast()) {
-				log.Println("Using MAC address [ " + nifMAC + " ] from network interface '" + nifName + "' as device identifier")
-				return nifMAC, nil
-			}
+		if !re.MatchString(nifName) {
+			continue
 		}
+		log.Println("Using MAC address [ " + nifMAC + " ] from network interface '" + nifName + "' as device identifier")
+		return nifMAC, nil
 	}
-	return "", errors.New("Failed to get MAC address")
+	log.Warnln("Failed to find network interface for pattern:", pattern, "that has a MAC address")
+	return "", ErrNoMatchingInterface
 }
 
 type JwtPayload struct {
