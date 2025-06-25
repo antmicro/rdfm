@@ -15,7 +15,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const TELEMETRY_LOOP_RECOVERY_INTERVAL = 5
+const TELEMETRY_LOOP_RECOVERY_INTERVAL = 60
 
 func (d *Device) sendLogBatch(batch telemetry.LogBatch, client *http.Client, endpoint string) error {
 	serializedBatch, err := json.Marshal(batch)
