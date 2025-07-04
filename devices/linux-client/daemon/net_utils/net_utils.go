@@ -8,14 +8,21 @@ import (
 	"sort"
 	"time"
 
+	"github.com/antmicro/rdfm/conf"
 	"github.com/golang-jwt/jwt/v5"
 
 	log "github.com/sirupsen/logrus"
 )
 
 var (
-	ErrInvalidRegexp = errors.New("Invalid regular expression")
+	ErrInvalidRegexp       = errors.New("Invalid regular expression")
 	ErrNoMatchingInterface = errors.New("No matching interfaces found")
+)
+
+var (
+	// Cache of the device identifier/MAC address found during call to
+	// GetUniqueId.
+	cachedDeviceIdentifier *string = nil
 )
 
 func ShouldEncryptProxy(addr string) (bool, error) {
@@ -49,7 +56,7 @@ func getSortedInterfaces() ([]net.Interface, error) {
 
 // Iterate over available network interfaces and find the first non-empty MAC
 // address of the interface whose name matches the specified regular expression.
-func GetMacAddr(pattern string) (string, error) {
+func getMacAddr(pattern string) (string, error) {
 	var nifMAC string
 	re, err := regexp.Compile(pattern)
 	if err != nil {
@@ -77,6 +84,44 @@ func GetMacAddr(pattern string) (string, error) {
 	}
 	log.Warnln("Failed to find network interface for pattern:", pattern, "that has a MAC address")
 	return "", ErrNoMatchingInterface
+}
+
+// Get the unique device identifier of this device. This attempts to look for a
+// unique value to identify this device with the server using the following
+// sources, in order:
+//  1. Reading the /var/lib/rdfm/device_id file.
+//  2. Querying the MAC address of the network interface matching a regular expression
+//     specified in the configuration (MacAddressInterfaceRegex). This value is persisted
+//     in device_id once found.
+func GetUniqueId() (*string, error) {
+	if cachedDeviceIdentifier != nil {
+		return cachedDeviceIdentifier, nil
+	}
+
+	idFromDeviceInfo, err := conf.LoadDeviceId()
+	if err == nil {
+		log.Debugln("Using device identifier [", *idFromDeviceInfo, "]", "from config")
+		cachedDeviceIdentifier = idFromDeviceInfo
+		return cachedDeviceIdentifier, nil
+	}
+
+	cfg, _, err := conf.GetConfig()
+	if err != nil {
+		return nil, errors.New("Failed to get config")
+	}
+	idFromMacAddr, err := getMacAddr(cfg.MacAddressInterfaceRegex)
+	if err == nil {
+		// There was no device_id file, save the MAC so future ID queries do not
+		// have to enumerate network interfaces again.
+		err = conf.SaveDeviceId(idFromMacAddr)
+		if err != nil {
+			log.Errorln("Failed to save discovered MAC address to file:", err)
+		}
+		cachedDeviceIdentifier = &idFromMacAddr
+		return cachedDeviceIdentifier, nil
+	}
+
+	return nil, nil
 }
 
 type JwtPayload struct {

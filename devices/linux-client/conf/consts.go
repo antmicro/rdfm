@@ -11,6 +11,7 @@ const (
 	RdfmLoggersFilename      = "loggers.conf"
 	RdfmArtifactInfoFilename = "artifact_info"
 	RdfmProvidesInfoFilename = "provides_info"
+	RdfmDeviceIdFilename     = "device_id"
 	RdfmRSAKeysFilename      = "rsa.pem"
 	RdfmCacheDirectory       = "cache"
 	RdfmActionsFilename      = "actions.conf"
@@ -25,6 +26,7 @@ var (
 	RdfmDefaultLoggersPath = path.Join(RdfmConfigDirectory, RdfmLoggersFilename)
 	RdfmArtifactInfoPath   = path.Join(RdfmConfigDirectory, RdfmArtifactInfoFilename)
 	RdfmProvidesInfoPath   = path.Join(RdfmConfigDirectory, RdfmProvidesInfoFilename)
+	RdfmDeviceIdPath       = path.Join(RdfmDataDirectory, RdfmDeviceIdFilename)
 	RdfmRSAKeysPath        = path.Join(RdfmDataDirectory, RdfmRSAKeysFilename)
 	RdfmCachePath          = path.Join(RdfmDataDirectory, RdfmCacheDirectory)
 	RdfmDefaultActionsPath = path.Join(RdfmDataDirectory, RdfmActionsFilename)
