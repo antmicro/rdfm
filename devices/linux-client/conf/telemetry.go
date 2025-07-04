@@ -3,7 +3,6 @@ package conf
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 
 	log "github.com/sirupsen/logrus"
@@ -16,20 +15,7 @@ type RDFMLoggerConfiguration struct {
 	Tick int      `json:"tick,omitempty"`
 }
 
-func checkConfigFilePermissions(path string) error {
-	fileInfo, err := os.Stat(path)
-	if err != nil {
-		return nil
-	}
-
-	filePerm := fileInfo.Mode().Perm()
-	if filePerm != 0644 {
-		return fmt.Errorf("invalid permission for config file %s (644 required)", path)
-	}
-	return nil
-}
-
-func LoadConfig(path string) (*map[string]RDFMLoggerConfiguration, error) {
+func LoadTelemetryConfig(path string) (*map[string]RDFMLoggerConfiguration, error) {
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
 		log.Warnf("telemetry: no configured loggers were found (missing %s)", path)
 		empty := make(map[string]RDFMLoggerConfiguration)
