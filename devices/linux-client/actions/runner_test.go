@@ -9,8 +9,6 @@ import (
 
 	"github.com/antmicro/rdfm/app"
 	"github.com/antmicro/rdfm/conf"
-	dconf "github.com/antmicro/rdfm/daemon/conf"
-	tconf "github.com/antmicro/rdfm/telemetry/conf"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
@@ -22,12 +20,12 @@ const (
 func createTestRdfmContext() *app.RDFM {
 	testContext := new(app.RDFM)
 	testContext.RdfmConfig = new(conf.RDFMConfig)
-	testContext.RdfmActionsConfig = new([]dconf.RDFMActionsConfiguration)
-	testContext.RdfmTelemetryConfig = new(map[string]tconf.RDFMLoggerConfiguration)
+	testContext.RdfmActionsConfig = new([]conf.RDFMActionsConfiguration)
+	testContext.RdfmTelemetryConfig = new(map[string]conf.RDFMLoggerConfiguration)
 	return testContext
 }
 
-func prepareRunner(queueSize int, callback ActionResultCallback, datadir string, actions []dconf.RDFMActionsConfiguration) (*ActionRunner, context.CancelFunc) {
+func prepareRunner(queueSize int, callback ActionResultCallback, datadir string, actions []conf.RDFMActionsConfiguration) (*ActionRunner, context.CancelFunc) {
 	rdfmContext := createTestRdfmContext()
 	rdfmContext.RdfmActionsConfig = &actions
 	context, cancel := context.WithCancel(context.Background())
@@ -46,7 +44,7 @@ func TestActionRunnerSimpleSetup(t *testing.T) {
 
 func TestActionRunnerExecuteSimple(t *testing.T) {
 	testFilePath := path.Join(t.TempDir(), ".test-action-file")
-	actions := []dconf.RDFMActionsConfiguration{
+	actions := []conf.RDFMActionsConfiguration{
 		{
 			Id:          "test_action",
 			Name:        "",
@@ -72,7 +70,7 @@ func TestActionRunnerExecuteSimple(t *testing.T) {
 }
 
 func TestActionRunnerResultCallback(t *testing.T) {
-	actions := []dconf.RDFMActionsConfiguration{
+	actions := []conf.RDFMActionsConfiguration{
 		{
 			Id:          "test_action",
 			Name:        "",
@@ -110,7 +108,7 @@ func TestActionRunnerResultCallback(t *testing.T) {
 }
 
 func TestActionRunnerConcurrentActionLimit(t *testing.T) {
-	actions := []dconf.RDFMActionsConfiguration{
+	actions := []conf.RDFMActionsConfiguration{
 		{
 			Id:          "test_action",
 			Name:        "",
