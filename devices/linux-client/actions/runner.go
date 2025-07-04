@@ -10,10 +10,9 @@ import (
 	"time"
 
 	"github.com/antmicro/rdfm/app"
+	"github.com/antmicro/rdfm/conf"
 
 	log "github.com/sirupsen/logrus"
-
-	dconf "github.com/antmicro/rdfm/daemon/conf"
 )
 
 const (
@@ -29,7 +28,7 @@ type ActionRunner struct {
 	rdfmCtx   *app.RDFM
 	reqStore  *FileStore
 	resStore  *FileStore
-	actionMap map[string]dconf.RDFMActionsConfiguration
+	actionMap map[string]conf.RDFMActionsConfiguration
 	resultCb  ActionResultCallback
 }
 
@@ -175,7 +174,7 @@ func (r *ActionRunner) Execute(executionId string, actionId string) bool {
 	return true
 }
 
-func (r *ActionRunner) List() []dconf.RDFMActionsConfiguration {
+func (r *ActionRunner) List() []conf.RDFMActionsConfiguration {
 	return *r.rdfmCtx.RdfmActionsConfig
 }
 
@@ -201,7 +200,7 @@ func NewActionRunner(rdfmCtx *app.RDFM, queueSize int, resultCb ActionResultCall
 }
 
 func (r *ActionRunner) RebuildActionMap() {
-	r.actionMap = make(map[string]dconf.RDFMActionsConfiguration)
+	r.actionMap = make(map[string]conf.RDFMActionsConfiguration)
 	for _, action := range *r.rdfmCtx.RdfmActionsConfig {
 		r.actionMap[action.Id] = action
 	}
