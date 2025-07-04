@@ -121,7 +121,7 @@ func GetUniqueId() (*string, error) {
 		return cachedDeviceIdentifier, nil
 	}
 
-	return nil, nil
+	return nil, errors.New("Failed to find unique identifier")
 }
 
 type JwtPayload struct {
