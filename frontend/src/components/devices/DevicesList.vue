@@ -79,14 +79,30 @@ Component wraps functionality for displaying and working with rdfm devices.
                                 <div class="value">{{ device.public_key.slice(0, 15) }}...</div>
                             </div>
                             <div class="entry">
-                                <!-- TODO: Check a specific permission/role for registering devices once it's implemented server-side -->
-                                <button
-                                    class="action-button blue"
-                                    v-if="hasAdminRole(AdminRole.RW)"
-                                    @click="registerDevice(device.mac_address, device.public_key)"
-                                >
-                                    Register
-                                </button>
+                                <div class="button-wrapper">
+                                    <!-- TODO: Check a specific permission/role for registering devices once it's implemented server-side -->
+                                    <button
+                                        class="action-button blue"
+                                        v-if="hasAdminRole(AdminRole.RW)"
+                                        @click="
+                                            registerDevice(device.mac_address, device.public_key)
+                                        "
+                                    >
+                                        Register
+                                    </button>
+                                    <button
+                                        class="action-button red"
+                                        v-if="hasAdminRole(AdminRole.RW)"
+                                        @click="
+                                            openRemovePendingDevicePopup(
+                                                device.mac_address,
+                                                device.public_key,
+                                            )
+                                        "
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -146,12 +162,40 @@ Component wraps functionality for displaying and working with rdfm devices.
                                     </div>
                                 </div>
                             </div>
+                            <div class="entry">
+                                <button
+                                    class="action-button red"
+                                    v-if="allowedTo('delete', 'device', device.id)"
+                                    @click="openRemoveDevicePopup(device.id)"
+                                    @click.stop.prevent
+                                >
+                                    Remove
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <RemovePopup
+        @click.self="closeRemoveDevicePopup"
+        title="Are you absolutely sure?"
+        :enabled="popupOpen == DevicePopupOpen.RemoveDevice"
+        :description="`This action cannot be undone. It will permanently delete the device #${deviceToRemove}.`"
+        :cancelCallback="closeRemoveDevicePopup"
+        :removeCallback="removeDevice"
+    />
+
+    <RemovePopup
+        @click.self="closeRemoveDevicePopup"
+        title="Are you absolutely sure?"
+        :enabled="popupOpen == DevicePopupOpen.RemovePendingDevice"
+        :description="`This action cannot be undone. It will permanently delete the unregistered device.`"
+        :cancelCallback="closeRemoveDevicePopup"
+        :removeCallback="removePendingDevice"
+    />
 </template>
 
 <style scoped>
@@ -176,7 +220,7 @@ Component wraps functionality for displaying and working with rdfm devices.
 
             /* Default columns widths */
             #device-list-registered .row {
-                grid-template-columns: 80px repeat(4, var(--default-col-width)) 300px auto;
+                grid-template-columns: 80px repeat(5, var(--default-col-width)) 300px auto;
             }
             #device-list-unregistered .row {
                 grid-template-columns: 200px 300px repeat(3, var(--default-col-width)) auto;
@@ -185,7 +229,7 @@ Component wraps functionality for displaying and working with rdfm devices.
             /* Smaller columns widths */
             @media screen and (max-width: 1670px) {
                 #device-list-registered .row {
-                    grid-template-columns: 80px repeat(4, var(--default-col-width)) 200px auto;
+                    grid-template-columns: 80px repeat(5, var(--default-col-width)) 200px auto;
                 }
                 #device-list-unregistered .row {
                     grid-template-columns:
@@ -202,12 +246,10 @@ Component wraps functionality for displaying and working with rdfm devices.
                     grid-template-rows: repeat(auto-fit, auto);
                     position: relative;
 
-                    .entry:last-child {
-                        button {
-                            position: absolute;
-                            right: 10px;
-                            top: 10px;
-                        }
+                    .button-wrapper {
+                        position: absolute;
+                        top: 10px;
+                        right: 10px;
                     }
                 }
             }
@@ -248,8 +290,10 @@ Component wraps functionality for displaying and working with rdfm devices.
                         }
                     }
 
-                    button {
-                        float: right;
+                    & > .button-wrapper {
+                        display: flex;
+                        justify-content: flex-end;
+                        gap: 1em;
                     }
                 }
             }
@@ -259,22 +303,43 @@ Component wraps functionality for displaying and working with rdfm devices.
 </style>
 
 <script lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue';
+import { computed, onMounted, onUnmounted, ref, type Ref } from 'vue';
 
-import { useNotifications, POLL_INTERVAL, hasAdminRole, AdminRole } from '../../common/utils';
+import {
+    useNotifications,
+    POLL_INTERVAL,
+    hasAdminRole,
+    AdminRole,
+    allowedTo,
+} from '../../common/utils';
 import TitleBar from '../TitleBar.vue';
+import RemovePopup from '../RemovePopup.vue';
 import {
     groupResources,
     pendingDevicesResources,
     registerDeviceRequest,
     registeredDevicesResources,
+    removePendingDeviceRequest,
+    removeDeviceRequest,
 } from './devices';
 import router from '@/router';
 import { useRouter } from 'vue-router';
 
+export enum DevicePopupOpen {
+    RemoveDevice,
+    RemovePendingDevice,
+    None,
+}
+
+type PendingDevice = {
+    mac_address: string;
+    public_key: string;
+};
+
 export default {
     components: {
         TitleBar,
+        RemovePopup,
     },
     setup() {
         const notifications = useNotifications();
@@ -289,6 +354,29 @@ export default {
                     headline: 'Error when registering device:',
                     msg: message || 'Registration of device failed',
                 });
+        };
+
+        const removePendingDevice = async () => {
+            const { success, message } = await removePendingDeviceRequest(
+                pendingDeviceToRemove.value!.mac_address,
+                pendingDeviceToRemove.value!.public_key,
+            );
+            if (!success)
+                notifications.notifyError({
+                    headline: 'Error when removing device:',
+                    msg: message || 'Removal of device failed',
+                });
+            closeRemoveDevicePopup();
+        };
+
+        const removeDevice = async () => {
+            const { success, message } = await removeDeviceRequest(deviceToRemove.value!);
+            if (!success)
+                notifications.notifyError({
+                    headline: 'Error when removing device:',
+                    msg: message || 'Removal of device failed',
+                });
+            closeRemoveDevicePopup();
         };
 
         const fetchResources = async () => {
@@ -321,6 +409,24 @@ export default {
             () => pendingDevicesCount.value + registeredDevicesCount.value,
         );
 
+        const popupOpen = ref(DevicePopupOpen.None);
+        const deviceToRemove: Ref<number | null> = ref(null);
+        const pendingDeviceToRemove: Ref<PendingDevice | null> = ref(null);
+
+        const openRemoveDevicePopup = async (id: number) => {
+            deviceToRemove.value = id;
+            popupOpen.value = DevicePopupOpen.RemoveDevice;
+        };
+
+        const openRemovePendingDevicePopup = async (mac_address: string, public_key: string) => {
+            pendingDeviceToRemove.value = { mac_address, public_key };
+            popupOpen.value = DevicePopupOpen.RemovePendingDevice;
+        };
+
+        const closeRemoveDevicePopup = () => {
+            popupOpen.value = DevicePopupOpen.None;
+        };
+
         return {
             pendingDevices: pendingDevicesResources.resources,
             registeredDevices: registeredDevicesResources.resources,
@@ -331,7 +437,17 @@ export default {
             devicesCount,
             hasAdminRole,
             AdminRole,
+            allowedTo,
             registerDevice,
+            removePendingDevice,
+            removeDevice,
+            popupOpen,
+            deviceToRemove,
+            pendingDeviceToRemove,
+            DevicePopupOpen,
+            openRemoveDevicePopup,
+            closeRemoveDevicePopup,
+            openRemovePendingDevicePopup,
         };
     },
 };

@@ -16,7 +16,9 @@ import {
     GROUPS_ENDPOINT,
     PENDING_ENDPOINT,
     REGISTER_DEVICE_ENDPOINT,
+    DELETE_DEVICE_ENDPOINT,
     resourcesGetter,
+    fetchWrapper,
     type Group,
     type PendingDevice,
     type RegisteredDevice,
@@ -81,6 +83,54 @@ export const registerDeviceRequest = async (
                 };
         }
     }
+    await pendingDevicesResources.fetchResources();
+    await registeredDevicesResources.fetchResources();
+    return { success: true };
+};
+
+export const removePendingDeviceRequest = async (
+    mac_address: string,
+    public_key: string,
+): Promise<RequestOutput> => {
+    const body = JSON.stringify({
+        mac_address,
+        public_key,
+    });
+
+    const headers = new Headers();
+    headers.set('Content-type', 'application/json');
+    headers.set('Accept', 'application/json, text/javascript');
+
+    const out = await fetchWrapper(PENDING_ENDPOINT, 'DELETE', headers, body);
+
+    if (!out.success) {
+        return {
+            success: false,
+            message: 'Failed to execute action. Got a response code of ' + out.code,
+        };
+    }
+
+    await pendingDevicesResources.fetchResources();
+    await registeredDevicesResources.fetchResources();
+    return { success: true };
+};
+
+export const removeDeviceRequest = async (identifier: number): Promise<RequestOutput> => {
+    const body = JSON.stringify({});
+
+    const headers = new Headers();
+    headers.set('Content-type', 'application/json');
+    headers.set('Accept', 'application/json, text/javascript');
+
+    const out = await fetchWrapper(DELETE_DEVICE_ENDPOINT(identifier), 'DELETE', headers, body);
+
+    if (!out.success) {
+        return {
+            success: false,
+            message: 'Failed to execute action. Got a response code of ' + out.code,
+        };
+    }
+
     await pendingDevicesResources.fetchResources();
     await registeredDevicesResources.fetchResources();
     return { success: true };
