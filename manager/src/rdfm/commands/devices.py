@@ -92,8 +92,9 @@ def deauth_device(config: rdfm.config.Config, args):
     """CLI entrypoint - de-authorizing a device"""
     print("Deauthorizing devices unsupported")
 
-def remove_device(config: rdfm.config.Config, args):
-    """ CLI entrypoint - removing a device
+
+def remove_registered_device(config: rdfm.config.Config, args):
+    """ CLI entrypoint - removing a registered device
     """
     identifier = args.identifier
     devices: List[rdfm.api.devices.Device] = rdfm.api.devices.fetch_all(config)
@@ -111,7 +112,43 @@ def remove_device(config: rdfm.config.Config, args):
         return f"No registered device with identifier {identifier} found"
 
     device: rdfm.api.devices.Device = filtered[0]
-    return rdfm.api.devices.remove(config, device.id)
+    return rdfm.api.devices.remove_registered(config, device.id)
+
+
+def remove_pending_device(config: rdfm.config.Config, args):
+    """ CLI entrypoint - removing a pending device
+    """
+    mac_address = args.mac_address
+    public_key = args.public_key
+    devices: List[rdfm.api.devices.Device] = (rdfm.api.devices
+                                              .fetch_registrations(config))
+
+    if public_key:
+        filtered: rdfm.api.devices.Device = list(filter(
+            lambda device: (device.mac_address ==
+                            mac_address and device.public_key == public_key),
+            devices
+        ))
+        if len(filtered) == 0:
+            return (f"No pending device with MAC {mac_address} "
+                    "and given public key found")
+    else:
+        filtered: rdfm.api.devices.Device = list(filter(
+            lambda device: (device.mac_address == mac_address),
+            devices
+        ))
+        if len(filtered) == 0:
+            return (f"No pending device with MAC {mac_address} "
+                    "found")
+
+    errs = None
+    for device in filtered:
+        err = rdfm.api.devices.remove_pending(config,
+                                              device.mac_address,
+                                              device.public_key)
+        if err:
+            errs = f"{errs}\n{err}" if errs else err
+    return errs
 
 
 def shell_to_device(config: rdfm.config.Config, args):
@@ -183,6 +220,18 @@ def add_devices_parser(parser: argparse._SubParsersAction):
     remove_registered.set_defaults(func=remove_registered_device)
     remove_registered.add_argument(
         "identifier", type=str, help="identifier of the device"
+    )
+
+    remove_pending = remove_sub.add_parser(
+        "pending", help="remove a pending device from the server"
+    )
+    remove_pending.set_defaults(func=remove_pending_device)
+    remove_pending.add_argument(
+        "mac_address", type=str, help="mac address of the device"
+    )
+    remove_pending.add_argument(
+        "public_key", nargs="?", type=str, help="public_key of the device",
+        default=None
     )
 
     shell = sub.add_parser("shell", help="connect to a shell on the device")

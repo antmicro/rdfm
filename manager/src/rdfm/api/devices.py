@@ -47,9 +47,20 @@ def approve(config: rdfm.config.Config, mac: str, public_key: str):
     return wrap_api_error(response, "Approving device failed")
 
 
-def remove(config: rdfm.config.Config,
-                identifier: int):
-    response = requests.delete(rdfm.api.escape(config, f"/api/v1/devices/{identifier}"),
+def remove_registered(config: rdfm.config.Config,
+                      identifier: int):
+    response = requests.delete(rdfm.api.escape(config,
+                               f"/api/v1/devices/{identifier}"),
+                               verify=config.ca_cert,
+                               auth=config.authorizer)
+    return wrap_api_error(response, "Removing device failed")
+
+
+def remove_pending(config: rdfm.config.Config,
+                   mac_address: str, public_key: str):
+    response = requests.delete(rdfm.api.escape(config, "/api/v1/auth/pending"),
+                               json={"mac_address": mac_address,
+                                     "public_key": public_key},
                                verify=config.ca_cert,
                                auth=config.authorizer)
     return wrap_api_error(response, "Removing device failed")
