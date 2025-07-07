@@ -6,6 +6,9 @@ import requests
 import rdfm.api.devices
 from typing import List, Optional
 from rdfm.helpers import utc_to_local, make_ssl_context_from_cert_file
+import re
+
+MAC_ADDR_REGEX = "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"
 
 
 def list_devices(config: rdfm.config.Config, args):
@@ -89,6 +92,27 @@ def deauth_device(config: rdfm.config.Config, args):
     """CLI entrypoint - de-authorizing a device"""
     print("Deauthorizing devices unsupported")
 
+def remove_device(config: rdfm.config.Config, args):
+    """ CLI entrypoint - removing a device
+    """
+    identifier = args.identifier
+    devices: List[rdfm.api.devices.Device] = rdfm.api.devices.fetch_all(config)
+
+    if re.fullmatch(MAC_ADDR_REGEX, identifier):
+        filtered: rdfm.api.devices.Device = list(
+            filter(lambda device: device.mac_address == identifier, devices))
+    elif identifier.isdigit():
+        filtered: rdfm.api.devices.Device = list(
+            filter(lambda device: device.id == int(identifier), devices))
+    else:
+        return f"No valid identifier provided"
+
+    if len(filtered) == 0:
+        return f"No registered device with identifier {identifier} found"
+
+    device: rdfm.api.devices.Device = filtered[0]
+    return rdfm.api.devices.remove(config, device.id)
+
 
 def shell_to_device(config: rdfm.config.Config, args):
     """CLI entrypoint - shell to a device"""
@@ -146,6 +170,19 @@ def add_devices_parser(parser: argparse._SubParsersAction):
     deauth.set_defaults(func=deauth_device)
     deauth.add_argument(
         "device_id", type=str, help="device identifier of the device"
+    )
+
+    remove = sub.add_parser(
+        "remove", help="remove device from the server"
+    )
+    remove_sub = remove.add_subparsers()
+
+    remove_registered = remove_sub.add_parser(
+        "registered", help="remove a registered device from the server"
+    )
+    remove_registered.set_defaults(func=remove_registered_device)
+    remove_registered.add_argument(
+        "identifier", type=str, help="identifier of the device"
     )
 
     shell = sub.add_parser("shell", help="connect to a shell on the device")

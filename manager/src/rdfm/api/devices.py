@@ -45,3 +45,11 @@ def approve(config: rdfm.config.Config, mac: str, public_key: str):
         auth=config.authorizer,
     )
     return wrap_api_error(response, "Approving device failed")
+
+
+def remove(config: rdfm.config.Config,
+                identifier: int):
+    response = requests.delete(rdfm.api.escape(config, f"/api/v1/devices/{identifier}"),
+                               verify=config.ca_cert,
+                               auth=config.authorizer)
+    return wrap_api_error(response, "Removing device failed")
