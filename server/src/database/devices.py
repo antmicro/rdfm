@@ -2,10 +2,12 @@ import json
 import datetime
 from typing import Optional, List
 import models.device
-from sqlalchemy import select, update
+import models.permission
+from sqlalchemy import select, update, delete
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 import server
+from rdfm.permissions import DEVICE_RESOURCE
 
 
 class DevicesDB:
@@ -105,6 +107,27 @@ class DevicesDB:
                 update(models.device.Device)
                 .values(device_metadata=json.dumps(metadata))
                 .where(models.device.Device.mac_address == mac_address)
+            )
+            session.execute(stmt)
+            session.commit()
+
+    def delete(self, identifier: int):
+        """Delete the given device."""
+        with Session(self.engine) as session:
+            stmt = (
+                delete(models.device.DeviceGroupAssignment)
+                .where(models.device.DeviceGroupAssignment.device_id == identifier)
+            )
+            session.execute(stmt)
+            stmt = (
+                delete(models.permission.Permission)
+                .where(models.permission.Permission.resource_id == identifier)
+                .where(models.permission.Permission.resource == DEVICE_RESOURCE)
+            )
+            session.execute(stmt)
+            stmt = (
+                delete(models.device.Device)
+                .where(models.device.Device.id == identifier)
             )
             session.execute(stmt)
             session.commit()

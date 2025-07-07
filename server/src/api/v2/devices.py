@@ -12,6 +12,7 @@ from rdfm.permissions import (
     READ_PERMISSION,
     UPDATE_PERMISSION,
     DEVICE_RESOURCE,
+    DELETE_PERMISSION
 )
 from rdfm.schema.v2.devices import Device
 import device_mgmt.action
@@ -265,3 +266,45 @@ def exec_action(
     """
     status_code, output = device_mgmt.action.execute_action(mac_address, action_id)
     return {"status_code": status_code, "output": output}, 200
+
+
+@devices_blueprint.route("/api/v2/devices/<int:identifier>", methods=['DELETE'])
+@check_permission(DEVICE_RESOURCE, DELETE_PERMISSION)
+def remove(identifier: int):
+    """ Delete the device
+
+    This endpoint allows deleting the device.
+    As a result, the device will no longer be able to access the server
+    without making a new registartion.
+
+    :param identifier: device identifier
+    :status 200: no error
+    :status 404: the specified device does not exist
+
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        DELETE /api/v1/devices/1 HTTP/1.1
+        Accept: application/json, text/javascript
+
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+    """
+    try:
+        dev: Optional[models.device.Device] = server.instance._devices_db.fetch_one(identifier)
+        if dev is None:
+            return api_error("device does not exist", 404)
+
+        server.instance._devices_db.delete(identifier)
+        return {}, 200
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception during removal:", repr(e))
+        return api_error("removal failed", 500)
