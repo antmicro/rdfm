@@ -10,7 +10,7 @@ import auth.device
 import models.device
 import models.registration
 from api.v1.common import api_error
-from rdfm.schema.v1.devices import AuthRegisterRequest
+from rdfm.schema.v1.devices import AuthRegisterRequest, RemovePendingRequest
 from auth.device import DeviceToken
 from flask import Blueprint, request
 import server
@@ -291,3 +291,63 @@ def set_registration():
         traceback.print_exc()
         print("Exception during registrations fetch:", repr(e))
         return api_error("fetching registrations failed", 500)
+
+
+@auth_blueprint.route("/api/v1/auth/pending", methods=['DELETE'])
+@management_read_write_api
+@deserialize_schema(
+    schema_dataclass=RemovePendingRequest, key="remove_pending_request"
+)
+def remove_pending(remove_pending_request: RemovePendingRequest):
+    """ Delete an unregistered device
+
+    This endpoint allows deleting an unregistered device.
+    As a result, the device will be removed from the list of pending devices.
+
+    :param identifier: device identifier
+    :status 200: no error
+    :status 404: the specified device does not exist
+
+    :<json str public_key: RSA public key used in the registration request
+    :<json str mac_address: MAC address used in the registration request
+
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        DELETE /api/v1/auth/pending HTTP/1.1
+        Accept: application/json, text/javascript
+        Content-Type: application/json
+
+        {
+            "mac_address": "00:00:00:00:00:00",
+            "public_key": "-----BEGIN PUBLIC KEY-----
+                MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCdBgmI/FGkb17Bcxr99lEF1Nof
+                jwQaPcipnBWW+S3N6c937rGkINH0vkHMjcS3HRF2ku6/Knjj4uXrZtbwUbPoP4bP
+                bK+HrYVw9Di6hTHr042W7FxIzU3howCF68QQnUMG/5XmqwdsucH1gMRv8cuU21Vz
+                Qazvf08UWZCUeQjw5QIDAQAB
+                -----END PUBLIC KEY-----"
+        }
+
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+    """
+    try:
+        dev: Optional[models.device.Device] = server.instance._registrations_db.fetch_one(
+            remove_pending_request.mac_address, remove_pending_request.public_key)
+        if dev is None:
+            return api_error("device does not exist", 404)
+
+        server.instance._registrations_db.delete_registration(
+            remove_pending_request.mac_address, remove_pending_request.public_key)
+        return {}, 200
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception during removal of pending device:", repr(e))
+        return api_error("removal failed", 500)

@@ -82,3 +82,16 @@ class AuthRegisterRequest():
         "required": True,
     })
     Schema: ClassVar[Type[marshmallow.Schema]] = marshmallow.Schema
+
+
+@marshmallow_dataclass.dataclass
+class RemovePendingRequest():
+    """ Represents a pending device removal request
+    """
+    public_key: str = field(metadata={
+        "required": True,
+    })
+    mac_address: str = field(metadata={
+        "required": True,
+    })
+    Schema: ClassVar[Type[marshmallow.Schema]] = marshmallow.Schema
