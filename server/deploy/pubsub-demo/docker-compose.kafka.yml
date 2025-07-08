@@ -29,7 +29,7 @@ services:
       # since the configure script inside the docker image doesn't expand
       # the listener.security.protocol.map. If this check fails in the config
       # script the keystore/truststore path config entries won't be propagated
-      KAFKA_ADVERTISED_LISTENERS: DEV://localhost:9093,MGMT://localhost:9094,INT_SSL://broker:19093
+      KAFKA_ADVERTISED_LISTENERS: DEV://broker:9093,MGMT://localhost:9094,INT_SSL://broker:19093
 
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:29093
