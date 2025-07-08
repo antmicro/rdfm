@@ -23,7 +23,7 @@ They can be password protected. To generate valid keystores for this demo deploy
 ../../tests/certgen.sh server IP:127.0.0.1,DNS:localhost,DNS:rdfm-server
 ```
 
-It generates a `server` directory in which, alongside the key-cert pair that could be used for a RDFM server, lie `CA.crt` and `CA.key`. They are essential for generating keystores:
+It generates a `server` directory in which, alongside the key-cert pair that will be used for a RDFM server, lie `CA.crt` and `CA.key`. They are essential for generating keystores:
 
 ```sh
 scripts/storegen.sh --cn broker --san IP:127.0.0.1,DNS:localhost,DNS:broker --password 123123 --destination broker --cacert server/CA.crt --cakey server/CA.key
@@ -37,15 +37,39 @@ KAFKA_SUPER_USERS: User:broker;User:00:00:00:00:00:00
 
 Aside from the mock device that should not be a super user in production, the brokers must have super user access to other brokers for replication of data and such. Without defining this, the cluster will fail to start.
 
-#### Run
+#### Build RDFM server and Linux client
 
-The following starts the Kafka broker alongside Keycloak:
+To run the whole demo, the server and client are also required. The server will authenticate the client. Then the client will use its credentials to authenticate with Kafka and begin sending messages.
+
+* For the server, follow the instruction in the official [docs](https://antmicro.github.io/rdfm/rdfm_mgmt_server.html)
+* For the client, from the root of the project, head to `devices/linux-client` and run:
 
 ```sh
-docker compose -f docker-compose.kafka.yml up
+make docker-demo-client
 ```
 
-If you've named your destination folders differenly with `storegen.sh`, adjust the volume mount in `docker-compose.kafka.yml` accordingly.
+#### Run
+
+The following starts the Kafka broker alongside Keycloak, RDFM server, and RDFM client:
+
+```sh
+docker compose -f docker-compose.kafka.yml up # it imports docker-compose.rdfm.yml
+```
+
+note:
+* If you've named your destination folder differently with `storegen.sh`, adjust the volume mount in `docker-compose.kafka.yml` accordingly.
+* If you've named your destination folder differently with `certgen.sh`, adjust the volume mounts in `docker-compose.rdfm.yml` accordingly.
+
+After the RDFM management server is up, the client sends an authentication request. Accept it using [rdfm-mgmt tool](../../../manager):
+
+```sh
+rdfm-mgmt --url https://localhost:5000 --cert ./server/CA.crt --no-api-auth devices auth <mac-addr>
+```
+
+note:
+* If you're using this utility inside a docker container attached to the `rdfm` network, substitute `localhost` with `rdfm-server`.
+
+After authenticating the client, it will start sending logs to the `RDFM` topic on the broker.
 
 #### Keycloak setup
 
