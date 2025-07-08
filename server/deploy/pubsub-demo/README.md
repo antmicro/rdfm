@@ -4,17 +4,9 @@
 
 Slight modifications to the Kafka docker image are required for it to work nicely with RDFM's authentication scheme. We'll make use of `strmzi-kafka-oauth` and `rdfm-jwt-auth` to authenticate management clients and device clients respectively. Additionally, `strimzi-kafka-oauth` is also capable of authorization.
 
-Before building the docker image, package `rdfm-jwt-auth`:
+Build the image with:
 
 ```sh
-pushd rdfm-jwt-auth
-mvn package
-```
-
-After that, build the image:
-
-```sh
-popd
 DOCKER_BUILDKIT=1 docker build -t kafka-for-rdfm .
 ```
 
