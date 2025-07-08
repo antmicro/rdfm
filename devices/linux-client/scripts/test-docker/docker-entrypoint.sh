@@ -11,6 +11,11 @@ PART_A="${RDFM_CLIENT_PART_A:-/dev/zero}"
 PART_B="${RDFM_CLIENT_PART_B:-/dev/zero}"
 DEVICE_TYPE="${RDFM_CLIENT_DEVTYPE:-x86_64}"
 
+BOOTSTRAP_SERVERS="${RDFM_TELEMETRY_BOOTSTRAP_SERVERS:-localhost:9093}"
+TELEMETRY_ENABLE=${RDFM_TELEMETRY_ENABLE:-false}
+LOG_LEVEL="${RDFM_TELEMETRY_LOG_LEVEL:-WARN}"
+
+
 # Generate a valid configuration
 cat >/etc/rdfm/artifact_info << EOF
 artifact_name=unknown
@@ -30,7 +35,10 @@ EOF
 cat >/var/lib/rdfm/rdfm.conf <<EOF
 {
     "ServerURL": "${SERVER_URL}",
-    "ServerCertificate": "${SERVER_CERT}"
+    "ServerCertificate": "${SERVER_CERT}",
+    "TelemetryEnable": ${TELEMETRY_ENABLE},
+    "TelemetryBootstrapServers": "${BOOTSTRAP_SERVERS}",
+    "TelemetryLogLevel": "${LOG_LEVEL}"
 }
 EOF
 
@@ -56,6 +64,17 @@ cat >/var/lib/rdfm/actions.conf <<EOF
     "Command": ["sleep", "5"],
     "Description": "This action will timeout",
     "Timeout": 3.0
+}
+]
+EOF
+
+cat >/etc/rdfm/loggers.conf <<EOF
+[
+{
+    "name": "current date",
+    "path": "date",
+    "args": ["--rfc-email"],
+    "tick": 1000
 }
 ]
 EOF
