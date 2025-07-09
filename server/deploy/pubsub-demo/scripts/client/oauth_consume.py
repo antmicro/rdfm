@@ -7,7 +7,7 @@ consumer_config = {
     "ssl_cafile": "../../server/CA.crt",
     "sasl_mechanism": "OAUTHBEARER",
 }
-topics = ["quickstart-events"]
+topics = ["RDFM"]
 keycloak_token_provider = KeycloakTokenProvider("test-client", "RnXXukKNSOj2JVNpJnyey6xGGIQQImVi")
 
 consumer = KafkaConsumer(*topics, sasl_oauth_token_provider=keycloak_token_provider, **consumer_config)

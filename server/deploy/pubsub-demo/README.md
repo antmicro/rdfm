@@ -101,7 +101,7 @@ Next configure the resources which define where the authorization rules should a
 2. Click on the intropsection client previusly created
 3. Under that client, head to the authorization tab
 4. Under the authorization tab, head to the resources tab
-5. Create new resource with name and display name of `Topic:quickstart-events`, optionally you can also declare it to be of type `Topic`
+5. Create new resource with name and display name of `Topic:RDFM`, optionally you can also declare it to be of type `Topic`
 6. Define a list of possible authorization scopes that make sense for that resource, for this example `Read`, `Write`, `Create` and `Describe` are enough
 7. Remove the `Default Resource`, if present
 
@@ -123,7 +123,7 @@ Finally create a permission that ties it all together:
 4. Under the authorization tab, head to the permissions tab
 5. Click on create scoped-based permission
 6. Choose an arbitrary name for the permission
-7. For the resource choose the `Topic:quickstart-events`
+7. For the resource choose the `Topic:RDFM`
 8. Choose a set of required authorization scopes. You can choose `Read` or `Write`, but `Describe` must always stay since a client needs to first fetch metadata about a topic. Whether `Create` is required depends on if the topic already exists.
 
 ### Keycloak import

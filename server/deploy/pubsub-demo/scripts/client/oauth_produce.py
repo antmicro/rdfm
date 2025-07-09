@@ -11,7 +11,7 @@ keycloak_token_provider = KeycloakTokenProvider("test-client", "RnXXukKNSOj2JVNp
 
 producer = KafkaProducer(sasl_oauth_token_provider=keycloak_token_provider, **consumer_config)
 
-future = producer.send("quickstart-events", b'test test test test')
+future = producer.send("RDFM", b'test test test test')
 record_metadata = future.get(timeout=3)
 print(record_metadata.topic)
 print(record_metadata.partition)

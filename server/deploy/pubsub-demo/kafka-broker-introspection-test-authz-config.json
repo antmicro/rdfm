@@ -3,10 +3,10 @@
   "policyEnforcementMode": "ENFORCING",
   "resources": [
     {
-      "name": "Topic:quickstart-events",
+      "name": "Topic:RDFM",
       "type": "Topic",
       "ownerManagedAccess": false,
-      "displayName": "Topic:quickstart-events",
+      "displayName": "Topic:RDFM",
       "attributes": {},
       "uris": [],
       "scopes": [
@@ -40,7 +40,7 @@
   ],
   "policies": [
     {
-      "name": "quickstart-events-rw",
+      "name": "RDFM-rw",
       "description": "read write",
       "type": "client",
       "logic": "POSITIVE",
@@ -50,15 +50,15 @@
       }
     },
     {
-      "name": "test-client-quickstart-events",
+      "name": "test-client-RDFM",
       "description": "",
       "type": "scope",
       "logic": "POSITIVE",
       "decisionStrategy": "UNANIMOUS",
       "config": {
-        "resources": "[\"Topic:quickstart-events\"]",
+        "resources": "[\"Topic:RDFM\"]",
         "scopes": "[\"Create\",\"Describe\",\"Read\",\"Write\"]",
-        "applyPolicies": "[\"quickstart-events-rw\"]"
+        "applyPolicies": "[\"RDFM-rw\"]"
       }
     }
   ],
