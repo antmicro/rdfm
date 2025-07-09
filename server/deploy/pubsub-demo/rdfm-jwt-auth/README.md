@@ -5,15 +5,3 @@ Build with
 ```
 mvn package
 ```
-
-Create a [Kafka image](../Dockerfile) with the package pulled into `/opt/kafka/libs`
-
-```
-docker build -t kafka-for-rdfm ..
-```
-
-After that, append this to `server.properties`:
-
-```
-listener.name.<name>.plain.sasl.server.callback.handler.class=com.antmicro.rdfm.DeviceAuthenticateCallbackHandler
-```

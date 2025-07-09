@@ -2,7 +2,7 @@ include:
   - docker-compose.rdfm.yml
 services:
   broker:
-    image: kafka-for-rdfm
+    image: antmicro/kafka-for-rdfm:latest
     hostname: broker
     container_name: broker
     networks:

@@ -7,7 +7,7 @@ Slight modifications to the Kafka docker image are required for it to work nicel
 Build the image with:
 
 ```sh
-DOCKER_BUILDKIT=1 docker build -t kafka-for-rdfm .
+DOCKER_BUILDKIT=1 docker build -t antmicro/kafka-for-rdfm .
 ```
 
 #### Keystore setup
