@@ -352,7 +352,8 @@ def device_api(f):
 
 def __management_api(
         scope_check_callback: Callable[[list[str]], bool],
-        append_scopes: bool = False):
+        append_scopes: bool = False,
+        allow_token_from_url: bool = False):
     """Decorator for management APIs
 
     This decorator verifies whether an incoming request contains a valid
@@ -376,6 +377,10 @@ def __management_api(
                        disabled. This is useful for routes that require
                        additional information about the authenticated
                        user.
+        allow_token_from_url: if True, the request can be authenticated
+                              with a management token added to the URL
+                              of the request instead of the authorization
+                              header.
     """
 
     def _management_api_impl(f):
@@ -388,21 +393,24 @@ def __management_api(
             if conf.disable_api_auth:
                 return f(*args, **kwargs)
 
-            # Extract token from the Authorization header
-            auth = request.authorization
-            if auth is None:
-                return api_error("no Authorization header was provided", 401)
-            if auth.type != "bearer":
-                return api_error(
-                    "invalid authorization - expected authorization type"
-                    "Bearer",
-                    401,
-                )
-            if "token" not in auth:
-                return api_error(
-                    "invalid authorization - missing field: token", 401
-                )
-            token: str = auth["token"]
+            if allow_token_from_url and "token" in request.args:
+                token: str = request.args["token"]
+            else:
+                # Extract token from the Authorization header
+                auth = request.authorization
+                if auth is None:
+                    return api_error("no Authorization header was provided", 401)
+                if auth.type != "bearer":
+                    return api_error(
+                        "invalid authorization - expected authorization type"
+                        "Bearer",
+                        401,
+                    )
+                if "token" not in auth:
+                    return api_error(
+                        "invalid authorization - missing field: token", 401
+                    )
+                token: str = auth["token"]
 
             scopes: Optional[list[str]] = __introspect_and_validate_token(
                 conf, token
@@ -528,20 +536,29 @@ def management_read_only_api(f):
     return __management_api(client_read_allowed)(f)
 
 
-def management_read_write_api(f):
+def management_read_write_api(_func=None, *, allow_token_from_url: bool = False):
     """Decorator to be used on read-write management API routes
 
     This decorator verifies if the requester has read-write access
     to the protected.
     """
-    def client_has_rw_scope(scopes):
-        return SCOPE_READ_WRITE in scopes
+    def _management_read_write_api(f):
+        def client_has_rw_scope(scopes):
+            return SCOPE_READ_WRITE in scopes
 
-    # Mark the handler function with a custom attribute
-    f.__rdfm_api_privileges__ = "management_rw"
-    __add_scope_docs(f, DOCS_SCOPE_RW_TEXT)
+        # Mark the handler function with a custom attribute
+        f.__rdfm_api_privileges__ = "management_rw"
+        __add_scope_docs(f, DOCS_SCOPE_RW_TEXT)
 
-    return __management_api(client_has_rw_scope)(f)
+        return __management_api(
+            client_has_rw_scope,
+            allow_token_from_url=allow_token_from_url
+        )(f)
+
+    if _func is None:
+        return _management_read_write_api
+    else:
+        return _management_read_write_api(_func)
 
 
 def check_user_permissions(resource: str, user_id: str,

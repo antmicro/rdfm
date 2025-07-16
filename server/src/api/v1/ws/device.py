@@ -35,7 +35,7 @@ def device_management_ws(
 @device_ws_blueprint.route(
     "/api/v1/devices/<string:mac_address>/shell", websocket=True
 )
-@management_read_write_api
+@management_read_write_api(allow_token_from_url=True)
 @upgrade_to_websocket
 def spawn_shell_for_manager(ws: simple_websocket.Client, mac_address: str):
     """Manager WebSocket: Spawn a device shell
