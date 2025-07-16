@@ -55,6 +55,13 @@ Component wraps functionality for displaying and working with a single rdfm devi
             </button>
         </div>
 
+        <div class="terminal-container">
+            <button class="action-button gray" @click="toggleTerminal">{{ terminalButton }}</button>
+            <div class="terminal-wrapper" v-if="isTerminalOpened">
+                <Terminal class="terminal" :device="device?.mac_address" />
+            </div>
+        </div>
+
         <div class="device-container" v-if="device">
             <div class="block">
                 <p class="title">MAC Address</p>
@@ -183,6 +190,21 @@ Component wraps functionality for displaying and working with a single rdfm devi
     }
 }
 
+.terminal-container {
+    margin: 2em;
+    transition: transform 1s;
+    display: flex;
+    flex-direction: column;
+}
+
+.terminal-wrapper {
+    position: relative;
+    height: 400px;
+    width: 100%;
+    border: 2px solid var(--gray-400);
+    border-radius: 5px;
+}
+
 .device-container {
     background-color: var(--background-200);
 
@@ -241,6 +263,7 @@ import {
     type RegisteredDevice,
 } from '../../common/utils';
 import TitleBar from '../TitleBar.vue';
+import Terminal from '../Terminal.vue';
 import {
     registeredDevicesResources,
     groupResources,
@@ -258,6 +281,7 @@ const notif = useNotifications();
 export default {
     components: {
         TitleBar,
+        Terminal,
     },
     unmounted() {
         if (this.interval !== null) clearInterval(this.interval);
@@ -394,6 +418,17 @@ export default {
             }
         };
 
+        const isTerminalOpened = ref<boolean>(false);
+
+        const terminalButton = computed(() => {
+            if (isTerminalOpened.value) return 'Close device shell';
+            else return 'Open device shell';
+        });
+
+        const toggleTerminal = () => {
+            isTerminalOpened.value = !isTerminalOpened.value;
+        };
+
         return {
             id: route.params.id,
             interval,
@@ -403,6 +438,9 @@ export default {
             groups,
             actions,
             runAction,
+            toggleTerminal,
+            isTerminalOpened,
+            terminalButton,
         };
     },
 };
