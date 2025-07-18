@@ -56,7 +56,12 @@ Component wraps functionality for displaying and working with a single rdfm devi
         </div>
 
         <div class="terminal-container">
-            <button class="action-button gray" @click="toggleTerminal">{{ terminalButton }}</button>
+            <button
+                :class="['action-button gray', { 'tab-active': isTerminalOpened }]"
+                @click="toggleTerminal"
+            >
+                {{ terminalButton }}
+            </button>
             <div class="terminal-wrapper" v-if="isTerminalOpened">
                 <Terminal class="terminal" :device="device?.mac_address" />
             </div>
@@ -195,6 +200,14 @@ Component wraps functionality for displaying and working with a single rdfm devi
     transition: transform 1s;
     display: flex;
     flex-direction: column;
+
+    button.tab-active {
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        margin-bottom: -2px;
+    }
 }
 
 .terminal-wrapper {
