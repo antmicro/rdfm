@@ -17,7 +17,7 @@ import { defineComponent, computed, onMounted, watch, nextTick } from 'vue';
 
 // @ts-ignore
 import { hterm, lib } from '../third-party/hterm';
-import { DEVICE_SHELL_ENDPOINT } from '../common/utils';
+import { DEVICE_SHELL_ENDPOINT, useNotifications } from '../common/utils';
 
 export default defineComponent({
     props: {
@@ -26,6 +26,8 @@ export default defineComponent({
         },
     },
     setup(props) {
+        const notifications = useNotifications();
+
         let term: any;
         const htermSettings: Record<string, string | boolean> = {
             'background-color': '#000000',
@@ -60,6 +62,7 @@ export default defineComponent({
                 if (props.device) {
                     const accessToken = localStorage.getItem('access_token') as string;
                     const socket = new WebSocket(DEVICE_SHELL_ENDPOINT(props.device, accessToken));
+                    let firstMessage = true;
 
                     socket.addEventListener('open', (event: Event) => {
                         term.io.print(`Connecting to device ${props.device}...\n\r`);
@@ -69,11 +72,20 @@ export default defineComponent({
                         const blob = event.data as Blob;
                         const text = await blob.text();
                         term.io.print(text);
+
+                        if (firstMessage) {
+                            notifications.notifySuccess({
+                                headline: `Device ${props.device} shell available`,
+                            });
+                            firstMessage = false;
+                        }
                     });
 
                     socket.addEventListener('error', (error: Event) => {
                         term.io.print('An error occurred\n\r');
-                        console.error('Device shell error', error);
+                        notifications.notifyError({
+                            headline: 'Device shell connection failed',
+                        });
                     });
 
                     socket.addEventListener('close', (event: CloseEvent) => {
@@ -82,6 +94,11 @@ export default defineComponent({
                             term.io.print(`: ${event.reason}`);
                         }
                         term.io.print('\n\r');
+
+                        notifications.notifyError({
+                            headline: 'Device shell connection closed',
+                            msg: event.reason || 'Shell is not available',
+                        });
                     });
 
                     this.io.onVTKeystroke = (str: string) => {
@@ -93,6 +110,10 @@ export default defineComponent({
                     this.installKeyboard();
                 } else {
                     term.io.print(`Unable to connect. Device is undefined.\n\r`);
+                    notifications.notifyError({
+                        headline: 'Unable to connect to device shell',
+                        msg: 'Device is undefined',
+                    });
                 }
             };
 
