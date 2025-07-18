@@ -17,6 +17,7 @@ import { defineComponent, computed, onMounted, watch, nextTick } from 'vue';
 
 // @ts-ignore
 import { hterm, lib } from '../third-party/hterm';
+import { DEVICE_SHELL_ENDPOINT } from '../common/utils';
 
 export default defineComponent({
     props: {
@@ -57,10 +58,9 @@ export default defineComponent({
                 };
 
                 if (props.device) {
-                    const accessToken = localStorage.getItem('access_token');
-                    const socket = new WebSocket(
-                        `wss://${window.location.host}/api/v1/devices/${props.device}/shell@token=${accessToken}`,
-                    );
+                    const accessToken = localStorage.getItem('access_token') as string;
+                    const socket = new WebSocket(DEVICE_SHELL_ENDPOINT(props.device, accessToken));
+
                     socket.addEventListener('open', (event: Event) => {
                         term.io.print(`Connecting to device ${props.device}...\n\r`);
                     });
