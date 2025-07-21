@@ -19,6 +19,7 @@ from rdfm.ws import (
     WebSocketException,
 )
 import device_mgmt.action
+import server
 
 
 class RemoteDevice:
@@ -79,6 +80,9 @@ class RemoteDevice:
                 flush=True,
             )
             self.capabilities = request.capabilities
+            server.instance._devices_db.update_capabilities(
+                self.token.device_id, request.capabilities
+            )
         elif isinstance(request, ActionExecResult):
             print(
                 "Action execution result for",
