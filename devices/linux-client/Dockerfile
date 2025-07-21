@@ -11,6 +11,7 @@ RUN apt-get update \
     git \
     ca-certificates \
     cmake \
+    protobuf-compiler \
     && apt-get autoremove && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ARG GOVERSION="go1.22.3"
@@ -18,7 +19,7 @@ WORKDIR /opt/${GOVERSION}/
 ADD https://go.dev/dl/${GOVERSION}.linux-amd64.tar.gz /opt/${GOVERSION}/
 RUN tar xzf /opt/${GOVERSION}/${GOVERSION}.linux-amd64.tar.gz
 ENV PATH="$PATH:/opt/${GOVERSION}/go/bin"
-
+RUN GOBIN=/opt/${GOVERSION}/go/bin go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.6
 RUN useradd -u 1000 rdfm-builder
 
 WORKDIR /tmp
