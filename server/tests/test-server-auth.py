@@ -9,7 +9,7 @@ from typing import Any, Optional
 from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
 from Crypto.Signature.pkcs1_15 import PKCS115_SigScheme
-from common import UPDATES_ENDPOINT, SimpleDevice, ProcessConfig
+from common import UPDATES_ENDPOINT, SimpleDevice, ProcessConfig, GROUPS_ENDPOINT
 
 
 SERVER = "http://127.0.0.1:5000/"
@@ -331,3 +331,61 @@ def test_device_token_verification_valid(process, submit_and_approve, submit_aut
         "Authorization": f"Bearer token={token}"
     })
     assert response.status_code != 401, "the endpoint should now be accessible"
+
+def test_remove_device(process, submit_and_approve):
+    response = requests.delete(f"{SERVER}/api/v1/devices/{DUMMY_DEVICE_ID}")
+    assert response.status_code == 200, "removing the device should return success code"
+
+    response = requests.get(f"{SERVER}/api/v1/devices")
+    assert response.status_code == 200, "devices should have been fetched successfully"
+
+    c = len(list(filter(lambda dev: dev["id"] == DUMMY_DEVICE_ID, response.json())))
+    assert c == 0, "the device should have been removed"
+
+def test_remove_device_in_group(process, submit_and_approve):
+    test_json_group = {
+        "metadata": {
+            "description": "An example group"
+        },
+    }
+    response = requests.post(GROUPS_ENDPOINT, json=test_json_group)
+    assert response.status_code == 200, "adding the group should succeed"
+
+    group_id = response.json()["id"]
+
+    response = requests.patch(f"{GROUPS_ENDPOINT}/{group_id}/devices", json={
+        "add": [DUMMY_DEVICE_ID],
+        "remove": []
+    })
+    assert response.status_code == 200, "adding the device to the group should succeed"
+
+    response = requests.delete(f"{SERVER}/api/v1/devices/{DUMMY_DEVICE_ID}")
+    assert response.status_code == 200, "removing the device should return success code"
+
+    response = requests.get(f"{GROUPS_ENDPOINT}/{group_id}").json()
+    assert DUMMY_DEVICE_ID not in response["devices"], "the device shouldn't be present in the group"
+
+    response = requests.get(f"{SERVER}/api/v1/devices")
+    assert response.status_code == 200, "devices should have been fetched successfully"
+
+    c = len(list(filter(lambda dev: dev["id"] == DUMMY_DEVICE_ID, response.json())))
+    assert c == 0, "the device should have been removed"
+
+def test_auth_after_device_removal(process, submit_and_approve):
+    response = requests.delete(f"{SERVER}/api/v1/devices/{DUMMY_DEVICE_ID}")
+    assert response.status_code == 200, "removing the device should return success code"
+
+    response = requests.get(f"{SERVER}/api/v1/devices")
+    assert response.status_code == 200, "devices should have been fetched successfully"
+
+    c = len(list(filter(lambda dev: dev["id"] == DUMMY_DEVICE_ID, response.json())))
+    assert c == 0, "the device should have been removed"
+
+    response = requests.post(AUTH,
+                             data=test_device.request_bytes,
+                             headers={
+                                 "Content-Type": "application/json",
+                                 "X-RDFM-Device-Signature": test_device.signature,
+                             })
+
+    assert response.status_code == 401 , "device should not be authorized"
