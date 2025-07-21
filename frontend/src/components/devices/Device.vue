@@ -55,17 +55,19 @@ Component wraps functionality for displaying and working with a single rdfm devi
             </button>
         </div>
 
-        <div class="terminal-container">
-            <button
-                :class="['action-button gray', { 'tab-active': isTerminalOpened }]"
-                @click="toggleTerminal"
-            >
-                {{ terminalButton }}
-            </button>
-            <div class="terminal-wrapper" v-if="isTerminalOpened">
-                <Terminal class="terminal" :device="device?.mac_address" />
+        <template v-if="device?.capabilities.shell">
+            <div class="terminal-container">
+                <button
+                    :class="['action-button gray', { 'tab-active': isTerminalOpened }]"
+                    @click="toggleTerminal"
+                >
+                    {{ terminalButton }}
+                </button>
+                <div class="terminal-wrapper" v-if="isTerminalOpened">
+                    <Terminal class="terminal" :device="device?.mac_address" />
+                </div>
             </div>
-        </div>
+        </template>
 
         <div class="device-container" v-if="device">
             <div class="block">
