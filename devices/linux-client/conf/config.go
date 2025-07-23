@@ -16,17 +16,19 @@ const DEFAULT_RETRY_POLL_INTERVAL_S = 60
 const DEFAULT_HTTP_CACHE_ENABLED = true
 const DEFAULT_RECONNECT_RETRY_COUNT = 3
 const DEFAULT_RECONNECT_RETRY_TIME = 60
+
 // The following regex provides a sane default for matching the network
 // interface to use for fetching the unique device identifier. This will try to
 // match:
-//   1) unpredictable naming schemes, e.g eth0
-//   2) PCI-based network devices using slot and path naming, e.g ens9f0/enp33s0f0
-//   3) onboard naming scheme, e.g eno1
+//  1. unpredictable naming schemes, e.g eth0
+//  2. PCI-based network devices using slot and path naming, e.g ens9f0/enp33s0f0
+//  3. onboard naming scheme, e.g eno1
+//
 // See below reference on predictable naming:
 // https://www.freedesktop.org/software/systemd/man/latest/systemd.net-naming-scheme.html
 const DEFAULT_MAC_ADDRESS_IF_REGEXP = "eth\\d+|en(([Pp]\\d+)*(s\\d+)+(f\\d+)*(n\\d+|d\\d+)*|([o]\\d+))"
 const DEFAULT_TELEMETRY_ENABLE = false
-const DEFAULT_TELEMETRY_BATCH_SIZE = 50
+const DEFAULT_TELEMETRY_BATCH_SIZE = 1024
 const DEFAULT_SHELL_ENABLE = true
 const DEFAULT_SHELL_CONCURRENT_MAX_COUNT = 5
 const DEFAULT_ACTION_ENABLE = true
@@ -63,8 +65,8 @@ type RDFMConfig struct {
 
 	// Is telemetry enabled. Default: false
 	TelemetryEnable bool `json:",omitempty"`
-	// Number of log entries to be sent at a time. Default: 50
-	TelemetryBatchSize int `json:",omitempty"`
+	// Maximum size of logs in bytes that the client will batch. Default: 1024
+	TelemetryBatchSize int32 `json:",omitempty"`
 	// Log levels from within the client to be captured
 	TelemetryLogLevel string `json:",omitempty"`
 	// Broker addresses

@@ -1,85 +1,37 @@
 package daemon
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"time"
 
+	"github.com/antmicro/rdfm/devices/linux-client/conf"
 	"github.com/antmicro/rdfm/devices/linux-client/telemetry"
 
 	log "github.com/sirupsen/logrus"
 )
 
-const TELEMETRY_LOOP_RECOVERY_INTERVAL = 60
+const TELEMETRY_LOOP_RECOVERY_INTERVAL_S = 60
+const TELEMETRY_RING_SIZE = 50
 
-func (d *Device) sendLogBatch(batch telemetry.LogBatch, client *http.Client, endpoint string) error {
-	serializedBatch, err := json.Marshal(batch)
-	if err != nil {
-		return errors.New("Failed to serialize log batch: " + err.Error())
-	}
-
-	deviceToken, err := d.getDeviceToken()
-	if err != nil {
-		return err
-	}
-
-	req, _ := http.NewRequest("POST", endpoint, bytes.NewBuffer(serializedBatch))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer token="+deviceToken)
-	res, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != 200 {
-		body, _ := io.ReadAll(res.Body)
-		return errors.New(string(body))
-	}
-
-	return nil
-}
-
-func (d *Device) sendLogEntries(entries *[]telemetry.LogEntry, client *http.Client, endpoint string) error {
-	return d.sendLogBatch(telemetry.MakeLogBatch(*entries), client, endpoint)
-}
-
-func (d *Device) logSendLoop(entries *[]telemetry.LogEntry, cancelCtx context.Context, logs <-chan telemetry.LogEntry) {
-	log.Println("Telemetry loop running")
-	client := &http.Client{Transport: d.httpTransport}
-	batchSize := d.rdfmCtx.RdfmConfig.TelemetryBatchSize
-	endpoint := fmt.Sprintf("%s/api/v1/logs", d.rdfmCtx.RdfmConfig.ServerURL)
-
+func (d *Device) logSendLoop(cancelCtx context.Context, msgOutCh <-chan telemetry.Message) {
 	for {
 		select {
 		case <-cancelCtx.Done():
-			telemetry.StopLoggers(d.logManager, d.rdfmCtx.RdfmTelemetryConfig)
-			err := d.sendLogEntries(entries, client, endpoint)
-			if err != nil {
-				log.Error("Telemetry log batch request failed: " + err.Error())
-			}
+			log.Println("Telemetry: logSendLoop: received cancellation signal, closing")
 			return
-		case entry := <-logs:
-			*entries = append(*entries, entry)
-			if len(*entries) >= batchSize {
-				err := d.sendLogEntries(entries, client, endpoint)
-				if err != nil {
-					log.Error("Telemetry log batch request failed: " + err.Error())
-					// Panic whenever an error occurs to put the logging goroutine
-					// on a timeout. The slice containing the log batch isn't lost.
-					// Slice will be zeroed only after a succesful log transfer to
-					// the management server. Adding the timeout prevents feedback
-					// loops caused by calling hooked logrus functions from within
-					// telemetry.
-					panic(err)
-				}
-				// Zero the slice to make space for new entries.
-				*entries = (*entries)[:0]
+		default:
+			err := d.kafkaRunner.ClientLoop(
+				cancelCtx,
+				msgOutCh,
+			)
+			if err != nil {
+				recoveryTime := TELEMETRY_LOOP_RECOVERY_INTERVAL_S * time.Second
+				log.Println("Telemetry: logSendLoop: KafkaRunner ClientLoop failed with", err)
+				log.Println("Telemetry: logSendLoop: Rerunning ClientLoop in", recoveryTime)
+				time.Sleep(recoveryTime)
+			} else {
+				log.Debug("Telemetry: logSendLoop: KafkaRunner ClientLoop graceful exit, rerunning")
 			}
 		}
 	}
@@ -90,17 +42,25 @@ func (d *Device) telemetryLoop(cancelCtx context.Context) {
 		return
 	}
 
-	logs := telemetry.StartRecurringProcessLoggers(
+	if d.rdfmCtx.RdfmConfig.TelemetryBatchSize < 512 {
+		log.Warnln("Telemetry: the minimum value of TelemetryBatchSize is 512, falling back to default:",
+			conf.DEFAULT_TELEMETRY_BATCH_SIZE)
+		d.rdfmCtx.RdfmConfig.TelemetryBatchSize = conf.DEFAULT_TELEMETRY_BATCH_SIZE
+	}
+
+	// telemetry.LogEntry adheres to the telemetry.Message
+	msgInCh := telemetry.StartRecurringProcessLoggers(
 		d.logManager,
 		d.rdfmCtx.RdfmTelemetryConfig,
 	)
+	msgOutCh := make(chan telemetry.Message, TELEMETRY_RING_SIZE)
+	messageRingBuffer := telemetry.NewRingBuffer[telemetry.Message](msgInCh, msgOutCh)
+	go messageRingBuffer.Run()
 
-	err := telemetry.ConfigureLogrusHook(d.rdfmCtx.RdfmConfig.TelemetryLogLevel, logs)
+	err := telemetry.ConfigureLogrusHook(d.rdfmCtx.RdfmConfig.TelemetryLogLevel, msgInCh)
 	if err != nil {
 		log.Warnln("Telemetry: logrus hook configuration:", err.Error())
 	}
-
-	entries := make([]telemetry.LogEntry, 0, d.rdfmCtx.RdfmConfig.TelemetryBatchSize)
 
 	var info string
 	var loop func()
@@ -116,14 +76,14 @@ func (d *Device) telemetryLoop(cancelCtx context.Context) {
 				return
 			default:
 			}
-			log.Println("Telemetry loop recovery from", info)
-			recoveryTime := TELEMETRY_LOOP_RECOVERY_INTERVAL * time.Second
+			log.Println("Telemetry: main loop recovery from", info)
+			recoveryTime := TELEMETRY_LOOP_RECOVERY_INTERVAL_S * time.Second
 			log.Println("Rerunning telemetry loop in", recoveryTime)
 			time.Sleep(recoveryTime)
 			loop()
 		}()
 
-		d.logSendLoop(&entries, cancelCtx, logs)
+		d.logSendLoop(cancelCtx, msgOutCh)
 	}
 	loop()
 }

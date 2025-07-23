@@ -2,17 +2,17 @@ package telemetry
 
 import (
 	"fmt"
-	"github.com/antmicro/rdfm/devices/linux-client/helpers"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
 
 type LogrusHook struct {
 	levels        []log.Level
-	telemetryChan chan<- LogEntry
+	telemetryChan chan<- Message
 }
 
-func ConfigureLogrusHook(config string, ch chan<- LogEntry) error {
+func ConfigureLogrusHook(config string, ch chan<- Message) error {
 	hook := LogrusHook{}
 	err := hook.determineLevelFromConfig(config)
 	if err != nil {
@@ -23,7 +23,7 @@ func ConfigureLogrusHook(config string, ch chan<- LogEntry) error {
 	return nil
 }
 
-func (hook *LogrusHook) setChannel(ch chan<- LogEntry) {
+func (hook *LogrusHook) setChannel(ch chan<- Message) {
 	hook.telemetryChan = ch
 }
 
@@ -34,7 +34,7 @@ func (hook *LogrusHook) Levels() []log.Level {
 func (hook *LogrusHook) Fire(entry *log.Entry) error {
 	go func() {
 		hook.telemetryChan <- MakeLogEntry(
-			helpers.TimeToServerTime(entry.Time),
+			time.Now(),
 			fmt.Sprintf("RDFM-%s", entry.Level.String()),
 			entry.Message,
 		)

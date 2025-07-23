@@ -13,7 +13,7 @@ type LoggerContext struct {
 	Args LoggerArgs // Arguments
 
 	Timeout time.Duration
-	Logs    chan<- LogEntry
+	Logs    chan<- Message
 	Done    <-chan struct{} // Should only be used by a function of type PersistentLoggerFunc
 
 }
@@ -60,7 +60,7 @@ func (p PersistentLogger) log(ctx LoggerContext) {
 
 type logTask struct {
 	done     chan struct{}
-	logs     chan LogEntry
+	logs     chan Message
 	interval time.Duration
 	logger   Logger
 	args     LoggerArgs
@@ -171,7 +171,7 @@ func (manager *LogManager) AddTask(name string, logger Logger, interval time.Dur
 	return nil
 }
 
-func (manager *LogManager) StartTask(name string, args LoggerArgs, logs chan LogEntry) error {
+func (manager *LogManager) StartTask(name string, args LoggerArgs, logs chan Message) error {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
 
@@ -207,8 +207,8 @@ func (manager *LogManager) StopTask(name string) error {
 }
 
 // Utility function that starts all the loggers within the provided map
-func StartRecurringProcessLoggers(lm *LogManager, c *map[string]conf.RDFMLoggerConfiguration) chan LogEntry {
-	logs := make(chan LogEntry)
+func StartRecurringProcessLoggers(lm *LogManager, c *map[string]conf.RDFMLoggerConfiguration) chan Message {
+	logs := make(chan Message)
 	if c == nil {
 		return logs
 	}

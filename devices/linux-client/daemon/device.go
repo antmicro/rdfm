@@ -50,6 +50,7 @@ type Device struct {
 	conn                *serverws.DeviceManagementConnection
 	actionRunner        *actions.ActionRunner
 	shellRunner         *shell.ShellRunner
+	kafkaRunner         *telemetry.KafkaRunner
 }
 
 func (d *Device) handleRequest(msg []byte) (serverws.Request, error) {
@@ -256,6 +257,27 @@ func (d *Device) setupShellRunner() error {
 		return err
 	}
 	d.shellRunner = sr
+	return nil
+}
+
+func (d *Device) setupKafkaRunner() error {
+	tlsConf, err := d.getTlsConf()
+	if err != nil {
+		return err
+	}
+
+	tokenCb := func() (string, error) {
+		return d.getDeviceToken()
+	}
+
+	kr := telemetry.NewKafkaRunner(
+		d.macAddr,
+		tlsConf,
+		d.rdfmCtx.RdfmConfig.TelemetryBootstrapServers,
+		d.rdfmCtx.RdfmConfig.TelemetryBatchSize,
+		tokenCb,
+	)
+	d.kafkaRunner = kr
 	return nil
 }
 

@@ -157,7 +157,7 @@ func TestDetermineLevel(t *testing.T) {
 }
 
 func TestFireLogs(t *testing.T) {
-	logs := make(chan LogEntry, 1)
+	logs := make(chan Message, 1)
 	var wantErr error = nil
 
 	err := ConfigureLogrusHook("WARN", logs)
@@ -177,8 +177,8 @@ func TestFireLogs(t *testing.T) {
 
 	entry := <-logs
 	wantEntry := regexp.MustCompile(warn)
-	if !wantEntry.MatchString(entry.Entry) {
-		t.Fatalf(`entry.Entry = %v, want match for %#q`, entry.Entry, wantEntry)
+	if !wantEntry.MatchString(entry.(LogEntry).Entry) {
+		t.Fatalf(`entry.Entry = %v, want match for %#q`, entry.(LogEntry).Entry, wantEntry)
 	}
 
 	want = 0

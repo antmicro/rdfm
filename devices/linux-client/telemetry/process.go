@@ -3,10 +3,10 @@ package telemetry
 import (
 	"bufio"
 	"context"
-	"github.com/antmicro/rdfm/devices/linux-client/helpers"
 	"io"
 	"os/exec"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -69,7 +69,7 @@ var RecurringProcessLogger = RecurringLogger(
 				case stdoutLine, ok := <-stdoutCh:
 					if ok {
 						ctx.Logs <- MakeLogEntry(
-							helpers.NowAsServerTime(),
+							time.Now(),
 							ctx.Args.Name,
 							stdoutLine,
 						)
@@ -79,7 +79,7 @@ var RecurringProcessLogger = RecurringLogger(
 				case stderrLine, ok := <-stderrCh:
 					if ok {
 						ctx.Logs <- MakeLogEntry(
-							helpers.NowAsServerTime(),
+							time.Now(),
 							ctx.Args.Name,
 							stderrLine,
 						)
