@@ -40,9 +40,12 @@ ifneq ($(TAGS),)
 BUILDTAGS = -tags '$(TAGS)'
 endif
 
-build:
+build: generate
 	$(GO) build -o rdfm $(GO_LDFLAGS) $(BUILDV) $(BUILDTAGS) \
 		-trimpath
+
+generate:
+	$(GO) generate protos/protos.go
 
 rdfm: build
 
