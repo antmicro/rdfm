@@ -1,0 +1,12 @@
+syntax = "proto3";
+package protos;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "./protos";
+
+message log {
+        string entry = 1;
+        string device_mac = 2;
+	google.protobuf.Timestamp device_time = 3;
+}
