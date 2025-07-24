@@ -12,6 +12,7 @@ RUN apt-get update \
     ca-certificates \
     cmake \
     protobuf-compiler \
+    libprotobuf-dev \
     && apt-get autoremove && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ARG GOVERSION="go1.22.3"
