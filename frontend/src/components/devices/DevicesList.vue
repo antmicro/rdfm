@@ -163,14 +163,16 @@ Component wraps functionality for displaying and working with rdfm devices.
                                 </div>
                             </div>
                             <div class="entry">
-                                <button
-                                    class="action-button red"
-                                    v-if="allowedTo('delete', 'device', device.id)"
-                                    @click="openRemoveDevicePopup(device.id)"
-                                    @click.stop.prevent
-                                >
-                                    Remove
-                                </button>
+                                <div class="button-wrapper">
+                                    <button
+                                        class="action-button red"
+                                        v-if="allowedTo('delete', 'device', device.id)"
+                                        @click="openRemoveDevicePopup(device.id)"
+                                        @click.stop.prevent
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
