@@ -22,7 +22,7 @@ export CGO_CFLAGS
 VERSION = $(shell git describe --tags --dirty --exact-match 2>/dev/null || git rev-parse --short HEAD)
 
 GO_LDFLAGS = \
-	-ldflags "-X github.com/antmicro/rdfm/conf.Version=$(VERSION)"
+	-ldflags "-X github.com/antmicro/rdfm/devices/linux-client/conf.Version=$(VERSION)"
 
 BUILDER_IMAGE_TAG = antmicro/rdfm-client-builder:latest
 DEMO_CLIENT_TAG = antmicro/rdfm-linux-demo-client:latest

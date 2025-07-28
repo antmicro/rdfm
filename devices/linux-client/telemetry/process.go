@@ -3,7 +3,7 @@ package telemetry
 import (
 	"bufio"
 	"context"
-	"github.com/antmicro/rdfm/helpers"
+	"github.com/antmicro/rdfm/devices/linux-client/helpers"
 	"io"
 	"os/exec"
 	"strings"

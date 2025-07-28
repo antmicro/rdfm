@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/antmicro/rdfm/telemetry"
+	"github.com/antmicro/rdfm/devices/linux-client/telemetry"
 
 	log "github.com/sirupsen/logrus"
 )

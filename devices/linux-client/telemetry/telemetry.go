@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/antmicro/rdfm/conf"
+	"github.com/antmicro/rdfm/devices/linux-client/conf"
 	log "github.com/sirupsen/logrus"
 )
 

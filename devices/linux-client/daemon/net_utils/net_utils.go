@@ -8,7 +8,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/antmicro/rdfm/conf"
+	"github.com/antmicro/rdfm/devices/linux-client/conf"
 	"github.com/golang-jwt/jwt/v5"
 
 	log "github.com/sirupsen/logrus"

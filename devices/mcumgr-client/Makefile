@@ -18,7 +18,7 @@ export CGO_ENABLED
 VERSION = $(shell git describe --tags --dirty --exact-match 2>/dev/null || git rev-parse --short HEAD)
 
 GO_LDFLAGS = \
-	-ldflags "-X github.com/antmicro/rdfm/conf.Version=$(VERSION)"
+	-ldflags "-X github.com/antmicro/rdfm/devices/linux-client/conf.Version=$(VERSION)"
 
 ifeq ($(V),1)
 BUILDV = -v

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/antmicro/rdfm/handlers"
+	"github.com/antmicro/rdfm/devices/linux-client/handlers"
 
 	"github.com/mendersoftware/mender-artifact/areader"
 	mhandlers "github.com/mendersoftware/mender-artifact/handlers"

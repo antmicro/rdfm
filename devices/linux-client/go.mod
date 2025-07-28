@@ -1,4 +1,4 @@
-module github.com/antmicro/rdfm
+module github.com/antmicro/rdfm/devices/linux-client
 
 go 1.20
 

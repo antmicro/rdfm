@@ -8,9 +8,9 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/antmicro/rdfm/download"
-	"github.com/antmicro/rdfm/handlers"
-	"github.com/antmicro/rdfm/parser"
+	"github.com/antmicro/rdfm/devices/linux-client/download"
+	"github.com/antmicro/rdfm/devices/linux-client/handlers"
+	"github.com/antmicro/rdfm/devices/linux-client/parser"
 
 	"github.com/mendersoftware/mender/client"
 	"github.com/mendersoftware/mender/datastore"

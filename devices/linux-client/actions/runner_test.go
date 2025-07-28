@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/antmicro/rdfm/app"
-	"github.com/antmicro/rdfm/conf"
+	"github.com/antmicro/rdfm/devices/linux-client/app"
+	"github.com/antmicro/rdfm/devices/linux-client/conf"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )

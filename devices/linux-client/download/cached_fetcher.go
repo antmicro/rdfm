@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/antmicro/rdfm/conf"
-	"github.com/antmicro/rdfm/parser"
+	"github.com/antmicro/rdfm/devices/linux-client/conf"
+	"github.com/antmicro/rdfm/devices/linux-client/parser"
 
 	"github.com/mendersoftware/mender/client"
 	log "github.com/sirupsen/logrus"

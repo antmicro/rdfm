@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	conf "github.com/antmicro/rdfm/conf"
+	conf "github.com/antmicro/rdfm/devices/linux-client/conf"
 
 	"github.com/mendersoftware/mender/client"
 	log "github.com/sirupsen/logrus"

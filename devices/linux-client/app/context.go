@@ -5,9 +5,9 @@ import (
 	"errors"
 	"path"
 
-	conf "github.com/antmicro/rdfm/conf"
-	"github.com/antmicro/rdfm/delta"
-	"github.com/antmicro/rdfm/helpers"
+	conf "github.com/antmicro/rdfm/devices/linux-client/conf"
+	"github.com/antmicro/rdfm/devices/linux-client/delta"
+	"github.com/antmicro/rdfm/devices/linux-client/helpers"
 	"github.com/mendersoftware/mender/client"
 	mconf "github.com/mendersoftware/mender/conf"
 	"github.com/mendersoftware/mender/datastore"

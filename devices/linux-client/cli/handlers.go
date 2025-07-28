@@ -3,8 +3,8 @@ package cli
 import (
 	"fmt"
 
-	"github.com/antmicro/rdfm/app"
-	"github.com/antmicro/rdfm/daemon"
+	"github.com/antmicro/rdfm/devices/linux-client/app"
+	"github.com/antmicro/rdfm/devices/linux-client/daemon"
 	log "github.com/sirupsen/logrus"
 
 	//  Watch out for package name collisions with the library below

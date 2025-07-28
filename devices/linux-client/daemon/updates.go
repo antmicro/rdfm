@@ -12,7 +12,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	packages "github.com/antmicro/rdfm/daemon/packages"
+	packages "github.com/antmicro/rdfm/devices/linux-client/daemon/packages"
 )
 
 const MIN_RETRY_INTERVAL = 1

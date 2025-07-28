@@ -10,8 +10,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/antmicro/rdfm/app"
-	"github.com/antmicro/rdfm/telemetry"
+	"github.com/antmicro/rdfm/devices/linux-client/app"
+	"github.com/antmicro/rdfm/devices/linux-client/telemetry"
 	libcli "github.com/urfave/cli/v2"
 )
 

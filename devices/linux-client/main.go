@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/antmicro/rdfm/cli"
+	"github.com/antmicro/rdfm/devices/linux-client/cli"
 )
 
 func main() {

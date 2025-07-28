@@ -2,7 +2,7 @@ package telemetry
 
 import (
 	"fmt"
-	"github.com/antmicro/rdfm/helpers"
+	"github.com/antmicro/rdfm/devices/linux-client/helpers"
 
 	log "github.com/sirupsen/logrus"
 )

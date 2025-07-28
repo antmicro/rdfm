@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/antmicro/rdfm/serverws"
+	"github.com/antmicro/rdfm/devices/linux-client/serverws"
 	"github.com/creack/pty"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"

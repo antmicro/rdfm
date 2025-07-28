@@ -23,14 +23,14 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/antmicro/rdfm/actions"
-	"github.com/antmicro/rdfm/app"
-	"github.com/antmicro/rdfm/conf"
-	"github.com/antmicro/rdfm/serverws"
-	"github.com/antmicro/rdfm/shell"
-	"github.com/antmicro/rdfm/telemetry"
+	"github.com/antmicro/rdfm/devices/linux-client/actions"
+	"github.com/antmicro/rdfm/devices/linux-client/app"
+	"github.com/antmicro/rdfm/devices/linux-client/conf"
+	"github.com/antmicro/rdfm/devices/linux-client/serverws"
+	"github.com/antmicro/rdfm/devices/linux-client/shell"
+	"github.com/antmicro/rdfm/devices/linux-client/telemetry"
 
-	netUtils "github.com/antmicro/rdfm/daemon/net_utils"
+	netUtils "github.com/antmicro/rdfm/devices/linux-client/daemon/net_utils"
 )
 
 const RSA_DEVICE_KEY_SIZE = 4096
