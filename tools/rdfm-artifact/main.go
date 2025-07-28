@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/antmicro/rdfm-artifact/cli"
+	"github.com/antmicro/rdfm/tools/rdfm-artifact/cli"
 )
 
 func main() {

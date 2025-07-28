@@ -16,7 +16,7 @@ export CGO_ENABLED
 VERSION = $(shell git describe --tags --dirty --exact-match 2>/dev/null || git rev-parse --short HEAD)
 
 GO_LDFLAGS = \
-	-ldflags "-X github.com/antmicro/rdfm-artifact/cli.Version=$(VERSION)"
+	-ldflags "-X github.com/antmicro/rdfm/tools/rdfm-artifact/cli.Version=$(VERSION)"
 
 ifeq ($(V),1)
 BUILDV = -v
@@ -36,7 +36,7 @@ build:
 
 PLATFORMS := darwin linux windows
 
-GO_LDFLAGS_WIN = -ldflags "-X github.com/antmicro/rdfm-artifact/cli.Version=$(VERSION) -linkmode=internal -s -w -extldflags '-static' -extld=x86_64-w64-mingw32-gcc"
+GO_LDFLAGS_WIN = -ldflags "-X github.com/antmicro/rdfm/tools/rdfm-artifact/cli.Version=$(VERSION) -linkmode=internal -s -w -extldflags '-static' -extld=x86_64-w64-mingw32-gcc"
 
 build-natives:
 	@arch="amd64";

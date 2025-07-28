@@ -3,7 +3,7 @@ package cli
 import (
 	"log"
 
-	"github.com/antmicro/rdfm-artifact/writers"
+	"github.com/antmicro/rdfm/tools/rdfm-artifact/writers"
 	"github.com/urfave/cli"
 )
 

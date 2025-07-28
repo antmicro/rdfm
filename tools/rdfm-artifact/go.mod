@@ -1,4 +1,4 @@
-module github.com/antmicro/rdfm-artifact
+module github.com/antmicro/rdfm/tools/rdfm-artifact
 
 go 1.17
 

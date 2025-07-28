@@ -7,7 +7,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/antmicro/rdfm-artifact/writers"
+	"github.com/antmicro/rdfm/tools/rdfm-artifact/writers"
 	"github.com/mendersoftware/mender-artifact/awriter"
 	"github.com/mendersoftware/mender-artifact/handlers"
 

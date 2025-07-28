@@ -1,7 +1,7 @@
 package writers
 
 import (
-	"github.com/antmicro/rdfm-artifact/deltas"
+	"github.com/antmicro/rdfm/tools/rdfm-artifact/deltas"
 	"github.com/mendersoftware/mender-artifact/artifact"
 	"github.com/mendersoftware/mender-artifact/awriter"
 	"github.com/mendersoftware/mender-artifact/handlers"

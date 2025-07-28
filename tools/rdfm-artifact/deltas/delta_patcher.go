@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/antmicro/rdfm-artifact/extractors"
+	"github.com/antmicro/rdfm/tools/rdfm-artifact/extractors"
 	"github.com/balena-os/librsync-go"
 	"golang.org/x/sync/errgroup"
 )
