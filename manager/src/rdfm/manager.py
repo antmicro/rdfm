@@ -8,6 +8,7 @@ import rdfm.config
 import rdfm.commands.devices
 import rdfm.commands.packages
 import rdfm.commands.groups
+import rdfm.commands.permissions
 from authlib.integrations.requests_client import OAuthError
 
 
@@ -46,6 +47,7 @@ def main():
     rdfm.commands.devices.add_devices_parser(subparsers)
     rdfm.commands.packages.add_packages_parser(subparsers)
     rdfm.commands.groups.add_groups_parser(subparsers)
+    rdfm.commands.permissions.add_permissions_parser(subparsers)
     # Wrap argv so when no arguments are passed, we inject a help screen
     wrapped_args = None if sys.argv[1:] else ["--help"]
     args = parser.parse_args(args=wrapped_args)
