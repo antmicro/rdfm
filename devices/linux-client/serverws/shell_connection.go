@@ -3,7 +3,12 @@ package serverws
 import (
 	"crypto/tls"
 	"os"
+	"os/exec"
+	"strconv"
+	"strings"
+	"syscall"
 
+	"github.com/creack/pty"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
@@ -45,7 +50,7 @@ func (sc *ShellConnection) Connect(deviceToken string, macAddr string, shellUuid
 
 // Copy data bidirectionally between the specified open PTY and the connected
 // WebSocket. Blocks until either the PTY or the WebSocket are closed.
-func (sc *ShellConnection) Copy(pty *os.File) error {
+func (sc *ShellConnection) Copy(pts *os.File, command *exec.Cmd) error {
 	var g errgroup.Group
 	// WS -> Shell
 	g.Go(func() error {
@@ -58,12 +63,24 @@ func (sc *ShellConnection) Copy(pty *os.File) error {
 			if t != websocket.BinaryMessage {
 				// NOTE: Shell data is transferred using binary messages
 				// exclusively, as it can contain control characters. Text
-				// messages are currently unused, but can be repurposed in the
-				// future for control messages (e.g - session-specific control
-				// messages).
+				// messages are used for control messages (e.g terminal resize).
+				message := string(b[:])
+				parts := strings.Split(message, " ")
+				if parts == nil {
+					continue
+				}
+				if parts[0] == "resize" {
+					rows, _ := strconv.Atoi(parts[1])
+					cols, _ := strconv.Atoi(parts[2])
+					pty.Setsize(pts, &pty.Winsize{
+						Rows: uint16(rows),
+						Cols: uint16(cols),
+					})
+					command.Process.Signal(syscall.SIGWINCH)
+				}
 				continue
 			}
-			_, err = pty.Write(b)
+			_, err = pts.Write(b)
 			if err != nil {
 				log.Debugf("FD write returned err: %s", err)
 				return err
@@ -74,7 +91,7 @@ func (sc *ShellConnection) Copy(pty *os.File) error {
 	g.Go(func() error {
 		b := make([]byte, ShellCopyBufferSize)
 		for {
-			n, err := pty.Read(b)
+			n, err := pts.Read(b)
 			if err != nil {
 				log.Debugf("PTY read returned err: %s", err)
 				return err

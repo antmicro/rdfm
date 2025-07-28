@@ -90,7 +90,7 @@ func TestShellConnectionRead(t *testing.T) {
 	// Create pipe to simulate tty. Pass the *read* end of the pipe as we want
 	// to test reads.
 	r, w, err := os.Pipe()
-	go conn.Copy(r)
+	go conn.Copy(r, nil)
 	// Write test data to the write pipe, it should be received over the mock
 	// websocket.
 	_, err = w.Write(TestData)
@@ -119,7 +119,7 @@ func TestShellConnectionWrite(t *testing.T) {
 	// Create pipe to simulate tty. Pass the *write* end of the pipe as we want
 	// to test writes.
 	r, w, err := os.Pipe()
-	go conn.Copy(w)
+	go conn.Copy(w, nil)
 	// Send data over the mock websocket, it should be readable on the read end
 	// of the pipe.
 	ws.toSend <- TestData

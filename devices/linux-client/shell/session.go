@@ -46,6 +46,7 @@ func findShell() (*string, error) {
 // stdout and provide stdin, call Run with the WebSocket to use for
 // communication.
 func NewShellSession(uid string) (*ShellSession, error) {
+	log.Printf("Creating new shell session with id %s", uid)
 	session := new(ShellSession)
 	session.uuid = uid
 	shell, err := findShell()
@@ -53,7 +54,11 @@ func NewShellSession(uid string) (*ShellSession, error) {
 		return nil, err
 	}
 	session.command = exec.Command(*shell)
-	ptmx, err := pty.Start(session.command)
+	session.command.Env = append(session.command.Env, "TERM=linux")
+	ptmx, err := pty.StartWithSize(session.command, &pty.Winsize{
+		Rows: uint16(80),
+		Cols: uint16(24),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +80,7 @@ func (s *ShellSession) Run(connection *serverws.ShellConnection) error {
 		return err
 	})
 	g.Go(func() error {
-		err := connection.Copy(s.ptmx)
+		err := connection.Copy(s.ptmx, s.command)
 		s.Close()
 		connection.Close()
 		return err
