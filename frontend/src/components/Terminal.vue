@@ -55,17 +55,20 @@ export default defineComponent({
             term.scrollPort_.contenteditable = false;
 
             term.onTerminalReady = function onTerminalReady() {
-                this.io.onTerminalResize = () => {
-                    this.focus();
-                };
-
                 if (props.device) {
                     const accessToken = localStorage.getItem('access_token') as string;
                     const socket = new WebSocket(DEVICE_SHELL_ENDPOINT(props.device, accessToken));
                     let firstMessage = true;
 
+                    const sendMessage = (str: string) => {
+                        const encoder = new TextEncoder();
+                        const raw = encoder.encode(str);
+                        socket.send(raw);
+                    };
+
                     socket.addEventListener('open', (event: Event) => {
                         term.io.print(`Connecting to device ${props.device}...\n\r`);
+                        socket.send(`resize ${term.screenSize.height} ${term.screenSize.width}`);
                     });
 
                     socket.addEventListener('message', async (event: MessageEvent) => {
@@ -101,10 +104,15 @@ export default defineComponent({
                         });
                     });
 
-                    this.io.onVTKeystroke = (str: string) => {
-                        const encoder = new TextEncoder();
-                        const raw = encoder.encode(str);
-                        socket.send(raw);
+                    this.io.onVTKeystroke = (str: string) => sendMessage(str);
+
+                    this.io.sendString = (str: string) => sendMessage(str);
+
+                    this.io.onTerminalResize = () => {
+                        this.focus();
+                        if (socket === undefined) return;
+                        if (socket.readyState !== WebSocket.OPEN) return;
+                        socket.send(`resize ${term.screenSize.height} ${term.screenSize.width}`);
                     };
 
                     this.installKeyboard();
