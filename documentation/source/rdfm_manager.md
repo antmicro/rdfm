@@ -92,10 +92,11 @@ options:
   --no-api-auth         disable OAuth2 authentication for API requests (default: False)
 
 available commands:
-  {devices,packages,groups}
+  {devices,packages,groups,permissions}
     devices             device management
     packages            package management
     groups              group management
+    permissions         permission management
 ```
 
 ### Listing available resources
@@ -123,6 +124,12 @@ Listing groups:
 
 ```
 rdfm-mgmt groups list
+```
+
+Listing permissions:
+
+```
+rdfm-mgmt permissions list [--user <user id>] [--resource <resource type>] [--resource-id <resource id>] [--permission <permission type>]
 ```
 
 ### Uploading packages
@@ -199,3 +206,74 @@ rdfm-mgmt devices auth <mac-address>
 ```
 
 You can then select the registration for this device to authorize.
+
+### Permissions
+
+RDFM Manager utility provides permission commands that allow granting permissions to specific users and resources.
+They operate on resource types, resource IDs, user IDs and permission types.
+
+#### Resource types
+
+There are three resource types: `group`, `package` and `device`.
+
+#### Resource IDs
+
+Resource ID is the ID of given resource and together with the resource type uniquely identifies such resource.
+You can determine the resource ID using `rdfm-mgmt <resource type> list` command, using the RDFM frontend or through the server API.
+In case of the devices you can also use device's MAC address or name in place of the ID.
+
+#### User IDs
+
+User ID uniquely identifies the user.
+
+In Keycloak, the user ID can be determined by logging into administration console, selecting the realm corresponding to the RDFM system and selecting `Users` from the menu.
+Then, you will see the list of users.
+Clicking on any user will enter user's details page where user ID will be visible.
+
+#### Permission types
+
+There are four permission types: `read`, `create`, `update` and `delete`.
+
+#### Creating permissions
+
+```
+rdfm-mgmt permissions create <resource type> --id <resource ids> --user <user ids> --permission <permission types>
+```
+
+For example, you can assign `read` permission to the user with ID `eed3d12d-e13b-4c4a-aebd-38b4d55c8947` for the group with ID `1` by invoking:
+
+```
+rdfm-mgmt permissions create group --id 1 --user eed3d12d-e13b-4c4a-aebd-38b4d55c8947 --permission read
+```
+
+You can assign permissions to multiple resources and users at once.
+For example, the following command will assign `read` and `update` permissions to users `eed3d12d-e13b-4c4a-aebd-38b4d55c8947` and `eed3d12d-e13b-4c4a-aebd-38b4d55c8948` for devices with IDs `1` and `2`:
+
+```
+rdfm-mgmt permissions create device --id 1 2 --user eed3d12d-e13b-4c4a-aebd-38b4d55c8947 eed3d12d-e13b-4c4a-aebd-38b4d55c8948 --permission read update
+```
+
+#### Deleting permissions
+
+```
+rdfm-mgmt permissions create <resource type> --id <resource ids> --user <user ids> --permission <permission types>
+```
+
+For example, you can revoke `read` permission from the user with ID `eed3d12d-e13b-4c4a-aebd-38b4d55c8947` for the group with ID `1` by invoking:
+
+```
+rdfm-mgmt permissions delete group --id 1 --user eed3d12d-e13b-4c4a-aebd-38b4d55c8947 --permission read
+```
+
+You can revoke permissions to multiple resources and users at once. For example, the following command will revoke `read` and `update` permissions from users `eed3d12d-e13b-4c4a-aebd-38b4d55c8947` and `eed3d12d-e13b-4c4a-aebd-38b4d55c8948` for devices with IDs `1` and `2`:
+
+```
+rdfm-mgmt permissions delete device --id 1 2 --user eed3d12d-e13b-4c4a-aebd-38b4d55c8947 eed3d12d-e13b-4c4a-aebd-38b4d55c8948 --permission read update
+```
+
+You can also revoke permissions for all resource IDs from given user using `--all-ids` flag.
+For example, the following command will revoke read permission for all devices from user `eed3d12d-e13b-4c4a-aebd-38b4d55c8947`:
+
+```
+rdfm-mgmt permissions delete device --all-ids --user eed3d12d-e13b-4c4a-aebd-38b4d55c8947 --permission read
+```
