@@ -249,3 +249,124 @@ def test_shell_to_device_eof_stdin(start_shell_mock, device_shell_no_teardown: s
     assert device_shell_no_teardown.poll() is not None, "rdfm-mgmt should have terminated after Ctrl-D"
     assert device_shell_no_teardown.wait() == 0, "Ctrl-D should be a clean exit"
 
+
+def test_create_permission(process, create_dummy_group):
+    """ Test if creating a permission works
+    """
+    _, code = run_manager_command(["--no-api-auth", "permissions", "create", "group",
+                                   "--id", "1",
+                                   "--user", "1",
+                                   "--permission", "read"])
+    assert code == 0, "creating a permission should succeed"
+
+    out, code = run_manager_command(["--no-api-auth", "permissions", "list"])
+    expected = "Permission type: read\nResource type: group\nResource id: 1\nUser id: 1"
+    assert code == 0, "listing permissions should succeed"
+    assert expected in out, "the permission should be present"
+
+
+def test_create_multiple_permissions(process, create_dummy_group):
+    """ Test if creating multiple permissions works
+    """
+    _, code = run_manager_command(["--no-api-auth", "permissions", "create", "group",
+                                   "--id", "1",
+                                   "--user", "1", "2",
+                                   "--permission", "read", "update"])
+    assert code == 0, "creating a permission should succeed"
+
+    out, code = run_manager_command(["--no-api-auth", "permissions", "list"])
+    assert code == 0, "listing permissions should succeed"
+    expected = [
+        "Permission type: read\nResource type: group\nResource id: 1\nUser id: 1",
+        "Permission type: update\nResource type: group\nResource id: 1\nUser id: 1",
+        "Permission type: read\nResource type: group\nResource id: 1\nUser id: 2",
+        "Permission type: update\nResource type: group\nResource id: 1\nUser id: 2"
+    ]
+    for e in expected:
+        assert e in out, "the permission should be present"
+
+
+def test_delete_permission(process, upload_dummy_package):
+    """ Test if deleting a permission works
+    """
+    _, code = run_manager_command(["--no-api-auth", "permissions", "create", "package",
+                                   "--id", "1",
+                                   "--user", "1",
+                                   "--permission", "read"])
+    assert code == 0, "creating a permission should succeed"
+
+    _, code = run_manager_command(["--no-api-auth", "permissions", "delete", "package",
+                                   "--id", "1",
+                                   "--user", "1",
+                                   "--permission", "read"])
+    assert code == 0, "deleting a permission should succeed"
+
+    out, code = run_manager_command(["--no-api-auth", "permissions", "list"])
+    assert code == 0, "listing permissions should succeed"
+    not_expected = "Permission type: read\nResource type: package\nResource id: 1\nUser id: 1"
+    assert not_expected not in out, "the permission should not be present"
+
+
+def test_delete_multiple_permissions(process, upload_dummy_package):
+    """ Test if deleting multiple permission works
+    """
+    _, code = run_manager_command(["--no-api-auth", "permissions", "create", "package",
+                                   "--id", "1",
+                                   "--user", "1", "2",
+                                   "--permission", "read", "update"])
+    assert code == 0, "creating permissions should succeed"
+
+    _, code = run_manager_command(["--no-api-auth", "permissions", "delete", "package",
+                                   "--id", "1",
+                                   "--user", "1", "2",
+                                   "--permission", "read", "update"])
+    assert code == 0, "deleting permissions should succeed"
+
+    out, code = run_manager_command(["--no-api-auth", "permissions", "list"])
+    assert code == 0, "listing permissions should succeed"
+    not_expected = [
+        "Permission type: read\nResource type: package\nResource id: 1\nUser id: 1",
+        "Permission type: update\nResource type: package\nResource id: 1\nUser id: 1",
+        "Permission type: read\nResource type: package\nResource id: 1\nUser id: 2",
+        "Permission type: update\nResource type: package\nResource id: 1\nUser id: 2"
+    ]
+    for e in not_expected:
+        assert e not in out, "the permission not should be present"
+
+
+def test_delete_permissions_all_ids(process, upload_dummy_package):
+    """ Test if deleting permissions with --all-ids works
+    """
+    for _ in range(0,2):
+        _, code = run_manager_command(["--no-api-auth", "groups", "create",
+                                    "--name", GROUP_NAME,
+                                    "--description", GROUP_DESCRIPTION,
+                                    "--priority", GROUP_PRIORITY])
+        assert code == 0, "creating group should succeed"
+
+    _, code = run_manager_command(["--no-api-auth", "permissions", "create", "group",
+                                   "--id", "1", "2",
+                                   "--user", "1", "2",
+                                   "--permission", "read"])
+    assert code == 0, "creating a permission should succeed"
+
+    _, code = run_manager_command(["--no-api-auth", "permissions", "delete", "group",
+                                   "--all-ids",
+                                   "--user", "1",
+                                   "--permission", "read"])
+    assert code == 0, "deleting a permission should succeed"
+
+    out, code = run_manager_command(["--no-api-auth", "permissions", "list"])
+    assert code == 0, "listing permissions should succeed"
+    expected = [
+        "Permission type: read\nResource type: group\nResource id: 1\nUser id: 2",
+        "Permission type: read\nResource type: group\nResource id: 2\nUser id: 2"
+    ]
+    not_expected = [
+        "Permission type: read\nResource type: group\nResource id: 1\nUser id: 1",
+        "Permission type: read\nResource type: group\nResource id: 2\nUser id: 1"
+    ]
+    for e in expected:
+        assert e in out, "the permission should be present"
+    for e in not_expected:
+        assert e not in out, "the permission not should be present"
