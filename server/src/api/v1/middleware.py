@@ -674,7 +674,7 @@ def management_user_validation(f):
             ]
         if conf.disable_api_auth:
             return f(auth_enabled=False, user_id=None,
-                     user_roles=None, *args, **kwargs)
+                     user_roles=[], *args, **kwargs)
 
         # Extract token from the Authorization header
         auth = request.authorization
