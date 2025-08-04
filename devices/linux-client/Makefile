@@ -41,7 +41,9 @@ BUILDTAGS = -tags '$(TAGS)'
 endif
 
 build:
-	$(GO) build $(GO_LDFLAGS) $(BUILDV) $(BUILDTAGS)
+	$(GO) build \
+		$(GO_LDFLAGS) $(BUILDV) $(BUILDTAGS) \
+		-trimpath
 
 rdfm: build
 
