@@ -63,7 +63,7 @@ build-natives-contained:
 	docker image rm $$image_id
 
 install:
-	@$(GO) install $(GO_LDFLAGS) $(BUILDV) $(BUILDTAGS)
+	@$(GO) install $(GO_LDFLAGS) $(BUILDV) $(BUILDTAGS) -trimpath
 
 clean:
 	$(GO) clean
