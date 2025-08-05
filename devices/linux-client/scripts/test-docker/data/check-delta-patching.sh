@@ -92,6 +92,7 @@ setup_test_delta_installation()
 	CHECKSUM=($(sha256sum $PART_A))
 	cat >/etc/rdfm/provides_info << EOF
 rootfs-image.checksum=$CHECKSUM
+rdfm.software.supports_rsync=true
 EOF
 	rm /var/lib/rdfm/*-store
 

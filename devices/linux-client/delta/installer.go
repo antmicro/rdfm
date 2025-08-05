@@ -122,7 +122,7 @@ func (d DeltaRootfsInstaller) PrepareStoreUpdate() error {
 }
 
 func (d DeltaRootfsInstaller) StoreUpdate(r io.Reader, info os.FileInfo) error {
-	isDelta := strings.HasSuffix(info.Name(), ".delta")
+	isDelta := strings.HasSuffix(info.Name(), ".delta") || strings.HasSuffix(info.Name(), ".rsync")
 	if isDelta {
 		fmt.Println("The artifact is a delta update:", info.Name())
 		return d.storeUpdateDelta(r, info)
