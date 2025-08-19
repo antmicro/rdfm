@@ -56,14 +56,20 @@ Component wraps functionality for displaying and working with a single rdfm devi
         </div>
 
         <template v-if="device?.capabilities.shell">
-            <div class="terminal-container">
-                <button
-                    :class="['action-button gray', { 'tab-active': isTerminalOpened }]"
-                    @click="toggleTerminal"
-                >
-                    {{ terminalButton }}
+            <div :class="['terminal-container', { fullscreen: isFullscreen }]">
+                <button :class="['action-button gray', { 'tab-active': isTerminalOpened }]">
+                    <div @click="toggleTerminal">
+                        {{ terminalButton }}
+                    </div>
+                    <div @click="terminalFullscreen" v-if="isTerminalOpened">
+                        <Expand v-if="!isFullscreen" />
+                        <Collapse v-if="isFullscreen" />
+                    </div>
                 </button>
-                <div class="terminal-wrapper" v-if="isTerminalOpened">
+                <div
+                    :class="['terminal-wrapper', { fullscreen: isFullscreen }]"
+                    v-if="isTerminalOpened"
+                >
                     <Terminal class="terminal" :device="device?.mac_address" />
                 </div>
             </div>
@@ -204,12 +210,29 @@ Component wraps functionality for displaying and working with a single rdfm devi
     flex-direction: column;
 
     button.tab-active {
+        display: flex;
+        flex-direction: row;
+        column-gap: 10px;
+
         border-top-left-radius: 8px;
         border-top-right-radius: 8px;
         border-bottom-left-radius: 0;
         border-bottom-right-radius: 0;
+
         margin-bottom: -2px;
     }
+}
+
+.terminal-container.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    margin: 0;
+    height: 100vh;
+    width: 100%;
+
+    background: var(--background-200);
+    z-index: 9999;
 }
 
 .terminal-wrapper {
@@ -218,6 +241,10 @@ Component wraps functionality for displaying and working with a single rdfm devi
     width: 100%;
     border: 2px solid var(--gray-400);
     border-radius: 5px;
+}
+
+.terminal-wrapper.fullscreen {
+    flex: 1;
 }
 
 .device-container {
@@ -279,6 +306,8 @@ import {
 } from '../../common/utils';
 import TitleBar from '../TitleBar.vue';
 import Terminal from '../Terminal.vue';
+import Expand from '../icons/Expand.vue';
+import Collapse from '../icons/Collapse.vue';
 import {
     registeredDevicesResources,
     groupResources,
@@ -297,6 +326,8 @@ export default {
     components: {
         TitleBar,
         Terminal,
+        Expand,
+        Collapse,
     },
     unmounted() {
         if (this.interval !== null) clearInterval(this.interval);
@@ -434,6 +465,7 @@ export default {
         };
 
         const isTerminalOpened = ref<boolean>(false);
+        const isFullscreen = ref<boolean>(false);
 
         const terminalButton = computed(() => {
             if (isTerminalOpened.value) return 'Close device shell';
@@ -442,6 +474,11 @@ export default {
 
         const toggleTerminal = () => {
             isTerminalOpened.value = !isTerminalOpened.value;
+            isFullscreen.value = false;
+        };
+
+        const terminalFullscreen = () => {
+            isFullscreen.value = !isFullscreen.value;
         };
 
         return {
@@ -456,6 +493,8 @@ export default {
             toggleTerminal,
             isTerminalOpened,
             terminalButton,
+            terminalFullscreen,
+            isFullscreen,
         };
     },
 };
