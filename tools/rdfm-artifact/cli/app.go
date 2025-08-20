@@ -1,12 +1,15 @@
 package cli
 
 import (
+	"fmt"
+
 	"github.com/urfave/cli"
 )
 
 const (
 	cliToolName        = "rdfm-artifact"
 	cliToolDescription = "manage creation of RDFM artifacts"
+	noPositional       = " " // needs to be truthy so the default [arguments...] is not displayed
 )
 
 // Version of the rdfm-artifact CLI tool
@@ -24,8 +27,18 @@ func NewApp() *cli.App {
 	return app
 }
 
+func walkCommands(cmds cli.Commands, fn func(*cli.Command)) {
+	for i := range cmds {
+		c := &cmds[i]
+		fn(c)
+		if len(c.Subcommands) > 0 {
+			walkCommands(c.Subcommands, fn)
+		}
+	}
+}
+
 func makeCommands() []cli.Command {
-	return []cli.Command{
+	cmds := []cli.Command{
 		{
 			Name:        "read",
 			Aliases:     []string{"r"},
@@ -56,14 +69,16 @@ func makeCommands() []cli.Command {
 		- "source" artifact - base artifact the delta will be applied on top of, i.e the currently running software
 		- "destination" artifact - target artifact, i.e the updated version of the running software
 					`,
-					Flags:  makeDeltaRootfsFlags(),
-					Action: writeDeltaRootfs,
+					Flags:     makeDeltaRootfsFlags(),
+					ArgsUsage: noPositional,
+					Action:    writeDeltaRootfs,
 				},
 				{
 					Name:        "zephyr-image",
 					Usage:       "Create a full Zephyr MCUboot image artifact",
 					Description: "Creates a non-delta artifact containing the complete Zephyr MCUboot image to be installed on a target device",
 					Flags:       makeFullZephyrFlags(),
+					ArgsUsage:   noPositional,
 					Action:      writeFullZephyr,
 				},
 				{
@@ -71,6 +86,7 @@ func makeCommands() []cli.Command {
 					Usage:       "Create a Zephyr MCUboot group image artifact",
 					Description: "Creates an artifact containing update images for Zephyr group devices",
 					Flags:       makeGroupFlags(),
+					ArgsUsage:   noPositional,
 					Action:      writeGroupZephyr,
 				},
 				{
@@ -78,11 +94,26 @@ func makeCommands() []cli.Command {
 					Usage:       "Create a single file artifact",
 					Description: "Creates an artifact containing a single file that can be installed on a target device",
 					Flags:       makeSingleFileFlags(),
+					ArgsUsage:   noPositional,
 					Action:      writeSingleFile,
 				},
 			},
 		},
 	}
+
+	walkCommands(cmds, func(cmd *cli.Command) {
+		if cmd.ArgsUsage != noPositional {
+			return
+		}
+		cmd.Before = func(c *cli.Context) error {
+			if c.Args().Present() {
+				return fmt.Errorf("%v: unexpected positional arguments: %v", cmd.Name, c.Args())
+			}
+			return nil
+		}
+	})
+
+	return cmds
 }
 
 func makeFlags() []cli.Flag {
