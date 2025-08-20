@@ -16303,7 +16303,7 @@ hterm.Terminal.prototype.setTextAttributes = function (textAttributes) {
  * @param {string} title The title to set.
  */
 hterm.Terminal.prototype.setWindowTitle = function (title) {
-    window.document.title = title;
+    return;
 };
 
 /**
