@@ -32,6 +32,21 @@ func TestWriteGroupWithMismatchVersion(t *testing.T) {
 	assert.ErrorContains(t, err, "Version mismatch between images")
 }
 
+func TestWriteGroupInvalidArgs(t *testing.T) {
+	app := NewApp()
+	err := app.Run([]string{
+		"rdfm-artifact",
+		"write",
+		"zephyr-group-image",
+		"--group-type", "dummy_type",
+		"--target", testGroupTargetOne,
+		"--target", testGroupInvalidTarget,
+		"positional",
+	})
+
+	assert.ErrorContains(t, err, "zephyr-group-image: unexpected positional arguments: [positional]")
+}
+
 func TestWriteGroupArtifact(t *testing.T) {
 	defer os.Remove(testGroupArtifactPath)
 

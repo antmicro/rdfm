@@ -43,6 +43,33 @@ func TestWriteInvalidZephyrArtifact(t *testing.T) {
 	assert.ErrorContains(t, err, "incorrect magic value")
 }
 
+func TestWriteZephyrArtifactInvalidArgs(t *testing.T) {
+	app := NewApp()
+	err := app.Run([]string{
+		"rdfm-artifact",
+		"write",
+		"zephyr-image",
+		"--device-type", "dummy_type",
+		"--device-type", "different_dummy_type", // Also test if passing multiple values works properly
+		"--artifact-name-depends", "depended_artifact",
+		"--artifact-name-depends", "another_depended_artifact",
+		"--depends-groups", "depended_group",
+		"--depends-groups", "another_depended_group",
+		"--provides-group", "provided_group",
+		"--clears-provides", "cleared_provide",
+		"--clears-provides", "another_cleared_provide",
+		"--provides", "provide1:AAAAAAAAAAAA",
+		"--provides", "provide2:BBBBBBBBBBBB",
+		"--depends", "depend1:11111111",
+		"--depends", "depend2:22222222",
+		"--output-path", testZephyrArtifactPath,
+		"--file", testZephyrInvalidPayload,
+		"positional",
+	})
+
+	assert.ErrorContains(t, err, "zephyr-image: unexpected positional arguments: [positional]")
+}
+
 func TestWriteZephyrArtifact(t *testing.T) {
 	defer os.Remove(testZephyrArtifactPath)
 

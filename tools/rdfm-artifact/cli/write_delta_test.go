@@ -71,3 +71,18 @@ func TestWriteRsyncDeltaRootfsArtifact(t *testing.T) {
 func TestWriteXDeltaRootfsArtifact(t *testing.T) {
 	testWriteDeltaRootfsArtifact(t, "xdelta", xdeltaSupportFlag)
 }
+
+func TestWriteDeltaRootfsInvalidArgs(t *testing.T) {
+	app := NewApp()
+	err := app.Run([]string{
+		"rdfm-artifact",
+		"write",
+		"delta-rootfs-image",
+		"--base-artifact", testDeltaRootfsBase,
+		"--target-artifact", testDeltaRootfsTarget,
+		"--output-path", testDeltaRootfsOut,
+		"positional",
+	})
+
+	assert.ErrorContains(t, err, "delta-rootfs-image: unexpected positional arguments: [positional]")
+}
