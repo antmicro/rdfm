@@ -13,7 +13,7 @@ Container for the hterm.js terminal.
 </template>
 
 <script lang="ts">
-import { defineComponent, computed, onMounted, watch, nextTick } from 'vue';
+import { defineComponent, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 
 // @ts-ignore
 import { hterm, lib } from '../third-party/hterm';
@@ -29,6 +29,7 @@ export default defineComponent({
         const notifications = useNotifications();
 
         let term: any;
+        let socket: WebSocket;
         const htermSettings: Record<string, string | boolean> = {
             'background-color': '#000000',
             'cursor-color': 'white',
@@ -37,6 +38,18 @@ export default defineComponent({
             'mouse-paste-button': 'no-button',
             'pass-on-drop': false,
             'shift-insert-paste': false,
+        };
+        const closeEventListener = (event: CloseEvent) => {
+            term.io.print('Console unavailable');
+            if (event.reason) {
+                term.io.print(`: ${event.reason}`);
+            }
+            term.io.print('\n\r');
+
+            notifications.notifyError({
+                headline: 'Device shell connection closed',
+                msg: event.reason || 'Shell is not available',
+            });
         };
 
         const setHTermPreferences = () => {
@@ -48,6 +61,16 @@ export default defineComponent({
             });
         };
 
+        onUnmounted(() => {
+            if (socket) {
+                socket.removeEventListener('close', closeEventListener);
+                socket.close();
+                notifications.notifySuccess({
+                    headline: `Device ${props.device} shell closed`,
+                });
+            }
+        });
+
         onMounted(async () => {
             await lib.init();
             setHTermPreferences();
@@ -57,7 +80,7 @@ export default defineComponent({
             term.onTerminalReady = function onTerminalReady() {
                 if (props.device) {
                     const accessToken = localStorage.getItem('access_token') as string;
-                    const socket = new WebSocket(DEVICE_SHELL_ENDPOINT(props.device, accessToken));
+                    socket = new WebSocket(DEVICE_SHELL_ENDPOINT(props.device, accessToken));
                     let firstMessage = true;
 
                     const sendMessage = (str: string) => {
@@ -91,18 +114,7 @@ export default defineComponent({
                         });
                     });
 
-                    socket.addEventListener('close', (event: CloseEvent) => {
-                        term.io.print('Console unavailable');
-                        if (event.reason) {
-                            term.io.print(`: ${event.reason}`);
-                        }
-                        term.io.print('\n\r');
-
-                        notifications.notifyError({
-                            headline: 'Device shell connection closed',
-                            msg: event.reason || 'Shell is not available',
-                        });
-                    });
+                    socket.addEventListener('close', closeEventListener);
 
                     this.io.onVTKeystroke = (str: string) => sendMessage(str);
 
