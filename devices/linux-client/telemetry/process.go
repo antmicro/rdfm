@@ -11,11 +11,17 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func readFromPipe(pipe io.ReadCloser, ch chan string) {
+func readFromPipe(pipe io.ReadCloser, ch chan string, ctx context.Context) {
 	scanner := bufio.NewScanner(pipe)
 	for scanner.Scan() {
-		ch <- scanner.Text()
+		select {
+		case <-ctx.Done():
+			break
+		default:
+			ch <- scanner.Text()
+		}
 	}
+
 	/* Err() returns any error that isn't io.EOF,
 	so no need to take of that scenario */
 	if err := scanner.Err(); err != nil {
@@ -53,16 +59,16 @@ var RecurringProcessLogger = RecurringLogger(
 			return
 		}
 
-		if err = cmd.Start(); err != nil {
-			log.Errorf("logger %s: error starting the process: %v", ctx.Args.Name, err)
-		}
-
 		stdoutCh := make(chan string)
 		stderrCh := make(chan string)
-		go readFromPipe(r, stdoutCh)
-		go readFromPipe(re, stderrCh)
+		go readFromPipe(r, stdoutCh, tctx)
+		go readFromPipe(re, stderrCh, tctx)
 
-		done := make(chan struct{})
+		if err = cmd.Start(); err != nil {
+			log.Errorf("logger %s: error starting the process: %v", ctx.Args.Name, err)
+			return
+		}
+
 		go func() {
 			for {
 				select {
@@ -86,18 +92,33 @@ var RecurringProcessLogger = RecurringLogger(
 					} else {
 						stderrCh = nil
 					}
-				case <-done:
+				case <-tctx.Done():
 					return
 				}
 			}
 		}()
 
 		if err := cmd.Wait(); err != nil {
-			log.Errorf(
-				"logger %s: %s timed out",
-				ctx.Args.Name,
-				ctx.Args.Path,
-			)
+			switch err.(type) {
+			case *exec.ExitError:
+				log.Errorf(
+					"logger %s: %s: unsuccessful exit: %v",
+					ctx.Args.Name,
+					ctx.Args.Path,
+					err,
+				)
+				ctx.Logs <- MakeLogEntry(
+					time.Now(),
+					ctx.Args.Name,
+					string(err.(*exec.ExitError).Stderr),
+				)
+			default:
+				log.Errorf(
+					"logger %s: %s: %v",
+					ctx.Args.Name,
+					ctx.Args.Path,
+					err,
+				)
+			}
 		}
-		close(done)
 	})
