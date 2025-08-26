@@ -68,17 +68,6 @@ cat >/var/lib/rdfm/actions.conf <<EOF
 ]
 EOF
 
-cat >/etc/rdfm/loggers.conf <<EOF
-[
-{
-    "name": "current date",
-    "path": "date",
-    "args": ["--rfc-email"],
-    "tick": 1000
-}
-]
-EOF
-
 # Creating an entry in /etc/hosts for the server
 IP=$(echo $SERVER_URL | awk -F"://|:" '{print $2}')
 echo "$IP rdfm-server" >> /etc/hosts
