@@ -1,0 +1,26 @@
+FROM antmicro/rdfm-linux-demo-client
+
+RUN apt-get update \
+	&& env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+		jq \
+		sysstat \
+		stress-ng \
+		&& apt-get autoremove && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /opt/rdfm
+RUN echo '\
+[{\n\
+	"name": "stress test",\n\
+	"path": "/usr/bin/stress-ng",\n\
+	"args": ["--cpu", "2", "-t", "1m"],\n\
+	"tick": 150000\n\
+},{\n\
+	"name": "CPU",\n\
+	"path": "/opt/rdfm/cpu.sh",\n\
+	"tick": 1500\n\
+}]'\
+>/etc/rdfm/loggers.conf
+RUN echo '#!/bin/bash\n\
+mpstat 1 1 -o JSON | jq -c'\
+>/opt/rdfm/cpu.sh
+RUN chmod +x /opt/rdfm/cpu.sh
