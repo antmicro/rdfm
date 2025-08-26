@@ -1,0 +1,3 @@
+server/mender-store
+server/mender-store-lock
+server/rsa.pem
