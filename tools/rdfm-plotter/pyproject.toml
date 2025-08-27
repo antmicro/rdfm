@@ -1,0 +1,32 @@
+[project]
+name = "rdfm-plotter"
+version = "0.1.0"
+description = "Consume messages, plot metrics"
+authors = [
+    { name = "Antmicro Ltd.", email = "contact@antmicro.com" }
+]
+license = {text = "Apache-2.0"}
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "kafka-python (>=2.2.15,<3.0.0)",
+    "protobuf (>=6.32.0,<7.0.0)",
+    "requests (>=2.32.5,<3.0.0)",
+    "argparse (>=1.4.0,<2.0.0)",
+    "servis @ git+https://github.com/antmicro/servis",
+    "jsonschema (>=4.25.1,<5.0.0)",
+]
+
+# We're vendoring the compiled pb files for now, so they're not in .gitignore.
+# By default poetry excludes files from .gitignore. Overwrite that behavior for `log_pb2.py`.
+# [tool.poetry]
+# include = [
+#	{ path = "src/rdfm_plotter/log_pb2.py", format = ["sdist", "wheel"] }
+# ]
+
+[project.scripts]
+rdfm-plotter = "rdfm_plotter.main:main"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

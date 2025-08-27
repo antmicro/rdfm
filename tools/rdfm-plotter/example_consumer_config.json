@@ -1,0 +1,4 @@
+{
+"bootstrap_servers": "localhost:9094",
+"ssl_cafile": "../../server/deploy/pubsub-demo/server/CA.crt"
+}

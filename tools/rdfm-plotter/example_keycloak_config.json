@@ -1,0 +1,6 @@
+{
+"audience": "kafka-broker-introspection",
+"url": "http://keycloak:8080/realms/master/protocol/openid-connect/token",
+"client": "test-client",
+"client_secret": "RnXXukKNSOj2JVNpJnyey6xGGIQQImVi"
+}
