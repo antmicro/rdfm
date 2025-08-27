@@ -58,6 +58,7 @@ func (sc *ShellConnection) Copy(pts *os.File, command *exec.Cmd) error {
 			t, b, err := sc.ws.ReadMessage()
 			if err != nil {
 				log.Debugf("WS read returned err: %s", err)
+				command.Process.Signal(syscall.SIGKILL)
 				return err
 			}
 			if t != websocket.BinaryMessage {
