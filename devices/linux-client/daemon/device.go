@@ -51,6 +51,7 @@ type Device struct {
 	actionRunner        *actions.ActionRunner
 	shellRunner         *shell.ShellRunner
 	kafkaRunner         *telemetry.KafkaRunner
+	triggerUpdateCheck  chan bool
 }
 
 func (d *Device) handleRequest(msg []byte) (serverws.Request, error) {
@@ -591,4 +592,8 @@ func (d *Device) collectMetadata() (map[string]interface{}, error) {
 		"rdfm.software.supports_rsync":  "true",
 		"rdfm.software.supports_xdelta": "true",
 	}, nil
+}
+
+func (d *Device) requestUpdateCheck() {
+	d.triggerUpdateCheck <- true
 }

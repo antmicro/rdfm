@@ -11,6 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/antmicro/rdfm/devices/linux-client/app"
+	"github.com/antmicro/rdfm/devices/linux-client/conf"
 	"github.com/antmicro/rdfm/devices/linux-client/telemetry"
 	libcli "github.com/urfave/cli/v2"
 )
@@ -26,11 +27,12 @@ func Daemonize(c *libcli.Context) error {
 	}
 
 	device := Device{
-		name:         name,
-		fileMetadata: fileMetadata,
-		metadata:     nil,
-		rdfmCtx:      ctx,
-		logManager:   telemetry.MakeLogManager(),
+		name:               name,
+		fileMetadata:       fileMetadata,
+		metadata:           nil,
+		rdfmCtx:            ctx,
+		logManager:         telemetry.MakeLogManager(),
+		triggerUpdateCheck: make(chan bool),
 	}
 
 	err = device.setupConnection()
@@ -59,6 +61,18 @@ func Daemonize(c *libcli.Context) error {
 
 	cancelCtx, cancelFunc := context.WithCancel(context.Background())
 
+	updateAction := conf.NewBuiltInAction(
+		"rdfm.builtins.trigger_update_check",
+		"Check updates",
+		"Check for updates",
+		func() (string, error) {
+			device.requestUpdateCheck()
+			return "Update check queued", nil
+		},
+	)
+
+	device.actionRunner.RegisterBuiltInAction(updateAction)
+
 	var wg sync.WaitGroup
 
 	wg.Add(1)
@@ -68,7 +82,7 @@ func Daemonize(c *libcli.Context) error {
 			wg.Done()
 		}()
 		log.Infoln("Starting updateCheckerLoop...")
-		device.updateCheckerLoop(cancelCtx)
+		device.updateCheckerLoop(cancelCtx, device.triggerUpdateCheck)
 	}()
 
 	wg.Add(1)

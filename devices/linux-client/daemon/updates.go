@@ -83,7 +83,7 @@ func (d *Device) checkUpdate() error {
 	return nil
 }
 
-func (d *Device) updateCheckerLoop(cancelCtx context.Context) {
+func (d *Device) updateCheckerLoop(cancelCtx context.Context, triggerUpdateCheck chan bool) {
 	var err error
 	var info string
 
@@ -100,7 +100,7 @@ func (d *Device) updateCheckerLoop(cancelCtx context.Context) {
 		default:
 		}
 		log.Println("Updater loop recovery from", info)
-		d.updateCheckerLoop(cancelCtx)
+		d.updateCheckerLoop(cancelCtx, triggerUpdateCheck)
 	}()
 
 	for {
@@ -114,6 +114,8 @@ func (d *Device) updateCheckerLoop(cancelCtx context.Context) {
 		case <-time.After(time.Duration(updateDuration)):
 		case <-cancelCtx.Done():
 			return
+		case <-triggerUpdateCheck:
+			continue
 		}
 	}
 	panic(err)
