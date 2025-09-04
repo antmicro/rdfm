@@ -9,12 +9,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type RDFMActionCallback func() (string, error)
+
 type RDFMActionsConfiguration struct {
-	Id          string   `json:"id"`
-	Name        string   `json:"name"`
-	Command     []string `json:"command"`
-	Description string   `json:"description,omitempty"`
-	Timeout     float32  `json:"timeout,omitempty"`
+	Id          string             `json:"id"`
+	Name        string             `json:"name"`
+	Command     []string           `json:"command"`
+	Description string             `json:"description,omitempty"`
+	Timeout     float32            `json:"timeout,omitempty"`
+	Callback    RDFMActionCallback `json:"-"`
 }
 
 func checkConfigFilePermissions(path string) error {
@@ -55,4 +58,15 @@ func LoadActionsConfig(path string) (*[]RDFMActionsConfiguration, error) {
 		return nil, err
 	}
 	return &config, nil
+}
+
+func NewBuiltInAction(id string, name string, description string, callback RDFMActionCallback) RDFMActionsConfiguration {
+	return RDFMActionsConfiguration{
+		Id:          id,
+		Name:        name,
+		Command:     []string{""},
+		Description: description,
+		Timeout:     0.0,
+		Callback:    callback,
+	}
 }

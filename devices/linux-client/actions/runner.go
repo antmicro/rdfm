@@ -34,29 +34,37 @@ type ActionRunner struct {
 
 func (r *ActionRunner) runCommand(req ActionRequest, cancelCtx context.Context) ActionResult {
 	action := r.actionMap[req.ActionId]
+	var status_code int = 0
+	var outputBytes []byte
 	log.Infof("Running action %s with execution id %s", action.Name, req.ExecId)
 
-	ctx := context.Background()
-	if action.Timeout > 0 {
-		var cancel context.CancelFunc
-		duration := time.Duration(action.Timeout*1e6) * time.Microsecond
-		ctx, cancel = context.WithTimeout(cancelCtx, duration)
-		defer cancel()
+	if action.Callback == nil {
+		ctx := context.Background()
+		if action.Timeout > 0 {
+			var cancel context.CancelFunc
+			duration := time.Duration(action.Timeout*1e6) * time.Microsecond
+			ctx, cancel = context.WithTimeout(cancelCtx, duration)
+			defer cancel()
+		}
+		log.Debugf("Executing action command: ['%s']", strings.Join(action.Command, "', '"))
+		cmd := exec.CommandContext(ctx, action.Command[0], action.Command[1:]...)
+		cmd.WaitDelay = time.Duration(ActionCommandWaitDelay)
+
+		outputBytes, _ = cmd.CombinedOutput()
+		status_code = cmd.ProcessState.ExitCode()
+	} else {
+		outputString, err := action.Callback()
+		outputBytes = []byte(outputString)
+		if err != nil {
+			status_code = 1
+		}
 	}
-	log.Debugf("Executing action command: ['%s']", strings.Join(action.Command, "', '"))
-	cmd := exec.CommandContext(ctx, action.Command[0], action.Command[1:]...)
-	cmd.WaitDelay = time.Duration(ActionCommandWaitDelay)
-
-	outputBytes, _ := cmd.CombinedOutput()
-
-	status_code := cmd.ProcessState.ExitCode()
-
-	log.Infoln("Action finished with status code:", status_code)
 
 	output := b64.StdEncoding.EncodeToString(outputBytes)
 
-	res := ActionResult{req.ExecId, status_code, &output}
-	return res
+	log.Infoln("Action finished with status code:", status_code)
+
+	return ActionResult{req.ExecId, status_code, &output}
 }
 
 func (r *ActionRunner) startCommandLoop(cancelCtx context.Context) error {
@@ -204,4 +212,9 @@ func (r *ActionRunner) RebuildActionMap() {
 	for _, action := range *r.rdfmCtx.RdfmActionsConfig {
 		r.actionMap[action.Id] = action
 	}
+}
+
+func (r *ActionRunner) RegisterBuiltInAction(action conf.RDFMActionsConfiguration) {
+	*r.rdfmCtx.RdfmActionsConfig = append(*r.rdfmCtx.RdfmActionsConfig, action)
+	r.RebuildActionMap()
 }
