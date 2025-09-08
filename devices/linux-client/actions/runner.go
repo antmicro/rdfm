@@ -3,23 +3,13 @@ package actions
 import (
 	"context"
 	b64 "encoding/base64"
-	"os/exec"
 	"path"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/antmicro/rdfm/devices/linux-client/app"
-	"github.com/antmicro/rdfm/devices/linux-client/conf"
 
 	log "github.com/sirupsen/logrus"
-)
-
-const (
-	// Additional time to wait for fds of the action command to be closed. This
-	// prevents the action runner from getting stuck waiting for a child that
-	// has already terminated, but did not close its file descriptors.
-	ActionCommandWaitDelay = time.Duration(time.Second * 5)
 )
 
 type ActionResultCallback func(ActionResult, context.Context) bool
@@ -28,37 +18,15 @@ type ActionRunner struct {
 	rdfmCtx   *app.RDFM
 	reqStore  *FileStore
 	resStore  *FileStore
-	actionMap map[string]conf.RDFMActionsConfiguration
+	actionMap map[string]Action
 	resultCb  ActionResultCallback
 }
 
 func (r *ActionRunner) runCommand(req ActionRequest, cancelCtx context.Context) ActionResult {
 	action := r.actionMap[req.ActionId]
-	var status_code int = 0
-	var outputBytes []byte
-	log.Infof("Running action %s with execution id %s", action.Name, req.ExecId)
+	log.Infof("Running action %s with execution id %s", action.GetName(), req.ExecId)
 
-	if action.Callback == nil {
-		ctx := context.Background()
-		if action.Timeout > 0 {
-			var cancel context.CancelFunc
-			duration := time.Duration(action.Timeout*1e6) * time.Microsecond
-			ctx, cancel = context.WithTimeout(cancelCtx, duration)
-			defer cancel()
-		}
-		log.Debugf("Executing action command: ['%s']", strings.Join(action.Command, "', '"))
-		cmd := exec.CommandContext(ctx, action.Command[0], action.Command[1:]...)
-		cmd.WaitDelay = time.Duration(ActionCommandWaitDelay)
-
-		outputBytes, _ = cmd.CombinedOutput()
-		status_code = cmd.ProcessState.ExitCode()
-	} else {
-		outputString, err := action.Callback()
-		outputBytes = []byte(outputString)
-		if err != nil {
-			status_code = 1
-		}
-	}
+	status_code, outputBytes := action.Execute(cancelCtx)
 
 	output := b64.StdEncoding.EncodeToString(outputBytes)
 
@@ -182,8 +150,12 @@ func (r *ActionRunner) Execute(executionId string, actionId string) bool {
 	return true
 }
 
-func (r *ActionRunner) List() []conf.RDFMActionsConfiguration {
-	return *r.rdfmCtx.RdfmActionsConfig
+func (r *ActionRunner) List() []Action {
+	var actions []Action
+	for _, v := range r.actionMap {
+		actions = append(actions, v)
+	}
+	return actions
 }
 
 func NewActionRunner(rdfmCtx *app.RDFM, queueSize int, resultCb ActionResultCallback, dataDirectory string) (*ActionRunner, error) {
@@ -208,13 +180,12 @@ func NewActionRunner(rdfmCtx *app.RDFM, queueSize int, resultCb ActionResultCall
 }
 
 func (r *ActionRunner) RebuildActionMap() {
-	r.actionMap = make(map[string]conf.RDFMActionsConfiguration)
+	r.actionMap = make(map[string]Action)
 	for _, action := range *r.rdfmCtx.RdfmActionsConfig {
-		r.actionMap[action.Id] = action
+		r.actionMap[action.Id] = NewCommandAction(action)
 	}
 }
 
-func (r *ActionRunner) RegisterBuiltInAction(action conf.RDFMActionsConfiguration) {
-	*r.rdfmCtx.RdfmActionsConfig = append(*r.rdfmCtx.RdfmActionsConfig, action)
-	r.RebuildActionMap()
+func (r *ActionRunner) RegisterAction(action Action) {
+	r.actionMap[action.GetId()] = action
 }

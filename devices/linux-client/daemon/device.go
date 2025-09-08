@@ -93,15 +93,22 @@ func (d *Device) handleRequest(msg []byte) (serverws.Request, error) {
 
 		return response, nil
 	case serverws.ActionListQuery:
-		actions := d.actionRunner.List()
+		action_list := d.actionRunner.List()
 		var reqActions []serverws.Action
-		for _, action := range actions {
+		for _, action := range action_list {
 			reqAction := serverws.Action{
-				ActionId:    action.Id,
-				ActionName:  action.Name,
-				Description: action.Description,
-				Command:     action.Command,
-				Timeout:     action.Timeout,
+				ActionId:    action.GetId(),
+				ActionName:  action.GetName(),
+				Description: action.GetDescription(),
+			}
+
+			switch v := action.(type) {
+			case actions.CommandAction:
+				reqAction.Command = v.Command
+				reqAction.Timeout = v.Timeout
+			default:
+				reqAction.Command = []string{}
+				reqAction.Timeout = 0.0
 			}
 
 			reqActions = append(reqActions, reqAction)

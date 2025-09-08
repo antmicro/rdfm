@@ -20,12 +20,12 @@ const (
 func createTestRdfmContext() *app.RDFM {
 	testContext := new(app.RDFM)
 	testContext.RdfmConfig = new(conf.RDFMConfig)
-	testContext.RdfmActionsConfig = new([]conf.RDFMActionsConfiguration)
+	testContext.RdfmActionsConfig = new([]conf.RDFMCommandActionConfiguration)
 	testContext.RdfmTelemetryConfig = new(map[string]conf.RDFMLoggerConfiguration)
 	return testContext
 }
 
-func prepareRunner(queueSize int, callback ActionResultCallback, datadir string, actions []conf.RDFMActionsConfiguration) (*ActionRunner, context.CancelFunc) {
+func prepareRunner(queueSize int, callback ActionResultCallback, datadir string, actions []conf.RDFMCommandActionConfiguration) (*ActionRunner, context.CancelFunc) {
 	rdfmContext := createTestRdfmContext()
 	rdfmContext.RdfmActionsConfig = &actions
 	context, cancel := context.WithCancel(context.Background())
@@ -44,15 +44,13 @@ func TestActionRunnerSimpleSetup(t *testing.T) {
 
 func TestActionRunnerExecuteSimple(t *testing.T) {
 	testFilePath := path.Join(t.TempDir(), ".test-action-file")
-	actions := []conf.RDFMActionsConfiguration{
+	actions := []conf.RDFMCommandActionConfiguration{
 		{
 			Id:          "test_action",
 			Name:        "",
 			Description: "",
-			Command: []string{
-				"touch", testFilePath,
-			},
-			Timeout: float32(TestActionTimeout),
+			Command:     []string{"touch", testFilePath},
+			Timeout:     float32(TestActionTimeout),
 		},
 	}
 	callback := func(ActionResult, context.Context) bool {
@@ -70,15 +68,13 @@ func TestActionRunnerExecuteSimple(t *testing.T) {
 }
 
 func TestActionRunnerResultCallback(t *testing.T) {
-	actions := []conf.RDFMActionsConfiguration{
+	actions := []conf.RDFMCommandActionConfiguration{
 		{
 			Id:          "test_action",
 			Name:        "",
 			Description: "",
-			Command: []string{
-				"uname",
-			},
-			Timeout: float32(TestActionTimeout),
+			Command:     []string{"uname"},
+			Timeout:     float32(TestActionTimeout),
 		},
 	}
 	ch := make(chan ActionResult)
@@ -108,15 +104,13 @@ func TestActionRunnerResultCallback(t *testing.T) {
 }
 
 func TestActionRunnerConcurrentActionLimit(t *testing.T) {
-	actions := []conf.RDFMActionsConfiguration{
+	actions := []conf.RDFMCommandActionConfiguration{
 		{
 			Id:          "test_action",
 			Name:        "",
 			Description: "",
-			Command: []string{
-				"cat",
-			},
-			Timeout: float32(TestActionTimeout),
+			Command:     []string{"cat"},
+			Timeout:     float32(TestActionTimeout),
 		},
 	}
 	callback := func(ActionResult, context.Context) bool {

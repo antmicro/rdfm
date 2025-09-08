@@ -22,7 +22,7 @@ type RDFM struct {
 	RdfmConfig          *conf.RDFMConfig
 	menderConfig        *mconf.MenderConfig
 	RdfmTelemetryConfig *map[string]conf.RDFMLoggerConfiguration
-	RdfmActionsConfig   *[]conf.RDFMActionsConfiguration
+	RdfmActionsConfig   *[]conf.RDFMCommandActionConfiguration
 	store               *store.DBStore
 	deviceManager       *device.DeviceManager
 }

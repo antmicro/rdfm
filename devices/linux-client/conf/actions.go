@@ -9,15 +9,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type RDFMActionCallback func() (string, error)
-
-type RDFMActionsConfiguration struct {
-	Id          string             `json:"id"`
-	Name        string             `json:"name"`
-	Command     []string           `json:"command"`
-	Description string             `json:"description,omitempty"`
-	Timeout     float32            `json:"timeout,omitempty"`
-	Callback    RDFMActionCallback `json:"-"`
+type RDFMCommandActionConfiguration struct {
+	Id          string   `json:"id"`
+	Name        string   `json:"name"`
+	Command     []string `json:"command"`
+	Description string   `json:"description,omitempty"`
+	Timeout     float32  `json:"timeout,omitempty"`
 }
 
 func checkConfigFilePermissions(path string) error {
@@ -33,10 +30,10 @@ func checkConfigFilePermissions(path string) error {
 	return nil
 }
 
-func LoadActionsConfig(path string) (*[]RDFMActionsConfiguration, error) {
+func LoadActionsConfig(path string) (*[]RDFMCommandActionConfiguration, error) {
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
 		log.Warnf("actions: no configured actions were found (missing %s)", path)
-		empty := make([]RDFMActionsConfiguration, 0)
+		empty := make([]RDFMCommandActionConfiguration, 0)
 		return &empty, nil
 	}
 
@@ -45,7 +42,7 @@ func LoadActionsConfig(path string) (*[]RDFMActionsConfiguration, error) {
 		return nil, err
 	}
 
-	var config []RDFMActionsConfiguration
+	var config []RDFMCommandActionConfiguration
 
 	configFile, err := os.Open(path)
 	if err != nil {
@@ -57,16 +54,6 @@ func LoadActionsConfig(path string) (*[]RDFMActionsConfiguration, error) {
 	if err = jsonDecoder.Decode(&config); err != nil {
 		return nil, err
 	}
-	return &config, nil
-}
 
-func NewBuiltInAction(id string, name string, description string, callback RDFMActionCallback) RDFMActionsConfiguration {
-	return RDFMActionsConfiguration{
-		Id:          id,
-		Name:        name,
-		Command:     []string{""},
-		Description: description,
-		Timeout:     0.0,
-		Callback:    callback,
-	}
+	return &config, nil
 }

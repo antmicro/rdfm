@@ -10,8 +10,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/antmicro/rdfm/devices/linux-client/actions"
 	"github.com/antmicro/rdfm/devices/linux-client/app"
-	"github.com/antmicro/rdfm/devices/linux-client/conf"
 	"github.com/antmicro/rdfm/devices/linux-client/telemetry"
 	libcli "github.com/urfave/cli/v2"
 )
@@ -61,7 +61,7 @@ func Daemonize(c *libcli.Context) error {
 
 	cancelCtx, cancelFunc := context.WithCancel(context.Background())
 
-	updateAction := conf.NewBuiltInAction(
+	updateAction := actions.NewBuiltInAction(
 		"rdfm.builtins.trigger_update_check",
 		"Check updates",
 		"Check for updates",
@@ -71,7 +71,7 @@ func Daemonize(c *libcli.Context) error {
 		},
 	)
 
-	device.actionRunner.RegisterBuiltInAction(updateAction)
+	device.actionRunner.RegisterAction(updateAction)
 
 	var wg sync.WaitGroup
 
