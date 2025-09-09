@@ -284,8 +284,7 @@ Component wraps functionality for displaying and working with rdfm devices.
 
                     .value {
                         max-height: 400px;
-                        text-overflow: ellipsis;
-                        overflow: hidden;
+                        word-break: break-word;
 
                         &:not(:has(.group-block)) {
                             padding-top: 10px;

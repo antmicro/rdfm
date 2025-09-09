@@ -31,11 +31,7 @@
                             </div>
                         </td>
                         <td v-for="col in columns" :key="col.name">
-                            {{
-                                row[col.id].toString().length > 18
-                                    ? row[col.id].toString().substring(0, 14) + '...'
-                                    : row[col.id].toString()
-                            }}
+                            {{ row[col.id] }}
                         </td>
                     </tr>
                 </tbody>
@@ -131,6 +127,9 @@ th {
 th,
 td {
     padding: 0.5em;
+    max-width: 150px;
+    min-width: 35px;
+    word-break: break-word;
 }
 
 .checkbox {

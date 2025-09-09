@@ -271,6 +271,7 @@ Component wraps functionality for displaying and working with a single rdfm devi
 
         pre.small {
             width: fit-content;
+            max-width: 95%;
         }
 
         pre,
@@ -278,11 +279,14 @@ Component wraps functionality for displaying and working with a single rdfm devi
             font-family: monospace;
             font-size: 13px;
             background-color: var(--background-100);
+            white-space: pre-wrap;
+            word-break: break-word;
         }
 
         p.title,
         p.value {
             margin: 5px;
+            word-break: break-word;
         }
 
         p.title {

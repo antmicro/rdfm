@@ -367,6 +367,7 @@ Component wraps functionality for displaying and working with rdfm groups.
 
                 & > .value {
                     color: var(--gray-1000);
+                    word-break: break-word;
                 }
 
                 & > .values {
@@ -379,6 +380,7 @@ Component wraps functionality for displaying and working with rdfm groups.
                         margin: 0.25em;
                         padding: 0.25em 0.5em;
                         display: inline-block;
+                        max-width: 100%;
 
                         .item-layout.grid {
                             display: grid;
@@ -388,6 +390,7 @@ Component wraps functionality for displaying and working with rdfm groups.
                         .item-layout {
                             font-size: large;
                             margin-left: 2px;
+                            word-break: break-word;
 
                             & > div {
                                 align-content: center;
@@ -395,7 +398,6 @@ Component wraps functionality for displaying and working with rdfm groups.
 
                             p {
                                 line-height: 1.25em;
-                                height: 1.25em;
                                 margin: 0px;
                                 text-align: left;
                                 font-family: monospace;

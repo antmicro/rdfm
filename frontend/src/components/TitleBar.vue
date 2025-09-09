@@ -33,6 +33,7 @@ with a title, subtitle and an optional action button.
         display: flex;
         flex-direction: column;
         font-family: 'Mona Sans', sans-serif;
+        word-break: break-word;
 
         & > #title {
             color: var(--gray-1000);
@@ -62,6 +63,16 @@ with a title, subtitle and an optional action button.
             &:hover {
                 background-color: var(--accent-200);
             }
+        }
+    }
+}
+
+@media screen and (max-width: 500px) {
+    #wrapper {
+        flex-direction: column;
+
+        & > #actionbar {
+            padding-top: 2em;
         }
     }
 }
