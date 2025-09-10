@@ -237,7 +237,7 @@ Component wraps functionality for displaying and working with a single rdfm devi
 
 .terminal-wrapper {
     position: relative;
-    height: 400px;
+    height: 900px;
     width: 100%;
     border: 2px solid var(--gray-400);
     border-radius: 5px;
