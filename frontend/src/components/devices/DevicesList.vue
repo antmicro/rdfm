@@ -28,16 +28,6 @@ Component wraps functionality for displaying and working with rdfm devices.
                                 </tr>
                                 <tr class="resources-table-row no-border">
                                     <td class="entry">
-                                        <div class="value">Unregistered devices</div>
-                                    </td>
-                                    <td class="entry">
-                                        <div class="value">
-                                            {{ pendingDevicesCount }}/{{ devicesCount }}
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr class="resources-table-row">
-                                    <td class="entry">
                                         <div class="value">Registered devices</div>
                                     </td>
                                     <td class="entry">
@@ -46,68 +36,20 @@ Component wraps functionality for displaying and working with rdfm devices.
                                         </div>
                                     </td>
                                 </tr>
+                                <tr class="resources-table-row">
+                                    <td class="entry">
+                                        <div class="value">Unregistered devices</div>
+                                    </td>
+                                    <td class="entry">
+                                        <div class="value">
+                                            {{ pendingDevicesCount }}/{{ devicesCount }}
+                                        </div>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
-                <div id="device-list-unregistered" v-if="pendingDevicesCount !== 0">
-                    <p>Unregistered</p>
-                    <div class="device-list">
-                        <div v-for="device in pendingDevices" :key="device.mac_address" class="row">
-                            <div class="entry">
-                                <div class="title">MAC Address</div>
-                                <div class="value">{{ device.mac_address }}</div>
-                            </div>
-                            <div class="entry">
-                                <div class="title">Last appeared</div>
-                                <div class="value">{{ device.last_appeared }}</div>
-                            </div>
-                            <div class="entry">
-                                <div class="title">Device type</div>
-                                <div class="value">
-                                    {{ device.metadata['rdfm.hardware.devtype'] }}
-                                </div>
-                            </div>
-                            <div class="entry">
-                                <div class="title">Software version</div>
-                                <div class="value">
-                                    {{ device.metadata['rdfm.software.version'] }}
-                                </div>
-                            </div>
-                            <div class="entry">
-                                <div class="title">Public key</div>
-                                <div class="value">{{ device.public_key.slice(0, 15) }}...</div>
-                            </div>
-                            <div class="entry">
-                                <div class="button-wrapper">
-                                    <!-- TODO: Check a specific permission/role for registering devices once it's implemented server-side -->
-                                    <button
-                                        class="action-button blue"
-                                        v-if="hasAdminRole(AdminRole.RW)"
-                                        @click="
-                                            registerDevice(device.mac_address, device.public_key)
-                                        "
-                                    >
-                                        Register
-                                    </button>
-                                    <button
-                                        class="action-button red"
-                                        v-if="hasAdminRole(AdminRole.RW)"
-                                        @click="
-                                            openRemovePendingDevicePopup(
-                                                device.mac_address,
-                                                device.public_key,
-                                            )
-                                        "
-                                    >
-                                        Remove
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <div id="device-list-registered" v-if="registeredDevicesCount !== 0">
                     <p>Registered</p>
                     <div class="device-list">
@@ -169,6 +111,63 @@ Component wraps functionality for displaying and working with rdfm devices.
                                         v-if="allowedTo('delete', 'device', device.id)"
                                         @click="openRemoveDevicePopup(device.id)"
                                         @click.stop.prevent
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="device-list-unregistered" v-if="pendingDevicesCount !== 0">
+                    <p>Unregistered</p>
+                    <div class="device-list">
+                        <div v-for="device in pendingDevices" :key="device.mac_address" class="row">
+                            <div class="entry">
+                                <div class="title">MAC Address</div>
+                                <div class="value">{{ device.mac_address }}</div>
+                            </div>
+                            <div class="entry">
+                                <div class="title">Last appeared</div>
+                                <div class="value">{{ device.last_appeared }}</div>
+                            </div>
+                            <div class="entry">
+                                <div class="title">Device type</div>
+                                <div class="value">
+                                    {{ device.metadata['rdfm.hardware.devtype'] }}
+                                </div>
+                            </div>
+                            <div class="entry">
+                                <div class="title">Software version</div>
+                                <div class="value">
+                                    {{ device.metadata['rdfm.software.version'] }}
+                                </div>
+                            </div>
+                            <div class="entry">
+                                <div class="title">Public key</div>
+                                <div class="value">{{ device.public_key.slice(0, 15) }}...</div>
+                            </div>
+                            <div class="entry">
+                                <div class="button-wrapper">
+                                    <!-- TODO: Check a specific permission/role for registering devices once it's implemented server-side -->
+                                    <button
+                                        class="action-button blue"
+                                        v-if="hasAdminRole(AdminRole.RW)"
+                                        @click="
+                                            registerDevice(device.mac_address, device.public_key)
+                                        "
+                                    >
+                                        Register
+                                    </button>
+                                    <button
+                                        class="action-button red"
+                                        v-if="hasAdminRole(AdminRole.RW)"
+                                        @click="
+                                            openRemovePendingDevicePopup(
+                                                device.mac_address,
+                                                device.public_key,
+                                            )
+                                        "
                                     >
                                         Remove
                                     </button>
