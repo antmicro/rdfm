@@ -81,6 +81,13 @@
     margin-top: 0.25em;
     padding: 0.5em;
     z-index: 10;
+
+    th,
+    td {
+        max-width: 150px;
+        min-width: 35px;
+        word-break: break-word;
+    }
 }
 
 input,
@@ -127,9 +134,6 @@ th {
 th,
 td {
     padding: 0.5em;
-    max-width: 150px;
-    min-width: 35px;
-    word-break: break-word;
 }
 
 .checkbox {
