@@ -246,12 +246,6 @@ Component wraps functionality for displaying and working with rdfm devices.
                     grid-template-columns: none;
                     grid-template-rows: repeat(auto-fit, auto);
                     position: relative;
-
-                    .button-wrapper {
-                        position: absolute;
-                        top: 10px;
-                        right: 10px;
-                    }
                 }
             }
 
