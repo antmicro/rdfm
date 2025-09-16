@@ -11,8 +11,8 @@ Component wraps functionality for displaying and working with rdfm devices.
 <template>
     <div id="devices">
         <TitleBar title="Devices" subtitle="manage your devices" />
-        <div id="container">
-            <div id="device-list">
+        <div class="container">
+            <div class="resources-list">
                 <div id="device-list-overview">
                     <p>Overview</p>
                     <div class="resources-table-wrapper checked">
@@ -198,103 +198,6 @@ Component wraps functionality for displaying and working with rdfm devices.
         :removeCallback="removePendingDevice"
     />
 </template>
-
-<style scoped>
-#devices {
-    p {
-        color: var(--gray-1000);
-        font-size: 1.5em;
-    }
-
-    & > #container {
-        color: var(--gray-1000);
-        padding: 2em;
-
-        & > #device-list {
-            width: 100%;
-            --default-col-width: 170px;
-
-            #device-list-registered .row:hover {
-                background-color: var(--gray-200);
-                cursor: pointer;
-            }
-
-            /* Default columns widths */
-            #device-list-registered .row {
-                grid-template-columns: 80px repeat(5, var(--default-col-width)) 300px auto;
-            }
-            #device-list-unregistered .row {
-                grid-template-columns: 200px 300px repeat(3, var(--default-col-width)) auto;
-            }
-
-            /* Smaller columns widths */
-            @media screen and (max-width: 1670px) {
-                #device-list-registered .row {
-                    grid-template-columns: 80px repeat(5, var(--default-col-width)) 200px auto;
-                }
-                #device-list-unregistered .row {
-                    grid-template-columns:
-                        var(--default-col-width) 200px repeat(3, var(--default-col-width))
-                        auto;
-                }
-            }
-
-            /* Columns collapsed into rows */
-            @media screen and (max-width: 1250px) {
-                #device-list-registered .row,
-                #device-list-unregistered .row {
-                    grid-template-columns: none;
-                    grid-template-rows: repeat(auto-fit, auto);
-                    position: relative;
-                }
-            }
-
-            .device-list {
-                border: 2px solid var(--gray-400);
-                border-radius: 5px;
-                background-color: var(--background-200);
-            }
-
-            .row {
-                display: grid;
-                transition: 500ms;
-
-                &:not(:last-child) {
-                    border-bottom: 2px solid var(--gray-400);
-                }
-
-                .entry {
-                    padding: 0.5em 1em;
-
-                    &:has(button) {
-                        align-content: center;
-                    }
-
-                    .title {
-                        color: var(--gray-900);
-                        text-wrap: nowrap;
-                    }
-
-                    .value {
-                        max-height: 400px;
-                        word-break: break-word;
-
-                        &:not(:has(.group-block)) {
-                            padding-top: 10px;
-                        }
-                    }
-
-                    & > .button-wrapper {
-                        display: flex;
-                        justify-content: flex-end;
-                        gap: 1em;
-                    }
-                }
-            }
-        }
-    }
-}
-</style>
 
 <script lang="ts">
 import { computed, onMounted, onUnmounted, ref, type Ref } from 'vue';

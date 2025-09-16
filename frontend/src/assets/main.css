@@ -9,6 +9,7 @@
 @import './buttons.css';
 @import './progress-bar.css';
 @import './toast.css';
+@import './list.css';
 
 @import url('https://fonts.googleapis.com/css2?family=Mona+Sans&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,600;1,14..32,600&display=swap');
