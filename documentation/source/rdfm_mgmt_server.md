@@ -174,6 +174,8 @@ Additional rules are defined for package uploading route from [Packages API](api
 
 - `rdfm_upload_single_file` - allows uploading an artifact of type `single-file`.
 - `rdfm_upload_rootfs_image` - allows uploading artifacts `rootfs-image` and `delta-rootfs-image`.
+- `rdfm_upload_nonstandard_artifact` - allows uploading artifacts of non-standard type.
+
 Each package type requires its corresponding scope, or the complete admin access - `rdfm_admin_rw`.
 
 Refer to the [RDFM Server API Reference chapter](api.rst) for a breakdown of the scopes required for accessing each API method.
@@ -296,13 +298,14 @@ After changing the `docker-compose` variables, remember to restart the services 
 
 Additionally, you must create proper client scopes and user roles to define which users have access to the read-only and read-write parts of the RDFM API.
 To create new scopes, navigate to the `Client scopes` tab and select `Create client scope`.
-Create four separate scopes with the names listed below.
+Create five separate scopes with the names listed below.
 The rest of the settings can be left as default (if required, you may also add a description to the scope):
 
 - `rdfm_admin_ro`
 - `rdfm_admin_rw`
 - `rdfm_upload_single_file`
 - `rdfm_upload_rootfs_image`
+- `rdfm_upload_nonstandard_artifact`
 
 To create new roles, navigate to the `Realm roles` tab and select `Create role`.
 Create separate roles with the same names.
