@@ -38,7 +38,7 @@ SCOPE_SINGLE_FILE = "rdfm_upload_single_file"
 """ Rootfs Image package write scope """
 SCOPE_ROOTFS_IMAGE = "rdfm_upload_rootfs_image"
 
-""" Rootfs Image package write scope """
+""" Non-standard package write scope """
 SCOPE_NONSTANDARD_ARTIFACT = "rdfm_upload_nonstandard_artifact"
 
 """ Text to append after the endpoint's docstring when an appropriate
@@ -49,7 +49,8 @@ DOCS_SCOPE_PACKAGE_TEXT = \
     """providing a management token with the appropriate """ \
     """package write scope. Available scopes are: """ \
     f"""``{SCOPE_SINGLE_FILE}`` - single file package, """ \
-    f"""``{SCOPE_ROOTFS_IMAGE}`` - rootfs image package.""" \
+    f"""``{SCOPE_ROOTFS_IMAGE}`` - rootfs image package, """ \
+    f"""``{SCOPE_NONSTANDARD_ARTIFACT}`` - non-standard package, """ \
     f"""``{SCOPE_READ_WRITE}`` - all package write scopes."""
 
 """ Text to append after the endpoint's docstring when a token
