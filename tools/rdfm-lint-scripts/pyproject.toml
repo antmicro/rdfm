@@ -1,0 +1,32 @@
+[project]
+name = "rdfm-lint-scripts"
+version = "0.1.0"
+description = "MyPy and Pycodestyle checks for the RDFM's CI flow"
+authors = [
+    {name = "Antmicro Ltd.", email = "contact@antmicro.com"}
+]
+license = {text = "Apache-2.0"}
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "mypy (>=1.18.1,<2.0.0)",
+    "pycodestyle (>=2.14.0,<3.0.0)",
+    "pydantic (>=2.11.9,<3.0.0)"
+]
+
+[tool.poetry.scripts]
+rdfm-lint-pycodestyle = "rdfm_lint_scripts.__main__:pycodestyle_checks"
+rdfm-lint-mypy = "rdfm_lint_scripts.__main__:mypy_checks"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[mypy]
+disallow_untyped_defs = true
+disallow_any_unimported = true
+no_implicit_optional = true
+check_untyped_defs = true
+warn_return_any = true
+warn_unused_ignores = true
+show_error_codes = true
