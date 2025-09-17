@@ -67,6 +67,7 @@ export enum AdminRole {
     RO = 'rdfm_admin_ro',
     UPLOAD_ROOTFS_IMAGE = 'rdfm_upload_rootfs_image',
     UPLOAD_SINGLE_FILE = 'rdfm_upload_single_file',
+    UPLOAD_NONSTANDARD_ARTIFACT = 'rdfm_upload_nonstandard_artifact',
 }
 
 /**
