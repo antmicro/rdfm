@@ -55,6 +55,28 @@ variables:
     - cmake --install build/
     - cd ../
 
+.install-poetry-and-lint-tools:
+  # rdfm-ci-base-bookworm has an outdated version of poetry
+  # changes to pyproject.toml spec require a newer version (PEP 621, poetry 2.0+ required)
+  image: python:3.11.4-bookworm
+  before_script:
+    - pip3 install poetry
+    - pip3 install --upgrade pip
+    - apt update && apt-get install -y pipx
+    - (cd tools/rdfm-lint-scripts && pipx install .)
+
+.mypy-check-base:
+  extends: .install-poetry-and-lint-tools
+  variables:
+    TARGET: "" # fill this when extending
+    ARGS:   "" # additional arguments for mypy, can be left empty
+  stage: static-checks
+  script:
+    - export PATH=$HOME/.local/bin:$PATH
+    - cd $TARGET && poetry install
+    - rdfm-lint-mypy $ARGS
+  allow_failure: true
+
 stages:
   - docs-build
   - docs-deploy
@@ -63,19 +85,23 @@ stages:
   - local-tests
 
 python-pycodestyle-check:
-  extends: .build
+  extends: .install-poetry-and-lint-tools
   stage: static-checks
   script:
-    - (cd server && poetry run test-pycodestyle)
-    - (cd manager && poetry run test-pycodestyle)
+    - export PATH=$HOME/.local/bin:$PATH
+    - (cd server && rdfm-lint-pycodestyle)
+    - (cd manager && rdfm-lint-pycodestyle)
 
-python-mypy-check:
-  extends: .build
-  stage: static-checks
-  script:
-    - (cd server && poetry run test-mypy)
-    - (cd manager && poetry run test-mypy)
-  allow_failure: true
+python-mypy-check-manager:
+  extends: .mypy-check-base
+  variables:
+    TARGET: manager
+
+python-mypy-check-server:
+  extends: .mypy-check-base
+  variables:
+    TARGET: server
+    ARGS: "--config-file ./mypy.ini"
 
 test-package-api:
   extends: .build
