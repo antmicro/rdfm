@@ -18,6 +18,7 @@ import {
     type Group,
     type Package,
     type RequestOutput,
+    updatePermissions,
 } from '../../common/utils';
 
 import { StatusCodes } from 'http-status-codes';
@@ -84,6 +85,9 @@ export const uploadPackageRequest = async (
         }
     }
     await packageResources.fetchResources();
+
+    updatePermissions();
+
     return { success: true };
 };
 

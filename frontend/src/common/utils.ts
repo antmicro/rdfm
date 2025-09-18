@@ -84,6 +84,17 @@ export type Permission = {
 export const adminRoles = ref<AdminRole[]>([]);
 export const permissions = ref<Permission[]>([]);
 
+export const updatePermissions = () => {
+    const accessToken = localStorage.getItem('access_token');
+    const parsedToken = JSON.parse(atob(accessToken!.split('.')[1]));
+    fetchWrapper(PERMISSIONS_ENDPOINT, 'GET').then(
+        (response) =>
+            (permissions.value = response.data.filter(
+                (p: Permission) => p.user_id == parsedToken.sub,
+            )),
+    );
+};
+
 export const hasPermission = (
     permission: Permission['permission'],
     resource: Permission['resource'],
