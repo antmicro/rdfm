@@ -17,7 +17,10 @@ Component wraps functionality for displaying and working with a single rdfm devi
             :subtitle="''"
         />
 
-        <div class="actions-container" v-if="actions.length > 0">
+        <div
+            class="actions-container"
+            v-if="actions.length > 0 && allowedTo('update', 'device', device?.id)"
+        >
             <button
                 v-on:click="() => runAction(action.action_id)"
                 class="action"
@@ -55,7 +58,7 @@ Component wraps functionality for displaying and working with a single rdfm devi
             </button>
         </div>
 
-        <template v-if="device?.capabilities.shell && allowedTo('shell', 'device', device.id)">
+        <template v-if="device?.capabilities.shell && allowedTo('shell', 'device', device?.id)">
             <div :class="['terminal-container', { fullscreen: isFullscreen }]">
                 <button :class="['action-button gray', { 'tab-active': isTerminalOpened }]">
                     <div @click="toggleTerminal">
