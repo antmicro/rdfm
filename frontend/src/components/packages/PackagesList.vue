@@ -84,7 +84,7 @@ Component wraps functionality for displaying and working with rdfm packages.
         title="Packages"
         subtitle="manage your packages"
         actionButtonName="Create new package"
-        :buttonCallback="openAddPackagePopup"
+        :buttonCallback="hasUploadAccess() ? openAddPackagePopup : undefined"
     />
 
     <div class="container">
@@ -336,7 +336,7 @@ table.resources-table.packages {
 
 <script lang="ts">
 import { computed, onMounted, onUnmounted, ref, type Ref, reactive, type Reactive } from 'vue';
-import { POLL_INTERVAL, useNotifications, allowedTo } from '../../common/utils';
+import { POLL_INTERVAL, useNotifications, allowedTo, hasUploadAccess } from '../../common/utils';
 import BlurPanel from '../BlurPanel.vue';
 import RemovePopup from '../RemovePopup.vue';
 import TitleBar from '../TitleBar.vue';
@@ -521,6 +521,7 @@ export default {
             copyDownloadLink,
             download,
             allowedTo,
+            hasUploadAccess,
         };
     },
 };

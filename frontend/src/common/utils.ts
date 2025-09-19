@@ -106,6 +106,14 @@ export const hasPermission = (
 
 export const hasAdminRole = (r: AdminRole) => adminRoles.value.includes(r);
 
+export const hasUploadAccess = () =>
+    [
+        AdminRole.RW,
+        AdminRole.UPLOAD_ROOTFS_IMAGE,
+        AdminRole.UPLOAD_SINGLE_FILE,
+        AdminRole.UPLOAD_NONSTANDARD_ARTIFACT,
+    ].some((r: AdminRole) => adminRoles.value.includes(r));
+
 export const allowedTo = (
     permission: Permission['permission'],
     resource: Permission['resource'],
