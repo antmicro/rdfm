@@ -101,6 +101,50 @@ func (r ActionListUpdate) method() string {
 	return r.Method
 }
 
+type FsFileDownload struct {
+	Method     string   `json:"method"`
+	Id         string   `json:"id"`
+	File       string   `json:"file"`
+	UploadUrls []string `json:"upload_urls"`
+	PartSize   int64    `json:"part_size"`
+}
+
+func (r FsFileDownload) method() string {
+	return r.Method
+}
+
+type FsFileDownloadReply struct {
+	Method string   `json:"method"`
+	Id     string   `json:"id"`
+	Status int      `json:"status"`
+	Etags  []string `json:"etags"`
+}
+
+func (r FsFileDownloadReply) method() string {
+	return r.Method
+}
+
+type FsFileProbe struct {
+	Method string `json:"method"`
+	Id     string `json:"id"`
+	File   string `json:"file"`
+}
+
+func (r FsFileProbe) method() string {
+	return r.Method
+}
+
+type FsFileProbeReply struct {
+	Method string `json:"method"`
+	Id     string `json:"id"`
+	Status int    `json:"status"`
+	Size   int64  `json:"size"`
+}
+
+func (r FsFileProbeReply) method() string {
+	return r.Method
+}
+
 func CantHandleRequest() Request {
 	res := Alert{
 		Method: "alert",
@@ -129,6 +173,14 @@ func Parse(r string) (Request, error) {
 		return parsed, err
 	case "action_list_query":
 		var parsed ActionListQuery
+		err = json.Unmarshal([]byte(r), &parsed)
+		return parsed, err
+	case "fs_file_download":
+		var parsed FsFileDownload
+		err = json.Unmarshal([]byte(r), &parsed)
+		return parsed, err
+	case "fs_file_probe":
+		var parsed FsFileProbe
 		err = json.Unmarshal([]byte(r), &parsed)
 		return parsed, err
 	}

@@ -33,6 +33,8 @@ const DEFAULT_SHELL_ENABLE = true
 const DEFAULT_SHELL_CONCURRENT_MAX_COUNT = 5
 const DEFAULT_ACTION_ENABLE = true
 const DEFAULT_ACTION_QUEUE_SIZE = 32
+const DEFAULT_FILESYSTEM_ENABLE = true
+const DEFAULT_FILESYSTEM_BASE_DIR = "/"
 
 type RDFMConfig struct {
 	// Path to the device type file
@@ -81,6 +83,12 @@ type RDFMConfig struct {
 	ActionEnable bool `json:",omitempty"`
 	// Incoming/outgoing action queue size. Default: 32
 	ActionQueueSize int `json:",omitempty"`
+
+	// Is filesystem support enabled? Default: true
+	FileSystemEnable bool `json:",omitempty"`
+
+	// Base directory for filesystem access. Default: "/"
+	FileSystemBaseDir string `json:",omitempty"`
 }
 
 var rdfmConfigInstance *RDFMConfig
@@ -128,6 +136,8 @@ func LoadConfig(mainConfigFile string, overlayConfigFile string) (*RDFMConfig, *
 		ShellConcurrentMaxCount:   DEFAULT_SHELL_CONCURRENT_MAX_COUNT,
 		ActionEnable:              DEFAULT_ACTION_ENABLE,
 		ActionQueueSize:           DEFAULT_ACTION_QUEUE_SIZE,
+		FileSystemEnable:          DEFAULT_FILESYSTEM_ENABLE,
+		FileSystemBaseDir:         DEFAULT_FILESYSTEM_BASE_DIR,
 	}
 
 	// Load Mender config

@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -52,6 +53,23 @@ type Device struct {
 	shellRunner         *shell.ShellRunner
 	kafkaRunner         *telemetry.KafkaRunner
 	triggerUpdateCheck  chan bool
+}
+
+func (d *Device) isFsAccessAllowed(file string) bool {
+	baseDir, err := filepath.EvalSymlinks(d.rdfmCtx.RdfmConfig.FileSystemBaseDir)
+	if err != nil {
+		return false
+	}
+	file, err = filepath.EvalSymlinks(file)
+	if err != nil {
+		return false
+	}
+	relPath, err := filepath.Rel(baseDir, file)
+	if err != nil {
+		return false
+	}
+
+	return !strings.Contains(relPath, "..")
 }
 
 func (d *Device) handleRequest(msg []byte) (serverws.Request, error) {
@@ -152,6 +170,71 @@ func (d *Device) handleRequest(msg []byte) (serverws.Request, error) {
 		}()
 
 		return nil, nil
+	case serverws.FsFileDownload:
+		response := serverws.FsFileDownloadReply{
+			Method: "fs_file_download_reply",
+			Id:     r.Id,
+			Status: 1,
+		}
+
+		if !d.isFsAccessAllowed(r.File) {
+			return response, nil
+		}
+
+		f, err := os.Open(r.File)
+		if err != nil {
+			return response, nil
+		}
+		defer f.Close()
+
+		buf := make([]byte, r.PartSize)
+
+		for _, url := range r.UploadUrls {
+			c, err := f.Read(buf)
+			if err != nil {
+				return response, nil
+			}
+
+			req, err := http.NewRequest(http.MethodPut, url, bytes.NewReader(buf[:c]))
+			if err != nil {
+				return nil, err
+			}
+			client := &http.Client{}
+			ret, err := client.Do(req)
+			if err != nil {
+				return nil, err
+			} else {
+				response.Etags = append(response.Etags, ret.Header.Get("Etag"))
+			}
+		}
+
+		response.Status = 0
+
+		return response, nil
+	case serverws.FsFileProbe:
+		response := serverws.FsFileProbeReply{
+			Method: "fs_file_probe_reply",
+			Id:     r.Id,
+			Status: 1,
+		}
+
+		if !d.isFsAccessAllowed(r.File) {
+			return response, nil
+		}
+
+		f, err := os.Open(r.File)
+		if err != nil {
+			return response, nil
+		}
+		defer f.Close()
+		stat, err := f.Stat()
+		if err != nil {
+			return response, nil
+		}
+		response.Size = stat.Size()
+		response.Status = 0
+
+		return response, nil
 	default:
 		log.Warnf("Request '%s' is unsupported", requestName)
 		response := serverws.CantHandleRequest()
@@ -247,6 +330,7 @@ func (d *Device) setupConnection() error {
 	d.conn = serverws.NewDeviceConnection(serverUrl, tlsConf, 1024)
 	d.conn.SetCapability("action", d.rdfmCtx.RdfmConfig.ActionEnable)
 	d.conn.SetCapability("shell", d.rdfmCtx.RdfmConfig.ShellEnable)
+	d.conn.SetCapability("filesystem", d.rdfmCtx.RdfmConfig.FileSystemEnable)
 	return nil
 }
 
