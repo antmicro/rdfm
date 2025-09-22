@@ -1,4 +1,5 @@
 import argparse
+import base64
 import sys
 import rdfm.config
 from rdfm.reverse_shell import ReverseShell
@@ -175,6 +176,26 @@ def shell_to_device(config: rdfm.config.Config, args):
     shell.run()
 
 
+def download_file(config: rdfm.config.Config, args):
+    """CLI entrypoint - downaload file from a device"""
+    device = args.device_id
+    src = args.src
+    dst = args.dst
+
+    response = rdfm.api.devices.download_file(config, device, src)
+
+    if response["status"] == 0:
+        CHUNK_LEN = 10*2**20
+
+        with requests.get(response["url"], stream=True) as r:
+            r.raise_for_status()
+            with open(dst, 'wb') as ofile:
+                for chunk in r.iter_content(chunk_size=CHUNK_LEN):
+                    ofile.write(chunk)
+    else:
+        return "Failed to read the file on the remote device"
+
+
 def add_devices_parser(parser: argparse._SubParsersAction):
     """Create a parser for the `devices` CLI command tree within
         the given subparser.
@@ -239,3 +260,15 @@ def add_devices_parser(parser: argparse._SubParsersAction):
     shell.add_argument(
         "device_id", type=str, help="device identifier of the device"
     )
+
+    download = sub.add_parser("download", help="download file from the device")
+    download.add_argument(
+        "device_id", type=str, help="device identifier of the device"
+    )
+    download.add_argument(
+        "src", type=str, help="source file on the device"
+    )
+    download.add_argument(
+        "dst", type=str, help="destination file"
+    )
+    download.set_defaults(func=download_file)

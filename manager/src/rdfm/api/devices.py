@@ -64,3 +64,19 @@ def remove_pending(config: rdfm.config.Config,
                                verify=config.ca_cert,
                                auth=config.authorizer)
     return wrap_api_error(response, "Removing device failed")
+
+
+def download_file(config: rdfm.config.Config,
+                  device: str, file: str):
+    response = requests.get(rdfm.api.escape(config,
+                            f"/api/v2/devices/{device}/fs/file"),
+                            json={"file": file},
+                            verify=config.ca_cert,
+                            auth=config.authorizer)
+
+    if response.status_code != 200:
+        raise RuntimeError(
+            f"Server returned unexpected status code {response.status_code}"
+        )
+
+    return response.json()
