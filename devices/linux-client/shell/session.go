@@ -55,6 +55,8 @@ func NewShellSession(uid string) (*ShellSession, error) {
 	}
 	session.command = exec.Command(*shell)
 	session.command.Env = append(session.command.Env, "TERM=linux")
+	session.command.Env = append(session.command.Env, "LANG=en_US.UTF-8")
+	session.command.Env = append(session.command.Env, "XDG_CONFIG_HOME=config")
 	ptmx, err := pty.StartWithSize(session.command, &pty.Winsize{
 		Rows: uint16(80),
 		Cols: uint16(24),
