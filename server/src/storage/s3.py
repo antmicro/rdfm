@@ -5,11 +5,16 @@ import boto3
 import boto3.session
 from botocore.exceptions import ClientError
 from botocore.config import Config
+from typing import Type
+from storage.common import upload_part_count
+import datetime
 
 
 META_S3_UUID = "rdfm.storage.s3.uuid"
 META_S3_SIZE = "rdfm.storage.s3.size"
 META_S3_DIRECTORY = "rdfm.storage.s3.directory"
+DESIRED_PART_SIZE = 10 * 2**20
+MULTIPART_EXPIRY = 3600
 
 
 class S3Storage:
@@ -139,4 +144,80 @@ class S3Storage:
             )
         except ClientError as e:
             print("Failed deleting package object from S3:", e, flush=True)
+            raise
+
+    class MultipartUploader:
+        """Helper class for handling multipart upload"""
+        def __init__(self, s3, key: str):
+            self.s3 = s3
+            self.key = key
+            self.mpu = self.s3.client.create_multipart_upload(
+                Bucket=self.s3.bucket,
+                Key=self.key,
+                Expires=(datetime.datetime.now()
+                         + datetime.timedelta(seconds=MULTIPART_EXPIRY))
+            )
+
+        def generate_urls(self, upload_size: int, expiry: int) -> tuple[list[str], int]:
+            """
+            Returns list of upload urls and upload size for each upload url.
+            The amount of upload urls depends on upload_size param
+            """
+            urls = []
+            part_count, part_size = upload_part_count(upload_size, DESIRED_PART_SIZE)
+
+            for i in range(part_count):
+                try:
+                    urls.append(self.s3.client.generate_presigned_url(
+                        "upload_part",
+                        Params={
+                            "Bucket": self.s3.bucket,
+                            "Key": self.key,
+                            "PartNumber": i,
+                            "UploadId": self.mpu["UploadId"]
+                        },
+                        ExpiresIn=expiry,
+                    ))
+                except ClientError as e:
+                    print("Failed to generate presigned S3 link:", e, flush=True)
+                    raise
+
+            return urls, part_size
+
+        def complete_upload(self, etags: list[str]):
+            """Finalizes the upload - etags param must contain etags returned by each upload"""
+            self.s3.client.complete_multipart_upload(
+                Bucket=self.s3.bucket,
+                Key=self.key,
+                MultipartUpload={
+                    'Parts': [{"ETag": etag, "PartNumber": idx} for idx, etag in enumerate(etags)]
+                },
+                UploadId=self.mpu["UploadId"]
+            )
+
+        def abort_upload(self):
+            """Terminates the upload"""
+            self.s3.client.abort_multipart_upload(
+                Bucket=self.s3.bucket,
+                Key=self.key,
+                UploadId=self.mpu["UploadId"]
+            )
+
+    def create_multipart_downloader(self, key: str) -> Type[MultipartUploader]:
+        """Creates multipart downloader"""
+        return self.MultipartUploader(self, key)
+
+    def generate_fs_download_url(self, key: str, expiry: int) -> str:
+        """Returns download link for given item"""
+        try:
+            return self.client.generate_presigned_url(
+                "get_object",
+                Params={
+                    "Bucket": self.bucket,
+                    "Key": key
+                },
+                ExpiresIn=expiry,
+            )
+        except ClientError as e:
+            print("Failed to generate presigned S3 link:", e, flush=True)
             raise

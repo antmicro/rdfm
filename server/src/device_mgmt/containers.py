@@ -2,6 +2,7 @@ from typing import Optional
 from device_mgmt.models.remote_device import RemoteDevice
 from device_mgmt.models.reverse_shell import ReverseShell
 from device_mgmt.models.action_execution import ActionExecution
+from device_mgmt.models.filesystem_operation import FilesystemOperation
 from uuid import UUID
 
 
@@ -66,4 +67,24 @@ class ActionExecutions:
         """Get action execution by its identifier."""
         return self._action_executions.get(
             execution_id, None
+        )
+
+
+class FilesystemOperations:
+    """Container for tracking filesystem operations"""
+
+    _filesystem_operations: dict[str, FilesystemOperation] = {}
+
+    def add(self, operation: FilesystemOperation):
+        """Add a new operation."""
+        self._filesystem_operations[operation.id] = operation
+
+    def remove(self, operation: FilesystemOperation):
+        """Remove the specified operation."""
+        self._filesystem_operations.pop(operation.id)
+
+    def get(self, operation_id: str) -> Optional[FilesystemOperation]:
+        """Get operation by its identifier."""
+        return self._filesystem_operations.get(
+            operation_id, None
         )

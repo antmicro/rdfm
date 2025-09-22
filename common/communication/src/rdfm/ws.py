@@ -29,6 +29,8 @@ __required_capabilities_by_method_name: dict[str, list[str]] = {
     'alert': [],
     'action_exec': ['action'],
     'action_list_query': ['action'],
+    'fs_file_download': ['filesystem'],
+    'fs_file_probe': ['filesystem']
 }
 
 

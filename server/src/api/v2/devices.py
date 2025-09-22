@@ -1,4 +1,5 @@
-from flask import Blueprint
+import device_mgmt.fs
+from flask import Blueprint, current_app, send_from_directory, abort, request, make_response
 from typing import Optional, List
 import server
 import traceback
@@ -8,15 +9,22 @@ from api.v1.common import api_error
 from api.v1.middleware import (
     check_permission,
     check_device_permission,
+    deserialize_schema,
+    public_api
 )
 from rdfm.permissions import (
     READ_PERMISSION,
     UPDATE_PERMISSION,
+    CREATE_PERMISSION,
     DEVICE_RESOURCE,
     DELETE_PERMISSION
 )
 from rdfm.schema.v2.devices import Device
+from rdfm.schema.v2.fs import FsFile
 import device_mgmt.action
+import configuration
+from pathlib import Path
+
 
 devices_blueprint: Blueprint = Blueprint("rdfm-server-devices", __name__)
 
@@ -309,3 +317,91 @@ def remove(identifier: int):
         traceback.print_exc()
         print("Exception during removal:", repr(e))
         return api_error("removal failed", 500)
+
+
+@devices_blueprint.route("/api/v2/devices/<int:identifier>/fs/file", methods=['GET'])
+@check_permission(DEVICE_RESOURCE, READ_PERMISSION)
+@deserialize_schema(schema_dataclass=FsFile, key="fs_file")
+def download_file(identifier: int, fs_file: FsFile):
+    """ Download file from the device
+
+    This endpoint allows downloading files from the device.
+
+    :status 200: no error
+    :status 404: device does not exist
+    :status 500: failure during download
+
+    :>json string file: name of file to download
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        GET /api/v2/devices/1/fs/file HTTP/1.1
+        Accept: application/json, text/javascript
+
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+
+        {
+          "status": 0,
+          "url": "download.url"
+        }
+    """
+    try:
+        dev: Optional[models.device.Device] = server.instance._devices_db.fetch_one(identifier)
+        if dev is None:
+            return api_error("device does not exist", 404)
+
+        status, download_url = device_mgmt.fs.prepare_download(dev.mac_address, fs_file.file)
+        return {"status": status, "url": download_url}, 200
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception during downloading:", repr(e))
+        return api_error("download failed", 500)
+
+
+@devices_blueprint.route("/local_storage_multipart/multipart/<path:key>", methods=["GET"])
+@public_api
+def fetch_local_file(key: str):
+    """Endpoint for exposing local filesystem storage for multipart download.
+
+    :param key: identifier of the multipart file object in local storage
+    :status 200: no error
+    :status 404: specified file does not exist
+    """
+    conf: configuration.ServerConfig = current_app.config["RDFM_CONFIG"]
+    storage_location = Path(conf.package_dir).resolve()
+    package = (storage_location / "multipart" / key).resolve()
+    if not package.is_relative_to(storage_location):
+        abort(404)
+    return send_from_directory(str(package.parent), str(package.name))
+
+
+@devices_blueprint.route("/local_storage_multipart/parts/<part>", methods=["PUT"])
+@public_api
+def upload_local_file_part(part: str):
+    """Endpoint for uploading parts of multipart upload to the local filesystem storage.
+
+    :param part: identifier of the multipart file object in local storage
+    :status 200: no error
+    :status 404: wrong upload part name
+    :status 500: failure during upload
+    """
+    conf: configuration.ServerConfig = current_app.config["RDFM_CONFIG"]
+    storage_location = Path(conf.package_dir).resolve()
+    package = (storage_location / "multipart" / "parts" / part).resolve()
+    if not package.is_relative_to(storage_location):
+        abort(404)
+    package.parent.mkdir(exist_ok=True, parents=True)
+    with open(package, "wb") as part_file:
+        part_file.write(request.data)
+    resp = make_response()
+    resp.status = 200
+    resp.headers.set("Etag", part)
+    return resp

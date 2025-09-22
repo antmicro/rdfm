@@ -4,9 +4,13 @@ import shutil
 import configuration
 import urllib.parse
 from pathlib import Path, PosixPath
+from typing import Type
+from storage.common import upload_part_count
 
 """Local storage driver, used for debugging purposes
 """
+
+DESIRED_PART_SIZE = 10 * 2**20
 
 
 class LocalStorage:
@@ -89,3 +93,74 @@ class LocalStorage:
                 / name
             )
         )
+
+    class MultipartUploader:
+        """Helper class for handling multipart upload"""
+        def __init__(self, local_storage, key: str):
+            self.local_storage = local_storage
+            self.key = key
+            self.uploaded = []
+            self.part_files = []
+            self.final_file = None
+            self.part_count = 0
+            self.part_size = 0
+            pass
+
+        def generate_urls(self, upload_size: int, expiry: int) -> tuple[list[str], int]:
+            """
+            Returns list of upload urls and upload size for each upload url.
+            The amount of upload urls depends on upload_size param
+            """
+            urls = []
+            part_count, part_size = upload_part_count(upload_size, DESIRED_PART_SIZE)
+            self.part_count = part_count
+            self.part_size = part_size
+            hostname = self.local_storage.config.hostname
+            port = self.local_storage.config.http_port
+            upload_name = str(uuid.uuid4())
+            self.final_file = Path(
+                self.local_storage.config.package_dir) / "multipart" / f"{self.key}"
+
+            for i in range(part_count):
+                self.part_files.append(Path(
+                    self.local_storage.config.package_dir) / "multipart" / "parts"
+                    / f"{upload_name}_part{i}"
+                )
+                path = f"/local_storage_multipart/parts/{upload_name}_part{i}"
+                urls.append(urllib.parse.urljoin(f"http://{hostname}:{port}", path))
+
+            return urls, part_size
+
+        def complete_upload(self, etags: list[str]):
+            """Finalizes the upload - etags param must contain etags returned by each upload"""
+            if len(etags) != len(self.part_files):
+                return
+
+            for etag, expected_etag in zip(etags, self.part_files):
+                if etag != expected_etag.name:
+                    return
+
+            self.final_file.parent.mkdir(exist_ok=True, parents=True)
+            with open(self.final_file, "wb") as ofile:
+                for f in self.part_files:
+                    with open(f, "rb") as part_file:
+                        ofile.write(part_file.read())
+
+        def abort_upload(self):
+            """Terminates the upload"""
+            for part_file in self.part_files:
+                try:
+                    os.remove(part_file)
+                except Exception as e:
+                    pass
+
+    def create_multipart_downloader(self, key: str) -> Type[MultipartUploader]:
+        """Creates multipart downloader"""
+        return self.MultipartUploader(self, key)
+
+    def generate_fs_download_url(self, key: str, expiry: int) -> str:
+        """Returns download link for given item"""
+        hostname = self.config.hostname
+        port = self.config.http_port
+        path = f"/local_storage_multipart/multipart/{key}"
+        return urllib.parse.urljoin(f"http://{hostname}:{port}", path)

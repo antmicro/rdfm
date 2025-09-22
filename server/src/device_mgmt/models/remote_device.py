@@ -8,6 +8,8 @@ from request_models import (
     ActionExecResult,
     ActionExecControl,
     ActionListUpdate,
+    FsFileDownloadReply,
+    FsFileProbeReply,
 )
 
 import simple_websocket
@@ -116,6 +118,36 @@ class RemoteDevice:
             )
             self.actions = {x.action_id: x for x in request.actions}
             self.actions_updated.set()
+        elif isinstance(request, FsFileDownloadReply):
+            print(
+                "Filesystem download reply for ",
+                self.token.device_id,
+                request.id,
+                flush=True,
+            )
+            operation = server.instance.filesystem_operations.get(request.id)
+            if operation:
+                operation.response = request
+                operation.completed.set()
+            else:
+                raise WebSocketException(
+                    "invalid filesystem response", RDFM_WS_INVALID_REQUEST
+                )
+        elif isinstance(request, FsFileProbeReply):
+            print(
+                "Filesystem probe reply for ",
+                self.token.device_id,
+                request.id,
+                flush=True,
+            )
+            operation = server.instance.filesystem_operations.get(request.id)
+            if operation:
+                operation.response = request
+                operation.completed.set()
+            else:
+                raise WebSocketException(
+                    "invalid filesystem response", RDFM_WS_INVALID_REQUEST
+                )
         else:
             print("Unknown request:", request, flush=True)
             raise WebSocketException(
