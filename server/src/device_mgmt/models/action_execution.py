@@ -1,6 +1,6 @@
 import threading
 import queue
-from typing import Union
+from typing import Union, Optional
 import uuid
 
 from request_models import Action
@@ -18,10 +18,10 @@ class ActionExecution:
     execution_queued: threading.Event
     execution_completed: threading.Event
 
-    def __init__(self, action: Action):
+    def __init__(self, action: Action, id: Optional[str] = None):
         self.action = action
         self.status_code = None
-        self.execution_id = str(uuid.uuid4())
+        self.execution_id = id if id else str(uuid.uuid4())
 
         self.execution_control = queue.Queue()
 

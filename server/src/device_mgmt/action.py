@@ -1,9 +1,12 @@
 import time
+import datetime
 from typing import Optional
 from device_mgmt.models.action_execution import ActionExecution
 from rdfm.ws import RDFM_WS_INVALID_REQUEST, WebSocketException
 from request_models import Action, ActionExec, ActionListQuery
 import server
+import models.action_log
+import uuid
 
 import queue
 
@@ -21,6 +24,14 @@ EXECUTION_TOTAL_TIMEOUT = 3600 * 2
 
 
 def execute_action(mac_address: str, action_id: str) -> Optional[tuple[int, str]]:
+    action_log = models.action_log.ActionLog()
+    action_log.id = str(uuid.uuid4())
+    action_log.action_id = action_id
+    action_log.mac_address = mac_address
+    action_log.created = datetime.datetime.utcnow()
+    action_log.status = "pending"
+    server.instance._action_logs_db.insert(action_log)
+
     if not (remote_device := server.instance.remote_devices.get(mac_address)):
         msg = f"Device '{mac_address}' not connected to the management WS."
         raise WebSocketException(msg, RDFM_WS_INVALID_REQUEST)
@@ -29,9 +40,10 @@ def execute_action(mac_address: str, action_id: str) -> Optional[tuple[int, str]
 
     if not (action := remote_device.actions.get(action_id)):
         msg = f"Action '{action_id}' doesn't exist for device '{mac_address}'."
+        server.instance._action_logs_db.update_status(action_log.id, "error")
         raise WebSocketException(msg, RDFM_WS_INVALID_REQUEST)
 
-    execution = ActionExecution(action)
+    execution = ActionExecution(action, action_log.id)
     server.instance.action_executions.add(execution)
 
     try:
@@ -49,6 +61,7 @@ def execute_action(mac_address: str, action_id: str) -> Optional[tuple[int, str]
                 control_msg = execution.execution_control.get(timeout=QUEUE_RESPONSE_TIMEOUT)
                 if control_msg == "ok":
                     print(f"Queued execution '{execution.execution_id}'.", flush=True)
+                    server.instance._action_logs_db.update_status(execution.execution_id, "sent")
                     break
                 elif control_msg == "full":
                     print(
@@ -99,6 +112,8 @@ def execute_action_result(execution_id: str, status_code: int, output: str):
 
     execution.execution_completed.set()
 
+    server.instance._action_logs_db.update_status(execution_id, status_code)
+
 
 def execute_action_control(execution_id: str, status: str):
     if not (execution := server.instance.action_executions.get(execution_id)):
@@ -127,3 +142,20 @@ def ensure_actions(mac_address: str) -> list[Action]:
             pass
 
     return list(remote_device.actions.values())
+
+
+def send_action_queue(mac_address: str):
+    if not (remote_device := server.instance.remote_devices.get(mac_address)):
+        msg = f"Device '{mac_address}' not connected to the management WS."
+        raise WebSocketException(msg, RDFM_WS_INVALID_REQUEST)
+
+    actions = server.instance._action_logs_db.fetch_device_queue(mac_address)
+
+    for action in actions:
+        action_type = remote_device.actions.get(action.action_id)
+        execution = ActionExecution(action_type, action.id)
+        server.instance.action_executions.add(execution)
+
+        remote_device.send_message(
+            ActionExec(action_id=action.action_id, execution_id=action.id)
+        )

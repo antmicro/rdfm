@@ -5,6 +5,7 @@ from request_models import (
     CapabilityReport,
     Alert,
     Action,
+    ActionExec,
     ActionExecResult,
     ActionExecControl,
     ActionListUpdate,
@@ -85,6 +86,7 @@ class RemoteDevice:
             server.instance._devices_db.update_capabilities(
                 self.token.device_id, request.capabilities
             )
+            device_mgmt.action.send_action_queue(self.token.device_id)
         elif isinstance(request, ActionExecResult):
             print(
                 "Action execution result for",
