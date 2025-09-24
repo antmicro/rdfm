@@ -230,7 +230,7 @@ export const fetchWrapper = async (
         const accessToken = localStorage.getItem('access_token');
 
         if (accessToken) {
-            headers.append('Authorization', `Bearer token=${accessToken}`);
+            headers.set('Authorization', `Bearer token=${accessToken}`);
         }
         response = await fetch(url, { method, body, headers: headers });
         if (!response.ok) {
