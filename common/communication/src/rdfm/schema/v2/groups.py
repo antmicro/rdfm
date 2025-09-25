@@ -70,6 +70,7 @@ class AssignPolicyRequest():
     })
     Schema: ClassVar[Type[marshmallow.Schema]] = marshmallow.Schema
 
+
 @marshmallow_dataclass.dataclass
 class AssignPriorityRequest():
     """ Represents a group priority assignment request

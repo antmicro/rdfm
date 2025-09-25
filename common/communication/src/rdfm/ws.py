@@ -43,7 +43,7 @@ def can_handle_request(capabilities: dict[str, bool], request_method: str) -> bo
         True if device can handle given method
     """
     return all(c in capabilities and capabilities[c]
-                    for c in __required_capabilities_by_method_name[request_method])
+               for c in __required_capabilities_by_method_name[request_method])
 
 
 class WebSocketException(Exception):
@@ -56,7 +56,6 @@ class WebSocketException(Exception):
     """
     status_code: int
     message: str
-
 
     def __init__(self, message: str, status_code: int) -> None:
         """ Initialize the exception
@@ -91,7 +90,8 @@ def receive_message(ws: simple_websocket.Client, timeout: Optional[float] = None
     try:
         data = ws.receive(timeout=timeout)
         if isinstance(data, bytes):
-            raise WebSocketException("device socket requires text-mode encoding", WS_UNSUPPORTED_DATA)
+            raise WebSocketException("device socket requires text-mode encoding",
+                                     WS_UNSUPPORTED_DATA)
         if data is None:
             raise WebSocketException("websocket read timed out", RDFM_WS_INVALID_REQUEST)
     except ConnectionClosed as e:
@@ -126,4 +126,3 @@ def send_message(ws: simple_websocket.Client, request: Request):
     except Exception as e:
         print("Device WS: Sending message failed:", e, flush=True)
         raise WebSocketException("invalid request", RDFM_WS_INVALID_REQUEST)
-

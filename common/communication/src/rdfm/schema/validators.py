@@ -12,11 +12,9 @@ class Contains(validate.OneOf):
     """
     default_message = "Sequence must contain: {choices}."
 
-
     def _format_error(self, value) -> str:
         value_text = ", ".join(str(val) for val in value)
         return super()._format_error(value_text)
-
 
     def __call__(self, value: typing.Sequence[_T]) -> typing.Sequence[_T]:
         for required in self.choices:
