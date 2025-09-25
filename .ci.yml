@@ -91,6 +91,7 @@ python-pycodestyle-check:
     - export PATH=$HOME/.local/bin:$PATH
     - (cd server && rdfm-lint-pycodestyle)
     - (cd manager && rdfm-lint-pycodestyle)
+    - (cd common/communication && rdfm-lint-pycodestyle)
 
 python-mypy-check-manager:
   extends: .mypy-check-base
@@ -102,6 +103,11 @@ python-mypy-check-server:
   variables:
     TARGET: server
     ARGS: "--config-file ./mypy.ini"
+
+python-mypy-check-common-communication:
+  extends: .mypy-check-base
+  variables:
+    TARGET: common/communication
 
 test-package-api:
   extends: .build
