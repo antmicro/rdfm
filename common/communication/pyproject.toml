@@ -16,9 +16,7 @@ marshmallow = "^3.20.1"
 marshmallow-dataclass = "^8.5.14"
 
 [tool.poetry.group.test.dependencies]
-mypy = "^1.4.0"
 types-jsonschema = "^4.17.0.8"
-pycodestyle = "^2.10.0"
 
 [tool.poetry.scripts]
 test = 'scripts:static_checks'
@@ -26,12 +24,3 @@ test = 'scripts:static_checks'
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[mypy]
-disallow_untyped_defs = true
-disallow_any_unimported = true
-no_implicit_optional = true
-check_untyped_defs = true
-warn_return_any = true
-warn_unused_ignores = true
-show_error_codes = true
