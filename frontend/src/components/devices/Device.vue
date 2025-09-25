@@ -80,6 +80,14 @@ Component wraps functionality for displaying and working with a single rdfm devi
                 <p class="title">MAC Address</p>
                 <pre class="small"><code>{{ device.mac_address }}</code></pre>
             </div>
+            <div class="block" v-if="tags.length > 0">
+                <p class="title">Tags</p>
+                <div id="tags">
+                    <div v-for="tag in tags">
+                        <pre class="small"><code>{{ tag }}</code></pre>
+                    </div>
+                </div>
+            </div>
             <div class="block">
                 <p class="title">Device Type</p>
                 <pre class="small"><code>{{ device.metadata['rdfm.hardware.devtype'] }}</code></pre>
@@ -296,6 +304,12 @@ Component wraps functionality for displaying and working with a single rdfm devi
             text-wrap: nowrap;
         }
     }
+
+    #tags {
+        display: flex;
+        flex-direction: row;
+        gap: 0.5em;
+    }
 }
 </style>
 
@@ -316,6 +330,7 @@ import Collapse from '../icons/Collapse.vue';
 import {
     registeredDevicesResources,
     groupResources,
+    getDeviceTags,
     getDeviceActions,
     execAction,
     type Action,
@@ -359,6 +374,7 @@ export default {
         const device = ref<RegisteredDevice>();
         const groups = ref<Group[]>();
         const pattern = ref<string>();
+
         const stop = watch(
             () => registeredDevicesResources.resources.value,
             async () => {
@@ -407,6 +423,19 @@ export default {
         );
 
         const devicesLoaded = computed(() => !!registeredDevicesResources.resources.value);
+
+        const tags = ref<string[]>([]);
+        effect(async () => {
+            if (!device.value) return;
+
+            const newTags = await getDeviceTags(device.value.id);
+
+            if (newTags.success && newTags.data) {
+                tags.value = newTags.data;
+            } else {
+                console.warn('Failed to fetch tags');
+            }
+        });
 
         // Actions interface
 
@@ -492,6 +521,7 @@ export default {
             devicesLoaded,
             device,
             pattern,
+            tags,
             groups,
             actions,
             runAction,

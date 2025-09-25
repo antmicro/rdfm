@@ -46,6 +46,11 @@ export const DEVICE_ACTIONS_EXEC_ENDPOINT = (mac: string, actionId: string) =>
 export const DEVICE_SHELL_ENDPOINT = (mac: string, token: string) =>
     `/api/v1/devices/${mac}/shell?token=${token}`;
 
+export const DEVICE_TAGS_ENDPOINT = (id: number) => `${SERVER_URL}/api/v2/devices/${id}/tags`;
+export const DEVICE_ADD_TAG_ENDPOINT = (id: number, tag: string) =>
+    `${SERVER_URL}/api/v2/devices/${id}/tag/${tag}`;
+export const TAGS_ENDPOINT = (tag: string) => `${SERVER_URL}/api/v2/tags/${tag}`;
+
 export const GROUPS_ENDPOINT = `${SERVER_URL}/api/v2/groups`;
 export const DELETE_GROUP_ENDPOINT = (id: number) => `${GROUPS_ENDPOINT}/${id}`;
 export const UPDATE_GROUP_PRIORITY_ENDPOINT = (id: number) => `${GROUPS_ENDPOINT}/${id}/priority`;

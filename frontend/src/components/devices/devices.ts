@@ -17,6 +17,9 @@ import {
     PENDING_ENDPOINT,
     REGISTER_DEVICE_ENDPOINT,
     DELETE_DEVICE_ENDPOINT,
+    DEVICE_TAGS_ENDPOINT,
+    DEVICE_ADD_TAG_ENDPOINT,
+    TAGS_ENDPOINT,
     resourcesGetter,
     fetchWrapper,
     type Group,
@@ -167,5 +170,21 @@ export const getDeviceActions = async (macAddress: string) => {
     return {
         success: true,
         data: out.data as Action[],
+    };
+};
+
+export const getDeviceTags = async (identifier: number) => {
+    const out = await registeredDevicesResources.fetchGET(DEVICE_TAGS_ENDPOINT(identifier));
+
+    if (!out.success) {
+        return {
+            success: false,
+            message: 'Failed to obtain device tags. Got a response code of ' + out.code,
+        };
+    }
+
+    return {
+        success: true,
+        data: out.data as string[],
     };
 };
