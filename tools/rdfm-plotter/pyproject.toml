@@ -15,6 +15,7 @@ dependencies = [
     "argparse (>=1.4.0,<2.0.0)",
     "servis @ git+https://github.com/antmicro/servis",
     "jsonschema (>=4.25.1,<5.0.0)",
+    "pytest (>=8.4.2,<9.0.0)",
 ]
 
 # We're vendoring the compiled pb files for now, so they're not in .gitignore.
