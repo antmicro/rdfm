@@ -163,7 +163,7 @@ export interface PendingDevice {
     public_key: string;
     mac_address: string;
     last_appeared: string;
-    metadata: Record<string, string>;
+    metadata: Record<string, string | string[]>;
 }
 
 /**
@@ -176,7 +176,7 @@ export interface RegisteredDevice {
     name: string;
     mac_address: string;
     groups?: number[];
-    metadata: Record<string, string>;
+    metadata: Record<string, string | string[]>;
     capabilities: Record<string, boolean>;
     public_key: string;
 }

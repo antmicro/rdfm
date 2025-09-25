@@ -24,7 +24,7 @@ class Device():
     capabilities: dict[str, bool] = field(metadata={
         "required": True
     })
-    metadata: dict[str, str] = field(metadata={
+    metadata: dict[str, str | list] = field(metadata={
         "required": True
     })
     groups: Optional[list[int]] = field(metadata={
@@ -53,7 +53,7 @@ class Registration():
     public_key: str = field(metadata={
         "required": True
     })
-    metadata: dict[str, str] = field(metadata={
+    metadata: dict[str, str | list] = field(metadata={
         "required": True
     })
     last_appeared: datetime.datetime = field(metadata={
@@ -67,7 +67,7 @@ class Registration():
 class AuthRegisterRequest():
     """ Represents a device registration request
     """
-    metadata: dict[str, str] = field(metadata={
+    metadata: dict[str, str | list] = field(metadata={
         "required": True,
         "validate": Contains(choices=[
             META_SOFT_VER,

@@ -34,7 +34,7 @@ def check_in(register_request: AuthRegisterRequest):
     :status 400: invalid schema, or provided signature is invalid
     :status 401: device was not authorized by an administrator yet
 
-    :<json dict[str, str] metadata: device metadata
+    :<json dict[str, str|list] metadata: device metadata
     :<json str public_key: the device's RSA public key, in PEM format, with
                            newline characters escaped
     :<json int timestamp: POSIX timestamp at the time of making the request
