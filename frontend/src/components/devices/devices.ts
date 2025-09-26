@@ -12,6 +12,7 @@
 import {
     DEVICE_ACTIONS_ENDPOINT,
     DEVICE_ACTIONS_EXEC_ENDPOINT,
+    DEVICE_ACTION_LOG_ENDPOINT,
     DEVICES_ENDPOINT,
     GROUPS_ENDPOINT,
     PENDING_ENDPOINT,
@@ -189,5 +190,21 @@ export const getDeviceTags = async (identifier: number) => {
     return {
         success: true,
         data: out.data as string[],
+    };
+};
+
+export const getDeviceActionLog = async (macAddress: string) => {
+    const out = await registeredDevicesResources.fetchGET(DEVICE_ACTION_LOG_ENDPOINT(macAddress));
+
+    if (!out.success) {
+        return {
+            success: false,
+            message: 'Failed to obtain device action log. Got a response code of ' + out.code,
+        };
+    }
+
+    return {
+        success: true,
+        data: out.data as Action[],
     };
 };

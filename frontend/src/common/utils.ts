@@ -43,6 +43,7 @@ export const DEVICE_ACTIONS_ENDPOINT = (mac: string) =>
     `${SERVER_URL}/api/v2/devices/${mac}/action/list`;
 export const DEVICE_ACTIONS_EXEC_ENDPOINT = (mac: string, actionId: string) =>
     `/api/v2/devices/${mac}/action/exec/${actionId}`;
+export const DEVICE_ACTION_LOG_ENDPOINT = (mac: string) => `/api/v2/devices/${mac}/action_log`;
 export const DEVICE_SHELL_ENDPOINT = (mac: string, token: string) =>
     `/api/v1/devices/${mac}/shell?token=${token}`;
 

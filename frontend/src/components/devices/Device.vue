@@ -56,7 +56,62 @@ Component wraps functionality for displaying and working with a single rdfm devi
                     </svg>
                 </div>
             </button>
+            <button v-on:click="() => fetchActionLog()" class="action">
+                <div class="name">Show action log for device</div>
+                <div class="description three-lines">
+                    Fetch a list of tasks assigned to the device
+                </div>
+                <div class="run">
+                    <svg
+                        class="if-not-running"
+                        width="30"
+                        height="31"
+                        viewBox="0 0 20 21"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <path d="M6 16V5L14.5 10.5L6 16Z" fill="#E8EAED" />
+                    </svg>
+                </div>
+            </button>
         </div>
+
+        <Transition>
+            <BlurPanel v-if="showingActionLog" @click.self="closeActionLogPopup">
+                <div class="popup">
+                    <div class="header">
+                        <p class="title">Action log</p>
+                        <p class="description">
+                            Actions assigned to device {{ device!.mac_address }}
+                        </p>
+                        <button
+                            class="action-button red small-padding close-button"
+                            @click="closeActionLogPopup"
+                        >
+                            <Cross />
+                        </button>
+                    </div>
+                    <div class="body action-log">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Action</th>
+                                    <th>Created date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="task in tasks">
+                                    <td>{{ task.action }}</td>
+                                    <td>{{ task.created }}</td>
+                                    <td>{{ task.status }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </BlurPanel>
+        </Transition>
 
         <template v-if="device?.capabilities.shell && allowedTo('shell', 'device', device?.id)">
             <div :class="['terminal-container', { fullscreen: isFullscreen }]">
@@ -214,6 +269,22 @@ Component wraps functionality for displaying and working with a single rdfm devi
     }
 }
 
+.action-log {
+    overflow: scroll;
+    max-height: 80vh;
+    max-width: 95vw;
+
+    @media screen and (max-width: 1250px) {
+        font-size: small;
+    }
+}
+
+.close-button {
+    position: absolute;
+    top: 30px;
+    right: 30px;
+}
+
 .terminal-container {
     margin: 2em;
     transition: transform 1s;
@@ -328,13 +399,16 @@ import {
 } from '../../common/utils';
 import TitleBar from '../TitleBar.vue';
 import Terminal from '../Terminal.vue';
+import BlurPanel from '../BlurPanel.vue';
 import Expand from '../icons/Expand.vue';
 import Collapse from '../icons/Collapse.vue';
+import Cross from '../icons/Cross.vue';
 import {
     registeredDevicesResources,
     groupResources,
     getDeviceTags,
     getDeviceActions,
+    getDeviceActionLog,
     execAction,
     type Action,
 } from './devices';
@@ -349,8 +423,10 @@ export default {
     components: {
         TitleBar,
         Terminal,
+        BlurPanel,
         Expand,
         Collapse,
+        Cross,
     },
     unmounted() {
         if (this.interval !== null) clearInterval(this.interval);
@@ -504,6 +580,32 @@ export default {
             }
         };
 
+        const tasks = ref<any[]>([]);
+        const showingActionLog = ref<boolean>(false);
+
+        const fetchActionLog = async () => {
+            const result = await getDeviceActionLog(device.value!.mac_address);
+
+            if (result.success) {
+                tasks.value = result.data as any[];
+                tasks.value = tasks.value.map((task: any) => {
+                    if (task.status === '0') task.status = 'success';
+                    if (task.status === '-1') task.status = 'error';
+                    return task;
+                });
+                showingActionLog.value = true;
+            } else {
+                notif.notifyError({
+                    headline: device.value?.name + ' action log',
+                    msg: `Failed to fetch action log`,
+                });
+            }
+        };
+
+        const closeActionLogPopup = () => {
+            showingActionLog.value = false;
+        };
+
         const isTerminalOpened = ref<boolean>(false);
         const isFullscreen = ref<boolean>(false);
 
@@ -530,7 +632,11 @@ export default {
             tags,
             groups,
             actions,
+            tasks,
             runAction,
+            fetchActionLog,
+            showingActionLog,
+            closeActionLogPopup,
             toggleTerminal,
             isTerminalOpened,
             terminalButton,
