@@ -4,6 +4,7 @@ from typing import Optional, List
 import server
 import traceback
 import models.device
+import models.action_log
 import json
 from api.v1.common import api_error
 from api.v1.middleware import (
@@ -19,7 +20,7 @@ from rdfm.permissions import (
     DEVICE_RESOURCE,
     DELETE_PERMISSION
 )
-from rdfm.schema.v2.devices import Device
+from rdfm.schema.v2.devices import Device, ActionLog
 from rdfm.schema.v2.fs import FsFile
 import device_mgmt.action
 import configuration
@@ -40,6 +41,15 @@ def model_to_schema(device: models.device.Device) -> Device:
         metadata=json.loads(device.device_metadata),
         public_key=device.public_key,
         groups=server.instance._devices_db.fetch_groups(device.id)
+    )
+
+
+def action_model_to_schema(task: models.action_log.ActionLog) -> Device:
+    """Convert a database model to the schema model"""
+    return ActionLog(
+        action=task.action_id,
+        created=task.created,
+        status=task.status
     )
 
 
@@ -275,6 +285,66 @@ def exec_action(
     """
     status_code, output = device_mgmt.action.execute_action(mac_address, action_id)
     return {"status_code": status_code, "output": output}, 200
+
+
+@devices_blueprint.route(
+    "/api/v2/devices/<string:mac_address>/action_log"
+)
+@check_permission(DEVICE_RESOURCE, READ_PERMISSION)
+def get_action_log(mac_address: str):
+    """ Fetch a list of actions assigned to the device.
+
+    :status 200: no error
+
+    :>json string action: action name
+    :>json string created: date in ISO format
+    :>json string status: pending, sent, success or error
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        GET /api/v2/devices/d8:5e:d3:86:02:f2/action/tasks HTTP/1.1
+        Accept: application/json, text/javascript
+
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+
+        [
+        {
+            "action": "echo",
+            "created": "2025-09-26T12:25:44.638747",
+            "status": "pending"
+        },
+        {
+            "action": "sleepTwoSeconds",
+            "created": "2025-09-26T12:15:32.047079",
+            "status": "success"
+        },
+        {
+            "action": "sleepFiveSeconds",
+            "created": "2025-09-26T11:14:55.160802",
+            "status": "error"
+        },
+        ]
+
+    """
+    try:
+        actions: List[
+            models.action_log.ActionLog
+        ] = server.instance._action_logs_db.fetch_device_log(mac_address)
+        return ActionLog.Schema().dump(
+            [action_model_to_schema(action) for action in actions], many=True
+        ), 200
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception during action log fetch:", repr(e))
+        return api_error("action log fetching failed", 500)
 
 
 @devices_blueprint.route("/api/v2/devices/<int:identifier>", methods=['DELETE'])

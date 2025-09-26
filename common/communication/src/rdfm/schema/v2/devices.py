@@ -82,3 +82,21 @@ class AuthRegisterRequest():
         "required": True,
     })
     Schema: ClassVar[Type[marshmallow.Schema]] = marshmallow.Schema
+
+
+@marshmallow_dataclass.dataclass
+class ActionLog():
+    """ Represents an action assigned to device.
+    """
+    action: str = field(metadata={
+        "required": True
+    })
+    created: Optional[datetime.datetime] = field(metadata={
+        "required": True,
+        "allow_none": True,
+        "format": "rfc",
+    })
+    status: str = field(metadata={
+        "required": True
+    })
+    Schema: ClassVar[Type[marshmallow.Schema]] = marshmallow.Schema
