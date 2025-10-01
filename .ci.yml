@@ -59,10 +59,11 @@ variables:
   # rdfm-ci-base-bookworm has an outdated version of poetry
   # changes to pyproject.toml spec require a newer version (PEP 621, poetry 2.0+ required)
   image: python:3.11.4-bookworm
-  before_script:
+  before_get_sources:
     - pip3 install poetry
     - pip3 install --upgrade pip
     - apt update && apt-get install -y pipx
+  before_script:
     - (cd tools/rdfm-lint-scripts && pipx install .)
 
 .mypy-check-base:
@@ -76,6 +77,30 @@ variables:
     - cd $TARGET && poetry install
     - rdfm-lint-mypy $ARGS
   allow_failure: true
+
+.install-poetry-and-apptainer:
+  image: python:3.11.4-bookworm
+  variables:
+    APPTAINER_REL: v1.4.3
+    GO_REL: https://go.dev/dl/go1.24.4.linux-amd64.tar.gz
+    SCALENODE_RAM: 4096
+  before_script:
+    - pip3 install poetry
+    - pip3 install --upgrade pip
+    - (apt update &&
+        apt-get -y install build-essential libseccomp-dev uidmap fakeroot cryptsetup tzdata dh-apparmor squashfs-tools curl wget git pipx iptables kcat openjdk-17-jre)
+    - wget --quiet -O - $GO_REL | tar xz
+    - git clone https://github.com/apptainer/apptainer.git
+    - export PATH=`pwd`/go/bin:$PATH
+    - cd apptainer
+    - git checkout ${APPTAINER_REL}
+    - ./mconfig
+    - cd builddir
+    - mkdir tmp
+    - export GOTMPDIR=$(pwd)/tmp
+    - make
+    - make install
+    - rm -rf ./tmp
 
 stages:
   - docs-build
@@ -435,6 +460,37 @@ test-rdfm-artifact:
     - export PATH=`pwd`/go/bin:$PATH
     - cd tools/rdfm-artifact
     - make test
+
+# ===== rdfm-jwt-auth ===== #
+
+build-rdfm-jwt-auth:
+  image: maven:3.9.11-eclipse-temurin-17
+  stage: build
+  script:
+    - cd server/deploy/pubsub-demo/rdfm-jwt-auth
+    - mvn package
+  artifacts:
+    paths:
+      - server/deploy/pubsub-demo/rdfm-jwt-auth/target/rdfm-jwt-auth-*.jar
+
+# ===== rdfm-plotter ===== #
+
+test-rdfm-plotter:
+  <<: *common_only
+  stage: local-tests
+  extends: .install-poetry-and-apptainer
+  dependencies:
+    - build-rdfm-jwt-auth
+  script:
+    - mv server/deploy/pubsub-demo/rdfm-jwt-auth/target/rdfm-jwt-auth-*.jar tools/rdfm-plotter/tests
+    - cd tools/rdfm-plotter/tests
+    - mkdir tmp
+    - APPTAINER_TMPDIR=$(pwd)/tmp apptainer -v build test_kafka.sif test_kafka.def
+    - rm -rf ./tmp
+    - cd ..
+    - poetry install
+    - poetry run pytest tests/test-plotter.py -s -v --testpath $(pwd)/tests
+    - poetry run pytest tests/test-rdfm-jwt-auth.py -s -v --testpath $(pwd)/tests
 
 # ===== rdfm-frontend ===== #
 
