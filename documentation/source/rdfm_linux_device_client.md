@@ -48,6 +48,16 @@ Further shell session requests will be rejected by the client.
 
 Shell functionality can be disabled entirely via the [ShellEnable](#shellenable-bool) configuration key.
 
+### File downloading
+
+The client supports downloading files from the device its running on. It utilizes intermediate S3 bucket or local storage, depending on RDFM server configuration. To download files [`rdfm-mgmt`](./rdfm_manager.md) can be used:
+
+```bash
+rdfm-mgmt devices download <device> <remote-file-path> <local-file-path>
+```
+
+You can limit locations of downloadable files to the specific directory using the [FileSystemBaseDir](filesystembasedir-string) configuration key. You can also disable the functionality completely via the [FileSystemEnable](filesystemenable-bool) configuration key.
+
 ## Installing from source
 
 ### Requirements
@@ -186,6 +196,16 @@ True by default.
 
 Specifies how many concurrent shell sessions can be spawned.
 `5` by default.
+
+#### FileSystemEnable `bool`
+
+Allows enabling/disabling filesystem functionality.
+True by default.
+
+#### FileSystemBaseDir `string`
+
+Specifies base directory of downloadable files.
+`/` by default.
 
 ### RDFM telemetry config
 

@@ -284,3 +284,9 @@ For example, the following command will revoke read permission for all devices f
 ```
 rdfm-mgmt permissions delete device --all-ids --user eed3d12d-e13b-4c4a-aebd-38b4d55c8947 --permission read
 ```
+
+### Downloading files from remote device
+You can download files from remote device with `filesystem` capability with the following command:
+```
+rdfm-mgmt devices download <device> <remote-file-path> <local-file-path>
+```
