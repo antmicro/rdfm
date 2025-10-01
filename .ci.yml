@@ -92,6 +92,7 @@ python-pycodestyle-check:
     - (cd server && rdfm-lint-pycodestyle)
     - (cd manager && rdfm-lint-pycodestyle)
     - (cd common/communication && rdfm-lint-pycodestyle)
+    - (cd tools/rdfm-plotter && rdfm-lint-pycodestyle --exclude log_pb2.py)
 
 python-mypy-check-manager:
   extends: .mypy-check-base
@@ -108,6 +109,11 @@ python-mypy-check-common-communication:
   extends: .mypy-check-base
   variables:
     TARGET: common/communication
+
+python-mypy-check-plotter:
+  extends: .mypy-check-base
+  variables:
+    TARGET: tools/rdfm-plotter
 
 test-package-api:
   extends: .build
