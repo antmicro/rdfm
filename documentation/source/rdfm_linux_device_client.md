@@ -303,6 +303,21 @@ Human readable action description.
 
 Maximum duration of command execution in seconds, command is killed if it doesn't finish in the time provided.
 
+### RDFM tags config
+
+The plaintext `/var/lib/rdfm/tags.conf` file contains a list of tags for the device.
+Each line should contain one tag without any additional characters.
+The tags are added to device metadata and stored in the database during registration.
+They can then be used to filter devices in the RDFM website.
+
+Example configuration:
+```
+linux-client
+test-device
+```
+
+Including this file is optional. Tags can also be assigned by making a request to the `/api/v2/devices/{id}/tag` endpoint.
+
 ## Testing server-device integration with a demo Linux device client
 
 For development purposes, it's often necessary to test server integration with an existing device client.
