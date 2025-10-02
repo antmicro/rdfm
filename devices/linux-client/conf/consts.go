@@ -16,6 +16,7 @@ const (
 	RdfmCacheDirectory       = "cache"
 	RdfmActionsFilename      = "actions.conf"
 	RdfmActionDataDirectory  = "action_persist"
+	RdfmTagsFilename         = "tags.conf"
 	// This pattern can only contain one '*', because of the Sprintf use in cached_fetcher
 	RdfmCacheFilePattern = "update-*.cache"
 )
@@ -31,4 +32,5 @@ var (
 	RdfmCachePath          = path.Join(RdfmDataDirectory, RdfmCacheDirectory)
 	RdfmDefaultActionsPath = path.Join(RdfmDataDirectory, RdfmActionsFilename)
 	RdfmActionDataPath     = path.Join(RdfmDataDirectory, RdfmActionDataDirectory)
+	RdfmDefaultTagsPath    = path.Join(RdfmDataDirectory, RdfmTagsFilename)
 )

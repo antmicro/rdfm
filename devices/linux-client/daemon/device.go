@@ -676,13 +676,23 @@ func (d *Device) collectMetadata() (map[string]interface{}, error) {
 		return nil, fmt.Errorf("Error collecting metadata: failed to get current software version: %w", err)
 	}
 
-	return map[string]interface{}{
+	tags, err := conf.LoadTagsConfig(conf.RdfmDefaultTagsPath)
+	if err != nil {
+		return nil, fmt.Errorf("Error collecting metadata: failed to get current tags: %w", err)
+	}
+
+	m := map[string]interface{}{
 		"rdfm.hardware.devtype":         devType,
 		"rdfm.software.version":         swVer,
 		"rdfm.hardware.macaddr":         d.macAddr,
 		"rdfm.software.supports_rsync":  "true",
 		"rdfm.software.supports_xdelta": "true",
-	}, nil
+		"rdfm.software.tags":            tags,
+	}
+	if len(tags) == 0 {
+		delete(m, "rdfm.software.tags")
+	}
+	return m, nil
 }
 
 func (d *Device) requestUpdateCheck() {

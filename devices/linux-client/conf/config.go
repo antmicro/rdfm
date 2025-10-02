@@ -1,9 +1,11 @@
 package conf
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"os"
 	"reflect"
 
 	log "github.com/sirupsen/logrus"
@@ -182,4 +184,34 @@ func loadConfigFile(fileName string, config interface{}) error {
 	}
 
 	return nil
+}
+
+func LoadTagsConfig(path string) ([]string, error) {
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return make([]string, 0), nil
+	}
+
+	if err := checkConfigFilePermissions(path); err != nil {
+		log.Error("tags: config file: wrong permissions")
+		return nil, err
+	}
+
+	configFile, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer configFile.Close()
+
+	var config []string
+
+	sc := bufio.NewScanner(configFile)
+	for sc.Scan() {
+		line := sc.Text()
+		config = append(config, line)
+	}
+	if err = sc.Err(); err != nil {
+		return nil, err
+	}
+
+	return config, nil
 }
