@@ -123,3 +123,5 @@ Return a list of actions supported by the device.
 ##### Method - `action_exec`
 
 Attempt to queue action execution and immediately respond with the `action_exec_control` message indicating success or failure. Action execution result is sent later via `action_exec_result` message.
+Action execution status: pending, sent, or the status code returned by the device is stored in the server database.
+If any action requests were made while the device was not connected to the management WebSocket, they would be sent again after the device reconnects and sends a `CapabilityReport`.
