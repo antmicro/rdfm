@@ -104,6 +104,7 @@ def create(perm: Permission):
                  or the authorization has expired
     :status 403: user was authorized, but did not have permission
                  to create permissions
+    :status 422: permission type and resource type are incompatible
 
     **Example Request**
 
@@ -137,6 +138,8 @@ def create(perm: Permission):
         }
 
     """  # noqa: E501
+    if perm.permission == "shell" and perm.resource != "device":
+        return api_error("Shell permission is only applicable to devices", 422)
 
     permission = models.permission.Permission()
     permission.created = datetime.datetime.utcnow()
