@@ -7,7 +7,10 @@ from auth.device import DeviceToken
 from api.v1.middleware import (
     upgrade_to_websocket,
     device_api,
-    management_read_write_api,
+    check_device_permission,
+)
+from rdfm.permissions import (
+    SHELL_PERMISSION,
 )
 
 
@@ -35,7 +38,7 @@ def device_management_ws(
 @device_ws_blueprint.route(
     "/api/v1/devices/<string:mac_address>/shell", websocket=True
 )
-@management_read_write_api(allow_token_from_url=True)
+@check_device_permission(SHELL_PERMISSION, allow_token_from_url=True)
 @upgrade_to_websocket
 def spawn_shell_for_manager(ws: simple_websocket.Client, mac_address: str):
     """Manager WebSocket: Spawn a device shell

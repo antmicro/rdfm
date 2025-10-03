@@ -9,7 +9,8 @@ MAC_ADDR_REGEX = "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"
 PERMISSIONS_CHOICES = [rdfm.permissions.READ_PERMISSION,
                        rdfm.permissions.CREATE_PERMISSION,
                        rdfm.permissions.UPDATE_PERMISSION,
-                       rdfm.permissions.DELETE_PERMISSION]
+                       rdfm.permissions.DELETE_PERMISSION,
+                       rdfm.permissions.SHELL_PERMISSION]
 RESOURCE_CHOICES = [rdfm.permissions.GROUP_RESOURCE,
                     rdfm.permissions.PACKAGE_RESOURCE,
                     rdfm.permissions.DEVICE_RESOURCE]
