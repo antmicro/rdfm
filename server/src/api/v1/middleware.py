@@ -634,6 +634,35 @@ def check_permission(resource_name: str, permission: str):
     return _check_permissions
 
 
+def check_device_permission(permission: str, allow_token_from_url: bool = False):
+    def _check_device_permission(f):
+        f.__rdfm_api_privileges__ = "management_permissions"
+
+        @functools.wraps(f)
+        @management_user_validation(allow_token_from_url=allow_token_from_url)
+        def __check_device_permission(
+                auth_enabled, user_id, user_roles, *args, **kwargs):
+
+            write_permission = permission in [
+                UPDATE_PERMISSION, DELETE_PERMISSION, SHELL_PERMISSION
+            ]
+
+            if (not auth_enabled or
+                    check_admin_rights(user_roles, not write_permission)):
+                return f(*args, **kwargs)
+
+            device = server.instance._devices_db.get_device_data(kwargs["mac_address"])
+
+            if check_user_permissions(DEVICE_RESOURCE, user_id, device.id, permission):
+                return f(*args, **kwargs)
+            if write_permission:
+                return api_error(f"insufficient permission to a resource", 403)
+            return {}, 404
+
+        return __check_device_permission
+    return _check_device_permission
+
+
 def add_permissions_for_new_resource(resource_name: str):
     def _add_permissions_for_new_resource(f):
         @functools.wraps(f)
