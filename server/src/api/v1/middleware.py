@@ -20,6 +20,7 @@ from rdfm.permissions import (
     READ_PERMISSION,
     UPDATE_PERMISSION,
     DELETE_PERMISSION,
+    SHELL_PERMISSION,
     PACKAGE_RESOURCE,
     DEVICE_RESOURCE,
     GROUP_RESOURCE,
@@ -696,60 +697,72 @@ def add_permissions_for_new_resource(resource_name: str):
     return _add_permissions_for_new_resource
 
 
-def management_user_validation(f):
-    @functools.wraps(f)
-    def _management_user_validation(*args, **kwargs):
-        conf: configuration.ServerConfig = current_app.config[
-                "RDFM_CONFIG"
-            ]
-        if conf.disable_api_auth:
-            return f(auth_enabled=False, user_id=None,
-                     user_roles=[], *args, **kwargs)
+def management_user_validation(_func=None, *, allow_token_from_url: bool = False):
+    def _management_user_validation(f):
+        @functools.wraps(f)
+        def __management_user_validation(*args, **kwargs):
+            conf: configuration.ServerConfig = current_app.config[
+                    "RDFM_CONFIG"
+                ]
+            if conf.disable_api_auth:
+                return f(auth_enabled=False, user_id=None, user_roles=[], *args, **kwargs)
 
-        # Extract token from the Authorization header
-        auth = request.authorization
-        if auth is None:
-            return api_error("no Authorization header was provided", 401)
-        if auth.type != "bearer":
-            return api_error(
-                "invalid authorization - expected authorization type"
-                "Bearer",
-                401,
-            )
-        if "token" not in auth:
-            return api_error(
-                "invalid authorization - missing field: token", 401
-            )
-        token: str = auth["token"]
-        client = OAuth2Session(
-            conf.token_introspection_client_id,
-            conf.token_introspection_client_secret,
-        )
-        resp: requests.models.Response = client.introspect_token(
-            conf.token_introspection_url, token=token
-        )
-        if resp.status_code != 200:
-            print(
-                "Error during token introspection: authorization server "
-                "responded with a non-success status.",
-                flush=True,
-            )
-            return api_error("introspection error", 401)
+            if allow_token_from_url and "token" in request.args:
+                token: str = request.args["token"]
+            else:
+                # Extract token from the Authorization header
+                auth = request.authorization
+                if auth is None:
+                    return api_error("no Authorization header was provided", 401)
+                if auth.type != "bearer":
+                    return api_error(
+                        "invalid authorization - expected authorization type"
+                        "Bearer",
+                        401,
+                    )
+                if "token" not in auth:
+                    return api_error(
+                        "invalid authorization - missing field: token", 401
+                    )
+                token: str = auth["token"]
 
-        introspected_token = resp.json()
-        if "sub" not in introspected_token:
-            return api_error("invalid token", 401)
-        scopes = []
-        if "scope" in introspected_token:
-            scopes += scope_to_list(introspected_token["scope"])
-        if ("realm_access" in introspected_token and
-                "roles" in introspected_token["realm_access"]):
-            scopes += scope_to_list(
-                introspected_token["realm_access"]["roles"])
-        return f(auth_enabled=True, user_id=introspected_token['sub'],
-                 user_roles=scopes, *args, **kwargs)
+            client = OAuth2Session(
+                conf.token_introspection_client_id,
+                conf.token_introspection_client_secret,
+            )
+            resp: requests.models.Response = client.introspect_token(
+                conf.token_introspection_url, token=token
+            )
+            if resp.status_code != 200:
+                print(
+                    "Error during token introspection: authorization server "
+                    "responded with a non-success status.",
+                    flush=True,
+                )
+                return api_error("introspection error", 401)
 
-    return _management_user_validation
+            introspected_token = resp.json()
+            if "sub" not in introspected_token:
+                return api_error("invalid token", 401)
+            scopes = []
+            if "scope" in introspected_token:
+                scopes += scope_to_list(introspected_token["scope"])
+            if ("realm_access" in introspected_token and
+                    "roles" in introspected_token["realm_access"]):
+                scopes += scope_to_list(
+                    introspected_token["realm_access"]["roles"])
+            return f(
+                auth_enabled=True,
+                user_id=introspected_token['sub'],
+                user_roles=scopes, *args, **kwargs,
+            )
+
+        return __management_user_validation
+
+    if _func is None:
+        return _management_user_validation
+    else:
+        return _management_user_validation(_func)
 
 
 def artifact_type_to_scope(artifact_type: str) -> str:
@@ -810,7 +823,7 @@ def authenticated_api(f):
     f.__rdfm_api_privileges__ = "authenticated"
     __add_scope_docs(f, DOCS_AUTHENTICATED_API_TEXT)
 
-    return management_user_validation(f)
+    return management_user_validation()(f)
 
 
 def public_api(f):
