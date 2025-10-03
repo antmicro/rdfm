@@ -75,7 +75,7 @@ export enum AdminRole {
  * https://antmicro.github.io/rdfm/rdfm_mgmt_server.html#permissions
  */
 export type Permission = {
-    permission: 'read' | 'update' | 'delete';
+    permission: 'read' | 'update' | 'delete' | 'shell';
     resource: 'package' | 'group' | 'device';
     resource_id: number;
     user_id: string;

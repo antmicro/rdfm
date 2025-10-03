@@ -55,7 +55,7 @@ Component wraps functionality for displaying and working with a single rdfm devi
             </button>
         </div>
 
-        <template v-if="device?.capabilities.shell">
+        <template v-if="device?.capabilities.shell && allowedTo('shell', 'device', device.id)">
             <div :class="['terminal-container', { fullscreen: isFullscreen }]">
                 <button :class="['action-button gray', { 'tab-active': isTerminalOpened }]">
                     <div @click="toggleTerminal">
@@ -305,6 +305,7 @@ import { computed, effect, ref, watch } from 'vue';
 import {
     POLL_INTERVAL,
     useNotifications,
+    allowedTo,
     type Group,
     type RegisteredDevice,
 } from '../../common/utils';
@@ -499,6 +500,7 @@ export default {
             terminalButton,
             terminalFullscreen,
             isFullscreen,
+            allowedTo,
         };
     },
 };
