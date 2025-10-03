@@ -232,7 +232,8 @@ Clicking on any user will enter user's details page where user ID will be visibl
 
 #### Permission types
 
-There are four permission types: `read`, `create`, `update` and `delete`.
+There are four standard permission types: `read`, `create`, `update` and `delete`.
+There is also an additional `shell` permission type that can only be assigned to devices.
 
 #### Creating permissions
 
@@ -253,6 +254,12 @@ For example, the following command will assign `read` and `update` permissions t
 rdfm-mgmt permissions create device --id 1 2 --user eed3d12d-e13b-4c4a-aebd-38b4d55c8947 eed3d12d-e13b-4c4a-aebd-38b4d55c8948 --permission read update
 ```
 
+The `shell` permission can only be assigned to devices:
+
+```
+rdfm-mgmt permissions create device --id 1 2 --user eed3d12d-e13b-4c4a-aebd-38b4d55c8947 eed3d12d-e13b-4c4a-aebd-38b4d55c8948 --permission shell
+```
+
 #### Deleting permissions
 
 ```
@@ -265,10 +272,10 @@ For example, you can revoke `read` permission from the user with ID `eed3d12d-e1
 rdfm-mgmt permissions delete group --id 1 --user eed3d12d-e13b-4c4a-aebd-38b4d55c8947 --permission read
 ```
 
-You can revoke permissions to multiple resources and users at once. For example, the following command will revoke `read` and `update` permissions from users `eed3d12d-e13b-4c4a-aebd-38b4d55c8947` and `eed3d12d-e13b-4c4a-aebd-38b4d55c8948` for devices with IDs `1` and `2`:
+You can revoke permissions to multiple resources and users at once. For example, the following command will revoke `read`, `update`, and `shell` permissions from users `eed3d12d-e13b-4c4a-aebd-38b4d55c8947` and `eed3d12d-e13b-4c4a-aebd-38b4d55c8948` for devices with IDs `1` and `2`:
 
 ```
-rdfm-mgmt permissions delete device --id 1 2 --user eed3d12d-e13b-4c4a-aebd-38b4d55c8947 eed3d12d-e13b-4c4a-aebd-38b4d55c8948 --permission read update
+rdfm-mgmt permissions delete device --id 1 2 --user eed3d12d-e13b-4c4a-aebd-38b4d55c8947 eed3d12d-e13b-4c4a-aebd-38b4d55c8948 --permission read update shell
 ```
 
 You can also revoke permissions for all resource IDs from given user using `--all-ids` flag.
