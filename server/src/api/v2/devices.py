@@ -7,6 +7,7 @@ import json
 from api.v1.common import api_error
 from api.v1.middleware import (
     check_permission,
+    check_device_permission,
 )
 from rdfm.permissions import (
     READ_PERMISSION,
@@ -161,7 +162,7 @@ def fetch_one(identifier: int):
 @devices_blueprint.route(
     "/api/v2/devices/<string:mac_address>/action/list"
 )
-@check_permission(DEVICE_RESOURCE, READ_PERMISSION)
+@check_device_permission(READ_PERMISSION)
 def list_actions(
     mac_address: str
 ):
@@ -231,7 +232,7 @@ def list_actions(
 @devices_blueprint.route(
     "/api/v2/devices/<string:mac_address>/action/exec/<string:action_id>"
 )
-@check_permission(DEVICE_RESOURCE, UPDATE_PERMISSION)
+@check_device_permission(UPDATE_PERMISSION)
 def exec_action(
     mac_address: str,
     action_id: str
