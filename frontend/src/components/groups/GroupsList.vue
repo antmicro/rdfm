@@ -319,7 +319,7 @@ Component wraps functionality for displaying and working with rdfm groups.
         & > .group-row {
             position: relative;
             display: grid;
-            grid-template-columns: 60px repeat(5, auto) 220px;
+            grid-template-columns: 80px repeat(5, auto) 220px;
             border-bottom: 2px solid var(--gray-400);
             padding: 12px;
 
@@ -602,7 +602,6 @@ export default {
          */
         const unapplicablePolicyWarning = computed(() => {
             const policyArg = groupConfiguration.policy?.split(',')[1];
-            console.log(selectedDevices.value);
 
             if (selectedDevices.value.length == 0) return false;
             if (!policyArg) return false;
