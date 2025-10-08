@@ -178,6 +178,10 @@ Additional rules are defined for package uploading route from [Packages API](api
 
 Each package type requires its corresponding scope, or the complete admin access - `rdfm_admin_rw`.
 
+There is also a rule for creating new groups via [Groups API](api.rst#Groups_API): `rdfm_create_group`.
+
+To create a group, a user must have this scope or complete admin access.
+
 Refer to the [RDFM Server API Reference chapter](api.rst) for a breakdown of the scopes required for accessing each API method.
 
 #### Permissions
@@ -306,6 +310,7 @@ The rest of the settings can be left as default (if required, you may also add a
 - `rdfm_upload_single_file`
 - `rdfm_upload_rootfs_image`
 - `rdfm_upload_nonstandard_artifact`
+- `rdfm_create_group`
 
 To create new roles, navigate to the `Realm roles` tab and select `Create role`.
 Create separate roles with the same names.
