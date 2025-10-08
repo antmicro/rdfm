@@ -142,7 +142,11 @@ Component wraps functionality for displaying and working with rdfm groups.
         title="Groups"
         subtitle="manage your groups"
         actionButtonName="Create new group"
-        :buttonCallback="hasAdminRole(AdminRole.RW) ? openAddGroupPopup : undefined"
+        :buttonCallback="
+            hasAdminRole(AdminRole.RW) || hasAdminRole(AdminRole.CREATE_GROUP)
+                ? openAddGroupPopup
+                : undefined
+        "
     />
 
     <div class="container">
