@@ -2,7 +2,7 @@ import datetime
 import traceback
 from typing import List, Optional
 from api.v1.middleware import (
-    management_read_write_api,
+    management_create_group_api,
     check_permission,
     add_permissions_for_new_resource,
 )
@@ -299,7 +299,7 @@ def change_assigned(identifier: int, instructions: AssignDeviceRequest):
 
 
 @groups_blueprint.route("/api/v2/groups", methods=["POST"])
-@management_read_write_api
+@management_create_group_api
 @add_permissions_for_new_resource(GROUP_RESOURCE)
 def create():
     """Create a new group

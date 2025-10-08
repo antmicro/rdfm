@@ -42,6 +42,9 @@ SCOPE_ROOTFS_IMAGE = "rdfm_upload_rootfs_image"
 """ Non-standard package write scope """
 SCOPE_NONSTANDARD_ARTIFACT = "rdfm_upload_nonstandard_artifact"
 
+""" Create group scope """
+SCOPE_CREATE_GROUP = "rdfm_create_group"
+
 """ Text to append after the endpoint's docstring when an appropriate
     package write scope is required
 """
@@ -53,6 +56,14 @@ DOCS_SCOPE_PACKAGE_TEXT = \
     f"""``{SCOPE_ROOTFS_IMAGE}`` - rootfs image package, """ \
     f"""``{SCOPE_NONSTANDARD_ARTIFACT}`` - non-standard package, """ \
     f"""``{SCOPE_READ_WRITE}`` - all package write scopes."""
+
+""" Text to append after the endpoint's docstring when a token
+    with create group scope is required
+"""
+DOCS_SCOPE_GROUP_TEXT = """.. warning:: Accessing this endpoint requires """ \
+                     """providing a management token with create group scope """ \
+                     f"""``{SCOPE_CREATE_GROUP}`` or administrative scope """ \
+                     f"""``{SCOPE_READ_WRITE}``."""
 
 """ Text to append after the endpoint's docstring when a token
     with read-only scope is required
@@ -800,7 +811,7 @@ def get_scopes_for_upload_package(artifact_type: str) -> bool:
 
 
 def management_upload_package_api(f):
-    """Decorator used to be used on upload_package API route.
+    """Decorator to be used on upload_package API route.
 
     This decorator passes the scopes of the authenticated user
     to the wrapped function.
@@ -813,6 +824,22 @@ def management_upload_package_api(f):
     __add_scope_docs(f, DOCS_SCOPE_PACKAGE_TEXT)
 
     return __management_api(scope_check_callback, append_scopes=True)(f)
+
+
+def management_create_group_api(f):
+    """Decorator to be used on create_group API route.
+
+    This decorator verifies if the requester has read-write access
+    to groups.
+    """
+    def check_create_group(scopes: list[str]) -> bool:
+        return SCOPE_READ_WRITE in scopes or SCOPE_CREATE_GROUP in scopes
+
+    # Mark the handler function with a custom attribute
+    f.__rdfm_api_privileges__ = "management_create_group"
+    __add_scope_docs(f, DOCS_SCOPE_GROUP_TEXT)
+
+    return __management_api(check_create_group)(f)
 
 
 def authenticated_api(f):
