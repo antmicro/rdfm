@@ -23,7 +23,14 @@ export default {
         }
 
         localStorage.setItem('access_token', token);
-        this.router.push('/');
+
+        const currentPath = localStorage.getItem('current_path') ?? '/';
+        const resolved = this.router.resolve(currentPath);
+        if (resolved.matched.length === 0) {
+            this.router.push('/');
+        } else {
+            this.router.push(currentPath);
+        }
     },
 };
 </script>

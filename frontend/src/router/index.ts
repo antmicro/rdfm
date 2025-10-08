@@ -51,4 +51,11 @@ const router = createRouter({
     routes: routes,
 });
 
+router.beforeEach((to, from, next) => {
+    if (!to.fullPath.startsWith('/auth_data')) {
+        localStorage.setItem('current_path', to.fullPath);
+    }
+    next();
+});
+
 export default router;
