@@ -23,6 +23,7 @@ import {
     type Package,
     type RegisteredDevice,
     type RequestOutput,
+    updatePermissions,
 } from '../../common/utils';
 
 import { StatusCodes } from 'http-status-codes';
@@ -323,6 +324,9 @@ export const addGroupRequest = async (newGroup: NewGroupData): Promise<RequestOu
         }
     }
     await groupResources.fetchResources();
+
+    updatePermissions();
+
     return { success: true, errors };
 };
 
