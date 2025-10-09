@@ -295,7 +295,7 @@ def remove(identifier: int):
 
     .. sourcecode:: http
 
-        DELETE /api/v1/devices/1 HTTP/1.1
+        DELETE /api/v2/devices/1 HTTP/1.1
         Accept: application/json, text/javascript
 
 
@@ -405,3 +405,137 @@ def upload_local_file_part(part: str):
     resp.status = 200
     resp.headers.set("Etag", part)
     return resp
+
+
+@devices_blueprint.route("/api/v2/devices/<int:identifier>/tag/<string:tag>", methods=["POST"])
+@check_permission(DEVICE_RESOURCE, UPDATE_PERMISSION)
+def assign_tag(identifier: int, tag: str):
+    """Assign a new tag to a device.
+
+    :param identifier: device identifier
+    :param tag: device tag
+    :status 200: no error
+
+
+    **Example request**
+
+    .. sourcecode:: http
+
+        POST /api/v2/devices/1/tag/linux-client HTTP/1.1
+        Accept: application/json, text/javascript
+
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+    """
+    try:
+        server.instance._devices_db.add_tag(identifier, tag)
+        return {}, 200
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception during tag assignment:", repr(e))
+        return api_error("assigning tags failed", 500)
+
+
+@devices_blueprint.route(
+    "/api/v2/devices/<int:identifier>/tags"
+)
+@check_permission(DEVICE_RESOURCE, READ_PERMISSION)
+def fetch_tags(identifier: int):
+    """ Fetch a list of tags assigned to the device.
+
+    :param identifier: device identifier
+    :status 200: no error
+
+    :>json string tag: device tag
+
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        GET /api/v2/devices/1/tags HTTP/1.1
+        Accept: application/json, text/javascript
+
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+
+        [
+            "linux-client",
+            "test-device"
+        ]
+
+    """
+    return server.instance._devices_db.fetch_tags(identifier), 200
+
+
+@devices_blueprint.route('/api/v2/tags/<string:tag>')
+@check_permission(DEVICE_RESOURCE, READ_PERMISSION)
+def fetch_by_tag(tag: str):
+    """Fetch a list of devices registered on the server with the given tag assigned.
+
+    :param tag: device tag 
+    :status 200: no error
+    :status 401: user did not provide authorization data,
+                 or the authorization has expired
+
+    :>jsonarr integer id: device identifier
+    :>jsonarr string last_access: UTC datetime of last access to the server (RFC822)
+    :>jsonarr string name: device-reported user friendly name
+    :>jsonarr string mac_addr: device-reported MAC address
+    :>jsonarr optional[array[integer]] groups: group identifiers of assigned groups
+    :>jsonarr dict[str, str] metadata: device metadata (key/value pairs)
+    :>jsonarr dict[str, bool] capabilities: device RDFM client capabilities
+
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        GET /api/v1/tag/linux-client HTTP/1.1
+        Accept: application/json, text/javascript
+
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+
+        [
+          {
+            "capabilities": {
+              "exec_cmds": false,
+              "file_transfer": true,
+              "shell_connect": true
+            },
+            "groups": [1],
+            "id": 1,
+            "last_access": null,
+            "mac_address": "loopback",
+            "metadata": {},
+            "name": "dummy_device"
+          }
+        ]
+    """  # noqa: E501
+    try:
+        devices: List[
+            models.device.Device
+        ] = server.instance._devices_db.fetch_by_tag(tag)
+        return Device.Schema().dump(
+            [model_to_schema(device) for device in devices], many=True
+        ), 200
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception during device fetch:", repr(e))
+        return api_error("device fetching failed", 500)
