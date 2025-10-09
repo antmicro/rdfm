@@ -59,6 +59,7 @@ SPDX-License-Identifier: Apache-2.0
             </div>
         </div>
 
+        <DevicesList :tag="tag" v-if="tag !== undefined" />
         <DevicesList v-if="route.name === ActiveTab.Devices" />
         <PackagesList v-if="route.name === ActiveTab.Packages" />
         <GroupsList v-if="route.name === ActiveTab.Groups" />
@@ -220,6 +221,10 @@ export const SECTIONS = [ActiveTab.Devices, ActiveTab.Packages, ActiveTab.Groups
 export default {
     props: {
         activeTab: Object as PropType<ActiveTab>,
+        tag: {
+            type: String,
+            required: false,
+        },
     },
     components: {
         Logo,

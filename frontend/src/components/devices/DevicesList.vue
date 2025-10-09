@@ -212,6 +212,7 @@ import {
 import TitleBar from '../TitleBar.vue';
 import RemovePopup from '../RemovePopup.vue';
 import {
+    filteredDevicesResources,
     groupResources,
     pendingDevicesResources,
     registerDeviceRequest,
@@ -234,11 +235,17 @@ type PendingDevice = {
 };
 
 export default {
+    props: {
+        tag: {
+            type: String,
+            required: false,
+        },
+    },
     components: {
         TitleBar,
         RemovePopup,
     },
-    setup() {
+    setup(props) {
         const notifications = useNotifications();
         const router = useRouter();
 
@@ -276,8 +283,12 @@ export default {
             closeRemoveDevicePopup();
         };
 
+        const devices = props.tag
+            ? filteredDevicesResources(props.tag)
+            : registeredDevicesResources;
+
         const fetchResources = async () => {
-            await registeredDevicesResources.fetchResources();
+            await devices.fetchResources();
             await pendingDevicesResources.fetchResources();
             await groupResources.fetchResources();
         };
@@ -287,6 +298,10 @@ export default {
 
             if (intervalID === undefined) {
                 intervalID = setInterval(fetchResources, POLL_INTERVAL);
+            }
+
+            if (props.tag && devices.resources.value?.length == 1) {
+                router.push('/devices/' + devices.resources.value[0].id);
             }
         });
 
@@ -299,9 +314,7 @@ export default {
         const pendingDevicesCount = computed(
             () => pendingDevicesResources.resources.value?.length ?? 0,
         );
-        const registeredDevicesCount = computed(
-            () => registeredDevicesResources.resources.value?.length ?? 0,
-        );
+        const registeredDevicesCount = computed(() => devices.resources.value?.length ?? 0);
         const devicesCount = computed(
             () => pendingDevicesCount.value + registeredDevicesCount.value,
         );
@@ -326,7 +339,7 @@ export default {
 
         return {
             pendingDevices: pendingDevicesResources.resources,
-            registeredDevices: registeredDevicesResources.resources,
+            registeredDevices: devices.resources,
             groups: groupResources.resources,
             router,
             pendingDevicesCount,

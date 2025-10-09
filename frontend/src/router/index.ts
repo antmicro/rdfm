@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
+import {
+    createRouter,
+    createWebHistory,
+    type RouteRecordRaw,
+    type RouteLocationNormalizedLoaded,
+} from 'vue-router';
 import HomeView, { ActiveTab, SECTIONS } from '../views/HomeView.vue';
 import LoginHandler from '../views/LoginHandler.vue';
 import LogoutHandler from '../views/LogoutHandler.vue';
@@ -33,6 +38,15 @@ const routes: RouteRecordRaw[] = [
         name: ActiveTab.Device,
         component: HomeView,
         props: { activeTab: ActiveTab.Device },
+    },
+    {
+        path: '/devices/tag/:tag',
+        name: `${ActiveTab.Devices} with tag`,
+        component: HomeView,
+        props: (route: RouteLocationNormalizedLoaded) => ({
+            activeTab: ActiveTab.Devices,
+            tag: route.params.tag,
+        }),
     },
     {
         path: '/auth_data',

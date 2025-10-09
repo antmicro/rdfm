@@ -34,6 +34,9 @@ export const pendingDevicesResources = resourcesGetter<PendingDevice[]>(PENDING_
 export const registeredDevicesResources = resourcesGetter<RegisteredDevice[]>(DEVICES_ENDPOINT);
 export const groupResources = resourcesGetter<Group[]>(GROUPS_ENDPOINT);
 
+export const filteredDevicesResources = (tag: string) =>
+    resourcesGetter<RegisteredDevice[]>(TAGS_ENDPOINT(tag));
+
 export type Action = {
     action_id: string;
     action_name: string;
