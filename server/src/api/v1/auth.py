@@ -282,6 +282,10 @@ def set_registration():
             device.last_access = registration.last_appeared
             server.instance._devices_db.insert(device)
 
+            if "rdfm.software.tags" in registration.info:
+                for tag in registration.info["rdfm.software.tags"]:
+                    server.instance._devices_db.add_tag(device.id, tag)
+
         # We also need to delete the registration, as it's already
         # been processed.
         server.instance._registrations_db.delete_registration(mac, public_key)
