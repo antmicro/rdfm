@@ -126,6 +126,11 @@ class DevicesDB:
             )
             session.execute(stmt)
             stmt = (
+                delete(models.device.DeviceTag)
+                .where(models.device.DeviceTag.device_id == identifier)
+            )
+            session.execute(stmt)
+            stmt = (
                 delete(models.device.Device)
                 .where(models.device.Device.id == identifier)
             )
@@ -142,3 +147,34 @@ class DevicesDB:
             )
             session.execute(stmt)
             session.commit()
+
+    def add_tag(self, identifier: int, tag: str):
+        """Add tag to the given devices."""
+        with Session(self.engine) as session:
+            device_tag = models.device.DeviceTag()
+            device_tag.device_id = identifier
+            device_tag.tag = tag
+            session.add(device_tag)
+            session.commit()
+            session.refresh(device_tag)
+
+    def fetch_tags(self, identifier: int) -> List[str]:
+        """Fetch all tags assigned to the given device."""
+        with Session(self.engine) as session:
+            return session.scalars(
+                select(models.device.DeviceTag.tag)
+                .where(models.device.DeviceTag.device_id == identifier)
+            ).all()
+
+    def fetch_by_tag(self, tag: str) -> List[models.device.Device]:
+        """Fetch a list of devices with the given tag"""
+        with Session(self.engine) as session:
+            device_ids = session.scalars(
+                select(models.device.DeviceTag.device_id)
+                .where(models.device.DeviceTag.tag == tag)
+            ).all()
+
+            return session.scalars(
+                select(models.device.Device)
+                .where(models.device.Device.id.in_(device_ids))
+            ).all()

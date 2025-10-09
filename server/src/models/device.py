@@ -33,3 +33,12 @@ class DeviceGroupAssignment(Base):
             ForeignKey(models.group.Group.id, ondelete="RESTRICT"),
             primary_key=True
     )
+
+
+class DeviceTag(Base):
+    __tablename__ = "devices_tags"
+    device_id: Mapped[int] = mapped_column(
+            ForeignKey(Device.id, ondelete="RESTRICT"),
+            primary_key=True
+    )
+    tag: Mapped[int] = mapped_column(Text, primary_key=True)
