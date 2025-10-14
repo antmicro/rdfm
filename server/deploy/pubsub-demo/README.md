@@ -20,7 +20,7 @@ Keystore is the means of storage of cryptographic credentials for a Kafka broker
 They can be password protected. To generate valid keystores for this demo deployment, first run [RDFM's certgen script](../../tests/certgen.sh):
 
 ```sh
-../../tests/certgen.sh server IP:127.0.0.1,DNS:localhost,DNS:rdfm-server
+../../tests/certgen.sh server IP:127.0.0.1,DNS:localhost,DNS:rdfm-server DEVICE no
 ```
 
 It generates a `server` directory in which, alongside the key-cert pair that will be used for a RDFM server, lie `CA.crt` and `CA.key`. They are essential for generating keystores:
@@ -47,6 +47,14 @@ To run the whole demo, the server and client are also required. The server will 
 ```sh
 make docker-demo-client
 ```
+
+After running make for the `docker-demo-client` target, return to this directory and run:
+
+```sh
+docker build -t antmicro/rdfm-linux-demo-client-stress -f Dockerfile.demo-client-stress .
+```
+
+The above adds a couple of tweaks to how the client behaves. It adds config fields instructing it to report CPU usage and run `stress-ng`.
 
 #### Run
 
@@ -133,5 +141,3 @@ Finally create a permission that ties it all together:
 3. Go to kafka-broker-introspection client authorization tab
 4. Under settings, import [kafka-broker-introspection-test-authz-config.json](kafka-broker-introspection-test-authz-config.json)
 5. Remove `Default Resource` from resources under the authorization tab
-
-With the premade config, OAUTH [client scripts](scripts/client) will work straight away with no need to modify credentials.
