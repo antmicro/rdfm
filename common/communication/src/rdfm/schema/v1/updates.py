@@ -26,7 +26,7 @@ META_RSYNC_SUPPORT = "rdfm.software.supports_rsync"
 class UpdateCheckRequest():
     """ Represents a request from a device to perform an update check
     """
-    metadata: dict[str, str] = field(metadata={
+    metadata: dict[str, str | list] = field(metadata={
         "validate": Contains(choices=[
             META_SOFT_VER,
             META_DEVICE_TYPE,
