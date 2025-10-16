@@ -18,7 +18,6 @@ import (
 	dev "github.com/mendersoftware/mender/device"
 	"github.com/mendersoftware/mender/installer"
 	"github.com/mendersoftware/mender/store"
-	"github.com/mendersoftware/mender/utils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -48,7 +47,7 @@ func DoInstall(device *dev.DeviceManager, updateURI string,
 		return err
 	}
 
-	p := utils.NewProgressWriter(imageSize)
+	p := NewProgressWriter(imageSize)
 	tr := io.TeeReader(image, p)
 
 	err = DoInstallStates(ioutil.NopCloser(tr), device, rebootExitCode)

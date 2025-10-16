@@ -22,6 +22,7 @@ require (
 
 require (
 	github.com/antmicro/go-xdelta/xdelta3/go_api v0.0.0-20250728100644-2e147d195b14 // indirect
+	github.com/asaskevich/EventBus v0.0.0-20200907212545-49d423059eef // indirect
 	github.com/balena-os/circbuf v0.1.3 // indirect
 	github.com/balena-os/librsync-go v0.8.5 // indirect
 	github.com/bmatsuo/lmdb-go v1.8.0 // indirect
