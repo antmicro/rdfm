@@ -450,6 +450,9 @@ export default {
             const newActions = await getDeviceActions(device.value.mac_address);
 
             if (newActions.success && newActions.data) {
+                newActions.data.sort((a: Action, b: Action) =>
+                    a.action_name.localeCompare(b.action_name),
+                );
                 actions.value = newActions.data;
             } else {
                 console.warn('Failed to fetch actions');
