@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import sys
 from flask import Flask, request
+from flask_sse import sse
 import server
 import api.v1
 import api.v2
@@ -84,6 +85,10 @@ def create_app(config: configuration.ServerConfig) -> Flask:
     else:
         app = Flask(__name__)
 
+    if hasattr(config, "redis_url"):
+        app.config["REDIS_URL"] = config.redis_url
+    app.register_blueprint(sse, url_prefix="/api/stream")
+
     app.register_blueprint(api.v1.create_routes())
     app.register_blueprint(api.v2.create_routes())
     app.config["RDFM_CONFIG"] = config
@@ -122,6 +127,7 @@ def setup(config: configuration.ServerConfig) -> Flask:
     and creates an app object that can be safely run.
     """
     server.instance = create_server_instance(config)
+    server.instance.sse = sse
     return create_app(config)
 
 

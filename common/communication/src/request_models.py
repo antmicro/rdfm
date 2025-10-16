@@ -98,6 +98,11 @@ class FsFileProbeReply(Request):
     size: int
 
 
+class UpdateProgress(Request):
+    method: Literal['update_progress'] = 'update_progress'
+    progress: int
+
+
 class Container(BaseModel):
     """container holds a list of models to enable parsing from json"""
     data: Union[
@@ -112,4 +117,5 @@ class Container(BaseModel):
         FsFileDownloadReply,
         FsFileProbe,
         FsFileProbeReply,
+        UpdateProgress,
     ]

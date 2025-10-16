@@ -1,4 +1,6 @@
 import threading
+import sys
+import json
 from typing import Optional
 from request_models import (
     Request,
@@ -11,6 +13,7 @@ from request_models import (
     ActionListUpdate,
     FsFileDownloadReply,
     FsFileProbeReply,
+    UpdateProgress,
 )
 
 import simple_websocket
@@ -149,6 +152,27 @@ class RemoteDevice:
             else:
                 raise WebSocketException(
                     "invalid filesystem response", RDFM_WS_INVALID_REQUEST
+                )
+        elif isinstance(request, UpdateProgress):
+            if not self.update_version:
+                self.update_version = server.instance._device_updates_db.get_version(
+                    self.token.device_id
+                )
+            message = {
+                "device": self.token.device_id,
+                "progress": request.progress,
+                "version": self.update_version,
+            }
+            server.instance.sse.publish(json.dumps(message), type='update')
+            if request.progress == 100:
+                print(
+                    f"Device {self.token.device_id} update complete",
+                    flush=True,
+                )
+            else:
+                print(
+                    f"Device {self.token.device_id} update in progress: {request.progress}%",
+                    flush=True,
                 )
         else:
             print("Unknown request:", request, flush=True)
