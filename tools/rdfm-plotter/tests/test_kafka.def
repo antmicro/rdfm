@@ -1,0 +1,26 @@
+Bootstrap: docker
+From: eclipse-temurin:17
+
+%setup
+	mkdir -p ${SINGULARITY_ROOTFS}/opt/kafka/{config,libs}
+
+%files
+	./server.properties /opt/kafka/config/server.properties
+	./rdfm-jwt-auth-*.jar /opt/kafka/libs/
+
+%post
+	cd /opt
+	wget https://dlcdn.apache.org/kafka/4.0.0/kafka_2.13-4.0.0.tgz
+	tar xzf ./kafka_2.13-4.0.0.tgz -C ./kafka --skip-old-files --strip-components=1
+	cd /opt/kafka/libs
+	wget https://repo1.maven.org/maven2/com/nimbusds/nimbus-jose-jwt/9.37.2/nimbus-jose-jwt-9.37.2.jar
+	wget https://repo1.maven.org/maven2/com/auth0/java-jwt/4.5.0/java-jwt-4.5.0.jar
+
+%environment
+	export RDFM_JWT_SECRET=secretsecret123123
+	export KAFKA_CLUSTER_ID=foobarbaz
+
+%startscript
+	cd /opt/kafka
+	bin/kafka-storage.sh format --standalone -t foobarbaz -c config/server.properties
+	bin/kafka-server-start.sh config/server.properties
