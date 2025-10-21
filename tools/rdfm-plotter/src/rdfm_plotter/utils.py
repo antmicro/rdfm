@@ -6,6 +6,12 @@ from rdfm_plotter.config import ClientConfiguration
 from rdfm_plotter.log_pb2 import log as Log  # type: ignore[attr-defined]
 
 
+def log_deserializer(record: bytes) -> Log:
+    log = Log()
+    log.ParseFromString(record)
+    return log
+
+
 def get_current_utc_millis_at_offset(hours: int) -> int:
     """
     Subtracts the hours*milliseconds_in_an_hour from the current unix millis.
