@@ -19,15 +19,6 @@ def get_current_utc_millis_at_offset(hours: int) -> int:
     return int(time.time() - hours*3600)*1000
 
 
-def deserialize(r: ConsumerRecord) -> Log:
-    """
-    Deserializes consumer record value according to protobuf schema.
-    """
-    log = Log()
-    log.ParseFromString(r.value)
-    return log
-
-
 def sort_by_device_timestamp(logs: list[Log]) -> None:
     """
     Sorts the provided list in place by unix millis inside device_time.
@@ -57,10 +48,8 @@ def filter_record(record: ConsumerRecord) -> Optional[Log]:
     if args.key and record.key != args.key:
         return None
 
-    log = deserialize(record)
-
-    if log.device_mac == args.device:
-        return log
+    if record.value.device_mac == args.device:
+        return record.value
     return None
 
 

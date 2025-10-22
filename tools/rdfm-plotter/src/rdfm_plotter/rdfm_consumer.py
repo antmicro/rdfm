@@ -3,7 +3,7 @@ from dataclasses import asdict
 from typing import Optional
 from rdfm_plotter.config import ClientConfiguration
 from rdfm_plotter.keycloak_token_provider import KeycloakTokenProvider
-from rdfm_plotter.utils import consumer_seek_hours_delta
+from rdfm_plotter.utils import consumer_seek_hours_delta, log_deserializer
 
 
 def try_create_keycloak_token_provider() -> Optional[KeycloakTokenProvider]:
@@ -34,6 +34,7 @@ class RdfmConsumer(KafkaConsumer):
                        security_protocol="SASL_SSL",
                        sasl_mechanism="OAUTHBEARER",
                        sasl_oauth_token_provider=try_create_keycloak_token_provider(),
+                       value_deserializer=log_deserializer,
                        **asdict(ClientConfiguration().config.Consumer))
 
         if ClientConfiguration().args.offset_hours != 0.0:
