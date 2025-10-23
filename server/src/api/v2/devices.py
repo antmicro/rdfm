@@ -40,7 +40,8 @@ def model_to_schema(device: models.device.Device) -> Device:
         capabilities=json.loads(device.capabilities),
         metadata=json.loads(device.device_metadata),
         public_key=device.public_key,
-        groups=server.instance._devices_db.fetch_groups(device.id)
+        groups=server.instance._devices_db.fetch_groups(device.id),
+        connected=True if server.instance.remote_devices.get(device.mac_address) else False
     )
 
 
@@ -69,6 +70,7 @@ def fetch_all():
     :>jsonarr optional[array[integer]] groups: group identifiers of assigned groups
     :>jsonarr dict[str, str] metadata: device metadata (key/value pairs)
     :>jsonarr dict[str, bool] capabilities: device RDFM client capabilities
+    :>jsonarr bool connected: device connection status
 
 
     **Example Request**
@@ -132,6 +134,7 @@ def fetch_one(identifier: int):
     :>json optional[array[integer]] groups: group identifiers of assigned groups
     :>json dict[str, str] metadata: device metadata (key/value pairs)
     :>json dict[str, bool] capabilities: device RDFM client capabilities
+    :>json bool connected: device connection status
 
 
     **Example Request**
@@ -599,6 +602,7 @@ def fetch_by_tag(tag: str):
     :>jsonarr optional[array[integer]] groups: group identifiers of assigned groups
     :>jsonarr dict[str, str] metadata: device metadata (key/value pairs)
     :>jsonarr dict[str, bool] capabilities: device RDFM client capabilities
+    :>jsonarr bool connected: device connection status
 
 
     **Example Request**

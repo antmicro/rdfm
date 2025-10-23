@@ -187,6 +187,7 @@ export interface RegisteredDevice {
     metadata: Record<string, string | string[]>;
     capabilities: Record<string, boolean>;
     public_key: string;
+    connected: boolean;
     progress?: number;
 }
 

@@ -40,6 +40,10 @@ class Device():
         "required": True,
         "allow_none": True
     })
+    connected: Optional[bool] = field(metadata={
+        "required": True,
+        "allow_none": True
+    })
     Schema: ClassVar[Type[marshmallow.Schema]] = marshmallow.Schema
 
 
