@@ -173,7 +173,7 @@ class S3Storage:
                         Params={
                             "Bucket": self.s3.bucket,
                             "Key": self.key,
-                            "PartNumber": i,
+                            "PartNumber": i + 1,
                             "UploadId": self.mpu["UploadId"]
                         },
                         ExpiresIn=expiry,
@@ -190,7 +190,9 @@ class S3Storage:
                 Bucket=self.s3.bucket,
                 Key=self.key,
                 MultipartUpload={
-                    'Parts': [{"ETag": etag, "PartNumber": idx} for idx, etag in enumerate(etags)]
+                    'Parts': [
+                        {"ETag": etag, "PartNumber": idx + 1} for idx, etag in enumerate(etags)
+                    ]
                 },
                 UploadId=self.mpu["UploadId"]
             )
