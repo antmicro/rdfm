@@ -79,17 +79,28 @@ Component wraps functionality for displaying and working with a single rdfm devi
         <Transition>
             <BlurPanel v-if="showingActionLog" @click.self="closeActionLogPopup">
                 <div class="popup">
-                    <div class="header">
-                        <p class="title">Action log</p>
-                        <p class="description">
-                            Actions assigned to device {{ device!.mac_address }}
-                        </p>
-                        <button
-                            class="action-button red small-padding close-button"
-                            @click="closeActionLogPopup"
-                        >
-                            <Cross />
-                        </button>
+                    <div class="header-with-buttons">
+                        <div class="header">
+                            <p class="title">Action log</p>
+                            <p class="description">
+                                Actions assigned to device {{ device!.mac_address }}
+                            </p>
+                        </div>
+                        <div class="button-wrapper">
+                            <button
+                                class="action-button blue"
+                                v-if="allowedTo('update', 'device', device?.id)"
+                                @click="clearActionLog()"
+                            >
+                                Clear
+                            </button>
+                            <button
+                                class="action-button red small-padding close-button"
+                                @click="closeActionLogPopup"
+                            >
+                                <Cross />
+                            </button>
+                        </div>
                     </div>
                     <div class="body action-log">
                         <table>
@@ -279,10 +290,16 @@ Component wraps functionality for displaying and working with a single rdfm devi
     }
 }
 
-.close-button {
-    position: absolute;
-    top: 30px;
-    right: 30px;
+.header-with-buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+
+    & > .button-wrapper {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1em;
+    }
 }
 
 .terminal-container {
@@ -409,6 +426,7 @@ import {
     getDeviceTags,
     getDeviceActions,
     getDeviceActionLog,
+    clearDeviceActionLog,
     execAction,
     type Action,
 } from './devices';
@@ -602,6 +620,19 @@ export default {
             }
         };
 
+        const clearActionLog = async () => {
+            const result = await clearDeviceActionLog(device.value!.mac_address);
+
+            if (result.success) {
+                fetchActionLog();
+            } else {
+                notif.notifyError({
+                    headline: device.value?.name + ' action log',
+                    msg: `Failed to clear action log`,
+                });
+            }
+        };
+
         const closeActionLogPopup = () => {
             showingActionLog.value = false;
         };
@@ -635,6 +666,7 @@ export default {
             tasks,
             runAction,
             fetchActionLog,
+            clearActionLog,
             showingActionLog,
             closeActionLogPopup,
             toggleTerminal,

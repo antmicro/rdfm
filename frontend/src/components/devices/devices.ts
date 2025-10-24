@@ -208,3 +208,22 @@ export const getDeviceActionLog = async (macAddress: string) => {
         data: out.data as Action[],
     };
 };
+
+export const clearDeviceActionLog = async (macAddress: string) => {
+    const body = JSON.stringify({});
+
+    const headers = new Headers();
+    headers.set('Content-type', 'application/json');
+    headers.set('Accept', 'application/json, text/javascript');
+
+    const out = await fetchWrapper(DEVICE_ACTION_LOG_ENDPOINT(macAddress), 'DELETE', headers, body);
+
+    if (!out.success) {
+        return {
+            success: false,
+            message: 'Failed to clear device action log. Got a response code of ' + out.code,
+        };
+    }
+
+    return { success: true };
+};
