@@ -71,3 +71,15 @@ class ActionLogsDB:
             )
             session.execute(stmt)
             session.commit()
+
+    def delete_device_log(self, mac_address: str):
+        """Removes all completed actions assigned to a device.
+        """
+        with Session(self.engine) as session:
+            stmt = (
+                delete(models.action_log.ActionLog)
+                .where(models.action_log.ActionLog.mac_address == mac_address)
+                .where(models.action_log.ActionLog.status.in_(["0", "-1"]))
+            )
+            session.execute(stmt)
+            session.commit()

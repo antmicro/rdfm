@@ -304,7 +304,7 @@ def get_action_log(mac_address: str):
 
     .. sourcecode:: http
 
-        GET /api/v2/devices/d8:5e:d3:86:02:f2/action/tasks HTTP/1.1
+        GET /api/v2/devices/d8:5e:d3:86:02:f2/action_log HTTP/1.1
         Accept: application/json, text/javascript
 
 
@@ -345,6 +345,40 @@ def get_action_log(mac_address: str):
         traceback.print_exc()
         print("Exception during action log fetch:", repr(e))
         return api_error("action log fetching failed", 500)
+
+
+@devices_blueprint.route("/api/v2/devices/<string:mac_address>/action_log", methods=['DELETE'])
+@check_permission(DEVICE_RESOURCE, UPDATE_PERMISSION)
+def clear_action_log(mac_address: str):
+    """ Clear device action log.
+
+    This removes all completed actions assigned to the device from the database.
+
+    :status 200: no error
+
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        DELETE /api/v2/devices/d8:5e:d3:86:02:f2/action_log HTTP/1.1
+        Accept: application/json, text/javascript
+
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+    """
+    try:
+        server.instance._action_logs_db.delete_device_log(mac_address)
+        return {}, 200
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception during removal:", repr(e))
+        return api_error("removal failed", 500)
 
 
 @devices_blueprint.route("/api/v2/devices/<int:identifier>", methods=['DELETE'])
