@@ -244,6 +244,14 @@ test-server-file-download:
     - poetry run pytest tests/test-file-download.py  --sqlite
     - poetry run pytest tests/test-file-download.py  --postgres
 
+test-actions:
+  extends: .build
+  stage: local-tests
+  script:
+    - cd server
+    - poetry run pytest tests/test-actions.py  --sqlite
+    - poetry run pytest tests/test-actions.py  --postgres
+
 # ===== rdfm-client ===== #
 
 build-rdfm-client:
