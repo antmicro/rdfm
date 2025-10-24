@@ -5,3 +5,4 @@ from models.device import Device
 from models.registration import Registration
 from models.log import Log
 from models.permission import Permission
+from models.action_log import ActionLog

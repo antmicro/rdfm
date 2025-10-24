@@ -12,6 +12,7 @@ from device_mgmt.containers import (
 import datetime
 from models.device import Device
 from database.permissions import PermissionsDB
+from database.action_logs import ActionLogsDB
 
 
 class Server:
@@ -27,6 +28,7 @@ class Server:
         self.action_executions = ActionExecutions()
         self.filesystem_operations = FilesystemOperations()
         self._permissions_db = PermissionsDB(self.db)
+        self._action_logs_db = ActionLogsDB(self.db)
 
     def create_mock_data(self):
         """Creates mock data
