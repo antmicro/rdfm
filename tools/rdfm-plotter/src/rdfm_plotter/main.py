@@ -32,7 +32,11 @@ def print_records(consumer: RdfmConsumer):
                 continue
             value = None
             if args.pattern is not None:
-                value = args.pattern.search(log.entry).group(args.group)
+                result = args.pattern.search(log.entry)
+                if not result:
+                    # Pattern search didn't return aything, skip
+                    continue
+                value = result.group(args.group)
             pretty_print_record(log, record, value)
 
     except KeyboardInterrupt:
@@ -72,7 +76,11 @@ def plot_records(consumer: RdfmConsumer):
     timestamps = []
 
     for log in logs:
-        value = args.pattern.search(log.entry).group(args.group)
+        result = args.pattern.search(log.entry)
+        if not result:
+            # Pattern search didn't return aything, skip
+            continue
+        value = result.group(args.group)
         if args.int:
             value = int(value)
         elif args.float:
