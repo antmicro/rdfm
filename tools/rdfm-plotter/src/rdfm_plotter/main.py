@@ -82,9 +82,17 @@ def plot_records(consumer: RdfmConsumer):
             continue
         value = result.group(args.group)
         if args.int:
-            value = int(value)
+            try:
+                value = int(value)
+            except Exception as e:
+                print(f"Expect int({value}) cast to succeed, encountered exception:", e)
+                exit(1)
         elif args.float:
-            value = float(value)
+            try:
+                value = float(value)
+            except Exception as e:
+                print(f"Expect float({value}) cast to succeed, encountered exception:", e)
+                exit(1)
         values.append(value)
         timestamps.append(log.device_time.ToSeconds())
 
