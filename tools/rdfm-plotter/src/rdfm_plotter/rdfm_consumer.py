@@ -41,3 +41,21 @@ class RdfmConsumer(KafkaConsumer):
             consumer_seek_hours_delta(instance)
 
         return instance
+
+    @classmethod
+    def plain_create(cls):
+        """
+        Creates a PLAINTEXT consumer.
+        """
+        instance = cls(ClientConfiguration().args.topic,
+                       bootstrap_servers=(
+                           ClientConfiguration().args.bootstrap_servers if
+                           ClientConfiguration().args.bootstrap_servers else
+                           ClientConfiguration().config.Consumer.bootstrap_servers),
+                       security_protocol="PLAINTEXT",
+                       value_deserializer=log_deserializer)
+
+        if ClientConfiguration().args.offset_hours != 0.0:
+            consumer_seek_hours_delta(instance)
+
+        return instance

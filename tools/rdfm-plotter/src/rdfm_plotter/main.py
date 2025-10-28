@@ -12,7 +12,10 @@ from servis import render_time_series_plot_with_histogram
 
 
 def main() -> None:
-    consumer = RdfmConsumer.quick_create()
+    if ClientConfiguration().args.plain:
+        consumer = RdfmConsumer.plain_create()
+    else:
+        consumer = RdfmConsumer.quick_create()
     if ClientConfiguration().args.print:
         print_records(consumer)
     elif ClientConfiguration().args.plot:

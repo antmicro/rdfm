@@ -1,5 +1,6 @@
 import re
 import os
+from typing import Optional
 from pathlib import Path
 from argparse import ArgumentParser, ArgumentTypeError, Namespace
 
@@ -7,6 +8,12 @@ from argparse import ArgumentParser, ArgumentTypeError, Namespace
 DEFAULT_CONSUMER_CONFIG = "example_consumer_config.json"
 DEFAULT_KEYCLOAK_CONFIG = "example_keycloak_config.json"
 POLL_TIMEOUT_MS = 100
+HOST_PATTERN = re.compile("^(?:[0-9a-zA-Z\\-%._]*://)?\\[?([0-9a-zA-Z\\-%._:]*)]?:([0-9]+)")
+
+
+def validate_bootstrap_server(url: str) -> Optional[str]:
+    matched = HOST_PATTERN.match(url)
+    return f"{matched.group(1)}:{matched.group(2)}" if matched else None
 
 
 def check_float_abs(value: str) -> float:
@@ -69,6 +76,17 @@ def check_gt_0(value: str) -> int:
     return n
 
 
+def bootstrap_servers(servers: str) -> list[str]:
+    validated = []
+    for server in servers.split(","):
+        v = validate_bootstrap_server(server)
+        if v:
+            validated.append(v)
+    if not any(validated):
+        raise ValueError("At least one valid bootstrap server must be provided")
+    return validated
+
+
 def parse_args() -> Namespace:
     parser = ArgumentParser(
             prog="rdfm-plotter",
@@ -127,15 +145,31 @@ def parse_args() -> Namespace:
                         default=POLL_TIMEOUT_MS,
                         help="Broker polling timeout when plotting in milliseconds.")
 
+    parser.add_argument("--plain",
+                        default=False,
+                        action="store_true",
+                        help="Creates a plaintext consumer")
+
+    parser.add_argument("-b", "--bootstrap-servers",
+                        type=bootstrap_servers,
+                        help='Comma separated list of "hostname:port"')
+
     parser.add_argument("-c", "--consumer-config", default=DEFAULT_CONSUMER_CONFIG)
     parser.add_argument("-C", "--keycloak-config", default=DEFAULT_KEYCLOAK_CONFIG)
 
     args = parser.parse_args()
 
     assert validate_capture_group(args)
-    path = Path(args.consumer_config)
-    assert path.is_file()
-    path = Path(args.keycloak_config)
-    assert path.is_file()
+    consumer_config_path = Path(args.consumer_config)
+    if not args.plain:
+        # When not running the consumer PLAINTEXT
+        # use the configuration files for OAUTH and SSL
+        keycloak_config_path = Path(args.keycloak_config)
+        assert keycloak_config_path.is_file()
+        assert consumer_config_path.is_file()
+    else:
+        # When running the consumer PLAINTEXT
+        # we just require the bootstrap servers
+        assert args.bootstrap_servers or consumer_config_path.is_file()
 
     return args

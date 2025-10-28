@@ -1,4 +1,5 @@
 from argparse import Namespace
+from typing import Optional
 from collections import namedtuple
 from dataclasses import dataclass
 import json
@@ -29,15 +30,18 @@ keycloak_config_schema = {
 }
 
 
-def load_config(consumer_config: str, keycloak_config: str) -> Config:
-    with open(consumer_config) as f:
-        c = json.loads(f.read())
-        validate(instance=c, schema=consumer_config_schema)
-    with open(keycloak_config) as f:
-        k = json.loads(f.read())
-        validate(instance=k, schema=keycloak_config_schema)
+def load_config(consumer_config: Optional[str] = None,
+                keycloak_config: Optional[str] = None) -> Config:
+    if consumer_config:
+        with open(consumer_config) as f:
+            c = json.loads(f.read())
+            validate(instance=c, schema=consumer_config_schema)
+    if keycloak_config:
+        with open(keycloak_config) as f:
+            k = json.loads(f.read())
+            validate(instance=k, schema=keycloak_config_schema)
 
-    return Config(ConsumerConfig(**c), KeycloakConfig(**k))
+    return Config(ConsumerConfig(**c) if c else c, KeycloakConfig(**k) if k else k)
 
 
 @dataclass
@@ -73,6 +77,10 @@ class ClientConfiguration(object):
         if cls._instance is None:
             cls._instance = super(ClientConfiguration, cls).__new__(cls)
             cls._instance.args = parse_args()
-            cls._instance.config = load_config(cls._instance.args.consumer_config,
-                                               cls._instance.args.keycloak_config)
+            if not cls._instance.args.plain:
+                cls._instance.config = load_config(cls._instance.args.consumer_config,
+                                                   cls._instance.args.keycloak_config)
+            elif not cls._instance.args.bootstrap_servers:
+                cls._instance.config = load_config(cls._instance.args.consumer_config, None)
+
         return cls._instance
