@@ -61,7 +61,17 @@ def execute_action(mac_address: str, action_id: str) -> Optional[tuple[int, str]
                 control_msg = execution.execution_control.get(timeout=QUEUE_RESPONSE_TIMEOUT)
                 if control_msg == "ok":
                     print(f"Queued execution '{execution.execution_id}'.", flush=True)
-                    server.instance._action_logs_db.update_status(execution.execution_id, "sent")
+
+                    # Action control may arrive after action result
+                    # We have to make sure we do not override completed status
+                    current_status = server.instance._action_logs_db.get_status(
+                        execution.execution_id
+                    )
+                    if current_status == "pending":
+                        server.instance._action_logs_db.update_status(
+                            execution.execution_id,
+                            "sent"
+                        )
                     break
                 elif control_msg == "full":
                     print(

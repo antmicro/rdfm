@@ -60,6 +60,15 @@ class ActionLogsDB:
             session.refresh(action)
             return action.id
 
+    def get_status(self, id: int) -> str:
+        """Fetch the status of a specified action.
+        """
+        with Session(self.engine) as session:
+            return session.scalar(
+                select(models.action_log.ActionLog.status)
+                .where(models.action_log.ActionLog.id == id)
+            )
+
     def update_status(self, id: int, status: str):
         """Update the status of a specified action.
         """
