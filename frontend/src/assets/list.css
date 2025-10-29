@@ -24,7 +24,7 @@
 
         /* Default columns widths */
         #packages-list .row {
-            grid-template-columns: 80px 90px 200px 200px 400px 200px auto;
+            grid-template-columns: 80px 90px 200px 200px auto 200px 300px;
         }
         #device-list-registered .row {
             grid-template-columns: 80px repeat(5, var(--default-col-width)) 300px auto;
@@ -36,7 +36,7 @@
         /* Smaller columns widths */
         @media screen and (max-width: 1670px) {
             #packages-list .row {
-                grid-template-columns: 80px 90px 200px 200px 400px 100px auto;
+                grid-template-columns: 80px 90px 200px 200px auto 200px 300px;
             }
             #device-list-registered .row {
                 grid-template-columns: 80px repeat(5, var(--default-col-width)) 200px auto;
