@@ -14,19 +14,77 @@
           "name": "Create"
         },
         {
-          "name": "Delete"
-        },
-        {
           "name": "Describe"
         },
         {
           "name": "Write"
         },
         {
+          "name": "Delete"
+        },
+        {
           "name": "IdempotentWrite"
         },
         {
           "name": "Read"
+        },
+        {
+          "name": "DescribeConfigs"
+        },
+        {
+          "name": "AlterConfigs"
+        }
+      ],
+      "icon_uri": ""
+    },
+    {
+      "name": "Cluster:*",
+      "type": "Cluster",
+      "ownerManagedAccess": false,
+      "displayName": "Cluster:*",
+      "attributes": {},
+      "uris": [],
+      "scopes": [
+        {
+          "name": "Create"
+        },
+        {
+          "name": "Describe"
+        },
+        {
+          "name": "IdempotentWrite"
+        },
+        {
+          "name": "Alter"
+        },
+        {
+          "name": "DescribeConfigs"
+        },
+        {
+          "name": "AlterConfigs"
+        },
+        {
+          "name": "ClusterAction"
+        }
+      ],
+      "icon_uri": ""
+    },
+    {
+      "name": "Topic:*",
+      "type": "Topic",
+      "ownerManagedAccess": false,
+      "displayName": "Topic:*",
+      "attributes": {},
+      "uris": [],
+      "scopes": [
+        {
+          "name": "Create"
+        },
+        {
+          "name": "Describe"
+        },
+        {
+          "name": "Delete"
         },
         {
           "name": "DescribeConfigs"
@@ -50,6 +108,16 @@
       }
     },
     {
+      "name": "management-server-admin",
+      "description": "",
+      "type": "client",
+      "logic": "POSITIVE",
+      "decisionStrategy": "UNANIMOUS",
+      "config": {
+        "clients": "[\"rdfm-management-server-cluster-admin\"]"
+      }
+    },
+    {
       "name": "test-client-RDFM",
       "description": "",
       "type": "scope",
@@ -59,6 +127,30 @@
         "resources": "[\"Topic:RDFM\"]",
         "scopes": "[\"Create\",\"Describe\",\"Read\",\"Write\"]",
         "applyPolicies": "[\"RDFM-rw\"]"
+      }
+    },
+    {
+      "name": "cluster-administration",
+      "description": "",
+      "type": "scope",
+      "logic": "POSITIVE",
+      "decisionStrategy": "UNANIMOUS",
+      "config": {
+        "resources": "[\"Cluster:*\"]",
+        "scopes": "[\"Create\",\"ClusterAction\",\"Alter\",\"Describe\",\"DescribeConfigs\",\"AlterConfigs\",\"IdempotentWrite\"]",
+        "applyPolicies": "[\"management-server-admin\"]"
+      }
+    },
+    {
+      "name": "topic-administration",
+      "description": "",
+      "type": "scope",
+      "logic": "POSITIVE",
+      "decisionStrategy": "UNANIMOUS",
+      "config": {
+        "resources": "[\"Topic:*\"]",
+        "scopes": "[\"Create\",\"Describe\",\"DescribeConfigs\",\"Delete\",\"AlterConfigs\"]",
+        "applyPolicies": "[\"management-server-admin\"]"
       }
     }
   ],
