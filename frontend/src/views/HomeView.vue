@@ -200,6 +200,8 @@ import {
     PERMISSIONS_ENDPOINT,
     adminRoles,
     type Permission,
+    DEVICE_PROGRESS_ENDPOINT,
+    useNotifications,
 } from '../common/utils';
 
 import DevicesList from '../components/devices/DevicesList.vue';
@@ -208,6 +210,7 @@ import GroupsList from '../components/groups/GroupsList.vue';
 import Logo from '../images/Logo.vue';
 import LogoutIcon from '@/images/LogoutIcon.vue';
 import Device from '@/components/devices/Device.vue';
+import { deviceUpdates, deviceVersions } from '../components/devices/devices';
 
 export enum ActiveTab {
     Device = 'device',
@@ -217,6 +220,7 @@ export enum ActiveTab {
 }
 
 export const SECTIONS = [ActiveTab.Devices, ActiveTab.Packages, ActiveTab.Groups];
+const notif = useNotifications();
 
 export default {
     props: {
@@ -322,6 +326,39 @@ export default {
         } else {
             window.location.href = LOGIN_PATH;
         }
+
+        const sse = new EventSource(DEVICE_PROGRESS_ENDPOINT);
+
+        sse.addEventListener('update', async (event: MessageEvent) => {
+            const message = JSON.parse(event.data);
+
+            if (!deviceUpdates.has(message.device) && !deviceVersions.has(message.device)) {
+                notif.notifySuccess({
+                    headline: `Device ${message.device}`,
+                    msg: 'Device update started',
+                });
+            }
+            if (message.version && !deviceVersions.has(message.device)) {
+                deviceVersions.set(message.device, message.version);
+            }
+            if (message.progress) {
+                deviceUpdates.set(message.device, message.progress);
+            }
+            if (deviceUpdates.get(message.device) === 100) {
+                notif.notifySuccess({
+                    headline: `Device ${message.device}`,
+                    msg: 'Device update finished',
+                });
+                deviceUpdates.delete(message.device);
+                deviceVersions.delete(message.device);
+            }
+        });
+
+        sse.addEventListener('error', (error: Event) => {
+            console.error(
+                'Connection to event stream failed. Will not be able to show device update progress.',
+            );
+        });
     },
 };
 </script>

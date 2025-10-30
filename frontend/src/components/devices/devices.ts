@@ -30,6 +30,7 @@ import {
 } from '../../common/utils';
 
 import { StatusCodes } from 'http-status-codes';
+import { reactive } from 'vue';
 
 export const pendingDevicesResources = resourcesGetter<PendingDevice[]>(PENDING_ENDPOINT);
 export const registeredDevicesResources = resourcesGetter<RegisteredDevice[]>(DEVICES_ENDPOINT);
@@ -37,6 +38,9 @@ export const groupResources = resourcesGetter<Group[]>(GROUPS_ENDPOINT);
 
 export const filteredDevicesResources = (tag: string) =>
     resourcesGetter<RegisteredDevice[]>(TAGS_ENDPOINT(tag));
+
+export const deviceUpdates = reactive(new Map<string, number>());
+export const deviceVersions = reactive(new Map<string, string>());
 
 export type Action = {
     action_id: string;

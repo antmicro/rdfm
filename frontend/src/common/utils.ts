@@ -46,6 +46,7 @@ export const DEVICE_ACTIONS_EXEC_ENDPOINT = (mac: string, actionId: string) =>
 export const DEVICE_ACTION_LOG_ENDPOINT = (mac: string) => `/api/v2/devices/${mac}/action_log`;
 export const DEVICE_SHELL_ENDPOINT = (mac: string, token: string) =>
     `/api/v1/devices/${mac}/shell?token=${token}`;
+export const DEVICE_PROGRESS_ENDPOINT = `/api/stream`;
 
 export const DEVICE_TAGS_ENDPOINT = (id: number) => `${SERVER_URL}/api/v2/devices/${id}/tags`;
 export const DEVICE_ADD_TAG_ENDPOINT = (id: number, tag: string) =>
@@ -186,6 +187,7 @@ export interface RegisteredDevice {
     metadata: Record<string, string | string[]>;
     capabilities: Record<string, boolean>;
     public_key: string;
+    progress?: number;
 }
 
 /**
