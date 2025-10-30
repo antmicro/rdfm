@@ -2,14 +2,16 @@ from typing import Optional, List
 from flask import request, Blueprint, current_app
 import storage
 import traceback
+import datetime
 import models.package
 import server
 from api.v1.common import api_error
 import models.device
 import models.group
+import models.device_update
 import configuration
 from rdfm.schema.v1.updates import UpdateCheckRequest
-from rdfm.schema.v1.updates import META_MAC_ADDRESS
+from rdfm.schema.v1.updates import META_MAC_ADDRESS, META_SOFT_VER
 from marshmallow import ValidationError
 from models.package import Package
 from update.resolver import PackageResolver
@@ -163,6 +165,13 @@ def check_for_update(device_token: DeviceToken):
 
         link = driver.generate_url(package.info, LINK_EXPIRY_TIME)
         print("Link:", link)
+
+        device_update = models.device_update.DeviceUpdate()
+        device_update.mac_address = device.mac_address
+        device_update.created = datetime.datetime.utcnow()
+        device_update.version = package.info[META_SOFT_VER]
+        device_update.progress = 0
+        server.instance._device_updates_db.insert(device_update)
 
         return {
             "id": package.id,

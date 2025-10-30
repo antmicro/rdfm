@@ -49,6 +49,7 @@ class RemoteDevice:
         self.capabilities = {}
         self.actions = {}
         self.actions_updated = threading.Event()
+        self.update_version = None
 
     def receive_message(self, timeout: Optional[float] = None) -> Request:
         """Receive a message from the device and decode it
@@ -165,11 +166,17 @@ class RemoteDevice:
             }
             server.instance.sse.publish(json.dumps(message), type='update')
             if request.progress == 100:
+                self.update_version = None
+                server.instance._device_updates_db.delete(self.token.device_id)
                 print(
                     f"Device {self.token.device_id} update complete",
                     flush=True,
                 )
             else:
+                server.instance._device_updates_db.update_progress(
+                    self.token.device_id,
+                    request.progress
+                )
                 print(
                     f"Device {self.token.device_id} update in progress: {request.progress}%",
                     flush=True,
