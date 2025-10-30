@@ -59,6 +59,9 @@ Component wraps functionality for displaying and working with rdfm devices.
                             class="row"
                             @click="() => router.push('/devices/' + device.id)"
                         >
+                            <div class="status">
+                                <Status :connected="device.connected" :detailed="false" />
+                            </div>
                             <div class="entry">
                                 <div class="title">ID</div>
                                 <div class="value">#{{ device.id }}</div>
@@ -103,6 +106,19 @@ Component wraps functionality for displaying and working with rdfm devices.
                                         }}
                                     </div>
                                 </div>
+                            </div>
+                            <div class="progress">
+                                <template
+                                    v-if="
+                                        deviceUpdates.has(device.mac_address) &&
+                                        deviceVersions.has(device.mac_address)
+                                    "
+                                >
+                                    <UpdateProgress
+                                        :progress="deviceUpdates.get(device.mac_address)!"
+                                        :version="deviceVersions.get(device.mac_address)!"
+                                    />
+                                </template>
                             </div>
                             <div class="entry">
                                 <div class="button-wrapper">
@@ -211,6 +227,8 @@ import {
 } from '../../common/utils';
 import TitleBar from '../TitleBar.vue';
 import RemovePopup from '../RemovePopup.vue';
+import UpdateProgress from '../UpdateProgress.vue';
+import Status from '../Status.vue';
 import {
     filteredDevicesResources,
     groupResources,
@@ -219,6 +237,8 @@ import {
     registeredDevicesResources,
     removePendingDeviceRequest,
     removeDeviceRequest,
+    deviceUpdates,
+    deviceVersions,
 } from './devices';
 import router from '@/router';
 import { useRouter } from 'vue-router';
@@ -244,6 +264,8 @@ export default {
     components: {
         TitleBar,
         RemovePopup,
+        UpdateProgress,
+        Status,
     },
     setup(props) {
         const notifications = useNotifications();
@@ -358,6 +380,8 @@ export default {
             openRemoveDevicePopup,
             closeRemoveDevicePopup,
             openRemovePendingDevicePopup,
+            deviceUpdates,
+            deviceVersions,
         };
     },
 };

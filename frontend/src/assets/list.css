@@ -27,7 +27,7 @@
             grid-template-columns: 80px 90px 200px 200px auto 200px 300px;
         }
         #device-list-registered .row {
-            grid-template-columns: 80px repeat(5, var(--default-col-width)) 300px auto;
+            grid-template-columns: 80px 80px repeat(5, var(--default-col-width)) 300px auto 200px;
         }
         #device-list-unregistered .row {
             grid-template-columns: 300px repeat(4, var(--default-col-width)) auto;
@@ -39,7 +39,9 @@
                 grid-template-columns: 80px 90px 200px 200px auto 200px 300px;
             }
             #device-list-registered .row {
-                grid-template-columns: 80px repeat(5, var(--default-col-width)) 200px auto;
+                grid-template-columns:
+                    80px 80px repeat(5, var(--default-col-width))
+                    200px auto 200px;
             }
             #device-list-unregistered .row {
                 grid-template-columns:
@@ -57,6 +59,14 @@
                 grid-template-rows: repeat(auto-fit, auto);
                 position: relative;
             }
+
+            #device-list-registered .row {
+                .status {
+                    position: absolute;
+                    top: 20px;
+                    right: 20px;
+                }
+            }
         }
 
         .device-list {
@@ -71,6 +81,14 @@
 
             &:not(:last-child) {
                 border-bottom: 2px solid var(--gray-400);
+            }
+
+            .status {
+                align-content: center;
+            }
+
+            .progress {
+                padding: 0.5em 1em;
             }
 
             .entry {

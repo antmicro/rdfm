@@ -11,12 +11,26 @@ with a title, subtitle and an optional action button.
 
 <template>
     <div id="wrapper">
-        <div id="titlebar">
-            <div id="title">{{ title }}</div>
-            <div id="subtitle">{{ subtitle }}</div>
+        <div id="title-section">
+            <div v-if="device" id="status">
+                <Status :connected="connected" :detailed="true" />
+            </div>
+            <div id="titlebar">
+                <div id="title">{{ title }}</div>
+                <div id="subtitle">{{ subtitle }}</div>
+            </div>
         </div>
         <div v-if="displayButton" id="actionbar">
             <button id="action-button" @click="buttonCallback">{{ actionButtonName }}</button>
+        </div>
+        <div id="update" v-if="device && deviceUpdates.has(device) && deviceVersions.has(device)">
+            <UpdateProgress
+                :progress="deviceUpdates.get(device)!"
+                :version="deviceVersions.get(device)!"
+            />
+        </div>
+        <div id="no-update" v-else-if="device">
+            <p>No updates available</p>
         </div>
     </div>
 </template>
@@ -29,21 +43,33 @@ with a title, subtitle and an optional action button.
     justify-content: space-between;
     padding: 2em;
 
-    & > #titlebar {
+    & > #title-section {
         display: flex;
-        flex-direction: column;
-        font-family: 'Mona Sans', sans-serif;
-        word-break: break-word;
+        flex-direction: row;
+        justify-content: start;
 
-        & > #title {
-            color: var(--gray-1000);
-            font-weight: 700;
-            font-size: 3em;
+        & > #status {
+            align-content: top;
+            padding-top: 1.5em;
+            padding-right: 1.5em;
         }
 
-        & > #subtitle {
-            color: var(--gray-900);
-            font-size: 1.3em;
+        & > #titlebar {
+            display: flex;
+            flex-direction: column;
+            font-family: 'Mona Sans', sans-serif;
+            word-break: break-word;
+
+            & > #title {
+                color: var(--gray-1000);
+                font-weight: 700;
+                font-size: 3em;
+            }
+
+            & > #subtitle {
+                color: var(--gray-900);
+                font-size: 1.3em;
+            }
         }
     }
 
@@ -65,6 +91,12 @@ with a title, subtitle and an optional action button.
             }
         }
     }
+
+    & > #no-update {
+        & > p {
+            color: var(--gray-900);
+        }
+    }
 }
 
 @media screen and (max-width: 500px) {
@@ -81,6 +113,9 @@ with a title, subtitle and an optional action button.
 <script lang="ts">
 import { computed, defineComponent } from 'vue';
 import { type PropType } from 'vue';
+import Status from './Status.vue';
+import UpdateProgress from './UpdateProgress.vue';
+import { deviceUpdates, deviceVersions } from './devices/devices';
 
 export default defineComponent({
     props: {
@@ -98,11 +133,21 @@ export default defineComponent({
         buttonCallback: {
             type: Function as PropType<(payload: MouseEvent) => void>,
         },
+        device: {
+            type: String,
+        },
+        connected: {
+            type: Boolean,
+        },
+    },
+    components: {
+        Status,
+        UpdateProgress,
     },
     setup(props) {
         const displayButton = computed(() => props.actionButtonName && props.buttonCallback);
 
-        return { displayButton };
+        return { displayButton, deviceUpdates, deviceVersions };
     },
 });
 </script>

@@ -10,7 +10,13 @@ Component wraps functionality for displaying and working with a single rdfm devi
 
 <template>
     <div v-if="devicesLoaded">
-        <TitleBar v-if="device" :title="'Device ' + device.mac_address" :subtitle="device.name" />
+        <TitleBar
+            v-if="device"
+            :title="'Device ' + device.mac_address"
+            :subtitle="device.metadata['rdfm.software.version'] as string"
+            :device="device.mac_address"
+            :connected="device.connected"
+        />
         <TitleBar
             v-if="!device"
             :title="`Device with ${pattern} '${id}' was not found`"
@@ -417,6 +423,7 @@ import {
 import TitleBar from '../TitleBar.vue';
 import Terminal from '../Terminal.vue';
 import BlurPanel from '../BlurPanel.vue';
+import UpdateProgress from '../UpdateProgress.vue';
 import Expand from '../icons/Expand.vue';
 import Collapse from '../icons/Collapse.vue';
 import Cross from '../icons/Cross.vue';
@@ -429,6 +436,8 @@ import {
     clearDeviceActionLog,
     execAction,
     type Action,
+    deviceUpdates,
+    deviceVersions,
 } from './devices';
 import { useRoute, useRouter } from 'vue-router';
 import { ActiveTab } from '@/views/HomeView.vue';
@@ -442,6 +451,7 @@ export default {
         TitleBar,
         Terminal,
         BlurPanel,
+        UpdateProgress,
         Expand,
         Collapse,
         Cross,
@@ -537,6 +547,7 @@ export default {
         // Actions interface
 
         const actions = ref<(Action & { running?: boolean })[]>([]);
+
         effect(async () => {
             if (!device.value) return;
             if (actions.value.length > 0) return;
@@ -675,6 +686,8 @@ export default {
             terminalFullscreen,
             isFullscreen,
             allowedTo,
+            deviceUpdates,
+            deviceVersions,
         };
     },
 };
