@@ -29,13 +29,13 @@ func NewShellRunner(limit int) (*ShellRunner, error) {
 }
 
 // Spawn a new shell process and associate it with a given UUID.
-func (s *ShellRunner) Spawn(uuid string) (*ShellSession, error) {
+func (s *ShellRunner) Spawn(uuid string, shellPath string) (*ShellSession, error) {
 	ok := s.shellCount.TryAcquire(1)
 	if !ok {
 		return nil, ErrSessionLimitReached
 	}
 
-	session, err := NewShellSession(uuid)
+	session, err := NewShellSession(uuid, shellPath)
 	if err != nil {
 		return nil, err
 	}

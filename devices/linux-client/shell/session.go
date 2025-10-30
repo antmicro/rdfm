@@ -31,7 +31,14 @@ var (
 )
 
 // Determine the shell executable to use for spawning shell sessions.
-func findShell() (*string, error) {
+func findShell(shellPath string) (*string, error) {
+	if shellPath != "" {
+		_, err := os.Stat(shellPath)
+		if err == nil {
+			return &shellPath, nil
+		}
+	}
+
 	shellEnv := os.Getenv("SHELL")
 	if shellEnv != "" {
 		_, err := os.Stat(shellEnv)
@@ -53,11 +60,11 @@ func findShell() (*string, error) {
 // binary to use and spawns it as a child process of the daemon. To capture
 // stdout and provide stdin, call Run with the WebSocket to use for
 // communication.
-func NewShellSession(uid string) (*ShellSession, error) {
+func NewShellSession(uid string, shellPath string) (*ShellSession, error) {
 	log.Printf("Creating new shell session with id %s", uid)
 	session := new(ShellSession)
 	session.uuid = uid
-	shell, err := findShell()
+	shell, err := findShell(shellPath)
 	if err != nil {
 		return nil, err
 	}

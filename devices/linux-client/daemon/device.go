@@ -150,7 +150,7 @@ func (d *Device) handleRequest(msg []byte) (serverws.Request, error) {
 				return
 			}
 
-			session, err := d.shellRunner.Spawn(r.Uuid)
+			session, err := d.shellRunner.Spawn(r.Uuid, d.rdfmCtx.RdfmConfig.ShellPath)
 			if err != nil {
 				log.Warnln("Failed to spawn shell session:", err)
 				return

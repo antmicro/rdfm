@@ -80,6 +80,8 @@ type RDFMConfig struct {
 	ShellEnable bool `json:",omitempty"`
 	// Maximum amount of concurrent shells. Default: 5
 	ShellConcurrentMaxCount int `json:",omitempty"`
+	// Path to shell. If not set, $SHELL or default shell path list will be used.
+	ShellPath string `json:",omitempty"`
 
 	// Is action support enabled? Default: true
 	ActionEnable bool `json:",omitempty"`
