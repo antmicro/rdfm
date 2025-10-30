@@ -32,6 +32,14 @@ var (
 
 // Determine the shell executable to use for spawning shell sessions.
 func findShell() (*string, error) {
+	shellEnv := os.Getenv("SHELL")
+	if shellEnv != "" {
+		_, err := os.Stat(shellEnv)
+		if err == nil {
+			return &shellEnv, nil
+		}
+	}
+
 	for _, shellPath := range DefaultShellList {
 		_, err := os.Stat(shellPath)
 		if err == nil {
