@@ -191,6 +191,10 @@ func (ctx *RDFM) InstallArtifact(path string) error {
 
 // Attempt to commit the currently installed update
 func (ctx *RDFM) CommitCurrentArtifact() error {
+	err := checkBeforeCommit(ctx.RdfmConfig.VerificationScriptPath)
+	if err != nil {
+		return err
+	}
 	return DoCommit(ctx.deviceManager)
 }
 

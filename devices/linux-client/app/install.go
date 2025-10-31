@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"os/exec"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -181,4 +182,27 @@ func handleFailure(installHandler *handlers.Handler) {
 		installHandler.Rollback()
 	}
 	installHandler.Cleanup()
+}
+
+func checkBeforeCommit(scriptPath string) error {
+	if scriptPath == "" {
+		log.Warn("Verification script not provided")
+		return nil
+	}
+	cmd := exec.Command(scriptPath)
+	output, err := cmd.CombinedOutput()
+
+	if err != nil {
+		log.Error("System correctness verification failed")
+		if len(output) > 0 {
+			log.Error(string(output))
+		}
+		return err
+	}
+
+	log.Info("System correctness successfully verified")
+	if len(output) > 0 {
+		log.Info(string(output))
+	}
+	return nil
 }
