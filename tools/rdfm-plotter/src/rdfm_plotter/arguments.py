@@ -64,7 +64,7 @@ def check_regex_compiles(expr: str) -> re.Pattern:
 
 def check_gt_0(value: str) -> int:
     """
-    Check if a provided argument is an integer greater than 0, if it then it can describe
+    Check if a provided argument is an integer greater than 0, if it is then it can describe
     a capture group index.
     """
     try:
