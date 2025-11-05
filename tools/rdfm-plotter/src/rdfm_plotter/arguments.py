@@ -159,17 +159,22 @@ def parse_args() -> Namespace:
 
     args = parser.parse_args()
 
-    assert validate_capture_group(args)
+    if not validate_capture_group(args):
+        raise ValueError("Invalid arguments: capture group validation failed")
+
     consumer_config_path = Path(args.consumer_config)
     if not args.plain:
         # When not running the consumer PLAINTEXT
         # use the configuration files for OAUTH and SSL
         keycloak_config_path = Path(args.keycloak_config)
-        assert keycloak_config_path.is_file()
-        assert consumer_config_path.is_file()
+        if not keycloak_config_path.is_file():
+            raise FileNotFoundError(keycloak_config_path)
+        if not consumer_config_path.is_file():
+            raise FileNotFoundError(consumer_config_path)
     else:
         # When running the consumer PLAINTEXT
         # we just require the bootstrap servers
-        assert args.bootstrap_servers or consumer_config_path.is_file()
+        if not args.bootstrap_servers and not consumer_config_path.is_file():
+            raise FileNotFoundError(consumer_config_path)
 
     return args
