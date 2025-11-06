@@ -42,6 +42,10 @@ To connect to the device, [`rdfm-mgmt`](./rdfm_manager.md) can be used to reques
 rdfm-mgmt devices shell <device-identifier>
 ```
 
+The shell to spawn can be selected via the [ShellPath](#shellpath-string) configuration key.
+If not set, the path to shell will be read from the `$SHELL` environment variable.
+Finally, if neither yields an available path, a list of default shell paths such as `/usr/bin/bash` or `/usr/bin/sh` will be checked.
+
 By default, a maximum of 5 concurrent shell sessions can be opened.
 This limit can be configured via the [ShellConcurrentMaxCount](#shellconcurrentmaxcount-int) configuration key.
 Further shell session requests will be rejected by the client.
@@ -196,6 +200,11 @@ True by default.
 
 Specifies how many concurrent shell sessions can be spawned.
 `5` by default.
+
+#### ShellPath `string`
+
+Allows choosing which shell to spawn by specifying the path.
+If not set, `$SHELL` environment variable or a list of default shell paths will be used to find an available shell.
 
 #### FileSystemEnable `bool`
 
