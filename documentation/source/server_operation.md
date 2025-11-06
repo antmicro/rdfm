@@ -125,3 +125,9 @@ Return a list of actions supported by the device.
 Attempt to queue action execution and immediately respond with the `action_exec_control` message indicating success or failure. Action execution result is sent later via `action_exec_result` message.
 Action execution status: pending, sent, or the status code returned by the device is stored in the server database.
 If any action requests were made while the device was not connected to the management WebSocket, they would be sent again after the device reconnects and sends a `CapabilityReport`.
+
+#### Capability - `update_progress`
+
+This capability indicates that a device supports reporting update progress.
+The device does not have to support any additional methods, but must send `update_progress` messages when installing an update.
+The messages should contain a percentage expressed as a 0-100 integer.

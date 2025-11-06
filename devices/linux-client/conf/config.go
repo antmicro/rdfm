@@ -38,6 +38,7 @@ const DEFAULT_ACTION_QUEUE_SIZE = 32
 const DEFAULT_FILESYSTEM_ENABLE = true
 const DEFAULT_FILESYSTEM_BASE_DIR = "/"
 const DEFAULT_VERIFICATION_SCRIPT_PATH = ""
+const DEFAULT_UPDATE_PROGRESS_ENABLE = true
 
 type RDFMConfig struct {
 	// Path to the device type file
@@ -97,6 +98,9 @@ type RDFMConfig struct {
 
 	// Path to the script used to verify system correctness before commit. Default: ""
 	VerificationScriptPath string `json:",omitempty"`
+
+	// Is reporting update progress enabled? Default: true
+	UpdateProgressEnable bool `json:",omitempty"`
 }
 
 var rdfmConfigInstance *RDFMConfig
@@ -147,6 +151,7 @@ func LoadConfig(mainConfigFile string, overlayConfigFile string) (*RDFMConfig, *
 		FileSystemEnable:          DEFAULT_FILESYSTEM_ENABLE,
 		FileSystemBaseDir:         DEFAULT_FILESYSTEM_BASE_DIR,
 		VerificationScriptPath:    DEFAULT_VERIFICATION_SCRIPT_PATH,
+		UpdateProgressEnable:      DEFAULT_UPDATE_PROGRESS_ENABLE,
 	}
 
 	// Load Mender config

@@ -331,6 +331,7 @@ func (d *Device) setupConnection() error {
 	d.conn.SetCapability("action", d.rdfmCtx.RdfmConfig.ActionEnable)
 	d.conn.SetCapability("shell", d.rdfmCtx.RdfmConfig.ShellEnable)
 	d.conn.SetCapability("filesystem", d.rdfmCtx.RdfmConfig.FileSystemEnable)
+	d.conn.SetCapability("update-progress", d.rdfmCtx.RdfmConfig.UpdateProgressEnable)
 	return nil
 }
 
