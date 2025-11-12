@@ -1,5 +1,11 @@
 from flask import Blueprint
+from configuration import (
+        ENV_ENABLE_KAFKA_INTEGRATION,
+        ARG_ENABLE_KAFKA_INTEGRATION,
+)
 
+import sys
+import os
 import api.v1.devices
 import api.v1.packages
 import api.v1.groups
@@ -8,6 +14,7 @@ import api.v1.auth
 import api.v1.logs
 import api.v1.ws.device
 import api.v1.permissions
+import api.v1.pubsub
 
 
 def create_routes() -> Blueprint:
@@ -20,4 +27,7 @@ def create_routes() -> Blueprint:
     api_routes.register_blueprint(api.v1.logs.logs_blueprint)
     api_routes.register_blueprint(api.v1.ws.device.device_ws_blueprint)
     api_routes.register_blueprint(api.v1.permissions.permissions_blueprint)
+    if (ARG_ENABLE_KAFKA_INTEGRATION in sys.argv or
+            ENV_ENABLE_KAFKA_INTEGRATION in os.environ.keys()):
+        api_routes.register_blueprint(api.v1.pubsub.pubsub_blueprint)
     return api_routes
