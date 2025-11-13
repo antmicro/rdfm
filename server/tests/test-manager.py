@@ -7,6 +7,16 @@ from typing import List, Tuple
 import time
 import pexpect
 
+from rdfm.permissions import (
+    READ_PERMISSION,
+    UPDATE_PERMISSION,
+    SHELL_PERMISSION,
+    PACKAGE_RESOURCE,
+    DEVICE_RESOURCE,
+    GROUP_RESOURCE,
+    DEVICE_NAMED_RESOURCE,
+)
+
 GROUP_NAME = "dummy_group"
 GROUP_DESCRIPTION = "dummy_group_description"
 GROUP_PRIORITY = "25"
@@ -253,10 +263,10 @@ def test_shell_to_device_eof_stdin(start_shell_mock, device_shell_no_teardown: s
 def test_create_permission(process, create_dummy_group):
     """ Test if creating a permission works
     """
-    _, code = run_manager_command(["--no-api-auth", "permissions", "create", "group",
+    _, code = run_manager_command(["--no-api-auth", "permissions", "create", GROUP_RESOURCE,
                                    "--id", "1",
                                    "--user", "1",
-                                   "--permission", "read"])
+                                   "--permission", READ_PERMISSION])
     assert code == 0, "creating a permission should succeed"
 
     out, code = run_manager_command(["--no-api-auth", "permissions", "list"])
@@ -268,10 +278,10 @@ def test_create_permission(process, create_dummy_group):
 def test_create_multiple_permissions(process, create_dummy_group):
     """ Test if creating multiple permissions works
     """
-    _, code = run_manager_command(["--no-api-auth", "permissions", "create", "group",
+    _, code = run_manager_command(["--no-api-auth", "permissions", "create", GROUP_RESOURCE,
                                    "--id", "1",
                                    "--user", "1", "2",
-                                   "--permission", "read", "update"])
+                                   "--permission", READ_PERMISSION, UPDATE_PERMISSION])
     assert code == 0, "creating a permission should succeed"
 
     out, code = run_manager_command(["--no-api-auth", "permissions", "list"])
@@ -281,6 +291,46 @@ def test_create_multiple_permissions(process, create_dummy_group):
         "Permission type: update\nResource type: group\nResource id: 1\nUser id: 1",
         "Permission type: read\nResource type: group\nResource id: 1\nUser id: 2",
         "Permission type: update\nResource type: group\nResource id: 1\nUser id: 2"
+    ]
+    for e in expected:
+        assert e in out, "the permission should be present"
+
+
+def test_create_device_permission_by_mac(process, create_dummy_group):
+    """ Test if creating device permissions by MAC address works
+    """
+    _, code = run_manager_command(["--no-api-auth", "permissions", "create", DEVICE_RESOURCE,
+                                   "--id", DEVICE_MAC,
+                                   "--user", "1", "2",
+                                   "--permission", READ_PERMISSION, UPDATE_PERMISSION])
+    assert code == 0, "creating a permission should succeed"
+
+    out, code = run_manager_command(["--no-api-auth", "permissions", "list"])
+    assert code == 0, "listing permissions should succeed"
+    expected = [
+        "Permission type: read\nResource type: device\nResource id: 1\nUser id: 1",
+        "Permission type: update\nResource type: device\nResource id: 1\nUser id: 1",
+        "Permission type: read\nResource type: device\nResource id: 1\nUser id: 2",
+        "Permission type: update\nResource type: device\nResource id: 1\nUser id: 2"
+    ]
+    for e in expected:
+        assert e in out, "the permission should be present"
+
+
+def test_create_named_device_permission(process, create_dummy_group):
+    """ Test if creating device permissions by name and tag works
+    """
+    _, code = run_manager_command(["--no-api-auth", "permissions", "create", DEVICE_NAMED_RESOURCE,
+                                   "--name", "linux-device",
+                                   "--user", "1", "2",
+                                   "--permission", SHELL_PERMISSION])
+    assert code == 0, "creating a permission should succeed"
+
+    out, code = run_manager_command(["--no-api-auth", "permissions", "list"])
+    assert code == 0, "listing permissions should succeed"
+    expected = [
+        "Permission type: shell\nResource type: device_by_tag\nResource name: linux-device\nUser id: 1",
+        "Permission type: shell\nResource type: device_by_tag\nResource name: linux-device\nUser id: 2",
     ]
     for e in expected:
         assert e in out, "the permission should be present"
@@ -307,19 +357,40 @@ def test_delete_permission(process, upload_dummy_package):
     assert not_expected not in out, "the permission should not be present"
 
 
+def test_delete_named_device_permission(process):
+    """ Test if deleting a named device permission works
+    """
+    _, code = run_manager_command(["--no-api-auth", "permissions", "create", DEVICE_NAMED_RESOURCE,
+                                   "--name", "linux-device",
+                                   "--user", "1",
+                                   "--permission", SHELL_PERMISSION])
+    assert code == 0, "creating a permission should succeed"
+
+    _, code = run_manager_command(["--no-api-auth", "permissions", "delete", DEVICE_NAMED_RESOURCE,
+                                   "--name", "linux-device",
+                                   "--user", "1",
+                                   "--permission", SHELL_PERMISSION])
+    assert code == 0, "deleting a permission should succeed"
+
+    out, code = run_manager_command(["--no-api-auth", "permissions", "list"])
+    assert code == 0, "listing permissions should succeed"
+    not_expected = "Permission type: shell\nResource type: device_by_tag\nResource name: linux-device\nUser id: 1"
+    assert not_expected not in out, "the permission should not be present"
+
+
 def test_delete_multiple_permissions(process, upload_dummy_package):
     """ Test if deleting multiple permission works
     """
-    _, code = run_manager_command(["--no-api-auth", "permissions", "create", "package",
+    _, code = run_manager_command(["--no-api-auth", "permissions", "create", PACKAGE_RESOURCE,
                                    "--id", "1",
                                    "--user", "1", "2",
-                                   "--permission", "read", "update"])
+                                   "--permission", READ_PERMISSION, UPDATE_PERMISSION])
     assert code == 0, "creating permissions should succeed"
 
-    _, code = run_manager_command(["--no-api-auth", "permissions", "delete", "package",
+    _, code = run_manager_command(["--no-api-auth", "permissions", "delete", PACKAGE_RESOURCE,
                                    "--id", "1",
                                    "--user", "1", "2",
-                                   "--permission", "read", "update"])
+                                   "--permission", READ_PERMISSION, UPDATE_PERMISSION])
     assert code == 0, "deleting permissions should succeed"
 
     out, code = run_manager_command(["--no-api-auth", "permissions", "list"])
@@ -344,16 +415,16 @@ def test_delete_permissions_all_ids(process, upload_dummy_package):
                                     "--priority", GROUP_PRIORITY])
         assert code == 0, "creating group should succeed"
 
-    _, code = run_manager_command(["--no-api-auth", "permissions", "create", "group",
+    _, code = run_manager_command(["--no-api-auth", "permissions", "create", GROUP_RESOURCE,
                                    "--id", "1", "2",
                                    "--user", "1", "2",
-                                   "--permission", "read"])
+                                   "--permission", READ_PERMISSION])
     assert code == 0, "creating a permission should succeed"
 
-    _, code = run_manager_command(["--no-api-auth", "permissions", "delete", "group",
+    _, code = run_manager_command(["--no-api-auth", "permissions", "delete", GROUP_RESOURCE,
                                    "--all-ids",
                                    "--user", "1",
-                                   "--permission", "read"])
+                                   "--permission", READ_PERMISSION])
     assert code == 0, "deleting a permission should succeed"
 
     out, code = run_manager_command(["--no-api-auth", "permissions", "list"])
