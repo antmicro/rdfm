@@ -254,12 +254,6 @@ For example, the following command will assign `read` and `update` permissions t
 rdfm-mgmt permissions create device --id 1 2 --user eed3d12d-e13b-4c4a-aebd-38b4d55c8947 eed3d12d-e13b-4c4a-aebd-38b4d55c8948 --permission read update
 ```
 
-The `shell` permission can only be assigned to devices:
-
-```
-rdfm-mgmt permissions create device --id 1 2 --user eed3d12d-e13b-4c4a-aebd-38b4d55c8947 eed3d12d-e13b-4c4a-aebd-38b4d55c8948 --permission shell
-```
-
 #### Deleting permissions
 
 ```
@@ -284,6 +278,28 @@ For example, the following command will revoke read permission for all devices f
 ```
 rdfm-mgmt permissions delete device --all-ids --user eed3d12d-e13b-4c4a-aebd-38b4d55c8947 --permission read
 ```
+
+#### Device permissions
+
+There are additional permission mechanisms that only apply to devices.
+
+The `shell` permission can only be assigned to devices:
+
+```
+rdfm-mgmt permissions create device --id 1 2 --user eed3d12d-e13b-4c4a-aebd-38b4d55c8947 --permission shell
+```
+
+When granting device permissions, a name can be used instead of resource ID. This will create a permission for all devices with the given name and all devices that have the given name listed in their tags.
+
+Device tags are included in the `rdfm.software.tags` field in metadata.
+
+For example, the following command will create permissions for all devices named `linux-device` and all devices that have `linux-device` as one of their tags.
+
+```
+rdfm-mgmt permissions create device_by_tag --name linux-device --user eed3d12d-e13b-4c4a-aebd-38b4d55c8947 --permission read update
+```
+
+When a new device with name or tag `linux-device` is registered, the user `eed3d12d-e13b-4c4a-aebd-38b4d55c8947` will automatically get `read` and `update` access to it.
 
 ### Downloading files from remote device
 You can download files from remote device with `filesystem` capability with the following command:
