@@ -88,10 +88,15 @@ def create_app(config: configuration.ServerConfig) -> Flask:
     if hasattr(config, "redis_url"):
         app.config["REDIS_URL"] = config.redis_url
     app.register_blueprint(sse, url_prefix="/api/stream")
+    sse.stream.__func__.__rdfm_api_privileges__ = "authenticated"
 
     app.register_blueprint(api.v1.create_routes())
     app.register_blueprint(api.v2.create_routes())
     app.config["RDFM_CONFIG"] = config
+
+    @app.before_request
+    def authorize():
+        return api.v1.middleware.authenticate_sse()
 
     if config.disable_cors:
         from flask_cors import CORS

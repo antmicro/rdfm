@@ -862,3 +862,44 @@ def public_api(f):
     f.__rdfm_api_privileges__ = "public"
     __add_scope_docs(f, DOCS_PUBLIC_API_TEXT)
     return f
+
+
+def authenticate_sse():
+    """Authenticator for server side event routes
+    """
+    if request.path.startswith('/api/stream'):
+        conf: configuration.ServerConfig = current_app.config[
+                    "RDFM_CONFIG"
+                ]
+        if conf.disable_api_auth:
+            return
+
+        auth = request.authorization
+        if auth is None:
+            return api_error("no Authorization header was provided", 401)
+        if auth.type != "bearer":
+            return api_error(
+                "invalid authorization - expected authorization type"
+                "Bearer",
+                401,
+            )
+        if "token" not in auth:
+            return api_error(
+                "invalid authorization - missing field: token", 401
+            )
+        token: str = auth["token"]
+
+        client = OAuth2Session(
+            conf.token_introspection_client_id,
+            conf.token_introspection_client_secret,
+        )
+        resp: requests.models.Response = client.introspect_token(
+            conf.token_introspection_url, token=token
+        )
+        if resp.status_code != 200:
+            print(
+                "Error during token introspection: authorization server "
+                "responded with a non-success status.",
+                flush=True,
+            )
+            return api_error("introspection error", 401)

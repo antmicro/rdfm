@@ -192,6 +192,7 @@ SPDX-License-Identifier: Apache-2.0
 <script lang="ts">
 import { ref, computed, type PropType } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { EventSourcePolyfill } from 'event-source-polyfill';
 import {
     fetchWrapper,
     LOGIN_PATH,
@@ -327,7 +328,13 @@ export default {
             window.location.href = LOGIN_PATH;
         }
 
-        const sse = new EventSource(DEVICE_PROGRESS_ENDPOINT);
+        const accessToken = localStorage.getItem('access_token');
+
+        const sse = new EventSourcePolyfill(DEVICE_PROGRESS_ENDPOINT, {
+            headers: {
+                Authorization: `Bearer token=${accessToken}`,
+            },
+        });
 
         sse.addEventListener('update', async (event: MessageEvent) => {
             const message = JSON.parse(event.data);
