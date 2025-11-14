@@ -35,6 +35,20 @@ def add_permission(config: rdfm.config.Config, resource: str, resource_id: int,
     return wrap_api_error(response, "Adding permission failed")
 
 
+def add_named_permission(config: rdfm.config.Config, resource: str, resource_name: str,
+                         user_id: str, permission: str) -> Optional[str]:
+    response = requests.post(
+        rdfm.api.escape(config, "/api/v1/permissions"),
+        json={
+            "resource": resource, "resource_name": resource_name,
+            "user_id": user_id, "permission": permission
+        },
+        verify=config.ca_cert,
+        auth=config.authorizer,
+    )
+    return wrap_api_error(response, "Adding permission failed")
+
+
 def remove_permission(config: rdfm.config.Config,
                       permission_id: int) -> Optional[str]:
     response = requests.delete(rdfm.api.escape(config,

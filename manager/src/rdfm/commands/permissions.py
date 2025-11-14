@@ -38,7 +38,10 @@ def list_permissions(config: rdfm.config.Config, args):
             print(f"Permission id: {permission.id}")
             print(f"Permission type: {permission.permission}")
             print(f"Resource type: {permission.resource}")
-            print(f"Resource id: {permission.resource_id}")
+            if permission.resource_id:
+                print(f"Resource id: {permission.resource_id}")
+            if permission.resource_name:
+                print(f"Resource name: {permission.resource_name}")
             print(f"User id: {permission.user_id}")
             print(f"Created: {permission.created}")
             print()
@@ -79,20 +82,28 @@ def resolve_resource_identifier(config: rdfm.config.Config, resource: str,
 def add_permissions(config: rdfm.config.Config, args):
     """CLI entrypoint - adding permissions"""
     err = False
-    for id in args.id:
-        resolved_id = resolve_resource_identifier(config, args.resource, id)
-        if not resolved_id:
-            print(f"{args.resource} with identifier {id} does not exist")
-            continue
-        for user in args.user:
-            for permission in args.permission:
-                ret = rdfm.api.permissions.add_permission(config,
-                                                          args.resource,
-                                                          resolved_id, user,
-                                                          permission)
-                if ret:
-                    print(ret)
-                    err = True
+    for user in args.user:
+        for permission in args.permission:
+            if args.id:
+                for id in args.id:
+                    resolved_id = resolve_resource_identifier(config, args.resource, id)
+                    if not resolved_id:
+                        print(f"{args.resource} with identifier {id} does not exist")
+                        continue
+                    ret = rdfm.api.permissions.add_permission(
+                        config, args.resource, resolved_id, user, permission
+                    )
+                    if ret:
+                        print(ret)
+                        err = True
+            if args.name:
+                for name in args.name:
+                    ret = rdfm.api.permissions.add_named_permission(
+                        config, args.resource, name, user, permission
+                    )
+                    if ret:
+                        print(ret)
+                        err = True
     if err:
         raise RuntimeError(f"failed to add permissions")
 
@@ -101,8 +112,8 @@ def remove_permissions(config: rdfm.config.Config, args):
     """CLI entrypoint - removing permissions"""
     permissions: List[rdfm.api.permissions.Permission] = (rdfm.api.permissions
                                                           .fetch_all(config))
+    resolved_ids = []
     if args.id:
-        resolved_ids = []
         for id in args.id:
             resolved_id = resolve_resource_identifier(config, args.resource,
                                                       id)
@@ -121,6 +132,16 @@ def remove_permissions(config: rdfm.config.Config, args):
                              perm.permission in args.permission),
                permissions)
     )
+
+    if args.name:
+        named: List[rdfm.api.permissions.Permission] = list(
+            filter(lambda perm: (perm.resource == args.resource and
+                                 perm.resource_name in args.name and
+                                 perm.user_id in args.user and
+                                 perm.permission in args.permission),
+                   permissions)
+        )
+        filtered.extend(named)
 
     err = False
     for permission in filtered:
@@ -152,6 +173,7 @@ def add_permissions_parser(parser: argparse._SubParsersAction):
     list.add_argument("--resource", type=str, choices=RESOURCE_CHOICES,
                       help="filter by resource type")
     list.add_argument("--resource-id", type=int, help="filter by resource id")
+    list.add_argument("--resource-name", type=int, help="filter by resource name")
     list.add_argument("--permission", type=str, choices=PERMISSIONS_CHOICES,
                       help="filter by permission type")
 
@@ -162,7 +184,10 @@ def add_permissions_parser(parser: argparse._SubParsersAction):
         help="resource type"
     )
     create.add_argument(
-        "--id", type=str, nargs="+", help="resource ids", required=True
+        "--id", type=str, nargs="+", help="resource ids"
+    )
+    create.add_argument(
+        "--name", type=str, nargs="+", help="resource names"
     )
     create.add_argument(
         "--user", type=str, nargs="+", help="user ids", required=True
@@ -181,6 +206,9 @@ def add_permissions_parser(parser: argparse._SubParsersAction):
     delete_ids = delete.add_mutually_exclusive_group(required=True)
     delete_ids.add_argument(
         "--id", type=str, nargs="+", help="resource ids"
+    )
+    delete_ids.add_argument(
+        "--name", type=str, nargs="+", help="resource names"
     )
     delete_ids.add_argument(
         "--all-ids", action='store_true', help="all resource ids"
