@@ -24,6 +24,7 @@ from rdfm.permissions import (
     PACKAGE_RESOURCE,
     DEVICE_RESOURCE,
     GROUP_RESOURCE,
+    DEVICE_NAMED_RESOURCE,
 )
 import models.permission
 
@@ -579,6 +580,7 @@ def check_user_permissions(resource: str, user_id: str,
     resource_perm = server.instance._permissions_db.fetch_one_by_attributes(
                         resource, user_id, resource_id, permission)
     permission_to_group = False
+    named_permission = False
 
     if resource == PACKAGE_RESOURCE:
         for group in server.instance._packages_db.fetch_groups(resource_id):
@@ -592,8 +594,14 @@ def check_user_permissions(resource: str, user_id: str,
                                    server.instance._permissions_db.fetch_one_by_attributes(
                                     GROUP_RESOURCE, user_id,
                                     group, permission) is not None)
+        tags = server.instance._devices_db.fetch_tags(resource_id)
+        name = server.instance._devices_db.fetch_one(resource_id).name
+        tags.append(name)
+        permissions = server.instance._permissions_db.fetch_named_by_attributes(
+                                                      DEVICE_NAMED_RESOURCE, user_id, permission)
+        named_permission = set(tags).intersection(set(permissions))
 
-    return resource_perm is not None or permission_to_group
+    return resource_perm is not None or permission_to_group or named_permission
 
 
 def check_admin_rights(user_roles: List[str], check_ro: bool):

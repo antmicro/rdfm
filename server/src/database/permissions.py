@@ -69,6 +69,24 @@ class PermissionsDB:
                 models.permission.Permission.resource == resource)
             return session.scalar(stmt)
 
+    def fetch_named_by_attributes(
+        self, resource: str, user_id: str, permission: str
+    ) -> List[str]:
+        """ Fetches information about named permissions
+            using attributes from the database
+        """
+        with Session(self.engine) as session:
+            return session.scalars(
+                select(models.permission.Permission.resource_name).where(
+                    models.permission.Permission.user_id == user_id
+                ).where(
+                    models.permission.Permission.resource_name.is_not(None)
+                ).where(
+                    models.permission.Permission.permission == permission
+                ).where(
+                    models.permission.Permission.resource == resource)
+            ).all()
+
     def delete(self, identifier: int) -> bool:
         """Deletes a permission from the database
 
