@@ -17,6 +17,12 @@ from typing import List, Optional
 import server
 import datetime
 
+from rdfm.permissions import (
+    SHELL_PERMISSION,
+    DEVICE_RESOURCE,
+    DEVICE_NAMED_RESOURCE,
+)
+
 permissions_blueprint: Blueprint = Blueprint(
     "rdfm-server-permissions", __name__)
 
@@ -32,6 +38,7 @@ def model_to_schema(
         created=permission.created,
         user_id=permission.user_id,
         resource_id=permission.resource_id,
+        resource_name=permission.resource_name,
         permission=permission.permission,
     )
 
@@ -54,6 +61,7 @@ def fetch_all(**kwargs):
     :>jsonarr str resource: type of resource (group/device/package)
     :>jsonarr str user_id: id of the user to whom this permission applies
     :>jsonarr integer resource_id: id of the resource to which this permission applies
+    :>jsonarr string resource_name: name of the resource to which this permission applies
 
     **Example Request**
 
@@ -138,14 +146,22 @@ def create(perm: Permission):
         }
 
     """  # noqa: E501
-    if perm.permission == "shell" and perm.resource != "device":
+    if perm.permission == SHELL_PERMISSION and perm.resource not in [
+        DEVICE_RESOURCE, DEVICE_NAMED_RESOURCE
+    ]:
         return api_error("Shell permission is only applicable to devices", 422)
+
+    if perm.resource_name and perm.resource != DEVICE_NAMED_RESOURCE:
+        return api_error(
+            "Named permissions are only applicable to the device_by_tag resource type", 422
+        )
 
     permission = models.permission.Permission()
     permission.created = datetime.datetime.utcnow()
     permission.resource = perm.resource
     permission.user_id = perm.user_id
     permission.resource_id = perm.resource_id
+    permission.resource_name = perm.resource_name
     permission.permission = perm.permission
 
     err = server.instance._permissions_db.create(permission)

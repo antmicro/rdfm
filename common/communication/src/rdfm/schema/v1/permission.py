@@ -28,10 +28,23 @@ class Permission():
         "required": True,
     })
     resource_id: int = field(metadata={
-        "required": True
+        "required": False,
+        "load_default": None,
+    })
+    resource_name: str = field(metadata={
+        "required": False,
+        "load_default": None,
     })
     permission: str = field(metadata={
         "required": True
     })
+
+    @marshmallow.validates_schema
+    def validate_one_of(self, data, **kwargs):
+        if not data.get("resource_id") and not data.get("resource_name"):
+            raise marshmallow.ValidationError(
+                "At least one of resource_id or resource_name must be provided.",
+                field_names=["required_id", "required_name"]
+            )
 
     Schema: ClassVar[Type[marshmallow.Schema]] = marshmallow.Schema
