@@ -152,6 +152,7 @@ def setup_with_config_from_env() -> Flask:
     config.disable_api_auth = "RDFM_DISABLE_API_AUTH" in os.environ
     config.encrypted = "RDFM_DISABLE_ENCRYPTION" not in os.environ
     config.include_frontend = "RDFM_INCLUDE_FRONTEND_ENDPOINT" in os.environ
+    config.enable_pubsub = configuration.ENV_ENABLE_KAFKA_INTEGRATION in os.environ
     if not configuration.parse_from_environment(config):
         raise RuntimeError(
             "Parsing variables from the environment failed, "
@@ -261,6 +262,12 @@ def parse_config_from_cli() -> configuration.ServerConfig:
         action="store_true",
         dest="disable_cors",
         help="determines whether to disable cors for development purposes"
+    )
+    parser.add_argument(
+        configuration.ARG_ENABLE_KAFKA_INTEGRATION,
+        action="store_true",
+        dest="enable_pubsub",
+        help="enables Kafka integration",
     )
     parser.add_argument(
         "--debug", action="store_true", help="launch server in debug mode"

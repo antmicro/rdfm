@@ -31,6 +31,16 @@ ENV_INCLUDE_FRONTEND_ENDPOINT = "RDFM_INCLUDE_FRONTEND_ENDPOINT"
 ENV_REDIS_HOST = "REDIS_HOST"
 ENV_REDIS_PORT = "REDIS_PORT"
 
+ENV_ENABLE_KAFKA_INTEGRATION = "RDFM_ENABLE_KAFKA_INTEGRATION"
+ARG_ENABLE_KAFKA_INTEGRATION = "--enable-pubsub"
+ENV_DEV_BOOTSTRAP_SERVERS = "RDFM_DEV_BOOTSTRAP_SERVERS"
+ENV_MGMT_BOOTSTRAP_SERVERS = "RDFM_MGMT_BOOTSTRAP_SERVERS"
+ENV_MGMT_AUTH_URL = "RDFM_PUBSUB_MGMT_AUTH_URL"
+ENV_MGMT_OAUTH_CLIENT_ID = "RDFM_PUBSUB_MGMT_OAUTH_CLIENT_ID"
+ENV_MGMT_OAUTH_CLIENT_SECRET = "RDFM_PUBSUB_MGMT_OAUTH_CLIENT_SEC"
+ENV_MGMT_OAUTH_AUDIENCE = "RDFM_PUBSUB_MGMT_OAUTH_AUDIENCE"
+ENV_CA_CERT = "RDFM_CA_CERT"
+
 
 class ServerConfig:
     """Server configuration"""
@@ -151,6 +161,56 @@ class ServerConfig:
         This is used for sending server side events.
     """
     redis_url: str
+
+    """ Determines whether the RDFM management server integration with
+        Kafka is enabled.
+    """
+    enable_pubsub: bool = False
+
+    """ Path to the Root CA certificate, used only when SSL is enabled
+        to establish a secure conection with a Kafka broker.
+    """
+    cacert: Optional[str] = None
+
+    """ URL to an OpenID Connect authentication endpoint which returns
+        a token that can be introspected. This is required when integration
+        with Kafka is enabled.
+    """
+    token_auth_url: Optional[str] = None
+
+    """ When integration with Kafka is enabled, this defines
+        the client_id that will be attached to authentication
+        requests made to token_auth_url. If integration with
+        Kafka is enabled and this is set to None, the server
+        will fallback to using token_introspection_client_id.
+    """
+    token_auth_client_id: Optional[str] = None
+
+    """ When integration with Kafka is enabled, this defines
+        the client_secret that will be attached to authentication
+        requests made to token_auth_url. If integration with
+        Kafka is enabled and this is set to None, the server
+        will fallback to using token_introspection_client_secret.
+    """
+    token_auth_client_secret: Optional[str] = None
+
+    """ Audience that introspects the client_id and client_secret during
+        authentication on a Kafka cluster.
+    """
+    token_auth_audience: Optional[str] = None
+
+    """ A bootstrap servers string used to connect to management endpoints
+        on a Kafka cluster. Used by the server for administrative tasks
+        such as provisioning topics and settings ACLs on a cluster.
+    """
+    mgmt_bootstrap_servers: Optional[str] = None
+
+    """ A bootstrap servers string used to connect to device endpoints
+        on a Kafka cluster. Used by devices which want to produce to topics.
+        This string should be given to already authenticated RDFM devices that are
+        also authorized to write to their topic on a Kafka cluster.
+    """
+    dev_bootstrap_servers: Optional[str] = None
 
     """ (DEBUG FLAG) Instruct the server to create mock data in the
         database when starting. DO NOT USE, for testing purposes only!
@@ -302,5 +362,62 @@ def parse_from_environment(config: ServerConfig) -> bool:
     redis_port = try_get_env(ENV_REDIS_PORT, "REDIS PORT")
     if redis_host and redis_port:
         config.redis_url = f"redis://{redis_host}:{redis_port}"
+
+    if ENV_ENABLE_KAFKA_INTEGRATION in os.environ:
+        config.enable_pubsub = True
+
+    if config.enable_pubsub:
+        url = try_get_env(
+                ENV_MGMT_AUTH_URL,
+                "OpenID token endpoint",
+        )
+        dev = try_get_env(
+                ENV_DEV_BOOTSTRAP_SERVERS,
+                "bootstrap servers for devices to connect to",
+        )
+        mgmt = try_get_env(
+                ENV_MGMT_BOOTSTRAP_SERVERS,
+                "bootstrap servers for admin clients to connect to",
+        )
+        audience = try_get_env(
+                ENV_MGMT_OAUTH_AUDIENCE,
+                "audience client for intropsecting the rdfm server",
+        )
+        cacert = try_get_env(
+                ENV_CA_CERT,
+                "CA certificate for admin client to use",
+        )
+
+        if None in (dev, mgmt):
+            return False
+        config.dev_bootstrap_servers = str(dev)
+        config.mgmt_bootstrap_servers = str(mgmt)
+
+        if config.encrypted:
+            if cacert is None:
+                return False
+            else:
+                config.cacert = str(cacert)
+        if not config.disable_api_auth:
+            if None in (url, audience):
+                return False
+            else:
+                config.token_auth_url = str(url)
+                config.token_auth_audience = str(audience)
+
+        if not config.disable_api_auth:
+            # Fallback to introspection id/secret if standalone client for Kafka auth not configured
+            config.token_auth_client_id = str(
+                    os.environ.get(
+                        ENV_MGMT_OAUTH_CLIENT_ID,
+                        config.token_introspection_client_id,
+                    )
+            )
+            config.token_auth_client_secret = str(
+                    os.environ.get(
+                        ENV_MGMT_OAUTH_CLIENT_SECRET,
+                        config.token_introspection_client_secret,
+                    )
+            )
 
     return True
