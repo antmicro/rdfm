@@ -20,7 +20,7 @@ variables:
   before_script:
     - python -V
     - (apt update &&
-        apt-get -y install make netcat-openbsd openssl telnet uuid-runtime xxd postgresql-$POSTGRES_MAJOR_VERSION postgresql-contrib cmake &&
+        apt-get -y install make netcat-openbsd openssl telnet uuid-runtime xxd redis-server postgresql-$POSTGRES_MAJOR_VERSION postgresql-contrib cmake &&
         service postgresql start &&
         ln -s /usr/lib/postgresql/$POSTGRES_MAJOR_VERSION/bin/initdb /bin/initdb &&
         ln -s /usr/lib/postgresql/$POSTGRES_MAJOR_VERSION/bin/postgres /bin/postgres)
@@ -251,6 +251,19 @@ test-actions:
     - cd server
     - poetry run pytest tests/test-actions.py  --sqlite
     - poetry run pytest tests/test-actions.py  --postgres
+
+test-server-side-events:
+  extends: .build
+  stage: local-tests
+  script:
+    - cd server
+    - poetry run pytest tests/test-server-side-events.py  --sqlite
+    - poetry run pytest tests/test-server-side-events.py  --postgres
+  artifacts:
+    paths:
+      - server/tests/server_gunicorn.log
+      - server/tests/server_redis.log
+    when: always
 
 # ===== rdfm-client ===== #
 

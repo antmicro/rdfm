@@ -149,6 +149,8 @@ def process_gunicorn(db, request):
             "RDFM_LOCAL_PACKAGE_DIR": "/tmp/.rdfm-local-storage",
             "RDFM_DISABLE_ENCRYPTION": "1",
             "RDFM_DISABLE_API_AUTH": "1",
+            "REDIS_HOST": "localhost",
+            "REDIS_PORT": "6379",
             **os.environ
         },
         stdout=log_file,
@@ -160,6 +162,37 @@ def process_gunicorn(db, request):
 
     print("Shutting down server..")
     process.kill()
+    log_file.close()
+
+
+@pytest.fixture(scope="function")
+def redis_server():
+    """Fixture to start a Redis server."""
+    import redis
+    import time
+
+    log_file = (Path(__file__).parent / "server_redis.log").open("a")
+
+    process = subprocess.Popen(
+        ["redis-server", "--port", "6379", "--save", "", "--appendonly", "no"],
+        stdout=log_file,
+        stderr=log_file,
+    )
+
+    client = redis.Redis(host="localhost", port=6379)
+    for _ in range(50):
+        try:
+            client.ping()
+            break
+        except redis.exceptions.ConnectionError:
+            time.sleep(0.1)
+    else:
+        process.kill()
+        raise RuntimeError("Redis server failed to start")
+
+    yield process
+
+    process.terminate()
     log_file.close()
 
 
