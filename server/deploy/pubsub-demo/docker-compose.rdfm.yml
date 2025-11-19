@@ -24,6 +24,15 @@ services:
       RDFM_WSGI_SERVER: werkzeug
       RDFM_SERVER_CERT: /certs/SERVER.crt
       RDFM_SERVER_KEY: /certs/SERVER.key
+      # Kafka integration
+      RDFM_ENABLE_KAFKA_INTEGRATION: 1
+      RDFM_CA_CERT: /certs/CA.crt  # Needed when contacting the broker as admin
+      RDFM_DEV_BOOTSTRAP_SERVERS: broker:9093
+      RDFM_MGMT_BOOTSTRAP_SERVERS: broker:9094
+      RDFM_PUBSUB_MGMT_AUTH_URL: http://keycloak:8080/realms/master/protocol/openid-connect/token
+      RDFM_PUBSUB_MGMT_OAUTH_CLIENT_ID: rdfm-management-server-cluster-admin
+      RDFM_PUBSUB_MGMT_OAUTH_CLIENT_SEC: jnsSrNjJ3Oov2DZpuEHpYlAPOOL14Xc4
+      RDFM_PUBSUB_MGMT_OAUTH_AUDIENCE: kafka-broker-introspection
 
     volumes:
       - db:/database/
