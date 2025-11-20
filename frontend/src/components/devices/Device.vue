@@ -130,6 +130,26 @@ Component wraps functionality for displaying and working with a single rdfm devi
             </BlurPanel>
         </Transition>
 
+        <div class="download-container">
+            <div class="drdn-wrapper">
+                <button id="main-button" class="action-button gray">
+                    Download file
+                    <span class="caret-down"> <CaretDown /> </span>
+                    <span class="caret-up"> <CaretUp /> </span>
+                </button>
+                <div class="drdn">
+                    <div class="entry">
+                        <p>Path to file on device</p>
+                        <input type="text" ref="fileToDownload" />
+                        <div v-if="emptyPathError" class="errors">
+                            <p>Please enter file path</p>
+                        </div>
+                    </div>
+                    <button class="action-button blue white" @click="downloadFile">Download</button>
+                </div>
+            </div>
+        </div>
+
         <template v-if="device?.capabilities.shell && allowedTo('shell', 'device', device?.id)">
             <div :class="['terminal-container', { fullscreen: isFullscreen }]">
                 <button :class="['action-button gray', { 'tab-active': isTerminalOpened }]">
@@ -308,6 +328,104 @@ Component wraps functionality for displaying and working with a single rdfm devi
     }
 }
 
+.download-container {
+    margin: 2em;
+    transition: transform 1s;
+    display: flex;
+    flex-direction: column;
+
+    /* Default state */
+    .drdn-wrapper {
+        user-select: none;
+        position: relative;
+        display: inline-block;
+
+        .caret-up,
+        .caret-down {
+            display: inline-block;
+        }
+
+        .caret-up {
+            display: none;
+        }
+
+        .drdn {
+            display: none;
+
+            color: var(--gray-1000);
+            background-color: var(--gray-100);
+            border: 2px solid var(--gray-400);
+            border-radius: 5px;
+
+            position: absolute;
+            top: 100%;
+            width: max-content;
+            z-index: 100;
+
+            padding: 1em;
+
+            .entry {
+                & > p {
+                    margin: 0 0 0.2em 0;
+                    font-size: 0.9em;
+                }
+
+                & > input {
+                    background-color: var(--gray-100);
+                    border: 1px solid var(--gray-400);
+                    border-radius: 5px;
+
+                    box-sizing: border-box;
+                    padding: 0.9em;
+                    width: 100%;
+                    color: var(--gray-1000);
+                }
+
+                &:has(.errors) {
+                    p {
+                        color: var(--destructive-900);
+                    }
+                }
+
+                div.errors {
+                    p {
+                        color: var(--destructive-900);
+                        margin: 0px;
+                        font-size: 0.75em;
+                    }
+                }
+            }
+        }
+
+        #main-button {
+            cursor: pointer;
+        }
+    }
+
+    /* Focused state */
+    .drdn-wrapper:focus-within {
+        .caret-up {
+            display: inline-block;
+        }
+
+        .caret-down {
+            display: none;
+        }
+
+        #main-button {
+            pointer-events: none;
+            cursor: pointer;
+            color: var(--gray-900);
+        }
+
+        .drdn {
+            display: flex;
+            flex-direction: column;
+            row-gap: 0.5em;
+        }
+    }
+}
+
 .terminal-container {
     margin: 2em;
     transition: transform 1s;
@@ -434,6 +552,7 @@ import {
     getDeviceActions,
     getDeviceActionLog,
     clearDeviceActionLog,
+    downloadDeviceFile,
     execAction,
     type Action,
     deviceUpdates,
@@ -648,6 +767,24 @@ export default {
             showingActionLog.value = false;
         };
 
+        const fileToDownload = ref<HTMLInputElement | null>(null);
+        const emptyPathError = ref<boolean>(false);
+
+        const downloadFile = async () => {
+            if (!fileToDownload.value!.value) {
+                emptyPathError.value = true;
+            }
+
+            const result = await downloadDeviceFile(device.value!.id, fileToDownload.value!.value);
+
+            if (!result.success) {
+                notif.notifyError({
+                    headline: device.value?.name + ' download',
+                    msg: `Failed to download file`,
+                });
+            }
+        };
+
         const isTerminalOpened = ref<boolean>(false);
         const isFullscreen = ref<boolean>(false);
 
@@ -680,6 +817,9 @@ export default {
             clearActionLog,
             showingActionLog,
             closeActionLogPopup,
+            downloadFile,
+            fileToDownload,
+            emptyPathError,
             toggleTerminal,
             isTerminalOpened,
             terminalButton,
