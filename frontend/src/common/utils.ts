@@ -47,6 +47,7 @@ export const DEVICE_ACTION_LOG_ENDPOINT = (mac: string) => `/api/v2/devices/${ma
 export const DEVICE_SHELL_ENDPOINT = (mac: string, token: string) =>
     `/api/v1/devices/${mac}/shell?token=${token}`;
 export const DEVICE_PROGRESS_ENDPOINT = `/api/stream`;
+export const DEVICE_DOWNLOAD_FILE_ENDPOINT = (id: number) => `/api/v2/devices/${id}/fs/file`;
 
 export const DEVICE_TAGS_ENDPOINT = (id: number) => `${SERVER_URL}/api/v2/devices/${id}/tags`;
 export const DEVICE_ADD_TAG_ENDPOINT = (id: number, tag: string) =>

@@ -21,6 +21,7 @@ import {
     DEVICE_TAGS_ENDPOINT,
     DEVICE_ADD_TAG_ENDPOINT,
     TAGS_ENDPOINT,
+    DEVICE_DOWNLOAD_FILE_ENDPOINT,
     resourcesGetter,
     fetchWrapper,
     type Group,
@@ -226,6 +227,30 @@ export const clearDeviceActionLog = async (macAddress: string) => {
         return {
             success: false,
             message: 'Failed to clear device action log. Got a response code of ' + out.code,
+        };
+    }
+
+    return { success: true };
+};
+
+export const downloadDeviceFile = async (identifier: number, file: string) => {
+    const body = JSON.stringify({ file });
+
+    const headers = new Headers();
+    headers.set('Content-type', 'application/json');
+    headers.set('Accept', 'application/json, text/javascript');
+
+    const out = await fetchWrapper(
+        DEVICE_DOWNLOAD_FILE_ENDPOINT(identifier),
+        'POST',
+        headers,
+        body,
+    );
+
+    if (!out.success) {
+        return {
+            success: false,
+            message: 'Failed to download file. Got a response code of ' + out.code,
         };
     }
 
