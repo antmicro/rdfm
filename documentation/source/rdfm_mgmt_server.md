@@ -86,6 +86,8 @@ HTTP/WSGI configuration:
 - `RDFM_GUNICORN_WORKER_TIMEOUT` - (when using Gunicorn) maximum allowed timeout of request handling on the server worker. Configuring this option may be necessary when uploading large packages.
 - `RDFM_INCLUDE_FRONTEND_ENDPOINT` - specifies whether the RDFM server should serve the frontend application. If set, the server will serve the frontend application from endpoint `/api/static/frontend`. Before setting this variable, the frontend application must be built and placed in the `frontend/dist` directory.
 - `RDFM_FRONTEND_APP_URL` - specifies URL to the frontend application. This variable is required when `RDFM_INCLUDE_FRONTEND_ENDPOINT` is not set, as backend HTTP server has to know where to redirect the **user**.
+- `REDIS_HOST` - hostname for Redis, a cache event store used for sending server side events.
+- `REDIS_PORT` - port for Redis, a cache event store used for sending server side events.
 
 API OAuth2 configuration (must be present when `RDFM_DISABLE_API_AUTH` is omitted):
 
@@ -505,6 +507,7 @@ In the `server/deploy/docker-compose.full.yml` file, you can find a more advance
 * PostgreSQL (`postgres` service) for the RDFM Management Server and Keycloak databases
 * MinIO (`minio` service) object storage compatible with S3, along with a one-time service (`minio-bucket-creator`) that creates a bucket for RDFM updates
 * nginx-based server for RDFM and Keycloak frontends (`frontend` service)
+* Redis (`redis` service) cache event store used for sending server side events to the frontend
 
 The `server/deploy/docker-compose.full.yml` file is accompanied by the `server/deploy/docker-compose.full.env` environment file, used to configure both the Docker Compose recipe and Docker containers running in the services.
 Some variables provided in this `server/deploy/docker-compose.full.env` file require modifications to create a safe deployment environment.
