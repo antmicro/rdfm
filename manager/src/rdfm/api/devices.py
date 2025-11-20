@@ -68,11 +68,11 @@ def remove_pending(config: rdfm.config.Config,
 
 def download_file(config: rdfm.config.Config,
                   device: str, file: str):
-    response = requests.get(rdfm.api.escape(config,
-                            f"/api/v2/devices/{device}/fs/file"),
-                            json={"file": file},
-                            verify=config.ca_cert,
-                            auth=config.authorizer)
+    response = requests.post(rdfm.api.escape(config,
+                             f"/api/v2/devices/{device}/fs/file"),
+                             json={"file": file},
+                             verify=config.ca_cert,
+                             auth=config.authorizer)
 
     if response.status_code != 200:
         raise RuntimeError(

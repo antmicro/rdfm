@@ -93,7 +93,7 @@ async def test_file_download(process):
     time.sleep(1) # otherwise the first request might be sent too fast
 
     for file, content in FILES.items():
-        resp = requests.get(
+        resp = requests.post(
             f"{SERVER}/{download_endpoint(1)}",
             headers={
                 "Authorization": "Bearer token=AAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
@@ -112,7 +112,7 @@ async def test_file_download(process):
 
 
 def test_non_existing_device_download(process):
-    resp = requests.get(
+    resp = requests.post(
         f"{SERVER}/{download_endpoint(0)}",
         headers={
             "Authorization": "Bearer token=AAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
@@ -130,7 +130,7 @@ async def test_non_existing_file_download(process):
 
     time.sleep(1) # otherwise the first request might be sent too fast
 
-    resp = requests.get(
+    resp = requests.post(
         f"{SERVER}/{download_endpoint(1)}",
         headers={
             "Authorization": "Bearer token=AAAAAAAAAAAAAAAAAAAAAAAAAAAAA"

@@ -426,7 +426,7 @@ def remove(identifier: int):
         return api_error("removal failed", 500)
 
 
-@devices_blueprint.route("/api/v2/devices/<int:identifier>/fs/file", methods=['GET'])
+@devices_blueprint.route("/api/v2/devices/<int:identifier>/fs/file", methods=['POST'])
 @check_permission(DEVICE_RESOURCE, READ_PERMISSION)
 @deserialize_schema(schema_dataclass=FsFile, key="fs_file")
 def download_file(identifier: int, fs_file: FsFile):
