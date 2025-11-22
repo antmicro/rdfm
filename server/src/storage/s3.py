@@ -209,15 +209,18 @@ class S3Storage:
         """Creates multipart downloader"""
         return self.MultipartUploader(self, key)
 
-    def generate_fs_download_url(self, key: str, expiry: int) -> str:
+    def generate_fs_download_url(self, key: str, expiry: int, filename: str | None = None) -> str:
         """Returns download link for given item"""
         try:
+            params = {
+                "Bucket": self.bucket,
+                "Key": key,
+            }
+            if filename is not None:
+                params["ResponseContentDisposition"] = f"attachment; filename = {filename}"
             return self.client.generate_presigned_url(
                 "get_object",
-                Params={
-                    "Bucket": self.bucket,
-                    "Key": key
-                },
+                Params=params,
                 ExpiresIn=expiry,
             )
         except ClientError as e:

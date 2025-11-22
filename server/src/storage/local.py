@@ -158,7 +158,7 @@ class LocalStorage:
         """Creates multipart downloader"""
         return self.MultipartUploader(self, key)
 
-    def generate_fs_download_url(self, key: str, expiry: int) -> str:
+    def generate_fs_download_url(self, key: str, expiry: int, filename: str | None = None) -> str:
         """Returns download link for given item"""
         hostname = self.config.hostname
         port = self.config.http_port

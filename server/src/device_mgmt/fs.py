@@ -7,6 +7,7 @@ from flask import current_app
 import storage
 import configuration
 import uuid
+from pathlib import Path
 
 LINK_EXPIRY = 3600
 DOWNLOAD_BUCKET_SUBDIR = "rdfm.downloads"
@@ -66,8 +67,11 @@ def prepare_download(mac_address: str, file: str) -> tuple[int, str]:
         # in case it failed
         if operation.response.status == 0:
             mpu.complete_upload(operation.response.etags)
+            filename = str(Path(file).name)
             download_url = driver.generate_fs_download_url(
-                f"{DOWNLOAD_BUCKET_SUBDIR}/{object_name}", LINK_EXPIRY
+                f"{DOWNLOAD_BUCKET_SUBDIR}/{object_name}",
+                LINK_EXPIRY,
+                filename
             )
         else:
             mpu.abort_upload()
