@@ -254,5 +254,13 @@ export const downloadDeviceFile = async (identifier: number, file: string) => {
         };
     }
 
+    if (out.data.status !== 0) {
+        return {
+            success: false,
+            message: 'Failed to download file. It does not exist.',
+        };
+    }
+
+    window.open(out.data.url);
     return { success: true };
 };
