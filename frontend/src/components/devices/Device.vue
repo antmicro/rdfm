@@ -130,25 +130,29 @@ Component wraps functionality for displaying and working with a single rdfm devi
             </BlurPanel>
         </Transition>
 
-        <div class="download-container">
-            <div class="drdn-wrapper">
-                <button id="main-button" class="action-button gray">
-                    Download file
-                    <span class="caret-down"> <CaretDown /> </span>
-                    <span class="caret-up"> <CaretUp /> </span>
-                </button>
-                <div class="drdn">
-                    <div class="entry">
-                        <p>Path to file on device</p>
-                        <input type="text" ref="fileToDownload" />
-                        <div v-if="emptyPathError" class="errors">
-                            <p>Please enter file path</p>
+        <template v-if="device?.capabilities.filesystem && allowedTo('read', 'device', device?.id)">
+            <div class="download-container">
+                <div class="drdn-wrapper">
+                    <button id="main-button" class="action-button gray">
+                        Download file
+                        <span class="caret-down"> <CaretDown /> </span>
+                        <span class="caret-up"> <CaretUp /> </span>
+                    </button>
+                    <div class="drdn">
+                        <div class="entry">
+                            <p>Path to file on device</p>
+                            <input type="text" ref="fileToDownload" />
+                            <div v-if="emptyPathError" class="errors">
+                                <p>Please enter file path</p>
+                            </div>
                         </div>
+                        <button class="action-button blue white" @click="downloadFile">
+                            Download
+                        </button>
                     </div>
-                    <button class="action-button blue white" @click="downloadFile">Download</button>
                 </div>
             </div>
-        </div>
+        </template>
 
         <template v-if="device?.capabilities.shell && allowedTo('shell', 'device', device?.id)">
             <div :class="['terminal-container', { fullscreen: isFullscreen }]">
