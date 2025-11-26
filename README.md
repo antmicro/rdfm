@@ -25,6 +25,7 @@ You can find out more about the framework and its capabilities in the following 
 * [RDFM delta packages overview](https://antmicro.com/blog/2024/05/efficient-ota-updates-with-rdfm-and-delta-packages/)
 * [RDFM support for Zephyr-controlled MCUs](https://antmicro.com/blog/2024/07/ota-updates-for-zephyr-with-rdfm/)
 * [Updates for NVIDIA BSP releases](https://antmicro.com/blog/2024/07/over-the-air-updates-using-rdfm-for-nvidia-bsps/)
+* [Web GUI, single-file updates and cloud setup guide](https://antmicro.com/blog/2025/02/rdfm-gui-single-file-updates-cloud-setup-guide/)
 
 Below, you can see a screencast of the Hifive Unmatched board updated with a delta package, simulated in [Renode](https://github.com/renode/renode), Antmicro's open source simulation framework.
 
