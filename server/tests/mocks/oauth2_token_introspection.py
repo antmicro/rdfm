@@ -1,6 +1,7 @@
 from multiprocessing import Process
 import inspect
 import subprocess
+from api.v1.middleware import SCOPE_READ_WRITE
 import flask
 import os
 import json
@@ -48,13 +49,27 @@ data = MockConfig()
 
 @app.route(MOCKS_INTROSPECT_PATH, methods=['POST'])
 def token_introspection_endpoint():
-    global data
-    # From the server's PoV, only the `active` and `scope` fields matter.
-    return {
-        "active": data.token_valid,
-        "scope": " ".join(data.token_scopes),
-        "sub": data.user_id,
-    }, 200
+    header = request.form.get("token")
+    if "management" in header:
+        return {
+            "active": True,
+            "scope": [SCOPE_READ_WRITE],
+            "sub": "management",
+        }, 200
+    elif "user" in header:
+        return {
+            "active": True,
+            "scope": [],
+            "sub": "user",
+        }, 200
+    else:
+        global data
+        # From the server's PoV, only the `active` and `scope` fields matter.
+        return {
+            "active": data.token_valid,
+            "scope": " ".join(data.token_scopes),
+            "sub": data.user_id,
+        }, 200
 
 
 @app.route(MOCKS_CONFIG_PATH, methods=['POST'])
