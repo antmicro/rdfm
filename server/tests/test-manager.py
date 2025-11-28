@@ -336,19 +336,51 @@ def test_create_named_device_permission(process, create_dummy_group):
         assert e in out, "the permission should be present"
 
 
+def test_create_duplicate_permission(process, create_dummy_group):
+    """ Test if creating a duplicate permission fails
+    """
+    _, code = run_manager_command(["--no-api-auth", "permissions", "create", GROUP_RESOURCE,
+                                   "--id", "1",
+                                   "--user", "1",
+                                   "--permission", READ_PERMISSION])
+    assert code == 0, "creating a permission should succeed"
+
+    _, code = run_manager_command(["--no-api-auth", "permissions", "create", GROUP_RESOURCE,
+                                   "--id", "1",
+                                   "--user", "1",
+                                   "--permission", READ_PERMISSION])
+    assert code == 1, "creating a duplicate permission should fail"
+
+
+def test_create_duplicate_named_device_permission(process, create_dummy_group):
+    """ Test if creating duplicate named device permissions fails
+    """
+    _, code = run_manager_command(["--no-api-auth", "permissions", "create", DEVICE_NAMED_RESOURCE,
+                                   "--name", "linux-device",
+                                   "--user", "1",
+                                   "--permission", SHELL_PERMISSION])
+    assert code == 0, "creating a permission should succeed"
+
+    _, code = run_manager_command(["--no-api-auth", "permissions", "create", DEVICE_NAMED_RESOURCE,
+                                   "--name", "linux-device",
+                                   "--user", "1",
+                                   "--permission", SHELL_PERMISSION])
+    assert code == 1, "creating a duplicate permission should fail"
+
+
 def test_delete_permission(process, upload_dummy_package):
     """ Test if deleting a permission works
     """
-    _, code = run_manager_command(["--no-api-auth", "permissions", "create", "package",
+    _, code = run_manager_command(["--no-api-auth", "permissions", "create", PACKAGE_RESOURCE,
                                    "--id", "1",
                                    "--user", "1",
-                                   "--permission", "read"])
+                                   "--permission", READ_PERMISSION])
     assert code == 0, "creating a permission should succeed"
 
-    _, code = run_manager_command(["--no-api-auth", "permissions", "delete", "package",
+    _, code = run_manager_command(["--no-api-auth", "permissions", "delete", PACKAGE_RESOURCE,
                                    "--id", "1",
                                    "--user", "1",
-                                   "--permission", "read"])
+                                   "--permission", READ_PERMISSION])
     assert code == 0, "deleting a permission should succeed"
 
     out, code = run_manager_command(["--no-api-auth", "permissions", "list"])
