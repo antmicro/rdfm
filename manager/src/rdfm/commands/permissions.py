@@ -13,7 +13,8 @@ PERMISSIONS_CHOICES = [rdfm.permissions.READ_PERMISSION,
                        rdfm.permissions.SHELL_PERMISSION]
 RESOURCE_CHOICES = [rdfm.permissions.GROUP_RESOURCE,
                     rdfm.permissions.PACKAGE_RESOURCE,
-                    rdfm.permissions.DEVICE_RESOURCE]
+                    rdfm.permissions.DEVICE_RESOURCE,
+                    rdfm.permissions.DEVICE_NAMED_RESOURCE]
 
 
 def list_permissions(config: rdfm.config.Config, args):
