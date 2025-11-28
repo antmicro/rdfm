@@ -3,3 +3,6 @@
 **/.pytest_cache
 **/.venv
 **/.vscode
+
+server/deploy/pubsub-demo/server
+server/deploy/pubsub-demo/broker
