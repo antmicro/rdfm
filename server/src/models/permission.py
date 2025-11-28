@@ -1,4 +1,4 @@
-from sqlalchemy import UniqueConstraint, CheckConstraint, DateTime
+from sqlalchemy import UniqueConstraint, CheckConstraint, DateTime, String, Computed, text
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from models.base import Base
@@ -9,9 +9,8 @@ class Permission(Base):
     __tablename__ = "permissions"
     __table_args__ = (UniqueConstraint("user_id",
                                        "resource",
-                                       "resource_id",
-                                       "resource_name",
                                        "permission",
+                                       "value",
                                        name="unique_permission"),
                       CheckConstraint("resource_id IS NOT NULL OR resource_name IS NOT NULL",
                                       name="at_least_one_not_null"), )
@@ -23,3 +22,11 @@ class Permission(Base):
     resource_name: Mapped[str | None]
     permission: Mapped[str]
     created: Mapped[datetime.datetime] = mapped_column(DateTime)
+    value: Mapped[str] = mapped_column(
+        String,
+        Computed(
+            text("COALESCE(CAST(resource_id AS VARCHAR), resource_name)"),
+            persisted=True
+        ),
+        nullable=False
+    )
