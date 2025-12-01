@@ -290,6 +290,13 @@ test-server-side-events:
       - server/tests/server_redis.log
     when: always
 
+test-server-pubsub-acl-handling:
+  extends: .build
+  stage: local-tests
+  script:
+    - cd server
+    - poetry run pytest tests/test-pubsub-acl-handling.py
+
 # ===== rdfm-client ===== #
 
 build-rdfm-client:
