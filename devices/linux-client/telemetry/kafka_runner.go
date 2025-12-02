@@ -22,8 +22,8 @@ const (
 	TELEMETRY_RING_SIZE   = 50
 )
 
-func assembleRecord(msg Message, mac string) (*kgo.Record, error) {
-	value, err := msg.Value(mac)
+func assembleRecord(msg Message) (*kgo.Record, error) {
+	value, err := msg.Value()
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +188,7 @@ func (kr *KafkaRunner) ClientLoop(
 			return nil
 
 		case msg := <-msgOutCh:
-			r, err := assembleRecord(msg, kr.macAddr)
+			r, err := assembleRecord(msg)
 			if err != nil {
 				log.Debug("KafkaRunner: ClientLoop: failed to assemble record", err)
 			} else {

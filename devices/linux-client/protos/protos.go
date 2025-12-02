@@ -6,9 +6,8 @@ import (
 	"time"
 )
 
-func CreateLog(mac string, time time.Time, entry string) ([]byte, error) {
+func CreateLog(time time.Time, entry string) ([]byte, error) {
 	log := Log{
-		DeviceMac:  mac,
 		DeviceTime: timestamppb.New(time),
 		Entry:      entry,
 	}

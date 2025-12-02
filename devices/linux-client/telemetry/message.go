@@ -8,7 +8,7 @@ import (
 type Message interface {
 	Topic() string
 	Key() []byte
-	Value(mac string) ([]byte, error)
+	Value() ([]byte, error)
 	Time() time.Time
 }
 
@@ -41,8 +41,8 @@ func (e LogEntry) Key() []byte {
 	return []byte(e.Name)
 }
 
-func (e LogEntry) Value(mac string) ([]byte, error) {
-	return protos.CreateLog(mac, e.Timestamp, e.Entry)
+func (e LogEntry) Value() ([]byte, error) {
+	return protos.CreateLog(e.Timestamp, e.Entry)
 }
 
 func (e LogEntry) Time() time.Time {
