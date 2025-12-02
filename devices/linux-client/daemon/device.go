@@ -363,12 +363,59 @@ func (d *Device) setupKafkaRunner(ctx context.Context) error {
 		return d.getDeviceToken(ctx)
 	}
 
+	endpoint := fmt.Sprintf("%s/api/v1/pubsub/request_topic", d.rdfmCtx.RdfmConfig.ServerURL)
+
+	var client *http.Client
+	client = &http.Client{Transport: d.httpTransport}
+
+	leaseCb := func() (*telemetry.RequestTopicResponse, error) {
+		req, _ := http.NewRequest(http.MethodPost, endpoint, nil)
+
+		deviceToken, err := tokenCb()
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Add("Authorization", "Bearer token="+deviceToken)
+
+		log.Println("Trying to lease a Kafka topic...")
+
+		res, err := client.Do(req)
+		if err != nil {
+			return nil, errors.New("Failed to lease a Kafka topic:" + err.Error())
+		}
+
+		defer res.Body.Close()
+
+		switch res.StatusCode {
+		case 200:
+			var rtr telemetry.RequestTopicResponse
+			bodyBytes, err := io.ReadAll(res.Body)
+			if err != nil {
+				return nil, errors.New("Failed to get lease topic response from body: " + err.Error())
+			}
+			err = json.Unmarshal(bodyBytes, &rtr)
+			if err != nil {
+				return nil, errors.New("Failed to deserialize lease topic response: " + err.Error())
+			}
+			return &rtr, nil
+		case 401:
+			return nil, errors.New("Device did not provide authorization data, or the authorization has expired")
+		case 404:
+			return nil, errors.New("Lease endpoint is inactive")
+
+		default:
+			return nil, errors.New("Unexpected status code from the server: " + res.Status)
+		}
+	}
+
 	kr := telemetry.NewKafkaRunner(
 		d.macAddr,
 		tlsConf,
 		d.rdfmCtx.RdfmConfig.TelemetryBootstrapServers,
 		d.rdfmCtx.RdfmConfig.TelemetryBatchSize,
 		tokenCb,
+		leaseCb,
 	)
 	d.kafkaRunner = kr
 	return nil

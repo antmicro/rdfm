@@ -15,12 +15,16 @@ import (
 )
 
 const (
-	KAFKA_DEFAULT_TOPIC   = "RDFM"
 	KAFKA_CLIENT_LINGER   = 5
 	KAFKA_CONTEXT_TIMEOUT = 10
 	KAFKA_RECORD_RETRIES  = 2
 	TELEMETRY_RING_SIZE   = 50
 )
+
+type RequestTopicResponse struct {
+	BootstrapServers string `json:"bootstrap_servers"`
+	Topic            string `json:"topic"`
+}
 
 func assembleRecord(msg Message) (*kgo.Record, error) {
 	value, err := msg.Value()
@@ -56,9 +60,10 @@ type KafkaRunner struct {
 	maxBatch int32
 
 	tokenCb func() (string, error)
+	leaseCb func() (*RequestTopicResponse, error)
 }
 
-func NewKafkaRunner(macAddr string, tlsConf *tls.Config, brokers string, maxBatch int32, tokenCb func() (string, error)) *KafkaRunner {
+func NewKafkaRunner(macAddr string, tlsConf *tls.Config, brokers string, maxBatch int32, tokenCb func() (string, error), leaseCb func() (*RequestTopicResponse, error)) *KafkaRunner {
 	rInCh := make(chan *kgo.Record)
 	rOutCh := make(chan *kgo.Record, TELEMETRY_RING_SIZE)
 	ringBuffer := NewRingBuffer[*kgo.Record](rInCh, rOutCh)
@@ -70,6 +75,7 @@ func NewKafkaRunner(macAddr string, tlsConf *tls.Config, brokers string, maxBatc
 		brokers:    brokers,
 		maxBatch:   maxBatch,
 		tokenCb:    tokenCb,
+		leaseCb:    leaseCb,
 		ringBuffer: ringBuffer,
 		rInCh:      rInCh,
 		rOutCh:     rOutCh,
@@ -84,10 +90,15 @@ func (kr *KafkaRunner) createClient() error {
 		return err
 	}
 
+	leaseResp, err := kr.leaseCb()
+	if err != nil {
+		return err
+	}
+
 	opts := []kgo.Opt{
-		kgo.DefaultProduceTopic(KAFKA_DEFAULT_TOPIC),
+		kgo.DefaultProduceTopic(leaseResp.Topic),
 		kgo.AllowAutoTopicCreation(),
-		kgo.SeedBrokers(strings.Split(kr.brokers, ",")...),
+		kgo.SeedBrokers(strings.Split(leaseResp.BootstrapServers, ",")...),
 		kgo.ProducerBatchMaxBytes(kr.maxBatch),
 		kgo.RecordRetries(KAFKA_RECORD_RETRIES),
 		kgo.DisableIdempotentWrite(),
