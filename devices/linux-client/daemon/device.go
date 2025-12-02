@@ -144,7 +144,7 @@ func (d *Device) handleRequest(msg []byte) (serverws.Request, error) {
 		}
 
 		go func() {
-			token, err := d.getDeviceToken()
+			token, err := d.getDeviceToken(nil)
 			if err != nil {
 				log.Warnln("Failed to acquire device token:", err)
 				return
@@ -353,14 +353,14 @@ func (d *Device) setupShellRunner() error {
 	return nil
 }
 
-func (d *Device) setupKafkaRunner() error {
+func (d *Device) setupKafkaRunner(ctx context.Context) error {
 	tlsConf, err := d.getTlsConf()
 	if err != nil {
 		return err
 	}
 
 	tokenCb := func() (string, error) {
-		return d.getDeviceToken()
+		return d.getDeviceToken(ctx)
 	}
 
 	kr := telemetry.NewKafkaRunner(
@@ -419,7 +419,7 @@ func (d *Device) maintainDeviceConnection(cancelCtx context.Context) {
 			return
 		}
 
-		deviceToken, err := d.getDeviceToken()
+		deviceToken, err := d.getDeviceToken(cancelCtx)
 		if err != nil {
 			log.Warnln("Restarting device connection. Couldn't obtain device token:", err)
 			continue
@@ -510,15 +510,22 @@ func (d *Device) managementWsLoop(cancelCtx context.Context) {
 	wg.Wait()
 }
 
-func (d *Device) getDeviceToken() (string, error) {
+func (d *Device) getDeviceToken(cancelCtx context.Context) (string, error) {
 	d.tokenMutex.Lock()
 	defer d.tokenMutex.Unlock()
+	if cancelCtx != nil && cancelCtx.Done() != nil {
+		select {
+		case <-cancelCtx.Done():
+			return "", errors.New("Authentication interrupted")
+		default:
+		}
+	}
 
 	payload, err := netUtils.ExtractJwtPayload(d.deviceToken)
 	if err == nil {
 		// check if reauth needed in the next TOKEN_EXPIRY_MIN_ALLOWED or less seconds
 		if d.deviceTokenAcquired+payload.Expires-TOKEN_EXPIRY_MIN_ALLOWED <= time.Now().Unix() {
-			err = d.authenticateDeviceWithServer()
+			err = d.authenticateDeviceWithServer(cancelCtx)
 			if err != nil {
 				return "", err
 			}
@@ -526,7 +533,7 @@ func (d *Device) getDeviceToken() (string, error) {
 	} else {
 		// extraction failed
 		log.Warnln("Device token missing or malformed, authenticating...")
-		err := d.authenticateDeviceWithServer()
+		err := d.authenticateDeviceWithServer(cancelCtx)
 		if err != nil {
 			return "", err
 		}
@@ -596,7 +603,7 @@ func (d Device) getKeys() (*rsa.PrivateKey, string) {
 	return privateKey, string(publicKeyPem)
 }
 
-func (d *Device) authenticateDeviceWithServer() error {
+func (d *Device) authenticateDeviceWithServer(ctx context.Context) error {
 	privateKey, publicKeyString := d.getKeys()
 	if len(publicKeyString) == 0 {
 		return errors.New("Failed to get device key. Authentication impossible")
@@ -668,7 +675,23 @@ func (d *Device) authenticateDeviceWithServer() error {
 			authDuration := time.Duration(d.rdfmCtx.RdfmConfig.RetryPollIntervalSeconds) * time.Second
 			log.Println("Device hasn't been authorized by the administrator.")
 			log.Println("Next authorization attempt in", authDuration)
-			time.Sleep(time.Duration(authDuration))
+			err = nil
+			if ctx != nil && ctx.Done() != nil {
+				func() {
+					select {
+					case <-time.After(time.Duration(authDuration)):
+						return
+					case <-ctx.Done():
+						err = errors.New("Authentication with the management server interrupted")
+						return
+					}
+				}()
+			} else {
+				time.Sleep(time.Duration(authDuration))
+			}
+			if err != nil {
+				return err
+			}
 		default:
 			log.Println("Unexpected status code from the server:", res.StatusCode)
 		}

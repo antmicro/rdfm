@@ -35,7 +35,7 @@ func (d *Device) checkUpdate(cancelCtx context.Context) error {
 		bytes.NewBuffer(serializedMetadata),
 	)
 	req.Header.Set("Content-Type", "application/json")
-	deviceToken, err := d.getDeviceToken()
+	deviceToken, err := d.getDeviceToken(cancelCtx)
 	if err != nil {
 		return errors.New("Failed to fetch the device token: " + err.Error())
 	}

@@ -26,10 +26,15 @@ func (d *Device) logSendLoop(cancelCtx context.Context, msgOutCh <-chan telemetr
 				msgOutCh,
 			)
 			if err != nil {
-				recoveryTime := TELEMETRY_LOOP_RECOVERY_INTERVAL_S * time.Second
-				log.Println("Telemetry: logSendLoop: KafkaRunner ClientLoop failed with", err)
-				log.Println("Telemetry: logSendLoop: Rerunning ClientLoop in", recoveryTime)
-				time.Sleep(recoveryTime)
+				select {
+				case <-cancelCtx.Done():
+					return
+				default:
+					recoveryTime := TELEMETRY_LOOP_RECOVERY_INTERVAL_S * time.Second
+					log.Println("Telemetry: logSendLoop: KafkaRunner ClientLoop failed with", err)
+					log.Println("Telemetry: logSendLoop: Rerunning ClientLoop in", recoveryTime)
+					time.Sleep(recoveryTime)
+				}
 			} else {
 				log.Debug("Telemetry: logSendLoop: KafkaRunner ClientLoop graceful exit, rerunning")
 			}
