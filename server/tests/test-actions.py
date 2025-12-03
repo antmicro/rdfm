@@ -8,10 +8,13 @@ import simple_websocket
 import threading
 
 SERVER = "http://127.0.0.1:5000/"
-DEVICE_ACTIONS_ENDPOINT = f"{SERVER}/api/v2/devices/00:00:00:00:00:00/action/list";
-DEVICE_ACTIONS_VALID_EXEC_ENDPOINT = f"{SERVER}/api/v2/devices/00:00:00:00:00:00/action/exec/valid";
-DEVICE_ACTIONS_INVALID_EXEC_ENDPOINT = f"{SERVER}/api/v2/devices/00:00:00:00:00:00/action/exec/invalid";
-DEVICE_ACTION_LOG_ENDPOINT = f"{SERVER}/api/v2/devices/00:00:00:00:00:00/action_log";
+DEVICE_ACTIONS_ENDPOINT = f"{SERVER}/api/v2/devices/00:00:00:00:00:00/action/list"
+DEVICE_ACTIONS_VALID_EXEC_ENDPOINT = f"{SERVER}/api/v2/devices/00:00:00:00:00:00/action/exec/valid"
+DEVICE_ACTIONS_INVALID_EXEC_ENDPOINT = f"{SERVER}/api/v2/devices/00:00:00:00:00:00/action/exec/invalid"
+DEVICE_ACTION_LOG_ENDPOINT = f"{SERVER}/api/v2/devices/00:00:00:00:00:00/action/log"
+DEVICE_PENDING_ACTIONS_ENDPOINT = f"{SERVER}/api/v2/devices/00:00:00:00:00:00/action/pending"
+DEVICE_REMOVE_ACTIONS_ENDPOINT = f"{SERVER}/api/v2/devices/00:00:00:00:00:00/action/remove"
+DOWNLOAD_URL_PREFIX = f"{SERVER}local_storage_multipart/multipart/rdfm.actions"
 
 ACTIONS = [
     {
@@ -65,7 +68,7 @@ def client_ws(dev, DEVICE_CONNECTED):
                 result = {
                     "method": "action_exec_result",
                     "status_code": 0 if data["action_id"] == "valid" else -1,
-                    "output": "echo",
+                    "output": "echo" if data["action_id"] == "valid" else "",
                     "execution_id": data["execution_id"],
                 }
                 ws.send(json.dumps(result))
@@ -140,19 +143,23 @@ async def test_actions(process):
     resp = requests.get(DEVICE_ACTIONS_INVALID_EXEC_ENDPOINT)
     assert resp.status_code == 200
     result = resp.json()
-    assert result["output"] == "echo"
+    assert result["output"] == ""
     assert result["status_code"] == -1
 
     # Check if all actions appear in action log
     resp = requests.get(DEVICE_ACTION_LOG_ENDPOINT)
     assert resp.status_code == 200
     actions = resp.json()
+    print(actions)
     assert actions[0]["action"] == "invalid"
     assert actions[0]["status"] == "-1"
+    assert actions[0]["download_url"] == None
     assert actions[1]["action"] == "valid"
     assert actions[1]["status"] == "0"
+    assert actions[1]["download_url"].startswith(DOWNLOAD_URL_PREFIX)
     assert actions[2]["action"] == "valid"
     assert actions[2]["status"] == "0"
+    assert actions[2]["download_url"].startswith(DOWNLOAD_URL_PREFIX)
 
     # Clear action log
     resp = requests.delete(DEVICE_ACTION_LOG_ENDPOINT)
@@ -162,3 +169,78 @@ async def test_actions(process):
     action_log = requests.get(DEVICE_ACTION_LOG_ENDPOINT)
     assert action_log.status_code == 200
     assert action_log.content == b"[]\n"
+
+
+@pytest.mark.asyncio
+async def test_removing_pending_actions(process):
+    # Request actions
+    resp = requests.get(DEVICE_ACTIONS_VALID_EXEC_ENDPOINT)
+    assert resp.status_code == 500
+    resp = requests.get(DEVICE_ACTIONS_VALID_EXEC_ENDPOINT)
+    assert resp.status_code == 500
+    resp = requests.get(DEVICE_ACTIONS_VALID_EXEC_ENDPOINT)
+    assert resp.status_code == 500
+
+    # Check if actions appears in action log
+    resp = requests.get(DEVICE_ACTION_LOG_ENDPOINT)
+    assert resp.status_code == 200
+    actions = resp.json()
+    assert actions[0]["action"] == "valid"
+    assert actions[0]["status"] == "pending"
+    assert actions[1]["action"] == "valid"
+    assert actions[1]["status"] == "pending"
+    assert actions[2]["action"] == "valid"
+    assert actions[2]["status"] == "pending"
+    assert len(actions) == 3
+
+    # Remove pending actions
+    resp = requests.delete(DEVICE_PENDING_ACTIONS_ENDPOINT)
+    assert resp.status_code == 200
+
+    # Check if action log is empty
+    action_log = requests.get(DEVICE_ACTION_LOG_ENDPOINT)
+    assert action_log.status_code == 200
+    assert action_log.content == b"[]\n"
+
+
+@pytest.mark.asyncio
+async def test_removing_selected_actions(process):
+    # Request actions
+    resp = requests.get(DEVICE_ACTIONS_VALID_EXEC_ENDPOINT)
+    assert resp.status_code == 500
+    resp = requests.get(DEVICE_ACTIONS_VALID_EXEC_ENDPOINT)
+    assert resp.status_code == 500
+    resp = requests.get(DEVICE_ACTIONS_VALID_EXEC_ENDPOINT)
+    assert resp.status_code == 500
+
+    # Check if action appears in action log
+    resp = requests.get(DEVICE_ACTION_LOG_ENDPOINT)
+    assert resp.status_code == 200
+    actions = resp.json()
+    assert actions[0]["action"] == "valid"
+    assert actions[0]["status"] == "pending"
+    assert actions[1]["action"] == "valid"
+    assert actions[1]["status"] == "pending"
+    assert actions[2]["action"] == "valid"
+    assert actions[2]["status"] == "pending"
+    assert len(actions) == 3
+
+    id0 = actions[0]["id"]
+    id1 = actions[1]["id"]
+    id2 = actions[2]["id"]
+    ids = {
+        "actions": [id0, id2]
+    }
+
+    # Remove two actions
+    resp = requests.post(DEVICE_REMOVE_ACTIONS_ENDPOINT, json=ids)
+    assert resp.status_code == 200
+
+    # Check action log content
+    resp = requests.get(DEVICE_ACTION_LOG_ENDPOINT)
+    assert resp.status_code == 200
+    actions = resp.json()
+    assert actions[0]["id"] == id1
+    assert actions[0]["action"] == "valid"
+    assert actions[0]["status"] == "pending"
+    assert len(actions) == 1
