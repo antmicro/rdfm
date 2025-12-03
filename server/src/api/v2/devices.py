@@ -20,7 +20,7 @@ from rdfm.permissions import (
     DEVICE_RESOURCE,
     DELETE_PERMISSION
 )
-from rdfm.schema.v2.devices import Device, ActionLog
+from rdfm.schema.v2.devices import Device, ActionLog, ActionRemoveRequest
 from rdfm.schema.v2.fs import FsFile
 import device_mgmt.action
 import configuration
@@ -291,7 +291,7 @@ def exec_action(
 
 
 @devices_blueprint.route(
-    "/api/v2/devices/<string:mac_address>/action_log"
+    "/api/v2/devices/<string:mac_address>/action/log"
 )
 @check_permission(DEVICE_RESOURCE, READ_PERMISSION)
 def get_action_log(mac_address: str):
@@ -350,7 +350,7 @@ def get_action_log(mac_address: str):
         return api_error("action log fetching failed", 500)
 
 
-@devices_blueprint.route("/api/v2/devices/<string:mac_address>/action_log", methods=['DELETE'])
+@devices_blueprint.route("/api/v2/devices/<string:mac_address>/action/log", methods=['DELETE'])
 @check_permission(DEVICE_RESOURCE, UPDATE_PERMISSION)
 def clear_action_log(mac_address: str):
     """ Clear device action log.
@@ -364,7 +364,7 @@ def clear_action_log(mac_address: str):
 
     .. sourcecode:: http
 
-        DELETE /api/v2/devices/d8:5e:d3:86:02:f2/action_log HTTP/1.1
+        DELETE /api/v2/devices/d8:5e:d3:86:02:f2/action/log HTTP/1.1
         Accept: application/json, text/javascript
 
 
@@ -377,6 +377,76 @@ def clear_action_log(mac_address: str):
     """
     try:
         server.instance._action_logs_db.delete_device_log(mac_address)
+        return {}, 200
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception during removal:", repr(e))
+        return api_error("removal failed", 500)
+
+
+@devices_blueprint.route("/api/v2/devices/<string:mac_address>/action/pending", methods=['DELETE'])
+@check_permission(DEVICE_RESOURCE, UPDATE_PERMISSION)
+def remove_pending_actions(mac_address: str):
+    """ Remove pending device actions.
+
+    This removes all pending actions assigned to the device from the database and from the queue.
+
+    :status 200: no error
+
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        DELETE /api/v2/devices/d8:5e:d3:86:02:f2/action/pending HTTP/1.1
+        Accept: application/json, text/javascript
+
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+    """
+    try:
+        server.instance._action_logs_db.delete_pending_actions(mac_address)
+        return {}, 200
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception during removal:", repr(e))
+        return api_error("removal failed", 500)
+
+
+@devices_blueprint.route("/api/v2/devices/<string:mac_address>/action/remove", methods=['POST'])
+@check_permission(DEVICE_RESOURCE, UPDATE_PERMISSION)
+@deserialize_schema(schema_dataclass=ActionRemoveRequest, key="actions")
+def remove_selected_actions(mac_address: str, actions: List[ActionLog]):
+    """ Remove selected device actions.
+
+    This removes all selected actions assigned to the device from the database
+    regardless of their completion status.
+
+    :status 200: no error
+
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        POST /api/v2/devices/d8:5e:d3:86:02:f2/action/remove HTTP/1.1
+        Accept: application/json, text/javascript
+
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+    """
+    try:
+        server.instance._action_logs_db.delete_selected_actions(mac_address, actions.actions)
         return {}, 200
     except Exception as e:
         traceback.print_exc()

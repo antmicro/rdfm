@@ -3,6 +3,7 @@ import models.action_log
 from sqlalchemy import select, update, delete, desc
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
+from rdfm.schema.v2.devices import ActionRemoveRequest
 
 
 class ActionLogsDB:
@@ -89,6 +90,30 @@ class ActionLogsDB:
                 delete(models.action_log.ActionLog)
                 .where(models.action_log.ActionLog.mac_address == mac_address)
                 .where(models.action_log.ActionLog.status.in_(["0", "-1"]))
+            )
+            session.execute(stmt)
+            session.commit()
+
+    def delete_pending_actions(self, mac_address: str):
+        """Removes all pending actions assigned to a device.
+        """
+        with Session(self.engine) as session:
+            stmt = (
+                delete(models.action_log.ActionLog)
+                .where(models.action_log.ActionLog.mac_address == mac_address)
+                .where(models.action_log.ActionLog.status == "pending")
+            )
+            session.execute(stmt)
+            session.commit()
+
+    def delete_selected_actions(self, mac_address: str, actions: List[str]):
+        """Removes all completed actions assigned to a device.
+        """
+        with Session(self.engine) as session:
+            stmt = (
+                delete(models.action_log.ActionLog)
+                .where(models.action_log.ActionLog.mac_address == mac_address)
+                .where(models.action_log.ActionLog.id.in_(actions))
             )
             session.execute(stmt)
             session.commit()
