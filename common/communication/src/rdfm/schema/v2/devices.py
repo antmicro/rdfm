@@ -92,6 +92,9 @@ class AuthRegisterRequest():
 class ActionLog():
     """ Represents an action assigned to device.
     """
+    id: str = field(metadata={
+        "required": True
+    })
     action: str = field(metadata={
         "required": True
     })
@@ -102,5 +105,15 @@ class ActionLog():
     })
     status: str = field(metadata={
         "required": True
+    })
+    Schema: ClassVar[Type[marshmallow.Schema]] = marshmallow.Schema
+
+
+@marshmallow_dataclass.dataclass
+class ActionRemoveRequest():
+    """ Represents a request to remove given actions from the action log.
+    """
+    actions: list[str] = field(metadata={
+        "required": True,
     })
     Schema: ClassVar[Type[marshmallow.Schema]] = marshmallow.Schema

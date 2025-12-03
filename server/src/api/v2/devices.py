@@ -48,6 +48,7 @@ def model_to_schema(device: models.device.Device) -> Device:
 def action_model_to_schema(task: models.action_log.ActionLog) -> Device:
     """Convert a database model to the schema model"""
     return ActionLog(
+        id=task.id,
         action=task.action_id,
         created=task.created,
         status=task.status
@@ -320,16 +321,19 @@ def get_action_log(mac_address: str):
 
         [
         {
+            "id": c5f9d50a-1949-4937-b80d-3c07c3474750,
             "action": "echo",
             "created": "2025-09-26T12:25:44.638747",
             "status": "pending"
         },
         {
+            "id": b07639e7-7b0c-4e6d-9531-21a92c441f98,
             "action": "sleepTwoSeconds",
             "created": "2025-09-26T12:15:32.047079",
             "status": "success"
         },
         {
+            "id": c48cd63b-511d-4ea4-a888-065a82fb9803,
             "action": "sleepFiveSeconds",
             "created": "2025-09-26T11:14:55.160802",
             "status": "error"
