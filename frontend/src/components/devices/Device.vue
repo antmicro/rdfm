@@ -98,7 +98,21 @@ Component wraps functionality for displaying and working with a single rdfm devi
                                 v-if="allowedTo('update', 'device', device?.id)"
                                 @click="clearActionLog()"
                             >
-                                Clear
+                                Clear completed tasks
+                            </button>
+                            <button
+                                class="action-button red"
+                                v-if="allowedTo('update', 'device', device?.id)"
+                                @click="removePendingActions()"
+                            >
+                                Clear pending tasks
+                            </button>
+                            <button
+                                class="action-button red"
+                                v-if="allowedTo('update', 'device', device?.id)"
+                                @click="removeSelectedActions()"
+                            >
+                                Remove selected
                             </button>
                             <button
                                 class="action-button red small-padding close-button"
@@ -112,13 +126,22 @@ Component wraps functionality for displaying and working with a single rdfm devi
                         <table>
                             <thead>
                                 <tr>
+                                    <th></th>
                                     <th>Action</th>
                                     <th>Created date</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="task in tasks">
+                                <tr
+                                    v-for="task in tasks"
+                                    @click="() => (task.selected = !task.selected)"
+                                >
+                                    <td>
+                                        <div class="checkbox">
+                                            <div :class="task.selected ? 'selected' : ''"></div>
+                                        </div>
+                                    </td>
                                     <td>{{ task.action }}</td>
                                     <td>{{ task.created }}</td>
                                     <td>{{ task.status }}</td>
@@ -318,6 +341,11 @@ Component wraps functionality for displaying and working with a single rdfm devi
 
     @media screen and (max-width: 1250px) {
         font-size: small;
+    }
+
+    tbody tr:hover {
+        background: var(--gray-400);
+        cursor: pointer;
     }
 }
 
@@ -552,6 +580,8 @@ import {
     getDeviceActions,
     getDeviceActionLog,
     clearDeviceActionLog,
+    removePendingDeviceActions,
+    removeSelectedDeviceActions,
     downloadDeviceFile,
     execAction,
     type Action,
@@ -739,6 +769,7 @@ export default {
             if (result.success) {
                 tasks.value = result.data as any[];
                 tasks.value = tasks.value.map((task: any) => {
+                    task.selected = false;
                     if (task.status === '0') task.status = 'success';
                     if (task.status === '-1') task.status = 'error';
                     return task;
@@ -761,6 +792,39 @@ export default {
                 notif.notifyError({
                     headline: device.value?.name + ' action log',
                     msg: `Failed to clear action log`,
+                });
+            }
+        };
+
+        const removePendingActions = async () => {
+            const result = await removePendingDeviceActions(device.value!.mac_address);
+
+            if (result.success) {
+                fetchActionLog();
+            } else {
+                notif.notifyError({
+                    headline: device.value?.name + ' action log',
+                    msg: `Failed to remove pending actions`,
+                });
+            }
+        };
+
+        const removeSelectedActions = async () => {
+            const selectedTasks = tasks.value
+                .filter((task: any) => task.selected)
+                .map((task: any) => task.id);
+
+            const result = await removeSelectedDeviceActions(
+                device.value!.mac_address,
+                selectedTasks,
+            );
+
+            if (result.success) {
+                fetchActionLog();
+            } else {
+                notif.notifyError({
+                    headline: device.value?.name + ' action log',
+                    msg: `Failed to remove actions`,
                 });
             }
         };
@@ -818,6 +882,8 @@ export default {
             runAction,
             fetchActionLog,
             clearActionLog,
+            removePendingActions,
+            removeSelectedActions,
             showingActionLog,
             closeActionLogPopup,
             downloadFile,
