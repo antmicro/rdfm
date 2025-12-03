@@ -13,6 +13,8 @@ import {
     DEVICE_ACTIONS_ENDPOINT,
     DEVICE_ACTIONS_EXEC_ENDPOINT,
     DEVICE_ACTION_LOG_ENDPOINT,
+    DEVICE_PENDING_ACTIONS_ENDPOINT,
+    DEVICE_REMOVE_ACTIONS_ENDPOINT,
     DEVICES_ENDPOINT,
     GROUPS_ENDPOINT,
     PENDING_ENDPOINT,
@@ -227,6 +229,54 @@ export const clearDeviceActionLog = async (macAddress: string) => {
         return {
             success: false,
             message: 'Failed to clear device action log. Got a response code of ' + out.code,
+        };
+    }
+
+    return { success: true };
+};
+
+export const removePendingDeviceActions = async (macAddress: string) => {
+    const body = JSON.stringify({});
+
+    const headers = new Headers();
+    headers.set('Content-type', 'application/json');
+    headers.set('Accept', 'application/json, text/javascript');
+
+    const out = await fetchWrapper(
+        DEVICE_PENDING_ACTIONS_ENDPOINT(macAddress),
+        'DELETE',
+        headers,
+        body,
+    );
+
+    if (!out.success) {
+        return {
+            success: false,
+            message: 'Failed to remove pending device actions. Got a response code of ' + out.code,
+        };
+    }
+
+    return { success: true };
+};
+
+export const removeSelectedDeviceActions = async (macAddress: string, actions: string[]) => {
+    const body = JSON.stringify({ actions });
+
+    const headers = new Headers();
+    headers.set('Content-type', 'application/json');
+    headers.set('Accept', 'application/json, text/javascript');
+
+    const out = await fetchWrapper(
+        DEVICE_REMOVE_ACTIONS_ENDPOINT(macAddress),
+        'POST',
+        headers,
+        body,
+    );
+
+    if (!out.success) {
+        return {
+            success: false,
+            message: 'Failed to remove selected device actions. Got a response code of ' + out.code,
         };
     }
 
