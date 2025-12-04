@@ -106,6 +106,10 @@ class ActionLog():
     status: str = field(metadata={
         "required": True
     })
+    download_url: str = field(metadata={
+        "required": True,
+        "allow_none": True
+    })
     Schema: ClassVar[Type[marshmallow.Schema]] = marshmallow.Schema
 
 

@@ -51,7 +51,8 @@ def action_model_to_schema(task: models.action_log.ActionLog) -> Device:
         id=task.id,
         action=task.action_id,
         created=task.created,
-        status=task.status
+        status=task.status,
+        download_url=task.download_url,
     )
 
 

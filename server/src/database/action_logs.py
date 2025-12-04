@@ -61,7 +61,7 @@ class ActionLogsDB:
             session.refresh(action)
             return action.id
 
-    def get_status(self, id: int) -> str:
+    def get_status(self, id: str) -> str:
         """Fetch the status of a specified action.
         """
         with Session(self.engine) as session:
@@ -70,13 +70,16 @@ class ActionLogsDB:
                 .where(models.action_log.ActionLog.id == id)
             )
 
-    def update_status(self, id: int, status: str):
+    def update_status(self, id: str, status: str, download_url: Optional[str] = None):
         """Update the status of a specified action.
         """
         with Session(self.engine) as session:
             stmt = (
                 update(models.action_log.ActionLog)
-                .values(status=status)
+                .values({
+                    "status": status,
+                    "download_url": download_url,
+                })
                 .where(models.action_log.ActionLog.id == id)
             )
             session.execute(stmt)
