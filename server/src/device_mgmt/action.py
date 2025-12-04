@@ -1,5 +1,6 @@
 import time
 import datetime
+import base64
 from typing import Optional
 from device_mgmt.models.action_execution import ActionExecution
 from rdfm.ws import RDFM_WS_INVALID_REQUEST, WebSocketException
@@ -7,6 +8,9 @@ from request_models import Action, ActionExec, ActionListQuery
 import server
 import models.action_log
 import uuid
+from flask import current_app
+import storage
+import configuration
 
 import queue
 
@@ -21,6 +25,12 @@ ACTION_UPDATE_TIMEOUT = 30
 
 EXECUTION_TOTAL_TIMEOUT = 3600 * 2
 """Maximum wait time for action execution."""
+
+ACTION_BUCKET_SUBDIR = "rdfm.actions"
+"""Bucket subdirectory where action logs are stored."""
+
+LINK_EXPIRY = 3600
+"""Action log download link expiration time."""
 
 
 def execute_action(mac_address: str, action_id: str) -> Optional[tuple[int, str]]:
@@ -122,7 +132,10 @@ def execute_action_result(execution_id: str, status_code: int, output: str):
 
     execution.execution_completed.set()
 
-    server.instance._action_logs_db.update_status(execution_id, status_code)
+    download_url = None
+    if output:
+        download_url = add_output_to_storage(execution_id, output)
+    server.instance._action_logs_db.update_status(execution_id, status_code, download_url)
 
 
 def execute_action_control(execution_id: str, status: str):
@@ -169,3 +182,21 @@ def send_action_queue(mac_address: str):
         remote_device.send_message(
             ActionExec(action_id=action.action_id, execution_id=action.id)
         )
+
+
+def add_output_to_storage(execution_id: str, output: str) -> Optional[str]:
+    conf: configuration.ServerConfig = current_app.config["RDFM_CONFIG"]
+    driver = storage.driver_by_name(conf.storage_driver, conf)
+
+    object_name = str(uuid.uuid4())
+    content = base64.b64decode(output)
+    success = driver.upload_action_log(content, ACTION_BUCKET_SUBDIR, object_name)
+
+    if not success:
+        return None
+
+    return driver.generate_fs_download_url(
+        f"{ACTION_BUCKET_SUBDIR}/{object_name}",
+        LINK_EXPIRY,
+        execution_id,
+    )
