@@ -136,13 +136,11 @@ Component wraps functionality for displaying and working with a single rdfm devi
                                     <th>Action</th>
                                     <th>Created date</th>
                                     <th>Status</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr
-                                    v-for="task in tasks"
-                                    @click="() => (task.selected = !task.selected)"
-                                >
+                                <tr v-for="task in tasks" @click="selectTask(task, $event)">
                                     <td>
                                         <div class="checkbox">
                                             <div :class="task.selected ? 'selected' : ''"></div>
@@ -153,6 +151,14 @@ Component wraps functionality for displaying and working with a single rdfm devi
                                     <td>
                                         <div :class="['status', task.status]">
                                             {{ task.status }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div v-if="task.download_url" class="dots">
+                                            <DownloadButton
+                                                :url="task.download_url"
+                                                :smallButton="true"
+                                            />
                                         </div>
                                     </td>
                                 </tr>
@@ -375,6 +381,7 @@ Component wraps functionality for displaying and working with a single rdfm devi
     tbody {
         td {
             border-bottom: 1px solid var(--gray-400);
+            vertical-align: middle;
         }
         tr:first-child td {
             border-top: 1px solid var(--gray-400);
@@ -384,6 +391,7 @@ Component wraps functionality for displaying and working with a single rdfm devi
         }
         td:last-child {
             border-right: 1px solid var(--gray-400);
+            text-align: center;
         }
 
         tr:first-child td:first-child {
@@ -764,6 +772,7 @@ import TitleBar from '../TitleBar.vue';
 import Terminal from '../Terminal.vue';
 import BlurPanel from '../BlurPanel.vue';
 import UpdateProgress from '../UpdateProgress.vue';
+import DownloadButton from '../DownloadButton.vue';
 import Expand from '../icons/Expand.vue';
 import Collapse from '../icons/Collapse.vue';
 import Cross from '../icons/Cross.vue';
@@ -800,6 +809,7 @@ export default {
         Terminal,
         BlurPanel,
         UpdateProgress,
+        DownloadButton,
         Expand,
         Collapse,
         Cross,
@@ -1040,6 +1050,14 @@ export default {
             }
         };
 
+        const selectTask = (task: any, e: MouseEvent) => {
+            const target = e!.target as HTMLElement;
+
+            if (!target.closest('.dots')) {
+                task.selected = !task.selected;
+            }
+        };
+
         const closeActionLogPopup = () => {
             showingActionLog.value = false;
         };
@@ -1095,6 +1113,7 @@ export default {
             clearActionLog,
             removePendingActions,
             removeSelectedActions,
+            selectTask,
             selectedCount,
             showingActionLog,
             closeActionLogPopup,

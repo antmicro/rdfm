@@ -144,37 +144,7 @@ Component wraps functionality for displaying and working with rdfm packages.
                                     class="drdn-wrapper"
                                     style="position: relative"
                                 >
-                                    <button id="main-button" class="action-button gray">
-                                        Download
-                                        <span class="caret-down"> <CaretDown /> </span>
-                                        <span class="caret-up"> <CaretUp /> </span>
-                                    </button>
-                                    <div class="drdn">
-                                        <button
-                                            class="action-button gray"
-                                            @click="
-                                                (e) =>
-                                                    download(pckg.id).then(() =>
-                                                        (e.target as HTMLElement).blur(),
-                                                    )
-                                            "
-                                        >
-                                            <Download />
-                                            Direct download
-                                        </button>
-                                        <button
-                                            class="action-button gray"
-                                            @click="
-                                                (e) =>
-                                                    copyDownloadLink(pckg.id).then(() =>
-                                                        (e.target as HTMLElement).blur(),
-                                                    )
-                                            "
-                                        >
-                                            <CopyLink />
-                                            Copy link
-                                        </button>
-                                    </div>
+                                    <DownloadButton :resource="pckg.id" />
                                 </div>
                                 <button
                                     v-if="allowedTo('delete', 'package', pckg.id, groups)"
@@ -193,89 +163,6 @@ Component wraps functionality for displaying and working with rdfm packages.
 </template>
 
 <style scoped>
-/* Default state */
-.drdn-wrapper {
-    user-select: none;
-    position: relative;
-    display: inline-block;
-
-    .caret-up,
-    .caret-down {
-        display: inline-block;
-    }
-
-    .caret-up {
-        display: none;
-    }
-
-    .drdn {
-        display: none;
-
-        color: var(--gray-1000);
-        background-color: var(--gray-100);
-        border: 2px solid var(--gray-400);
-        border-radius: 5px;
-
-        position: absolute;
-        top: 100%;
-        right: 5px;
-        width: max-content;
-        z-index: 100;
-
-        padding: 0px;
-        padding-top: 10px;
-        padding-bottom: 10px;
-
-        .action-button {
-            margin: 0px !important;
-            width: 100%;
-            border: 0px;
-            display: flex;
-            align-items: center;
-            text-align: left;
-            color: var(--gray-900);
-
-            &:hover {
-                color: var(--gray-1000);
-
-                svg {
-                    fill: var(--gray-1000);
-                }
-            }
-
-            svg {
-                margin-right: 10px;
-                fill: var(--gray-900);
-            }
-        }
-    }
-
-    #main-button {
-        cursor: pointer;
-    }
-}
-
-/* Focused state */
-.drdn-wrapper:focus-within {
-    .caret-up {
-        display: inline-block;
-    }
-
-    .caret-down {
-        display: none;
-    }
-
-    #main-button {
-        pointer-events: none;
-        cursor: pointer;
-        color: var(--gray-900);
-    }
-
-    .drdn {
-        display: block;
-    }
-}
-
 .buttons {
     button {
         margin: 5px !important;
@@ -290,8 +177,7 @@ import { POLL_INTERVAL, useNotifications, allowedTo, hasUploadAccess } from '../
 import BlurPanel from '../BlurPanel.vue';
 import RemovePopup from '../RemovePopup.vue';
 import TitleBar from '../TitleBar.vue';
-import Download from '../icons/Download.vue';
-import CopyLink from '../icons/CopyLink.vue';
+import DownloadButton from '../DownloadButton.vue';
 import {
     packageResources,
     groupsResources,
@@ -300,8 +186,6 @@ import {
     downloadPackageRequest,
     type NewPackageData,
 } from './packages';
-import CaretDown from '@/images/CaretDown.vue';
-import CaretUp from '@/images/CaretUp.vue';
 
 export enum PackagePopupOpen {
     AddPackage,
@@ -314,10 +198,7 @@ export default {
         BlurPanel,
         RemovePopup,
         TitleBar,
-        CaretDown,
-        CaretUp,
-        Download,
-        CopyLink,
+        DownloadButton,
     },
     setup() {
         let intervalID: undefined | number = undefined;
@@ -410,31 +291,6 @@ export default {
         };
 
         // =======================
-        // Download package functionality
-        // =======================
-
-        const getPackageDownloadUrl = async (packageId: number) => {
-            const { success, message } = await downloadPackageRequest(packageId);
-            if (!success || !message) {
-                notifications.notifyError({
-                    headline: 'Error when downloading the package:',
-                    msg: message || 'Could not get the download link',
-                });
-                throw new Error('Error when downloading the package');
-            }
-            return message;
-        };
-
-        const download = (packageId: number) =>
-            getPackageDownloadUrl(packageId).then((url) => window.open(url));
-
-        const copyDownloadLink = async (packageId: number) => {
-            const downloadUrl = await getPackageDownloadUrl(packageId);
-            navigator.clipboard.writeText(downloadUrl);
-            notifications.notifySuccess({ headline: 'Download link copied!' });
-        };
-
-        // =======================
 
         onMounted(async () => {
             await packageResources.fetchResources();
@@ -472,8 +328,6 @@ export default {
             closeAddPackagePopup,
             closeRemovePackagePopup,
             openAddPackagePopup,
-            copyDownloadLink,
-            download,
             allowedTo,
             hasUploadAccess,
         };
