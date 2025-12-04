@@ -164,3 +164,15 @@ class LocalStorage:
         port = self.config.http_port
         path = f"/local_storage_multipart/multipart/{key}"
         return urllib.parse.urljoin(f"http://{hostname}:{port}", path)
+
+    def upload_action_log(
+        self,
+        content: bytes,
+        storage_directory: str,
+        object_id: str,
+    ) -> bool:
+        destination_path = Path(storage_directory, object_id).resolve()
+        destination_path.parent.mkdir(exist_ok=True, parents=True)
+        with open(destination_path, "wb") as f:
+            f.write(content)
+        return True

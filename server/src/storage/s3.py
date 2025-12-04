@@ -226,3 +226,27 @@ class S3Storage:
         except ClientError as e:
             print("Failed to generate presigned S3 link:", e, flush=True)
             raise
+
+    def upload_action_log(
+        self,
+        content: bytes,
+        storage_directory: str,
+        object_id: str,
+    ) -> bool:
+        """Uploads file containg action execution log"""
+        try:
+            self.client.put_object(
+                Body=content,
+                Bucket=self.bucket,
+                Key=S3Storage.get_object_path(storage_directory, object_id),
+            )
+            return True
+        except ClientError as e:
+            print(
+                "Uploading action log to bucket",
+                self.bucket,
+                "failed:",
+                e,
+                flush=True,
+            )
+            return False
