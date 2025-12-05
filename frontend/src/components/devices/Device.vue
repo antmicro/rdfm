@@ -15,9 +15,13 @@ Component wraps functionality for displaying and working with a single rdfm devi
             :title="'Device ' + device.mac_address"
             :subtitle="device.metadata['rdfm.software.version'] as string"
             :device="device.mac_address"
-            :connected="device.connected"
             smallButtonName="Open action log"
             :buttonCallback="fetchActionLog"
+            :connected="
+                deviceConnections.has(device.mac_address)
+                    ? deviceConnections.get(device.mac_address)
+                    : device.connected
+            "
         />
         <TitleBar
             v-if="!device"
@@ -780,8 +784,7 @@ import {
     downloadDeviceFile,
     execAction,
     type Action,
-    deviceUpdates,
-    deviceVersions,
+    deviceConnections,
 } from './devices';
 import { useRoute, useRouter } from 'vue-router';
 import { ActiveTab } from '@/views/HomeView.vue';
@@ -1119,8 +1122,7 @@ export default {
             isFullscreen,
             disconnect,
             allowedTo,
-            deviceUpdates,
-            deviceVersions,
+            deviceConnections,
         };
     },
 };

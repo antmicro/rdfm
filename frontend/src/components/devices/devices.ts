@@ -44,6 +44,7 @@ export const filteredDevicesResources = (tag: string) =>
 
 export const deviceUpdates = reactive(new Map<string, number>());
 export const deviceVersions = reactive(new Map<string, string>());
+export const deviceConnections = reactive(new Map<string, boolean>());
 
 export type Action = {
     action_id: string;

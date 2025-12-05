@@ -1,3 +1,4 @@
+import json
 from rdfm.ws import WebSocketException
 from flask import Blueprint
 import simple_websocket
@@ -12,6 +13,7 @@ from api.v1.middleware import (
 from rdfm.permissions import (
     SHELL_PERMISSION,
 )
+import server
 
 
 device_ws_blueprint: Blueprint = Blueprint("rdfm-server-device-ws", __name__)
@@ -31,6 +33,13 @@ def device_management_ws(
     try:
         device_mgmt.loop.start_device_event_loop(ws, device_token)
     except WebSocketException as e:
+        message = {"device": device_token.device_id}
+
+        try:
+            server.instance.sse.publish(json.dumps(message), type='disconnect')
+        except KeyError:
+            print("Redis is not configured. Unable to send device updates.")
+
         print("Terminating device WS connection:", e.message, flush=True)
         raise
 

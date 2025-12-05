@@ -211,7 +211,12 @@ import GroupsList from '../components/groups/GroupsList.vue';
 import Logo from '../images/Logo.vue';
 import LogoutIcon from '@/images/LogoutIcon.vue';
 import Device from '@/components/devices/Device.vue';
-import { deviceUpdates, deviceVersions } from '../components/devices/devices';
+import {
+    deviceUpdates,
+    deviceVersions,
+    deviceConnections,
+    registeredDevicesResources,
+} from '../components/devices/devices';
 
 export enum ActiveTab {
     Device = 'device',
@@ -359,6 +364,16 @@ export default {
                 deviceUpdates.delete(message.device);
                 deviceVersions.delete(message.device);
             }
+        });
+
+        sse.addEventListener('connect', async (event: MessageEvent) => {
+            const message = JSON.parse(event.data);
+            deviceConnections.set(message.device, true);
+        });
+
+        sse.addEventListener('disconnect', async (event: MessageEvent) => {
+            const message = JSON.parse(event.data);
+            deviceConnections.set(message.device, false);
         });
 
         sse.addEventListener('error', (error: Event) => {
