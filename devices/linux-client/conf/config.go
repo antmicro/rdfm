@@ -39,6 +39,7 @@ const DEFAULT_FILESYSTEM_ENABLE = true
 const DEFAULT_FILESYSTEM_BASE_DIR = "/"
 const DEFAULT_VERIFICATION_SCRIPT_PATH = ""
 const DEFAULT_UPDATE_PROGRESS_ENABLE = true
+const DEFAULT_METADATA_FILE_PATH = ""
 
 type RDFMConfig struct {
 	// Path to the device type file
@@ -101,6 +102,9 @@ type RDFMConfig struct {
 
 	// Is reporting update progress enabled? Default: true
 	UpdateProgressEnable bool `json:",omitempty"`
+
+	// Path to the file with device metadata. Default: ""
+	MetadataFilePath string `json:",omitempty"`
 }
 
 var rdfmConfigInstance *RDFMConfig
@@ -152,6 +156,7 @@ func LoadConfig(mainConfigFile string, overlayConfigFile string) (*RDFMConfig, *
 		FileSystemBaseDir:         DEFAULT_FILESYSTEM_BASE_DIR,
 		VerificationScriptPath:    DEFAULT_VERIFICATION_SCRIPT_PATH,
 		UpdateProgressEnable:      DEFAULT_UPDATE_PROGRESS_ENABLE,
+		MetadataFilePath:          DEFAULT_METADATA_FILE_PATH,
 	}
 
 	// Load Mender config
@@ -226,4 +231,22 @@ func LoadTagsConfig(path string) ([]string, error) {
 	}
 
 	return config, nil
+}
+
+func LoadMetadataFile(path string) (map[string]interface{}, error) {
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return make(map[string]interface{}), errors.New(err.Error())
+	}
+
+	content, err := ioutil.ReadFile(path)
+	if err != nil {
+		return make(map[string]interface{}), errors.New(err.Error())
+	}
+
+	var metadata map[string]interface{}
+	if err := json.Unmarshal(content, &metadata); err != nil {
+		return make(map[string]interface{}), errors.New("Error parsing metadata file: " + err.Error())
+	}
+
+	return metadata, nil
 }

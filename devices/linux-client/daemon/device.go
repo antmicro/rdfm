@@ -658,6 +658,11 @@ func (d *Device) authenticateDeviceWithServer() error {
 
 // collectMetadata gathers the RDFM metadata for this device.
 func (d *Device) collectMetadata() (map[string]interface{}, error) {
+	metadata, err := conf.LoadMetadataFile(d.rdfmCtx.RdfmConfig.MetadataFilePath)
+	if err != nil {
+		log.Warnln("Error collecting metadata: failed to get base metadata file:", err)
+	}
+
 	// make sure we have a MAC
 	if d.macAddr == "" {
 		mac, err := netUtils.GetUniqueId()
@@ -693,7 +698,10 @@ func (d *Device) collectMetadata() (map[string]interface{}, error) {
 	if len(tags) == 0 {
 		delete(m, "rdfm.software.tags")
 	}
-	return m, nil
+	for k, v := range m {
+		metadata[k] = v
+	}
+	return metadata, nil
 }
 
 func (d *Device) requestUpdateCheck() {
