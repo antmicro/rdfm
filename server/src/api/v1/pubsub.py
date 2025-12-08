@@ -10,6 +10,10 @@ from rdfm.permissions import (
         READ_PERMISSION,
         UPDATE_PERMISSION,
 )
+from rdfm.schema.v1.pubsub import (
+        LeaseTopicResponse,
+        CheckTopicResponse,
+)
 import server
 import configuration
 import models.device
@@ -59,11 +63,10 @@ def lease_topic(device_token: DeviceToken):
     try:
         conf: configuration.ServerConfig = current_app.config["RDFM_CONFIG"]
 
-        return {
-            "bootstrap_servers": conf.dev_bootstrap_servers,
-            "topic": admin.lease_topic_for_device(device_token.device_id)
-        }, 200
-
+        admin = RdfmKafkaAdminClient.quick_create()
+        resp = LeaseTopicResponse(bootstrap_servers=conf.dev_bootstrap_servers,
+                                  topic=admin.lease_topic_for_device(device_token.device_id))
+        return LeaseTopicResponse.Schema().dump(resp), 200
     except Exception as e:
         traceback.print_exc()
         print("Exception during lease topic", repr(e))
@@ -119,9 +122,10 @@ def check_topic(identifier: int):
         admin = RdfmKafkaAdminClient.quick_create()
         status = admin.device_topic_status(dev.mac_address)
         if status:
-            return {"topic_name": status.topic_name,
-                    "write": status.can_write(),
-                    "idempotent_write": status.can_idempotent_write()}, 200
+            resp = CheckTopicResponse(topic=status.topic_name,
+                                      write=status.can_write(),
+                                      idempotent_write=status.can_idempotent_write())
+            return CheckTopicResponse.Schema().dump(resp), 200
         else:
             return {}, 204  # device exists, but doesn't have a topic
     except Exception as e:
