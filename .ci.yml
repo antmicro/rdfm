@@ -84,12 +84,12 @@ variables:
   variables:
     APPTAINER_REL: v1.4.3
     GO_REL: https://go.dev/dl/go1.24.4.linux-amd64.tar.gz
-    SCALENODE_RAM: 4096
-  before_script:
+    SCALENODE_RAM: 5120
+  before_get_sources:
     - pip3 install poetry
     - pip3 install --upgrade pip
     - (apt update &&
-        apt-get -y install build-essential libseccomp-dev uidmap fakeroot cryptsetup tzdata dh-apparmor squashfs-tools curl wget git pipx iptables kcat openjdk-17-jre)
+        apt-get -y install build-essential libseccomp-dev uidmap fakeroot cryptsetup tzdata dh-apparmor squashfs-tools curl wget git pipx iptables kcat openjdk-17-jre maven ripgrep)
     - wget --quiet -O - $GO_REL | tar xz
     - git clone https://github.com/apptainer/apptainer.git
     - export PATH=`pwd`/go/bin:$PATH
@@ -101,7 +101,6 @@ variables:
     - export GOTMPDIR=$(pwd)/tmp
     - make
     - make install
-    - rm -rf ./tmp
 
 stages:
   - docs-build
