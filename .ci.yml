@@ -299,6 +299,20 @@ test-server-pubsub-acl-handling:
     - cd server
     - poetry run pytest tests/test-pubsub-acl-handling.py
 
+test-server-pubsub-acl-side-effects:
+  extends: .install-poetry-and-apptainer
+  stage: local-tests
+  script:
+    - cd server
+    - poetry install
+    - SIF_SECRET=$(apptainer inspect --environment deploy/pubsub-demo/tests/test_kafka.sif | rg '^\s+export RDFM_JWT_SECRET=([\w\W]+)$' -r '$1')
+    - export JWT_SECRET=$SIF_SECRET
+    - poetry run pytest -v tests/test-pubsub-acl-side-effects.py --sifpath $(pwd)/deploy/pubsub-demo/tests --sqlite
+  artifacts:
+    paths:
+      - server/tests/server.log
+    when: always
+
 # ===== rdfm-client ===== #
 
 build-rdfm-client:
