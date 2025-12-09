@@ -1,15 +1,19 @@
 import os
 import time
+import re
 import requests
 import jwt
 import urllib.parse
 import base64
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Optional
 from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
 from Crypto.Signature.pkcs1_15 import PKCS115_SigScheme
+from kafka import KafkaProducer
+from kafka.errors import NoBrokersAvailable
+from pathlib import Path
 
 
 # Which path to use for probing by default
@@ -23,6 +27,13 @@ SERVER = "http://127.0.0.1:5000/"
 SERVER_WS = "ws://127.0.0.1:5000/"
 # Server wait timeout, in seconds
 SERVER_WAIT_TIMEOUT = 20
+KAFKA_BROKER_WAIT_INTERVAL = 1
+
+KAFKA_CLUSTER_ID = "foobarbaz"
+KAFKA_CONFIG_REL_PATH = Path("server.properties")
+KAFKA_DEVICE = "00:00:00:00:00:00"
+KAFKA_TOPIC = "00-00-00-00-00-00"
+KAFKA_SINGULARITY_IMAGE = "test_kafka.sif"
 
 # Commonly used endpoints
 AUTH_ENDPOINT = f"{SERVER}/api/v1/auth"
@@ -31,6 +42,7 @@ PACKAGES_ENDPOINT = f"{SERVER}/api/v1/packages"
 UPDATES_ENDPOINT = f"{SERVER}/api/v1/update/check"
 DEVICES_ENDPOINT = f"{SERVER}/api/v2/devices"
 LOGS_ENDPOINT = f"{SERVER}/api/v1/logs"
+PUBSUB_ENDPOINT = f"{SERVER}/api/v1/pubsub"
 DEVICES_WS = f"{SERVER}/api/v1/devices/ws"
 
 @dataclass
@@ -41,6 +53,7 @@ class ProcessConfig():
     no_ssl: bool = True
     no_api_auth: bool = True
     debug: bool = False
+    enable_pubsub: bool = False
 
 
 def make_signature(key_pair, payload_bytes):
@@ -241,3 +254,27 @@ def auth_pending() -> list[dict]:
     assert response.status_code == 200, "changing policy should succeed"
     return response.json()
 
+
+def wait_for_broker(broker: str,
+                    timeout: int = SERVER_WAIT_TIMEOUT,
+                    interval: int = KAFKA_BROKER_WAIT_INTERVAL) -> bool:
+    start = time.time()
+    while True:
+        try:
+            producer = KafkaProducer(bootstrap_servers=broker)
+            producer.close()
+            return True
+        except NoBrokersAvailable:
+            if time.time() - start > timeout:
+                return False
+            print("Broker not available, waiting...")
+            time.sleep(interval)
+
+
+def find_endpoint_in_cfg(listener: str, cwd: Path, kafka_config_rel_path: Path) -> str:
+    with open(cwd / kafka_config_rel_path) as f:
+        pattern = f"{re.escape(listener)}:\\/\\/([A-Za-z0-9\\.]+:[0-9]+)"
+        match = re.search(pattern, f.read())
+        assert match is not None, f"searching {kafka_config_rel_path} must yield a result"
+        assert match.groups()[0], f"searching {kafka_config_rel_path} must yield a result"
+        return match.groups()[0]
