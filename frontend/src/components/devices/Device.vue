@@ -132,24 +132,25 @@ Component wraps functionality for displaying and working with a single rdfm devi
 
         <template v-if="device?.capabilities.filesystem && allowedTo('read', 'device', device?.id)">
             <div class="download-container">
-                <div class="drdn-wrapper">
-                    <button id="main-button" class="action-button gray">
-                        Download file
-                        <span class="caret-down"> <CaretDown /> </span>
-                        <span class="caret-up"> <CaretUp /> </span>
-                    </button>
-                    <div class="drdn">
-                        <div class="entry">
-                            <p>Path to file on device</p>
+                <p>Download file from path</p>
+                <table class="file-selector">
+                    <tbody>
+                        <td class="icon">
+                            <File />
+                        </td>
+                        <td class="input">
                             <input type="text" ref="fileToDownload" />
-                            <div v-if="emptyPathError" class="errors">
-                                <p>Please enter file path</p>
-                            </div>
-                        </div>
-                        <button class="action-button blue white" @click="downloadFile">
-                            Download
-                        </button>
-                    </div>
+                        </td>
+                        <td>
+                            <button class="action-button" @click="downloadFile">
+                                <Download />
+                                Download file
+                            </button>
+                        </td>
+                    </tbody>
+                </table>
+                <div v-if="emptyPathError" class="errors">
+                    <p>File not found</p>
                 </div>
             </div>
         </template>
@@ -334,98 +335,91 @@ Component wraps functionality for displaying and working with a single rdfm devi
 
 .download-container {
     margin: 2em;
-    transition: transform 1s;
     display: flex;
     flex-direction: column;
 
-    /* Default state */
-    .drdn-wrapper {
-        user-select: none;
-        position: relative;
-        display: inline-block;
+    .file-selector {
+        width: 520px;
+        height: 40px;
 
-        .caret-up,
-        .caret-down {
-            display: inline-block;
+        border-radius: 8px;
+        border-width: 1px;
+        border: 1px solid var(--gray-400);
+        border-collapse: separate;
+        border-spacing: 0;
+
+        td {
+            padding: 0;
         }
 
-        .caret-up {
-            display: none;
-        }
+        .icon {
+            border-right: 1px solid var(--gray-400);
 
-        .drdn {
-            display: none;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
 
-            color: var(--gray-1000);
-            background-color: var(--gray-100);
-            border: 2px solid var(--gray-400);
-            border-radius: 5px;
-
-            position: absolute;
-            top: 100%;
-            width: max-content;
-            z-index: 100;
-
-            padding: 1em;
-
-            .entry {
-                & > p {
-                    margin: 0 0 0.2em 0;
-                    font-size: 0.9em;
-                }
-
-                & > input {
-                    background-color: var(--gray-100);
-                    border: 1px solid var(--gray-400);
-                    border-radius: 5px;
-
-                    box-sizing: border-box;
-                    padding: 0.9em;
-                    width: 100%;
-                    color: var(--gray-1000);
-                }
-
-                &:has(.errors) {
-                    p {
-                        color: var(--destructive-900);
-                    }
-                }
-
-                div.errors {
-                    p {
-                        color: var(--destructive-900);
-                        margin: 0px;
-                        font-size: 0.75em;
-                    }
-                }
+            & > svg {
+                fill: var(--gray-900);
+                width: 20px;
+                height: 20px;
+                padding: 8px;
             }
         }
 
-        #main-button {
-            cursor: pointer;
+        .input {
+            border-right: 1px solid var(--gray-400);
+
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            background: transparent;
+            padding: 8px;
+
+            input {
+                height: 100%;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                border: none;
+                box-sizing: border-box;
+                background: transparent;
+            }
+        }
+
+        .action-button {
+            margin: 0px !important;
+            height: 100%;
+            width: fit-content;
+            white-space: nowrap;
+            border: 0px;
+            border-radius: 0px 8px 8px 0px;
+            display: flex;
+            align-items: center;
+            text-align: left;
+            color: var(--gray-900);
+            background-color: var(--background-100);
+
+            &:hover {
+                background-color: var(--gray-200);
+                color: var(--gray-1000);
+
+                svg {
+                    fill: var(--gray-1000);
+                }
+            }
+
+            svg {
+                margin-right: 10px;
+                fill: var(--gray-900);
+            }
         }
     }
 
-    /* Focused state */
-    .drdn-wrapper:focus-within {
-        .caret-up {
-            display: inline-block;
-        }
-
-        .caret-down {
-            display: none;
-        }
-
-        #main-button {
-            pointer-events: none;
-            cursor: pointer;
-            color: var(--gray-900);
-        }
-
-        .drdn {
-            display: flex;
-            flex-direction: column;
-            row-gap: 0.5em;
+    .errors {
+        p {
+            color: var(--destructive-900);
         }
     }
 }
@@ -549,6 +543,8 @@ import UpdateProgress from '../UpdateProgress.vue';
 import Expand from '../icons/Expand.vue';
 import Collapse from '../icons/Collapse.vue';
 import Cross from '../icons/Cross.vue';
+import Download from '../icons/Download.vue';
+import File from '../icons/File.vue';
 import {
     registeredDevicesResources,
     groupResources,
@@ -578,6 +574,8 @@ export default {
         Expand,
         Collapse,
         Cross,
+        Download,
+        File,
     },
     unmounted() {
         if (this.interval !== null) clearInterval(this.interval);
@@ -786,6 +784,7 @@ export default {
                     headline: device.value?.name + ' download',
                     msg: `Failed to download file`,
                 });
+                emptyPathError.value = true;
             }
         };
 
