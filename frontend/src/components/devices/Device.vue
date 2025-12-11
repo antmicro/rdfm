@@ -86,40 +86,46 @@ Component wraps functionality for displaying and working with a single rdfm devi
             <BlurPanel v-if="showingActionLog" @click.self="closeActionLogPopup">
                 <div class="popup">
                     <div class="header-with-buttons">
-                        <div class="header">
-                            <p class="title">Action log</p>
-                            <p class="description">
-                                Actions assigned to device {{ device!.mac_address }}
-                            </p>
-                        </div>
-                        <div class="button-wrapper">
-                            <button
-                                class="action-button blue"
-                                v-if="allowedTo('update', 'device', device?.id)"
-                                @click="clearActionLog()"
-                            >
-                                Clear completed tasks
-                            </button>
-                            <button
-                                class="action-button red"
-                                v-if="allowedTo('update', 'device', device?.id)"
-                                @click="removePendingActions()"
-                            >
-                                Clear pending tasks
-                            </button>
-                            <button
-                                class="action-button red"
-                                v-if="allowedTo('update', 'device', device?.id)"
-                                @click="removeSelectedActions()"
-                            >
-                                Remove selected
-                            </button>
-                            <button
-                                class="action-button red small-padding close-button"
-                                @click="closeActionLogPopup"
-                            >
+                        <div class="title-container">
+                            <div class="header">
+                                <p class="title">Action log</p>
+                                <p class="description">
+                                    Actions assigned to device {{ device!.mac_address }}
+                                </p>
+                            </div>
+                            <button class="action-button" @click="closeActionLogPopup">
                                 <Cross />
                             </button>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="button-wrapper">
+                            <p class="selected-count">{{ selectedCount }}</p>
+                            <div class="buttons">
+                                <button
+                                    class="action-button gray"
+                                    v-if="allowedTo('update', 'device', device?.id)"
+                                    @click="clearActionLog()"
+                                >
+                                    <Completed />
+                                    Clear completed tasks
+                                </button>
+                                <button
+                                    class="action-button gray"
+                                    v-if="allowedTo('update', 'device', device?.id)"
+                                    @click="removePendingActions()"
+                                >
+                                    <Pending />
+                                    Clear pending tasks
+                                </button>
+                                <button
+                                    class="action-button red"
+                                    v-if="allowedTo('update', 'device', device?.id)"
+                                    @click="removeSelectedActions()"
+                                >
+                                    <Delete />
+                                    Remove selected
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div class="body action-log">
@@ -144,7 +150,11 @@ Component wraps functionality for displaying and working with a single rdfm devi
                                     </td>
                                     <td>{{ task.action }}</td>
                                     <td>{{ task.created }}</td>
-                                    <td>{{ task.status }}</td>
+                                    <td>
+                                        <div :class="['status', task.status]">
+                                            {{ task.status }}
+                                        </div>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -334,30 +344,216 @@ Component wraps functionality for displaying and working with a single rdfm devi
     }
 }
 
+.popup {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 2em;
+}
+
 .action-log {
-    overflow: scroll;
-    max-height: 80vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 70vh;
     max-width: 95vw;
 
-    @media screen and (max-width: 1250px) {
+    @media screen and (max-width: 1650px) {
+        font-size: small;
+        max-height: 50vh;
+    }
+
+    table {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    th {
+        color: var(--gray-900);
         font-size: small;
     }
 
-    tbody tr:hover {
-        background: var(--gray-400);
-        cursor: pointer;
+    tbody {
+        td {
+            border-bottom: 1px solid var(--gray-400);
+        }
+        tr:first-child td {
+            border-top: 1px solid var(--gray-400);
+        }
+        td:first-child {
+            border-left: 1px solid var(--gray-400);
+        }
+        td:last-child {
+            border-right: 1px solid var(--gray-400);
+        }
+
+        tr:first-child td:first-child {
+            border-top-left-radius: 8px;
+        }
+        tr:first-child td:last-child {
+            border-top-right-radius: 8px;
+        }
+        tr:last-child td:first-child {
+            border-bottom-left-radius: 8px;
+        }
+        tr:last-child td:last-child {
+            border-bottom-right-radius: 8px;
+        }
+
+        tr:hover {
+            background: var(--gray-200);
+            cursor: pointer;
+        }
+
+        .checkbox {
+            border: 0.88px solid var(--gray-400);
+            color: var(--gray-400);
+            background: var(--gray-100);
+            width: 14px;
+            height: 14px;
+
+            div {
+                width: 14px;
+                height: 14px;
+            }
+        }
+
+        .status {
+            color: var(--gray-900);
+            background-color: var(--gray-100);
+            border: 1px solid var(--gray-400);
+            border-radius: 8px;
+
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .success {
+            color: var(--success);
+            background-color: var(--success-bg);
+            border: 1px solid var(--success-border);
+        }
+
+        .error {
+            color: var(--destructive-900);
+            background-color: var(--destructive-100);
+            border: 1px solid var(--destructive-400);
+        }
+
+        .dots {
+            padding-left: 1em;
+            padding-right: 1em;
+        }
+
+        @media screen and (max-width: 1650px) {
+            td:nth-child(2) {
+                word-break: break-all;
+            }
+        }
     }
 }
 
 .header-with-buttons {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     justify-content: space-between;
+    gap: 1.5em;
+
+    & > .title-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+
+        & > .action-button {
+            background-color: var(--background-200);
+            border: none;
+
+            svg {
+                width: 15px;
+                height: 15px;
+                fill: var(--gray-900);
+            }
+        }
+    }
+
+    & > .divider {
+        flex-grow: 1;
+        border-bottom: 1px solid var(--gray-400);
+    }
 
     & > .button-wrapper {
         display: flex;
-        justify-content: flex-end;
-        gap: 1em;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+
+        & > .selected-count {
+            color: var(--gray-900);
+            padding: 0;
+            margin: 0;
+        }
+
+        & > .buttons {
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-end;
+            gap: 0.75em;
+
+            & > .action-button {
+                white-space: nowrap;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                padding: 0.5em;
+                border-radius: 8px;
+
+                svg {
+                    width: 15px;
+                    height: 15px;
+                    margin-right: 10px;
+                }
+
+                &.gray {
+                    color: var(--gray-1000);
+                    background-color: var(--gray-100);
+                    border: 1px solid var(--gray-400);
+
+                    svg {
+                        fill: var(--gray-1000);
+                    }
+
+                    &:hover {
+                        background-color: var(--gray-300);
+                    }
+                }
+
+                &.red {
+                    border: 1px solid var(--destructive-400);
+                    svg {
+                        fill: var(--destructive-900);
+                    }
+                }
+            }
+        }
+    }
+
+    @media screen and (max-width: 2000px) {
+        .button-wrapper {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 0.75em;
+            align-items: start;
+        }
+    }
+
+    @media screen and (max-width: 1650px) {
+        .button-wrapper {
+            .buttons {
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+        }
     }
 }
 
@@ -573,6 +769,9 @@ import Collapse from '../icons/Collapse.vue';
 import Cross from '../icons/Cross.vue';
 import Download from '../icons/Download.vue';
 import File from '../icons/File.vue';
+import Completed from '../icons/Completed.vue';
+import Pending from '../icons/Pending.vue';
+import Delete from '../icons/Delete.vue';
 import {
     registeredDevicesResources,
     groupResources,
@@ -606,6 +805,9 @@ export default {
         Cross,
         Download,
         File,
+        Completed,
+        Pending,
+        Delete,
     },
     unmounted() {
         if (this.interval !== null) clearInterval(this.interval);
@@ -762,6 +964,15 @@ export default {
 
         const tasks = ref<any[]>([]);
         const showingActionLog = ref<boolean>(false);
+        const selectedCount = computed(() => {
+            const selectedTasks = tasks.value
+                .filter((task: any) => task.selected)
+                .map((task: any) => task.id);
+
+            const selected = selectedTasks.length;
+            const total = tasks.value.length;
+            return `${selected} out of ${total} row(s) selected.`;
+        });
 
         const fetchActionLog = async () => {
             const result = await getDeviceActionLog(device.value!.mac_address);
@@ -884,6 +1095,7 @@ export default {
             clearActionLog,
             removePendingActions,
             removeSelectedActions,
+            selectedCount,
             showingActionLog,
             closeActionLogPopup,
             downloadFile,
