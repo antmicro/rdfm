@@ -192,7 +192,11 @@ Component wraps functionality for displaying and working with a single rdfm devi
                     :class="['terminal-wrapper', { fullscreen: isFullscreen }]"
                     v-if="isTerminalOpened"
                 >
-                    <Terminal class="terminal" :device="device?.mac_address" />
+                    <Terminal
+                        class="terminal"
+                        :device="device?.mac_address"
+                        @shell-disconnected="disconnect"
+                    />
                 </div>
             </div>
         </template>
@@ -1081,6 +1085,11 @@ export default {
             isFullscreen.value = !isFullscreen.value;
         };
 
+        const disconnect = () => {
+            toggleTerminal();
+            device.value!.connected = false;
+        };
+
         return {
             id: route.params.id,
             interval,
@@ -1108,6 +1117,7 @@ export default {
             terminalButton,
             terminalFullscreen,
             isFullscreen,
+            disconnect,
             allowedTo,
             deviceUpdates,
             deviceVersions,

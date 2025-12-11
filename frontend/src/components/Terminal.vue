@@ -13,7 +13,15 @@ Container for the hterm.js terminal.
 </template>
 
 <script lang="ts">
-import { defineComponent, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import {
+    defineComponent,
+    computed,
+    onMounted,
+    onUnmounted,
+    watch,
+    nextTick,
+    defineEmits,
+} from 'vue';
 
 // @ts-ignore
 import { hterm, lib } from '../third-party/hterm';
@@ -25,7 +33,7 @@ export default defineComponent({
             type: String,
         },
     },
-    setup(props) {
+    setup(props, { emit }) {
         const notifications = useNotifications();
 
         let term: any;
@@ -40,11 +48,7 @@ export default defineComponent({
             'shift-insert-paste': false,
         };
         const closeEventListener = (event: CloseEvent) => {
-            term.io.print('Console unavailable');
-            if (event.reason) {
-                term.io.print(`: ${event.reason}`);
-            }
-            term.io.print('\n\r');
+            emit('shell-disconnected');
 
             notifications.notifyError({
                 headline: 'Device shell connection closed',
