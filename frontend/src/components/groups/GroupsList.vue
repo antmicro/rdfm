@@ -410,6 +410,10 @@ Component wraps functionality for displaying and working with rdfm groups.
                             p:nth-child(2) {
                                 color: var(--gray-700);
                             }
+
+                            svg {
+                                fill: #e2162a;
+                            }
                         }
                     }
                 }

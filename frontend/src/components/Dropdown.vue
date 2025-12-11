@@ -197,6 +197,10 @@ td {
     gap: 0.5rem;
     align-items: center;
     flex-wrap: wrap;
+
+    svg {
+        fill: #e2162a;
+    }
 }
 </style>
 
