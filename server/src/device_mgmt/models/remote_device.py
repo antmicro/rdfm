@@ -14,6 +14,7 @@ from request_models import (
     FsFileDownloadReply,
     FsFileProbeReply,
     UpdateProgress,
+    UpdateVersion,
 )
 
 import simple_websocket
@@ -24,6 +25,7 @@ from rdfm.ws import (
     RDFM_WS_MISSING_CAPABILITIES,
     WebSocketException,
 )
+from rdfm.schema.v1.updates import META_SOFT_VER
 import device_mgmt.action
 import server
 
@@ -184,6 +186,12 @@ class RemoteDevice:
                     f"Device {self.token.device_id} update in progress: {request.progress}%",
                     flush=True,
                 )
+        elif isinstance(request, UpdateVersion):
+            device = server.instance._devices_db.get_device_data(self.token.device_id)
+            metadata = json.loads(device.device_metadata)
+            metadata[META_SOFT_VER] = request.version
+            server.instance._devices_db.update_metadata(self.token.device_id, metadata)
+
         else:
             print("Unknown request:", request, flush=True)
             raise WebSocketException(

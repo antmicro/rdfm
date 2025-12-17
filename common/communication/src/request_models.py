@@ -103,6 +103,11 @@ class UpdateProgress(Request):
     progress: int
 
 
+class UpdateVersion(Request):
+    method: Literal['update_version'] = 'update_version'
+    version: str
+
+
 class Container(BaseModel):
     """container holds a list of models to enable parsing from json"""
     data: Union[
@@ -118,4 +123,5 @@ class Container(BaseModel):
         FsFileProbe,
         FsFileProbeReply,
         UpdateProgress,
+        UpdateVersion,
     ]
