@@ -16,7 +16,11 @@ with a title, subtitle and an optional action button.
                 <Status :connected="connected" :detailed="true" />
             </div>
             <div id="titlebar">
-                <div id="title">{{ title }}</div>
+                <div v-if="smallButtonName" id="title-container">
+                    <div id="title">{{ title }}</div>
+                    <button id="small-button" @click="buttonCallback">{{ smallButtonName }}</button>
+                </div>
+                <div v-else id="title">{{ title }}</div>
                 <div id="subtitle">{{ subtitle }}</div>
             </div>
         </div>
@@ -60,7 +64,7 @@ with a title, subtitle and an optional action button.
             font-family: 'Mona Sans', sans-serif;
             word-break: break-word;
 
-            & > #title {
+            #title {
                 color: var(--gray-1000);
                 font-weight: 700;
                 font-size: 3em;
@@ -69,6 +73,28 @@ with a title, subtitle and an optional action button.
             & > #subtitle {
                 color: var(--gray-900);
                 font-size: 1.3em;
+            }
+
+            & > #title-container {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 2em;
+
+                #small-button {
+                    border: 1px solid var(--gray-400);
+                    border-radius: 8px;
+                    padding: 0.5em;
+                    color: var(--gray-900);
+                    background-color: var(--background-100);
+                    font-size: 1em;
+                    height: fit-content;
+
+                    &:hover {
+                        background-color: var(--gray-200);
+                        color: var(--gray-1000);
+                    }
+                }
             }
         }
     }
@@ -138,6 +164,9 @@ export default defineComponent({
         },
         connected: {
             type: Boolean,
+        },
+        smallButtonName: {
+            type: String,
         },
     },
     components: {
