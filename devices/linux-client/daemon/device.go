@@ -390,6 +390,25 @@ func (d *Device) actionResultCallback(result actions.ActionResult, cancelCtx con
 	return true
 }
 
+func (d *Device) updateSoftwareVersion(cancelCtx context.Context) bool {
+	swVer, err := d.rdfmCtx.GetCurrentArtifactName()
+	if err != nil {
+		log.Warnln("Error collecting metadata: failed to get current software version:", err)
+		return false
+	}
+	res := serverws.UpdateVersion{
+		Method:  "update_version",
+		Version: swVer,
+	}
+
+	err = d.marshalSendRetry(res, cancelCtx)
+	if err != nil {
+		log.Warnln("Sending version update failed:", err)
+		return false
+	}
+	return true
+}
+
 func (d *Device) maintainDeviceConnection(cancelCtx context.Context) {
 	expBackoff := netUtils.NewExpBackoff(200*time.Millisecond, 5*time.Second, 2)
 	expBackoffResetThreshold := 10 * time.Second

@@ -18,7 +18,7 @@ import (
 const MIN_RETRY_INTERVAL = 1
 const MAX_RETRY_INTERVAL = 60
 
-func (d *Device) checkUpdate() error {
+func (d *Device) checkUpdate(cancelCtx context.Context) error {
 	metadata, err := d.collectMetadata()
 	if err != nil {
 		return err
@@ -70,6 +70,8 @@ func (d *Device) checkUpdate() error {
 			log.Println("Failed to install package",
 				pkg.Id, err)
 			// TODO: Do something in case of failure
+		} else {
+			d.updateSoftwareVersion(cancelCtx)
 		}
 	case 204:
 		log.Println("No updates are available")
@@ -104,7 +106,7 @@ func (d *Device) updateCheckerLoop(cancelCtx context.Context, triggerUpdateCheck
 	}()
 
 	for {
-		err = d.checkUpdate()
+		err = d.checkUpdate(cancelCtx)
 		if err != nil {
 			log.Println("Update check failed:", err)
 		}

@@ -145,6 +145,15 @@ func (r FsFileProbeReply) method() string {
 	return r.Method
 }
 
+type UpdateVersion struct {
+	Method  string `json:"method"`
+	Version string `json:"version"`
+}
+
+func (r UpdateVersion) method() string {
+	return r.Method
+}
+
 func CantHandleRequest() Request {
 	res := Alert{
 		Method: "alert",
