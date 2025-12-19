@@ -34,7 +34,7 @@ func (r *RdfmHttpUpdateReader) Read(p []byte) (n int, err error) {
 		if r.body != nil {
 			r.body.Close()
 		}
-		log.Errorf("Connection error - trying to resume")
+		log.Errorf("Connection error - trying to resume download")
 		time.Sleep(time.Duration(rdfmConf.ReconnectRetryTime) * time.Second)
 		response, supportsRangeRequests, err := setupHttpConnection(r.apiClient, r.url, r.offset)
 
@@ -51,11 +51,11 @@ func (r *RdfmHttpUpdateReader) Read(p []byte) (n int, err error) {
 		n, err = r.body.Read(p[r.offset-startOffset:])
 		r.offset += int64(n)
 		if err == nil || err == io.EOF {
-			break
+			return int(r.offset - startOffset), err
 		}
 	}
 
-	return int(r.offset - startOffset), nil
+	return int(r.offset - startOffset), errors.New("Failed to resume download")
 }
 
 func (r *RdfmHttpUpdateReader) Close() error {
