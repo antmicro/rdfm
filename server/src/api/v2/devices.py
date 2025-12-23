@@ -22,6 +22,7 @@ from rdfm.permissions import (
 )
 from rdfm.schema.v2.devices import Device, ActionLog, ActionRemoveRequest
 from rdfm.schema.v2.fs import FsFile
+from rdfm.ws import WebSocketException
 import device_mgmt.action
 import configuration
 from pathlib import Path
@@ -263,6 +264,7 @@ def exec_action(
     """ Execute action on the device.
 
     :status 200: no error
+    :status 202: device is not connected, action execution was queued
     :status 500: action doesn't exist
 
     :>json string output: base64 encoded action output
@@ -288,8 +290,15 @@ def exec_action(
           "status_code": 0
         }
     """
-    status_code, output = device_mgmt.action.execute_action(mac_address, action_id)
-    return {"status_code": status_code, "output": output}, 200
+    try:
+        status_code, output = device_mgmt.action.execute_action(mac_address, action_id)
+        return {"status_code": status_code, "output": output}, 200
+    except WebSocketException as e:
+        if "not connected to the management WS" in e.message:
+            print(e.message, flush=True)
+            return {}, 202
+        else:
+            raise
 
 
 @devices_blueprint.route(

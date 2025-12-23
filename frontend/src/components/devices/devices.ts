@@ -158,6 +158,12 @@ export const execAction = async (macAddress: string, actionId: string) => {
         DEVICE_ACTIONS_EXEC_ENDPOINT(macAddress, actionId),
     );
 
+    if (out.code === 202) {
+        return {
+            success: true,
+            message: 'Device not connected. Queued action execution.',
+        };
+    }
     if (!out.success) {
         return {
             success: false,

@@ -948,7 +948,12 @@ export default {
             setRunning(action_id, false);
 
             if (outcome.success) {
-                if (outcome.data.status_code != 0) {
+                if (!outcome.data) {
+                    notif.notifySuccess({
+                        headline: device.value?.name + ' — ' + action!.action_name,
+                        msg: outcome.message,
+                    });
+                } else if (outcome.data.status_code != 0) {
                     notif.notifyError({
                         headline: device.value?.name + ' — ' + action!.action_name,
                         msg: `Action finished with non-zero exit code: ${outcome.data.status_code}`,
