@@ -53,6 +53,8 @@ export type Action = {
     description: string;
 };
 
+export const deviceActions = reactive(new Map<string, Action[]>());
+
 /**
  * Request specified in
  * https://antmicro.github.io/rdfm/api.html#post--api-v1-auth-register

@@ -785,6 +785,7 @@ import {
     execAction,
     type Action,
     deviceConnections,
+    deviceActions,
 } from './devices';
 import { useRoute, useRouter } from 'vue-router';
 import { ActiveTab } from '@/views/HomeView.vue';
@@ -912,8 +913,12 @@ export default {
                     a.action_name.localeCompare(b.action_name),
                 );
                 actions.value = newActions.data;
+                deviceActions.set(device.value!.mac_address, newActions.data);
             } else {
                 console.warn('Failed to fetch actions');
+                if (deviceActions.has(device.value!.mac_address)) {
+                    actions.value = deviceActions.get(device.value!.mac_address)!;
+                }
             }
         });
 
