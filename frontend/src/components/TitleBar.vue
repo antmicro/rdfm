@@ -11,10 +11,10 @@ with a title, subtitle and an optional action button.
 
 <template>
     <div id="wrapper">
-        <div id="title-section">
-            <div v-if="device" id="status">
-                <Status :connected="connected" :detailed="true" />
-            </div>
+        <div v-if="device" id="status">
+            <Status :connected="connected" :detailed="true" />
+        </div>
+        <div id="content-wrapper">
             <div id="titlebar">
                 <div v-if="smallButtonName" id="title-container">
                     <div id="title">{{ title }}</div>
@@ -23,18 +23,21 @@ with a title, subtitle and an optional action button.
                 <div v-else id="title">{{ title }}</div>
                 <div id="subtitle">{{ subtitle }}</div>
             </div>
-        </div>
-        <div v-if="displayButton" id="actionbar">
-            <button id="action-button" @click="buttonCallback">{{ actionButtonName }}</button>
-        </div>
-        <div id="update" v-if="device && deviceUpdates.has(device) && deviceVersions.has(device)">
-            <UpdateProgress
-                :progress="deviceUpdates.get(device)!"
-                :version="deviceVersions.get(device)!"
-            />
-        </div>
-        <div id="no-update" v-else-if="device">
-            <p>No updates available</p>
+            <div v-if="displayButton" id="actionbar">
+                <button id="action-button" @click="buttonCallback">{{ actionButtonName }}</button>
+            </div>
+            <div
+                id="update"
+                v-if="device && deviceUpdates.has(device) && deviceVersions.has(device)"
+            >
+                <UpdateProgress
+                    :progress="deviceUpdates.get(device)!"
+                    :version="deviceVersions.get(device)!"
+                />
+            </div>
+            <div id="no-update" v-else-if="device">
+                <p>No updates available</p>
+            </div>
         </div>
     </div>
 </template>
@@ -44,19 +47,21 @@ with a title, subtitle and an optional action button.
     border: 1px solid var(--gray-400);
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: start;
     padding: 2em;
 
-    & > #title-section {
+    & > #status {
+        align-content: top;
+        padding-top: 1.5em;
+        padding-right: 1.5em;
+    }
+
+    & > #content-wrapper {
         display: flex;
         flex-direction: row;
-        justify-content: start;
-
-        & > #status {
-            align-content: top;
-            padding-top: 1.5em;
-            padding-right: 1.5em;
-        }
+        justify-content: space-between;
+        flex-wrap: wrap;
+        width: 100%;
 
         & > #titlebar {
             display: flex;
@@ -89,6 +94,8 @@ with a title, subtitle and an optional action button.
                     background-color: var(--background-100);
                     font-size: 1em;
                     height: fit-content;
+                    text-wrap: nowrap;
+                    word-break: none;
 
                     &:hover {
                         background-color: var(--gray-200);
@@ -97,36 +104,36 @@ with a title, subtitle and an optional action button.
                 }
             }
         }
-    }
 
-    & > #actionbar {
-        display: flex;
-        align-items: center;
+        & > #actionbar {
+            display: flex;
+            align-items: center;
 
-        & > #action-button {
-            color: var(--accent-900);
-            background-color: var(--accent-100);
-            border: 2px solid var(--accent-400);
-            border-radius: 5px;
-            font-size: 1em;
-            padding: 0.75em;
-            cursor: pointer;
+            & > #action-button {
+                color: var(--accent-900);
+                background-color: var(--accent-100);
+                border: 2px solid var(--accent-400);
+                border-radius: 5px;
+                font-size: 1em;
+                padding: 0.75em;
+                cursor: pointer;
 
-            &:hover {
-                background-color: var(--accent-200);
+                &:hover {
+                    background-color: var(--accent-200);
+                }
             }
         }
-    }
 
-    & > #no-update {
-        & > p {
-            color: var(--gray-900);
+        & > #no-update {
+            & > p {
+                color: var(--gray-900);
+            }
         }
     }
 }
 
 @media screen and (max-width: 500px) {
-    #wrapper {
+    #content-wrapper {
         flex-direction: column;
 
         & > #actionbar {
