@@ -100,7 +100,7 @@ def wait_for_device_connection():
 async def test_actions(process):
     # Request action before device connects
     resp = requests.get(DEVICE_ACTIONS_VALID_EXEC_ENDPOINT)
-    assert resp.status_code == 500
+    assert resp.status_code == 202
 
     # Check if action appears in action log
     resp = requests.get(DEVICE_ACTION_LOG_ENDPOINT)
@@ -175,11 +175,11 @@ async def test_actions(process):
 async def test_removing_pending_actions(process):
     # Request actions
     resp = requests.get(DEVICE_ACTIONS_VALID_EXEC_ENDPOINT)
-    assert resp.status_code == 500
+    assert resp.status_code == 202
     resp = requests.get(DEVICE_ACTIONS_VALID_EXEC_ENDPOINT)
-    assert resp.status_code == 500
+    assert resp.status_code == 202
     resp = requests.get(DEVICE_ACTIONS_VALID_EXEC_ENDPOINT)
-    assert resp.status_code == 500
+    assert resp.status_code == 202
 
     # Check if actions appears in action log
     resp = requests.get(DEVICE_ACTION_LOG_ENDPOINT)
@@ -207,11 +207,11 @@ async def test_removing_pending_actions(process):
 async def test_removing_selected_actions(process):
     # Request actions
     resp = requests.get(DEVICE_ACTIONS_VALID_EXEC_ENDPOINT)
-    assert resp.status_code == 500
+    assert resp.status_code == 202
     resp = requests.get(DEVICE_ACTIONS_VALID_EXEC_ENDPOINT)
-    assert resp.status_code == 500
+    assert resp.status_code == 202
     resp = requests.get(DEVICE_ACTIONS_VALID_EXEC_ENDPOINT)
-    assert resp.status_code == 500
+    assert resp.status_code == 202
 
     # Check if action appears in action log
     resp = requests.get(DEVICE_ACTION_LOG_ENDPOINT)
