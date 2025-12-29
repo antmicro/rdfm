@@ -61,19 +61,20 @@ class ActionLogsDB:
             session.refresh(action)
             return action.id
 
-    def get_status(self, id: str) -> str:
-        """Fetch the status of a specified action.
-        """
-        with Session(self.engine) as session:
-            return session.scalar(
-                select(models.action_log.ActionLog.status)
-                .where(models.action_log.ActionLog.id == id)
-            )
-
     def update_status(self, id: str, status: str, download_url: Optional[str] = None):
         """Update the status of a specified action.
         """
         with Session(self.engine) as session:
+            if status == "sent":
+                # Do not overwrite completed status
+                # if action control arrived after action result
+                old_status = (
+                    select(models.action_log.ActionLog.status)
+                    .where(models.action_log.ActionLog.id == id)
+                )
+                if old_status != "pending":
+                    return
+
             stmt = (
                 update(models.action_log.ActionLog)
                 .values({
