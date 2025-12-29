@@ -50,6 +50,7 @@ class RemoteDevice:
         self.token = token
         self.capabilities = {}
         self.actions = {}
+        self.capabilities_updated = threading.Event()
         self.actions_updated = threading.Event()
         self.update_version = None
 
@@ -92,7 +93,7 @@ class RemoteDevice:
             server.instance._devices_db.update_capabilities(
                 self.token.device_id, request.capabilities
             )
-            device_mgmt.action.send_action_queue(self.token.device_id)
+            self.capabilities_updated.set()
         elif isinstance(request, ActionExecResult):
             print(
                 "Action execution result for",
@@ -221,6 +222,12 @@ class RemoteDevice:
             server.instance.sse.publish(json.dumps(message), type='connect')
         except KeyError:
             print("Redis is not configured. Unable to send device updates.")
+
+        thread = threading.Thread(
+            target=device_mgmt.action.send_action_queue,
+            args=(self.token.device_id, )
+        )
+        thread.start()
 
         while True:
             self.__handle_device_message(self.receive_message())

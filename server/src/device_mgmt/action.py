@@ -162,10 +162,20 @@ def send_action_queue(mac_address: str):
         msg = f"Device '{mac_address}' not connected to the management WS."
         raise WebSocketException(msg, RDFM_WS_INVALID_REQUEST)
 
+    if not remote_device.capabilities_updated.wait(ACTION_UPDATE_TIMEOUT):
+        msg = f"Capability list for '{mac_address} timed-out in {ACTION_UPDATE_TIMEOUT}s.'"
+        raise WebSocketException(msg, RDFM_WS_INVALID_REQUEST)
+
+    ensure_actions(mac_address)
     actions = server.instance._action_logs_db.fetch_device_queue(mac_address)
 
     for action in actions:
-        action_type = remote_device.actions.get(action.action_id)
+        if not (action_type := remote_device.actions.get(action.action_id)):
+            server.instance._action_logs_db.update_status(action.id, "error")
+            msg = f"Skipping invalid action '{action.action_id}' for device '{mac_address}'."
+            print(msg, flush=True)
+            continue
+
         execution = ActionExecution(action_type, action.id)
         server.instance.action_executions.add(execution)
 
