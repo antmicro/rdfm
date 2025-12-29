@@ -11,6 +11,7 @@ SERVER = "http://127.0.0.1:5000/"
 DEVICE_ACTIONS_ENDPOINT = f"{SERVER}/api/v2/devices/00:00:00:00:00:00/action/list"
 DEVICE_ACTIONS_VALID_EXEC_ENDPOINT = f"{SERVER}/api/v2/devices/00:00:00:00:00:00/action/exec/valid"
 DEVICE_ACTIONS_INVALID_EXEC_ENDPOINT = f"{SERVER}/api/v2/devices/00:00:00:00:00:00/action/exec/invalid"
+DEVICE_ACTIONS_UNSUPPORTED_EXEC_ENDPOINT = f"{SERVER}/api/v2/devices/00:00:00:00:00:00/action/exec/unsupported"
 DEVICE_ACTION_LOG_ENDPOINT = f"{SERVER}/api/v2/devices/00:00:00:00:00:00/action/log"
 DEVICE_PENDING_ACTIONS_ENDPOINT = f"{SERVER}/api/v2/devices/00:00:00:00:00:00/action/pending"
 DEVICE_REMOVE_ACTIONS_ENDPOINT = f"{SERVER}/api/v2/devices/00:00:00:00:00:00/action/remove"
@@ -94,6 +95,26 @@ def wait_for_device_connection():
         if DEVICE_CONNECTED.is_set():
             return True
     return False
+
+
+def check_action_log():
+    resp = requests.get(DEVICE_ACTION_LOG_ENDPOINT)
+    assert resp.status_code == 200
+    actions = resp.json()
+
+    # Wait until actions are executed
+    retry_count = 0
+    status_codes = [action["status"] for action in actions]
+    while retry_count < 5 and ("pending" in status_codes or "sent" in status_codes):
+        time.sleep(1)
+        resp = requests.get(DEVICE_ACTION_LOG_ENDPOINT)
+        assert resp.status_code == 200
+        actions = resp.json()
+        status_codes = [action["status"] for action in actions]
+        retry_count += 1
+    assert retry_count < 5, "too many retries"
+
+    return actions
 
 
 @pytest.mark.asyncio
@@ -244,3 +265,36 @@ async def test_removing_selected_actions(process):
     assert actions[0]["action"] == "valid"
     assert actions[0]["status"] == "pending"
     assert len(actions) == 1
+
+
+@pytest.mark.asyncio
+async def test_unsupported_actions(process):
+    # Request action before device connects
+    resp = requests.get(DEVICE_ACTIONS_VALID_EXEC_ENDPOINT)
+    assert resp.status_code == 202
+
+    # Request unsupported action before device connects
+    resp = requests.get(DEVICE_ACTIONS_UNSUPPORTED_EXEC_ENDPOINT)
+    assert resp.status_code == 202
+
+    # Check action log
+    resp = requests.get(DEVICE_ACTION_LOG_ENDPOINT)
+    assert resp.status_code == 200
+    actions = resp.json()
+    assert actions[0]["action"] == "unsupported"
+    assert actions[0]["status"] == "pending"
+    assert actions[1]["action"] == "valid"
+    assert actions[1]["status"] == "pending"
+
+    # Connect device
+    dev = MockedDevice("00:00:00:00:00:00", "v0", "dummy")
+    await client(dev)
+    connected = wait_for_device_connection()
+    assert connected == True
+
+    actions = check_action_log()
+
+    assert actions[0]["action"] == "unsupported"
+    assert actions[0]["status"] == "error"
+    assert actions[1]["action"] == "valid"
+    assert actions[1]["status"] == "0"
