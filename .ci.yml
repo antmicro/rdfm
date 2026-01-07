@@ -473,14 +473,19 @@ test-rdfm-artifact:
 # ===== rdfm-jwt-auth ===== #
 
 build-rdfm-jwt-auth:
-  image: maven:3.9.11-eclipse-temurin-17
   stage: build
+  extends: .install-poetry-and-apptainer
   script:
-    - cd server/deploy/pubsub-demo/rdfm-jwt-auth
-    - mvn package
+    - (cd server/deploy/pubsub-demo/rdfm-jwt-auth && mvn package)
+    - cp server/deploy/pubsub-demo/rdfm-jwt-auth/target/rdfm-jwt-auth-*.jar server/deploy/pubsub-demo/tests
+    - cd server/deploy/pubsub-demo/tests
+    - mkdir tmp
+    - APPTAINER_TMPDIR=$(pwd)/tmp apptainer -v build test_kafka.sif test_kafka.def
   artifacts:
+    expire_in: 1 day
     paths:
       - server/deploy/pubsub-demo/rdfm-jwt-auth/target/rdfm-jwt-auth-*.jar
+      - server/deploy/pubsub-demo/tests/test_kafka.sif
 
 # ===== rdfm-plotter ===== #
 
@@ -491,15 +496,11 @@ test-rdfm-plotter:
   dependencies:
     - build-rdfm-jwt-auth
   script:
-    - mv server/deploy/pubsub-demo/rdfm-jwt-auth/target/rdfm-jwt-auth-*.jar tools/rdfm-plotter/tests
-    - cd tools/rdfm-plotter/tests
-    - mkdir tmp
-    - APPTAINER_TMPDIR=$(pwd)/tmp apptainer -v build test_kafka.sif test_kafka.def
-    - rm -rf ./tmp
-    - cd ..
+    - SIFPATH=$(pwd)/server/deploy/pubsub-demo/tests
+    - cd tools/rdfm-plotter
     - poetry install
-    - poetry run pytest tests/test-plotter.py -s -v --testpath $(pwd)/tests
-    - poetry run pytest tests/test-rdfm-jwt-auth.py -s -v --testpath $(pwd)/tests
+    - poetry run pytest tests/test-plotter.py -s -v --testpath $SIFPATH
+    - poetry run pytest tests/test-rdfm-jwt-auth.py -s -v --testpath $SIFPATH
 
 # ===== rdfm-frontend ===== #
 
