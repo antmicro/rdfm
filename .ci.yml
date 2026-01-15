@@ -252,6 +252,8 @@ test-server-stress:
     paths:
       - server/tests/logs/*
     when: always
+  only:
+    - schedules
 
 test-server-logs:
   extends: .build
