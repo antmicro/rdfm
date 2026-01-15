@@ -553,18 +553,13 @@ build-rdfm-frontend:
 docs-build:
   stage: docs-build
   <<: *common_only
+  image: $CI_REGISTRY_IMAGE:rdfm-ci-documentation-trixie
   before_script:
-    # Disable venvs and just install everything globally
-    # The server module must be accessible by Sphinx to
-    # properly autogenerate API documentation
-    - poetry config virtualenvs.create false
-    # Install doc building requirements
-    - pip3 install -r documentation/requirements.txt
-    # Build and install the server
-    - (cd server/ && poetry build --verbose && poetry install --verbose && pip3 install --verbose -e .)
+    - cd documentation/
+    - poetry install
   script:
     - cd documentation/
-    - make html latexpdf
+    - poetry run make html latexpdf
     - cp build/latex/*.pdf build/html/
     # Make sure the docs archive lands in the root of the repository
     - tar cf ../$CI_DOCS_ARCHIVE -C build/html/ .

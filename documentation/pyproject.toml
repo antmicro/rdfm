@@ -1,0 +1,29 @@
+[project]
+name = "documentation"
+version = "0.1.0"
+description = "Generate documentation"
+authors = [
+    { name = "Antmicro Ltd.", email = "contact@antmicro.com" }
+]
+license = "Apache-2.0"
+readme = "README.md"
+requires-python = ">=3.11, <4.0"
+dependencies = [
+    "rdfm_mgmt_communication>=0.1.0",
+    "rdfm-mgmt-server>=0.1.0",
+    "sphinx (==7.1.2)",
+    "sphinxcontrib-httpdomain (>=1.8.1,<2.0.0)",
+    "antmicro-sphinx-utils @ https://github.com/antmicro/antmicro-sphinx-utils/archive/8907a689189de91ec2fcedd1ab8088f123bcf0ab.zip"
+]
+
+[tool.poetry]
+package-mode = false
+requires-poetry = ">=2.0"
+
+[tool.poetry.dependencies]
+rdfm_mgmt_communication = {path = "../common/communication"}
+rdfm-mgmt-server = { path = "../server" }
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
