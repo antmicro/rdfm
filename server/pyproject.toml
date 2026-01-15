@@ -1,42 +1,50 @@
-[tool.poetry]
+[project]
 name = "rdfm-mgmt-server"
 version = "0.1.0"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = [
+    { name = "Antmicro Ltd.", email = "contact@antmicro.com" }
+]
 readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.11, <4.0"
+dependencies = [
+    "rdfm_mgmt_communication>=0.1.0",
+    "pydantic (>=2.0.3,<3.0.0)",
+    "flask (>=2.3.2,<3.0.0)",
+    "types-jwt (>=0.1.3,<1.0.0)",
+    "pyjwt (>=2.8.0,<3.0.0)",
+    "sqlalchemy (>=2.0.19,<3.0.0)",
+    "types-flask (>=1.1.6,<2.0.0)",
+    "types-pyjwt (>=1.7.1,<2.0.0)",
+    "pytest (>=7.4.0,<8.0.0)",
+    "pexpect (>=4.8.0,<5.0.0)",
+    "requests (>=2.31.0,<3.0.0)",
+    "marshmallow (>=3.20.1,<4.0.0)",
+    "networkx (>=3.1,<4.0)",
+    "pycryptodome (>=3.18.0,<4.0.0)",
+    "boto3 (>=1.28.57,<2.0.0)",
+    "moto (>=4.2.4,<5.0.0)",
+    "authlib==1.2.1",
+    "simple-websocket (>=1.0.0,<2.0.0)",
+    "gevent (>=26.5.0)",
+    "gunicorn (>=21.2.0,<22.0.0)",
+    "psycopg2 (>=2.9.9,<3.0.0)",
+    "alembic (>=1.13.1,<2.0.0)",
+    "SQLAlchemy-Utils (>=0.41.2,<1.0.0)",
+    "flask-cors (>=4.0.1,<5.0.0)",
+    "flask-sse (>=1.0.0,<2.0.0)",
+    "kafka-python==2.2.15",
+]
+
+[tool.poetry]
+requires-poetry = ">=2.0"
 packages = [
     { include = "**/*.py", from = "src/" },
 ]
 
 [tool.poetry.dependencies]
-python = "^3.11"
-jsonschema = "^4.17.3"
 rdfm_mgmt_communication = {path = "../common/communication"}
-pydantic = "^2.0.3"
-flask = "^2.3.2"
-types-jwt = "^0.1.3"
-pyjwt = "^2.8.0"
-sqlalchemy = "^2.0.19"
-types-flask = "^1.1.6"
-types-pyjwt = "^1.7.1"
-pytest = "^7.4.0"
-pexpect = "^4.8.0"
-requests = "^2.31.0"
-marshmallow = "^3.20.1"
-networkx = "^3.1"
-pycryptodome = "^3.18.0"
-boto3 = "^1.28.57"
-moto = "^4.2.4"
-authlib = "==1.2.1"
-simple-websocket = "^1.0.0"
-gevent = "^23.9.1"
-gunicorn = "^21.2.0"
-psycopg2 = "^2.9.9"
-alembic = "^1.13.1"
-SQLAlchemy-Utils = "^0.41.2"
-flask-cors = "^4.0.1"
-flask-sse = "^1.0.0"
-kafka-python = "==2.2.15"
 
 [tool.poetry.group.test.dependencies]
 types-jsonschema = "^4.17.0.8"
