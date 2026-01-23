@@ -12,6 +12,7 @@ variables:
   SCALENODE_CPU: 2
   SCALENODE_RAM: 2048
   SCALENODE_DISK: 20
+  SCALENODE_KERNEL: legacy
 
 .build-base:
   variables:
