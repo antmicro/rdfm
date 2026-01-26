@@ -106,7 +106,7 @@ After creating the client and pasting all the necessary fields into `server.prop
 Next configure the resources which define where the authorization rules should apply. For this simple demo the resource is going to be a single topic:
 
 1. Head to clients tab
-2. Click on the intropsection client previusly created
+2. Click on the introspection client previusly created
 3. Under that client, head to the authorization tab
 4. Under the authorization tab, head to the resources tab
 5. Create new resource with name and display name of `Topic:RDFM`, optionally you can also declare it to be of type `Topic`
@@ -126,7 +126,7 @@ After that create a client policy:
 Finally create a permission that ties it all together:
 
 1. Head to clients clients tab
-2. Click on the intropsection client previusly created
+2. Click on the introspection client previusly created
 3. Under that client, head to the authorization tab
 4. Under the authorization tab, head to the permissions tab
 5. Click on create scoped-based permission
