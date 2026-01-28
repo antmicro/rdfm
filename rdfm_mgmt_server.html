@@ -1,0 +1,1302 @@
+
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="">
+    
+    
+      
+        <title>RDFM Management Server - RDFM Documentation</title>
+      
+    
+    
+      
+        
+        
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+        <link rel="stylesheet" type="text/css" href="_static/sphinx_immaterial_theme.0074f731f8a211b06.min.css?v=a5c09059" />
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="deep-orange">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="index.html" title="RDFM Documentation" class="md-header__button md-logo" aria-label="RDFM Documentation" data-md-component="logo">
+      <img src="_static/white.svg" alt="logo">
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            RDFM Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              RDFM Management Server
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="deep-orange"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5c-.84 0-1.65.15-2.39.42L12 2M3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29L3.34 7m.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14L3.36 17M20.65 7l-1.77 3.79a7.023 7.023 0 0 0-2.38-4.15l4.15.36m-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29L20.64 17M12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44L12 22Z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3 3.19.09m3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95 2.06.05m-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31Z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <div class="md-header__button">
+        <a href="rdfm-docs.pdf" title="PDF - rdfm-docs.pdf">
+          <div class="md-icon">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M64 0C28.7 0 0 28.7 0 64v384c0 35.3 28.7 64 64 64h256c35.3 0 64-28.7 64-64V160H256c-17.7 0-32-14.3-32-32V0H64zm192 0v128h128L256 0zM64 224h24c30.9 0 56 25.1 56 56s-25.1 56-56 56h-8v32c0 8.8-7.2 16-16 16s-16-7.2-16-16V240c0-8.8 7.2-16 16-16zm24 80c13.3 0 24-10.7 24-24s-10.7-24-24-24h-8v48h8zm72-64c0-8.8 7.2-16 16-16h24c26.5 0 48 21.5 48 48v64c0 26.5-21.5 48-48 48h-24c-8.8 0-16-7.2-16-16V240zm32 112h8c8.8 0 16-7.2 16-16v-64c0-8.8-7.2-16-16-16h-8v96zm96-128h48c8.8 0 16 7.2 16 16s-7.2 16-16 16h-32v32h32c8.8 0 16 7.2 16 16s-7.2 16-16 16h-32v48c0 8.8-7.2 16-16 16s-16-7.2-16-16V240c0-8.8 7.2-16 16-16z"/></svg>
+          </div>
+        </a>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="index.html" title="RDFM Documentation" class="md-nav__button md-logo" aria-label="RDFM Documentation" data-md-component="logo">
+      <img src="_static/white.svg" alt="logo">
+    </a>
+    RDFM Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="introduction.html" class="md-nav__link">
+        <span class="md-ellipsis">Introduction</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="system_overview.html" class="md-nav__link">
+        <span class="md-ellipsis">System Architecture</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="rdfm_linux_device_client.html" class="md-nav__link">
+        <span class="md-ellipsis">RDFM Linux Device Client</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="rdfm_android_device_client.html" class="md-nav__link">
+        <span class="md-ellipsis">RDFM Android Device Client</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="rdfm_mcumgr_device_client.html" class="md-nav__link">
+        <span class="md-ellipsis">RDFM MCUmgr Device Client</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="rdfm_artifact.html" class="md-nav__link">
+        <span class="md-ellipsis">RDFM Artifact utility</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="rdfm_manager.html" class="md-nav__link">
+        <span class="md-ellipsis">RDFM Manager utility</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          <span class="md-ellipsis">RDFM Management Server</span>
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="#" class="md-nav__link md-nav__link--active">
+        <span class="md-ellipsis">RDFM Management Server</span>
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">Introduction</span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rest-api" class="md-nav__link">
+    <span class="md-ellipsis">REST API</span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setting-up-a-dockerized-development-environment" class="md-nav__link">
+    <span class="md-ellipsis">Setting up a Dockerized development environment</span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-via-environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">Configuration via environment variables</span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuring-package-storage-location" class="md-nav__link">
+    <span class="md-ellipsis">Configuring package storage location</span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuring package storage location">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#storing-packages-locally" class="md-nav__link">
+    <span class="md-ellipsis">Storing packages locally</span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storing-packages-on-s3-compatible-storage" class="md-nav__link">
+    <span class="md-ellipsis">Storing packages on S3-<wbr>compatible storage</span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuring-api-authentication" class="md-nav__link">
+    <span class="md-ellipsis">Configuring API authentication</span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuring API authentication">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-configuration" class="md-nav__link">
+    <span class="md-ellipsis">Basic configuration</span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#users-and-applications-permissions" class="md-nav__link">
+    <span class="md-ellipsis">Users’ and applications’ permissions</span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Users’ and applications’ permissions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#scopes" class="md-nav__link">
+    <span class="md-ellipsis">Scopes</span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#permissions" class="md-nav__link">
+    <span class="md-ellipsis">Permissions</span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Permissions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#assigning-a-permission" class="md-nav__link">
+    <span class="md-ellipsis">Assigning a Permission</span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-authentication-using-keycloak" class="md-nav__link">
+    <span class="md-ellipsis">API authentication using Keycloak</span>
+  </a>
+  
+    <nav class="md-nav" aria-label="API authentication using Keycloak">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#running-the-services" class="md-nav__link">
+    <span class="md-ellipsis">Running the services</span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keycloak-configuration" class="md-nav__link">
+    <span class="md-ellipsis">Keycloak configuration</span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-an-api-client" class="md-nav__link">
+    <span class="md-ellipsis">Adding an API client</span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-user" class="md-nav__link">
+    <span class="md-ellipsis">Adding a User</span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding a User">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuring-frontend-application" class="md-nav__link">
+    <span class="md-ellipsis">Configuring frontend application</span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuring-https" class="md-nav__link">
+    <span class="md-ellipsis">Configuring HTTPS</span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuring HTTPS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#https-demo-deployment" class="md-nav__link">
+    <span class="md-ellipsis">HTTPS demo deployment</span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#production-deployments" class="md-nav__link">
+    <span class="md-ellipsis">Production deployments</span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Production deployments">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#production-considerations" class="md-nav__link">
+    <span class="md-ellipsis">Production considerations</span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#production-example-deployment" class="md-nav__link">
+    <span class="md-ellipsis">Production example deployment</span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-more-advanced-example-of-production-deployment" class="md-nav__link">
+    <span class="md-ellipsis">A more advanced example of production deployment</span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="rdfm_ota_manual.html" class="md-nav__link">
+        <span class="md-ellipsis">RDFM OTA Manual</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="server_operation.html" class="md-nav__link">
+        <span class="md-ellipsis">Server Integration flows</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="rdfm_frontend.html" class="md-nav__link">
+        <span class="md-ellipsis">RDFM Frontend</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api.html" class="md-nav__link">
+        <span class="md-ellipsis">RDFM Server API Reference</span>
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset" role="main">
+                  
+
+
+<h1 id="rdfm-management-server">RDFM Management Server<a class="headerlink" href="#rdfm-management-server" title="Permalink to this heading">¶</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading">¶</a></h2>
+<p>The RDFM Management Server is a core part of the RDFM ecosystem.
+The server manages incoming device connections and grants authorization only to those which are allowed to check in with the server.
+It also handles package upload and management, deploy group management and other crucial functionality required for robust and secure device Over-The-Air (OTA) updates along with allowing remote system management without exposing devices to the outside world.</p>
+<h2 id="rest-api">REST API<a class="headerlink" href="#rest-api" title="Permalink to this heading">¶</a></h2>
+<p>The server exposes a management and device API used by management software and end devices.
+A comprehensive list of all API endpoints is available in the <a class="reference internal" href="api.html"><span class="std std-doc">RDFM Server API Reference chapter</span></a>.</p>
+<h2 id="setting-up-a-dockerized-development-environment">Setting up a Dockerized development environment<a class="headerlink" href="#setting-up-a-dockerized-development-environment" title="Permalink to this heading">¶</a></h2>
+<p>The preferred method for running the RDFM server is by using a Docker container.
+To set up a local development environment, first clone the RDFM repository:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/antmicro/rdfm.git
+<span class="nb">cd</span><span class="w"> </span>rdfm/
+</code></pre></div>
+</div>
+<p>A <code class="docutils literal notranslate"><span class="pre">Dockerfile</span></code> is provided in the <code class="docutils literal notranslate"><span class="pre">server/deploy/</span></code> directory, that builds a container suitable for running the server.
+Currently, it is required to build the container image manually.
+To do this, run the following from the <strong>cloned RDFM repository root</strong> folder:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code>docker<span class="w"> </span>build<span class="w"> </span>-f<span class="w"> </span>server/deploy/Dockerfile<span class="w"> </span>-t<span class="w"> </span>antmicro/rdfm-server:latest<span class="w"> </span>.
+</code></pre></div>
+</div>
+<p>A simple <code class="docutils literal notranslate"><span class="pre">docker-compose</span></code> file that can be used to run the server is provided below and in the <code class="docutils literal notranslate"><span class="pre">server/deploy/docker-compose.development.yml</span></code> file.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><code><span class="nt">services</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">rdfm-server</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">antmicro/rdfm-server:latest</span>
+<span class="w">    </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">unless-stopped</span>
+<span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RDFM_JWT_SECRET=&lt;REPLACE_WITH_CUSTOM_JWT_SECRET&gt;</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RDFM_DB_CONNSTRING=sqlite:////database/development.db</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RDFM_HOSTNAME=rdfm-server</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RDFM_API_PORT=5000</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RDFM_DISABLE_ENCRYPTION=1</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RDFM_DISABLE_API_AUTH=1</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RDFM_LOCAL_PACKAGE_DIR=/packages/</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RDFM_WSGI_SERVER=werkzeug</span>
+<span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;5000:5000&quot;</span>
+<span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">db:/database/</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pkgs:/packages/</span>
+
+<span class="nt">volumes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">db</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">pkgs</span><span class="p">:</span>
+</code></pre></div>
+</div>
+<p>You can then start the server using the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code>docker-compose<span class="w"> </span>-f<span class="w"> </span>server/deploy/docker-compose.development.yml<span class="w"> </span>up
+</code></pre></div>
+</div>
+<h2 id="configuration-via-environment-variables">Configuration via environment variables<a class="headerlink" href="#configuration-via-environment-variables" title="Permalink to this heading">¶</a></h2>
+<p>You can change the configuration of the RDFM server by using the following environment variables:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_JWT_SECRET</span></code> - secret key used by the server when issuing JWT tokens, this value must be kept secret and not easily guessable (for example, a random hexadecimal string).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_DB_CONNSTRING</span></code> - database connection string, for examples please refer to: <a class="reference external" href="https://docs.sqlalchemy.org/en/20/core/engines.html#backend-specific-urls">SQLAlchemy - Backend-specific URLs</a>. Currently, only the SQLite and PostgreSQL engines were verified to work with RDFM (however, the PostgreSQL engine requires adding additional dependencies which are currently not part of the default server image - this may change in the future).</p></li>
+</ul>
+<p>Development configuration:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_DISABLE_ENCRYPTION</span></code> - if set, disables the use of HTTPS, falling back to exposing the API over HTTP. This can only be used in production if an additional HTTPS reverse proxy is used in front of the RDFM server.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_DISABLE_API_AUTH</span></code> - if set, disables request authentication on the exposed API routes. <strong>WARNING: This is a development flag only! Do not use in production!</strong> This causes all API methods to be freely accessible, without any access control in place!</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_ENABLE_CORS</span></code> - if set, disables CORS checks, which in consequence allows any origin to access the server. <strong>WARNING: This is a development flag only! Do not use in production!</strong></p></li>
+</ul>
+<p>HTTP/WSGI configuration:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_HOSTNAME</span></code> - hostname/IP address to listen on. This is additionally used for constructing package URLs when storing packages in a local directory.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_API_PORT</span></code> - API port.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_SERVER_CERT</span></code> - required when HTTPS is enabled; path to the server’s certificate. The certificate can be stored on a Docker volume mounted to the container. For reference on generating the certificate/key pairs, see the <code class="docutils literal notranslate"><span class="pre">server/tests/certgen.sh</span></code> script.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_SERVER_KEY</span></code> - required when HTTPS is enabled; path to the server’s private key. Additionally, the above also applies here.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_WSGI_SERVER</span></code> - WSGI server to use, this value should be left default. Accepted values: <code class="docutils literal notranslate"><span class="pre">gunicorn</span></code> (<strong>default</strong>, production-ready), <code class="docutils literal notranslate"><span class="pre">werkzeug</span></code> (recommended for development).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_WSGI_MAX_CONNECTIONS</span></code> - (when using Gunicorn) maximum amount of connections available to the server worker. This value must be set to at minimum the amount of devices that are expected to be maintaining a persistent (via WebSocket) connection with the server. Default: <code class="docutils literal notranslate"><span class="pre">4000</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_GUNICORN_WORKER_TIMEOUT</span></code> - (when using Gunicorn) maximum allowed timeout of request handling on the server worker. Configuring this option may be necessary when uploading large packages.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_INCLUDE_FRONTEND_ENDPOINT</span></code> - specifies whether the RDFM server should serve the frontend application. If set, the server will serve the frontend application from endpoint <code class="docutils literal notranslate"><span class="pre">/api/static/frontend</span></code>. Before setting this variable, the frontend application must be built and placed in the <code class="docutils literal notranslate"><span class="pre">frontend/dist</span></code> directory.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_FRONTEND_APP_URL</span></code> - specifies URL to the frontend application. This variable is required when <code class="docutils literal notranslate"><span class="pre">RDFM_INCLUDE_FRONTEND_ENDPOINT</span></code> is not set, as backend HTTP server has to know where to redirect the <strong>user</strong>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">REDIS_HOST</span></code> - hostname for Redis, a cache event store used for sending server side events.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">REDIS_PORT</span></code> - port for Redis, a cache event store used for sending server side events.</p></li>
+</ul>
+<p>API OAuth2 configuration (must be present when <code class="docutils literal notranslate"><span class="pre">RDFM_DISABLE_API_AUTH</span></code> is omitted):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_OAUTH_URL</span></code> - specifies the URL to an authorization server endpoint compatible with the RFC 7662 OAuth2 Token Introspection extension. This endpoint is used to authorize access to the RDFM server based on tokens provided in requests made by API users.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_LOGIN_URL</span></code> - specifies the URL to a login page of the authorization server. It is used to authorize users and generate an access token and start a session.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_LOGOUT_URL</span></code> - specified the URL to a logout page of the authorization server. It is used to end the session and revoke the access token.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_OAUTH_CLIENT_ID</span></code> - if the authorization server endpoint provided in <code class="docutils literal notranslate"><span class="pre">RDFM_OAUTH_URL</span></code> requires the RDFM server to authenticate, this variable defines the OAuth2 <code class="docutils literal notranslate"><span class="pre">client_id</span></code> used for authentication.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_OAUTH_CLIENT_SEC</span></code> - if the authorization server endpoint provided in <code class="docutils literal notranslate"><span class="pre">RDFM_OAUTH_URL</span></code> requires the RDFM server to authenticate, this variable defines the OAuth2 <code class="docutils literal notranslate"><span class="pre">client_secret</span></code> used for authentication.</p></li>
+</ul>
+<p>Package storage configuration:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_STORAGE_DRIVER</span></code> - storage driver to use for storing artifacts. Accepted values: <code class="docutils literal notranslate"><span class="pre">local</span></code> (default), <code class="docutils literal notranslate"><span class="pre">s3</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_LOCAL_PACKAGE_DIR</span></code> - specifies a path (local for the server) to a directory where the packages are stored.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_S3_BUCKET</span></code> - when using S3 storage, name of the bucket to upload the packages to.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_S3_ACCESS_KEY_ID</span></code> - when using S3 storage, Access Key ID to access the specified bucket.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_S3_ACCESS_SECRET_KEY</span></code> - when using S3 storage, Secret Access Key to access the specified bucket.</p></li>
+</ul>
+<h2 id="configuring-package-storage-location">Configuring package storage location<a class="headerlink" href="#configuring-package-storage-location" title="Permalink to this heading">¶</a></h2>
+<h3 id="storing-packages-locally">Storing packages locally<a class="headerlink" href="#storing-packages-locally" title="Permalink to this heading">¶</a></h3>
+<p>By default (when not using one of the above deployment setups), the server stores all uploaded packages to a temporary folder under <code class="docutils literal notranslate"><span class="pre">/tmp/.rdfm-local-storage/</span></code>.
+To persist package data, configuration of an upload folder is required.
+This can be done by using the <code class="docutils literal notranslate"><span class="pre">RDFM_LOCAL_PACKAGE_DIR</span></code> environment variable (in the Dockerized deployment), which should contain a path to the desired upload folder.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This storage method should NOT be used for production deployments!
+The performance of the built-in file server is severely limited and provides NO caching, which will negatively affect the update speed for all devices even when a few of them try downloading an update package at the same time.
+It is recommended to use a dedicated storage solution such as S3 to store packages.</p>
+</div>
+<h3 id="storing-packages-on-s3-compatible-storage">Storing packages on S3-compatible storage<a class="headerlink" href="#storing-packages-on-s3-compatible-storage" title="Permalink to this heading">¶</a></h3>
+<p>The RDFM server can also store package data on S3 and other S3 API-compatible object storage servers.
+The following environment variables enable changing the configuration of the S3 integration:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_S3_BUCKET</span></code> - name of the bucket to upload the packages to</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_S3_ACCESS_KEY_ID</span></code> - Access Key ID to access the specified bucket</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_S3_ACCESS_SECRET_KEY</span></code> - Secret Access Key to access the specified bucket
+Additionally, when using S3 storage, the environment variable <code class="docutils literal notranslate"><span class="pre">RDFM_STORAGE_DRIVER</span></code> must be set to <code class="docutils literal notranslate"><span class="pre">s3</span></code>.</p></li>
+</ul>
+<p>An example reference setup utilizing the MinIO Object Storage server is provided in the <code class="docutils literal notranslate"><span class="pre">server/deploy/docker-compose.minio.yml</span></code> file.
+To run it, first build the RDFM server container like in the above setup guides:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code>docker<span class="w"> </span>build<span class="w"> </span>-f<span class="w"> </span>server/deploy/Dockerfile<span class="w"> </span>-t<span class="w"> </span>antmicro/rdfm-server:latest<span class="w"> </span>.
+</code></pre></div>
+</div>
+<p>Then, run the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span class="n">docker</span><span class="o">-</span><span class="n">compose</span> <span class="o">-</span><span class="n">f</span> <span class="n">server</span><span class="o">/</span><span class="n">deploy</span><span class="o">/</span><span class="n">docker</span><span class="o">-</span><span class="n">compose</span><span class="o">.</span><span class="n">minio</span><span class="o">.</span><span class="n">development</span><span class="o">.</span><span class="n">yml</span> <span class="n">up</span>
+</code></pre></div>
+</div>
+<h2 id="configuring-api-authentication">Configuring API authentication<a class="headerlink" href="#configuring-api-authentication" title="Permalink to this heading">¶</a></h2>
+<h3 id="basic-configuration">Basic configuration<a class="headerlink" href="#basic-configuration" title="Permalink to this heading">¶</a></h3>
+<p>The above development setup does not provide any authentication for the RDFM API.
+This is helpful for development or debugging purposes, however <strong>under no circumstance should this be used in production deployments, as it exposes the entire API with no restrictions in place</strong>.</p>
+<p>By default, the RDFM server requires configuration of an external authorization server to handle token creation and scope management.
+To be compatible with RDFM Management Server, the authentication server <strong>MUST</strong> support the OAuth2 Token Introspection extension (<a class="reference external" href="https://datatracker.ietf.org/doc/html/rfc7662">RFC 7662</a>).</p>
+<p>The authorization server is configured using the following environment variables:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_OAUTH_URL</span></code> - specifies the URL to the Token Introspection endpoint of the authorization server.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_OAUTH_CLIENT_ID</span></code> - specifies the client identifier to use for authenticating the RDFM server to the authorization server.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_OAUTH_CLIENT_SEC</span></code> - specifies the client secret to use for authenticating the RDFM server to the authorization server.</p></li>
+</ul>
+<p>For accessing the management API, the RDFM server does not issue any tokens itself.
+This task is delegated to the authorization server that is used in conjunction with RDFM.</p>
+<h3 id="users-and-applications-permissions">Users’ and applications’ permissions<a class="headerlink" href="#users-and-applications-permissions" title="Permalink to this heading">¶</a></h3>
+<p>The authorization server needs to implement certain applications’ scopes and users’ permissions for users and applications to access RDFM API.</p>
+<h4 id="scopes">Scopes<a class="headerlink" href="#scopes" title="Permalink to this heading">¶</a></h4>
+<p>The following scopes are used for controlling access to different methods of the RDFM API:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">rdfm_admin_ro</span></code> - read-only access to the API (fetching devices, groups, packages).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rdfm_admin_rw</span></code> - complete administrative access to the API with modification rights.</p></li>
+</ul>
+<p>Additional rules are defined for package uploading route from <a class="reference internal" href="api.html#Packages_API"><span class="std std-ref">Packages API</span></a>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">rdfm_upload_single_file</span></code> - allows uploading an artifact of type <code class="docutils literal notranslate"><span class="pre">single-file</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rdfm_upload_rootfs_image</span></code> - allows uploading artifacts <code class="docutils literal notranslate"><span class="pre">rootfs-image</span></code> and <code class="docutils literal notranslate"><span class="pre">delta-rootfs-image</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rdfm_upload_nonstandard_artifact</span></code> - allows uploading artifacts of non-standard type.</p></li>
+</ul>
+<p>Each package type requires its corresponding scope, or the complete admin access - <code class="docutils literal notranslate"><span class="pre">rdfm_admin_rw</span></code>.</p>
+<p>There is also a rule for creating new groups via <a class="reference internal" href="api.html#Groups_API"><span class="std std-ref">Groups API</span></a>: <code class="docutils literal notranslate"><span class="pre">rdfm_create_group</span></code>.</p>
+<p>To create a group, a user must have this scope or complete admin access.</p>
+<p>Refer to the <a class="reference internal" href="api.html"><span class="std std-doc">RDFM Server API Reference chapter</span></a> for a breakdown of the scopes required for accessing each API method.</p>
+<h4 id="permissions">Permissions<a class="headerlink" href="#permissions" title="Permalink to this heading">¶</a></h4>
+<p>In addition to the above, you can assign specific permissions to users for specific resources (devices, groups, packages).
+There are three types of permissions:</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">read</span></code></strong> permission - Allows listing devices, groups, and packages, as well as downloading packages.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">update</span></code></strong> permission - Allows changing, adding, and updating groups and packages.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">delete</span></code></strong> permission - Allows deleting groups and packages.</p></li>
+</ul>
+<p>These permissions are not mutually exclusive and have no hierarchy (none of the above permissions imply or contain the other).</p>
+<p>Permissions to a group also apply to the devices and packages within that group.
+For example, if you assign a user an <code class="docutils literal notranslate"><span class="pre">update</span></code> permission to a group, they will also be able to update any resources within that group.
+These propagated permissions are implicit and are not stored in the RDFM Management Server.</p>
+<p>You can inspect the current permissions for each user using the <a class="reference internal" href="api.html#Permissions_API"><span class="std std-ref">Permissions API</span></a>.</p>
+<h5 id="assigning-a-permission">Assigning a Permission<a class="headerlink" href="#assigning-a-permission" title="Permalink to this heading">¶</a></h5>
+<p>To assign a permission to a user, you must have the <code class="docutils literal notranslate"><span class="pre">rdfm_admin_rw</span></code> scope. Then, you will need the following information:</p>
+<ul class="simple">
+<li><p>The <strong>ID of the user</strong> you want to assign the permission to, which you can obtain from your OAuth2 provider’s administration panel.</p></li>
+<li><p>The <strong>ID of the resource</strong>, which can be retrieved via:</p>
+<ul>
+<li><p>The <a class="reference internal" href="rdfm_manager.html"><span class="std std-doc">RDFM Manager</span></a> - Use the <code class="docutils literal notranslate"><span class="pre">rdfm-mgmt</span> <span class="pre">{devices,packages,groups}</span> <span class="pre">list</span></code> command to get a list of resources and their IDs.</p></li>
+<li><p>The <a class="reference internal" href="api.html"><span class="std std-doc">RDFM Server API</span></a> - The <code class="docutils literal notranslate"><span class="pre">/api/{v2,v1}/{devices,packages,groups}</span></code> endpoints will return a list of resources and their IDs.</p></li>
+</ul>
+</li>
+</ul>
+<p>Permissions can be assigned via a POST request to <code class="docutils literal notranslate"><span class="pre">/api/v1/permissions</span></code>.
+For an example of such request, see <a class="reference internal" href="api.html#post--api-v1-permissions"><span class="std std-ref">this endpoint’s documentation</span></a>.</p>
+<h3 id="api-authentication-using-keycloak">API authentication using Keycloak<a class="headerlink" href="#api-authentication-using-keycloak" title="Permalink to this heading">¶</a></h3>
+<h4 id="running-the-services">Running the services<a class="headerlink" href="#running-the-services" title="Permalink to this heading">¶</a></h4>
+<p>An example <code class="docutils literal notranslate"><span class="pre">docker-compose</span></code> file that can be used to run the RDFM server using <a class="reference external" href="https://www.keycloak.org/">Keycloak Identity and Access Management server</a> as an authorization server is provided below, and in the <code class="docutils literal notranslate"><span class="pre">server/deploy/docker-compose.keycloak.development.yml</span></code> file.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><code><span class="nt">services</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">rdfm-server</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">antmicro/rdfm-server:latest</span>
+<span class="w">    </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">unless-stopped</span>
+<span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RDFM_JWT_SECRET=&lt;REPLACE_WITH_CUSTOM_JWT_SECRET&gt;</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RDFM_DB_CONNSTRING=sqlite:////database/development.db</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RDFM_HOSTNAME=rdfm-server</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RDFM_API_PORT=5000</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RDFM_DISABLE_ENCRYPTION=1</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RDFM_LOCAL_PACKAGE_DIR=/packages/</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RDFM_OAUTH_URL=http://keycloak:8080/realms/master/protocol/openid-connect/token/introspect</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RDFM_OAUTH_CLIENT_ID=rdfm-server-introspection</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RDFM_OAUTH_CLIENT_SEC=&lt;REPLACE_WITH_RDFM_INTROSPECTION_SECRET&gt;</span>
+<span class="w">    </span><span class="nt">networks</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rdfm</span>
+<span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;5000:5000&quot;</span>
+<span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">db:/database/</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pkgs:/packages/</span>
+
+<span class="w">  </span><span class="nt">keycloak</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">quay.io/keycloak/keycloak:22.0.1</span>
+<span class="w">    </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">unless-stopped</span>
+<span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">KEYCLOAK_ADMIN=admin</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">KEYCLOAK_ADMIN_PASSWORD=admin</span>
+<span class="w">    </span><span class="nt">networks</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rdfm</span>
+<span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;8080:8080&quot;</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">start-dev</span>
+<span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">keycloak:/opt/keycloak/data/</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">../keycloak-themes:/opt/keycloak/themes</span>
+
+<span class="nt">volumes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">db</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">pkgs</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">keycloak</span><span class="p">:</span>
+
+<span class="nt">networks</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">rdfm</span><span class="p">:</span>
+</code></pre></div>
+</div>
+<p>Before running the services above, you must first build the RDFM server container by running the following from the RDFM repository root folder:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span class="n">docker</span> <span class="n">build</span> <span class="o">-</span><span class="n">f</span> <span class="n">server</span><span class="o">/</span><span class="n">deploy</span><span class="o">/</span><span class="n">Dockerfile</span> <span class="o">-</span><span class="n">t</span> <span class="n">antmicro</span><span class="o">/</span><span class="n">rdfm</span><span class="o">-</span><span class="n">server</span><span class="p">:</span><span class="n">latest</span> <span class="o">.</span>
+</code></pre></div>
+</div>
+<p>You can then run the services by executing:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span class="n">docker</span><span class="o">-</span><span class="n">compose</span> <span class="o">-</span><span class="n">f</span> <span class="n">server</span><span class="o">/</span><span class="n">deploy</span><span class="o">/</span><span class="n">docker</span><span class="o">-</span><span class="n">compose</span><span class="o">.</span><span class="n">keycloak</span><span class="o">.</span><span class="n">development</span><span class="o">.</span><span class="n">yml</span> <span class="n">up</span>
+</code></pre></div>
+</div>
+<h4 id="keycloak-configuration">Keycloak configuration<a class="headerlink" href="#keycloak-configuration" title="Permalink to this heading">¶</a></h4>
+<p>Before any requests are successfully authenticated, you need to configure the Keycloak server further.
+First, navigate to the Keycloak Administration Console found at <code class="docutils literal notranslate"><span class="pre">http://localhost:8080/</span></code> and log in with the initial credentials provided in Keycloak’s configuration above (by default: <code class="docutils literal notranslate"><span class="pre">admin</span></code>/<code class="docutils literal notranslate"><span class="pre">admin</span></code>).</p>
+<p>Next, go to <strong>Clients</strong> and press <strong>Create client</strong>.
+This client is required for the RDFM server to perform token validation.
+The following settings must be set when configuring the client:</p>
+<ul class="simple">
+<li><p><strong>Client ID</strong> - must match <code class="docutils literal notranslate"><span class="pre">RDFM_OAUTH_CLIENT_ID</span></code> provided in the RDFM server configuration, can be anything (for example: <code class="docutils literal notranslate"><span class="pre">rdfm-server-introspection</span></code>)</p></li>
+<li><p><strong>Client Authentication</strong> - set to <code class="docutils literal notranslate"><span class="pre">On</span></code></p></li>
+<li><p><strong>Authentication flow</strong> - select only <code class="docutils literal notranslate"><span class="pre">Service</span> <span class="pre">accounts</span> <span class="pre">roles</span></code></p></li>
+</ul>
+<p>After saving the client, go to the <code class="docutils literal notranslate"><span class="pre">Credentials</span></code> tab found in the client details.
+Make sure the authenticator used is <code class="docutils literal notranslate"><span class="pre">Client</span> <span class="pre">Id</span> <span class="pre">and</span> <span class="pre">Secret</span></code> and copy the <code class="docutils literal notranslate"><span class="pre">Client</span> <span class="pre">secret</span></code>.
+This secret must be configured in the RDFM server in the <code class="docutils literal notranslate"><span class="pre">RDFM_OAUTH_CLIENT_SEC</span></code> environment variable.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>After changing the <code class="docutils literal notranslate"><span class="pre">docker-compose</span></code> variables, remember to restart the services (by pressing <code class="docutils literal notranslate"><span class="pre">Ctrl+C</span></code> and re-running the <code class="docutils literal notranslate"><span class="pre">docker-compose</span> <span class="pre">up</span></code> command).</p>
+</div>
+<p>Additionally, you must create proper client scopes and user roles to define which users have access to the read-only and read-write parts of the RDFM API.
+To create new scopes, navigate to the <code class="docutils literal notranslate"><span class="pre">Client</span> <span class="pre">scopes</span></code> tab and select <code class="docutils literal notranslate"><span class="pre">Create</span> <span class="pre">client</span> <span class="pre">scope</span></code>.
+Create five separate scopes with the names listed below.
+The rest of the settings can be left as default (if required, you may also add a description to the scope):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">rdfm_admin_ro</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rdfm_admin_rw</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rdfm_upload_single_file</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rdfm_upload_rootfs_image</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rdfm_upload_nonstandard_artifact</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rdfm_create_group</span></code></p></li>
+</ul>
+<p>To create new roles, navigate to the <code class="docutils literal notranslate"><span class="pre">Realm</span> <span class="pre">roles</span></code> tab and select <code class="docutils literal notranslate"><span class="pre">Create</span> <span class="pre">role</span></code>.
+Create separate roles with the same names.
+The rest of the settings can remain default (if required, you may also add a description to the role).</p>
+<p>After restarting the services, the RDFM server will now validate requests against the Keycloak server.
+To further set up the <code class="docutils literal notranslate"><span class="pre">rdfm-mgmt</span></code> manager to use the Keycloak server, refer to the <a class="reference internal" href="rdfm_manager.html"><span class="std std-doc">RDFM manager manual</span></a>.
+To add users with roles to the Keycloak server, which can then be used to access the RDFM API using the frontend application, refer to the <a class="reference internal" href="#adding-a-user"><span class="xref myst">Adding a User</span></a> section below.</p>
+<h4 id="adding-an-api-client">Adding an API client<a class="headerlink" href="#adding-an-api-client" title="Permalink to this heading">¶</a></h4>
+<p>First, navigate to the Keycloak Administration Console found at <code class="docutils literal notranslate"><span class="pre">http://localhost:8080/</span></code> and login with the initial credentials provided in Keycloak’s configuration above (by default: <code class="docutils literal notranslate"><span class="pre">admin</span></code>/<code class="docutils literal notranslate"><span class="pre">admin</span></code>).</p>
+<p>Next, go to <strong>Clients</strong> and press <strong>Create client</strong>.
+This client will represent a user of the RDFM API.
+The following settings must be set when configuring the client:</p>
+<ul class="simple">
+<li><p><strong>Client Authentication</strong> - set to <code class="docutils literal notranslate"><span class="pre">On</span></code></p></li>
+<li><p><strong>Authentication flow</strong> - select only <code class="docutils literal notranslate"><span class="pre">Service</span> <span class="pre">accounts</span> <span class="pre">roles</span></code></p></li>
+</ul>
+<p>After saving the client, go to the <code class="docutils literal notranslate"><span class="pre">Credentials</span></code> tab found under the client details.
+Make sure the authenticator used is <code class="docutils literal notranslate"><span class="pre">Client</span> <span class="pre">Id</span> <span class="pre">and</span> <span class="pre">Secret</span></code>, and copy the <code class="docutils literal notranslate"><span class="pre">Client</span> <span class="pre">secret</span></code>.</p>
+<p>Finally, assign the required scope to the client: under the <code class="docutils literal notranslate"><span class="pre">Client</span> <span class="pre">scopes</span></code> tab, click <code class="docutils literal notranslate"><span class="pre">Add</span> <span class="pre">client</span> <span class="pre">scope</span></code> and select one of the two RDFM scopes: read-only <code class="docutils literal notranslate"><span class="pre">rdfm_admin_ro</span></code> or read-write <code class="docutils literal notranslate"><span class="pre">rdfm_admin_rw</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The newly-created client will now have access to the RDFM API.
+To configure <code class="docutils literal notranslate"><span class="pre">rdfm-mgmt</span></code> to use this client, follow the <a class="reference internal" href="rdfm_manager.html#configuration"><span class="std std-ref">Configuration section</span></a> of the RDFM manager manual.</p>
+</div>
+<h4 id="adding-a-user">Adding a User<a class="headerlink" href="#adding-a-user" title="Permalink to this heading">¶</a></h4>
+<p>First, navigate to the Keycloak Administration Console found at <code class="docutils literal notranslate"><span class="pre">http://localhost:8080/</span></code> and login with the initial credentials provided in Keycloak’s configuration above (by default: <code class="docutils literal notranslate"><span class="pre">admin</span></code>/<code class="docutils literal notranslate"><span class="pre">admin</span></code>).</p>
+<p>Next, go to the <code class="docutils literal notranslate"><span class="pre">Users</span></code> tab and press <strong>Add user</strong>.
+This will open up a form to create a new user.
+Fill in the <strong>Username</strong> field and press <strong>Create</strong>.</p>
+<p>Next, go to the <code class="docutils literal notranslate"><span class="pre">Credentials</span></code> tab found under the user details and press <strong>Set password</strong>.
+This form allows you to set a password for the user and determine whether creating a new one is required on the next login.</p>
+<p>After configuring the user, go to the <code class="docutils literal notranslate"><span class="pre">Role</span> <span class="pre">mapping</span></code> tab under the user details.
+There, appropriate roles can be assigned to the user using the <strong>Assign role</strong> button.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The newly created users can now log in using the RDFM frontend application.
+To configure and run the frontend application, refer to the <a class="reference internal" href="rdfm_frontend.html"><span class="std std-doc">RDFM Frontend chapter</span></a>.</p>
+</div>
+<h5 id="configuring-frontend-application">Configuring frontend application<a class="headerlink" href="#configuring-frontend-application" title="Permalink to this heading">¶</a></h5>
+<p>When using the frontend application, logging in functionality is provided by the Keycloak server.
+To integrate the Keycloak server with the frontend application first go to the client details created in the <a class="reference internal" href="#keycloak-configuration"><span class="xref myst">Keycloak configuration</span></a> section.</p>
+<p>Go to <code class="docutils literal notranslate"><span class="pre">Capability</span> <span class="pre">config</span></code> and make sure that <strong>Implicit flow</strong> and <strong>Standard flow</strong> are enabled.</p>
+<p>Open the <code class="docutils literal notranslate"><span class="pre">Settings</span></code> panel and set <strong>Valid redirect URIs</strong> and <strong>Valid post logout redirect URIs</strong> values to the URL of the frontend application.
+The value depends on the deployment method, if the <code class="docutils literal notranslate"><span class="pre">rdfm-server</span></code> is used to host the frontend application the value can be inferred from the <code class="docutils literal notranslate"><span class="pre">RDFM_HOSTNAME</span></code> and <code class="docutils literal notranslate"><span class="pre">RDFM_API_PORT</span></code> environment variables and will most likely be <code class="docutils literal notranslate"><span class="pre">http[s]://{RDFM_HOSTNAME}:{RDFM_API_PORT}</span></code>.
+Otherwise, the value should be equal to <code class="docutils literal notranslate"><span class="pre">RDFM_FRONTEND_APP_URL</span></code> variable.</p>
+<p>Additionally, you can change the theme of the login page to match the frontend application.
+To do this, go to <code class="docutils literal notranslate"><span class="pre">Login</span> <span class="pre">settings</span></code> section and <code class="docutils literal notranslate"><span class="pre">rdfm</span></code> in the <strong>Login theme</strong> dropdown.</p>
+<h2 id="configuring-https">Configuring HTTPS<a class="headerlink" href="#configuring-https" title="Permalink to this heading">¶</a></h2>
+<p>For simple deployments, the server can expose an HTTPS API directly without requiring an additional reverse proxy.
+Configuration of the server’s HTTPS can be done using the following environment variables:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_SERVER_CERT</span></code> - path to the server’s signed certificate</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_SERVER_KEY</span></code> - path to the server’s private key</p></li>
+</ul>
+<p>Both of these files must be accessible within the server Docker container.</p>
+<h3 id="https-demo-deployment">HTTPS demo deployment<a class="headerlink" href="#https-demo-deployment" title="Permalink to this heading">¶</a></h3>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This demo deployment explicitly disables API authentication, and is only meant to be used as a reference on how to configure your particular deployment.</p>
+</div>
+<p>An example HTTPS deployment can be found in the <code class="docutils literal notranslate"><span class="pre">server/deploy/docker-compose.https.development.yml</span></code> file.
+Before running it, you must execute the <code class="docutils literal notranslate"><span class="pre">tests/certgen.sh</span></code> in the <code class="docutils literal notranslate"><span class="pre">server/deploy/</span></code> directory:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>server/deploy/
+../tests/certgen.sh
+</code></pre></div>
+</div>
+<p>This script generates a root CA and an associated signed certificate to be used for running the server.
+The following files are generated:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">certs/CA.{crt,key}</span></code> - CA certificate/private key that is used as the root of trust</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">certs/SERVER.{crt,key}</span></code> - signed certificate/private key used by the server</p></li>
+</ul>
+<p>To run the deployment, you must first build the RDFM server container by running the following from the RDFM repository root folder:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code>docker<span class="w"> </span>build<span class="w"> </span>-f<span class="w"> </span>server/deploy/Dockerfile<span class="w"> </span>-t<span class="w"> </span>antmicro/rdfm-server:latest<span class="w"> </span>.
+</code></pre></div>
+</div>
+<p>You can then start the deployment by running:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code>docker-compose<span class="w"> </span>-f<span class="w"> </span>server/deploy/docker-compose.https.development.yml<span class="w"> </span>up
+</code></pre></div>
+</div>
+<p>To verify the connection to the server, you must provide the CA certificate.
+For example, when using <code class="docutils literal notranslate"><span class="pre">curl</span></code> to access API methods:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code>curl<span class="w"> </span>--cacert<span class="w"> </span>server/deploy/certs/CA.crt<span class="w"> </span>https://127.0.0.1:5000/api/v1/devices
+</code></pre></div>
+</div>
+<p>When using <code class="docutils literal notranslate"><span class="pre">rdfm-mgmt</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code>rdfm-mgmt<span class="w"> </span>--url<span class="w"> </span>https://127.0.0.1:5000/<span class="w">     </span><span class="se">\</span>
+<span class="w">          </span>--cert<span class="w"> </span>server/deploy/certs/CA.crt<span class="w"> </span><span class="se">\</span>
+<span class="w">          </span>--no-api-auth<span class="w">                     </span><span class="se">\</span>
+<span class="w">          </span>devices<span class="w"> </span>list
+</code></pre></div>
+</div>
+<h2 id="production-deployments">Production deployments<a class="headerlink" href="#production-deployments" title="Permalink to this heading">¶</a></h2>
+<h3 id="production-considerations">Production considerations<a class="headerlink" href="#production-considerations" title="Permalink to this heading">¶</a></h3>
+<p>The following is a list of considerations when deploying the RDFM server:</p>
+<ol class="arabic simple">
+<li><p>HTTPS <strong>must</strong> be enabled; <code class="docutils literal notranslate"><span class="pre">RDFM_DISABLE_ENCRYPTION</span></code> <strong>must not</strong> be set (or the server is behind a dedicated reverse proxy that adds HTTPS on the edge).</p></li>
+<li><p>API authentication <strong>must</strong> be enabled; <code class="docutils literal notranslate"><span class="pre">RDFM_DISABLE_API_AUTH</span></code> <strong>must not</strong> be set.</p></li>
+<li><p>RDFM <strong>must</strong> use a production WSGI server; <code class="docutils literal notranslate"><span class="pre">RDFM_WSGI_SERVER</span></code> <strong>must not</strong> be set to <code class="docutils literal notranslate"><span class="pre">werkzeug</span></code>.
+When not provided, the server defaults to using a production-ready WSGI server (<code class="docutils literal notranslate"><span class="pre">gunicorn</span></code>).
+The development server (<code class="docutils literal notranslate"><span class="pre">werkzeug</span></code>) does not provide sufficient performance to handle production workloads, and a high percentage of requests will be dropped under heavy load.</p></li>
+<li><p>RDFM <strong>must</strong> use a dedicated (S3) package storage location; the local directory driver does not provide adequate performance when compared to dedicated object storage.</p></li>
+</ol>
+<p>Refer to the configuration chapters above for guidance on configuring each aspect of the RDFM server:</p>
+<ol class="arabic simple">
+<li><p><a class="reference internal" href="#configuring-https"><span class="xref myst">HTTPS</span></a></p></li>
+<li><p><a class="reference internal" href="#configuring-api-authentication"><span class="xref myst">API authentication</span></a></p></li>
+<li><p><a class="reference internal" href="#configuration-via-environment-variables"><span class="xref myst">WSGI server</span></a></p></li>
+<li><p><a class="reference internal" href="#configuring-package-storage-location"><span class="xref myst">S3 package storage</span></a></p></li>
+</ol>
+<p>You can find a practical example of a deployment that includes all the above considerations below.</p>
+<h3 id="production-example-deployment">Production example deployment<a class="headerlink" href="#production-example-deployment" title="Permalink to this heading">¶</a></h3>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>For simplicity, nearly all credentials for this example deployment are static and pre-configured, and as such should never be used directly in a production setup.
+In such a scenario, at least the following pre-configured secrets need to be changed:</p>
+<ul class="simple">
+<li><p>S3 Access Key ID/Access Secret Key</p></li>
+<li><p>rdfm-server JWT secret</p></li>
+<li><p>Keycloak Administrator username/password</p></li>
+<li><p>Keycloak Client: rdfm-server introspection Client ID/Secret</p></li>
+<li><p>Keycloak Client: rdfm-mgmt admin user Client ID/Secret</p></li>
+</ul>
+<p>Additionally, the Keycloak server requires further configuration for production deployments.
+For more information, refer to the <a class="reference external" href="https://www.keycloak.org/server/configuration-production">Configuring Keycloak for production</a> page in the Keycloak documentation.</p>
+</div>
+<p>A reference setup that can be used for customizing production server deployments is provided in <code class="docutils literal notranslate"><span class="pre">server/deploy/docker-compose.production.yml</span></code>.
+Prior to starting the deployment, you need to generate a signed server certificate that will be used for establishing the HTTPS connection to the server.
+You can do it by either providing your own certificate, or by running the provided example certificate generation script:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>server/deploy/
+../tests/certgen.sh
+../tests/certgen.sh<span class="w"> </span>certs<span class="w"> </span>IP.1:127.0.0.1<span class="w"> </span>DEVICE<span class="w"> </span>no
+</code></pre></div>
+</div>
+<p>When using the <code class="docutils literal notranslate"><span class="pre">certgen.sh</span></code> script, the CA certificate found at <code class="docutils literal notranslate"><span class="pre">server/deploy/certs/CA.crt</span></code> can be used for validating the connection made to the server.
+The <code class="docutils literal notranslate"><span class="pre">server/deploy/certs/SERVER.crt</span></code> will be used as a certificate of the Management Server.</p>
+<p>Similarly to previous example deployments, it can be started by running the following command from the <strong>RDFM monorepository root folder</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code>docker-compose<span class="w"> </span>-f<span class="w"> </span>server/deploy/docker-compose.production.yml<span class="w"> </span>up
+</code></pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">rdfm-mgmt</span></code> configuration for this deployment can be found in <code class="docutils literal notranslate"><span class="pre">server/deploy/test-rdfm-mgmt-config.json</span></code>.
+After copying the configuration to <code class="docutils literal notranslate"><span class="pre">$HOME/.config/rdfm-mgmt/config.json</span></code>, you can access the server by running:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code>rdfm-mgmt<span class="w"> </span>--url<span class="w"> </span>https://127.0.0.1:5000/<span class="w"> </span>--cert<span class="w"> </span>server/deploy/CA.crt<span class="w"> </span><span class="se">\</span>
+<span class="w">          </span>devices<span class="w"> </span>list
+</code></pre></div>
+</div>
+<h3 id="a-more-advanced-example-of-production-deployment">A more advanced example of production deployment<a class="headerlink" href="#a-more-advanced-example-of-production-deployment" title="Permalink to this heading">¶</a></h3>
+<p>In the <code class="docutils literal notranslate"><span class="pre">server/deploy/docker-compose.full.yml</span></code> file, you can find a more advanced example of the RDFM Management Server setup that includes the following:</p>
+<ul class="simple">
+<li><p>RDFM Management Server (<code class="docutils literal notranslate"><span class="pre">rdfm-server</span></code> service), using the <code class="docutils literal notranslate"><span class="pre">server/deploy/Dockerfile</span></code> to build the image</p></li>
+<li><p>Keycloak identity and access management server (<code class="docutils literal notranslate"><span class="pre">keycloak</span></code> service)</p></li>
+<li><p>PostgreSQL (<code class="docutils literal notranslate"><span class="pre">postgres</span></code> service) for the RDFM Management Server and Keycloak databases</p></li>
+<li><p>MinIO (<code class="docutils literal notranslate"><span class="pre">minio</span></code> service) object storage compatible with S3, along with a one-time service (<code class="docutils literal notranslate"><span class="pre">minio-bucket-creator</span></code>) that creates a bucket for RDFM updates</p></li>
+<li><p>nginx-based server for RDFM and Keycloak frontends (<code class="docutils literal notranslate"><span class="pre">frontend</span></code> service)</p></li>
+<li><p>Redis (<code class="docutils literal notranslate"><span class="pre">redis</span></code> service) cache event store used for sending server side events to the frontend</p></li>
+</ul>
+<p>The <code class="docutils literal notranslate"><span class="pre">server/deploy/docker-compose.full.yml</span></code> file is accompanied by the <code class="docutils literal notranslate"><span class="pre">server/deploy/docker-compose.full.env</span></code> environment file, used to configure both the Docker Compose recipe and Docker containers running in the services.
+Some variables provided in this <code class="docutils literal notranslate"><span class="pre">server/deploy/docker-compose.full.env</span></code> file require modifications to create a safe deployment environment.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Similarly to the <a class="reference internal" href="#production-example-deployment"><span class="xref myst">Production example deployment</span></a>, for a safe environment you need to configure at least:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">KEYCLOAK_ADMIN</span></code> - admin name in Keycloak</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">KEYCLOAK_ADMIN_PASSWORD</span></code> - password for admin in Keycloak</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DB_USER</span></code> - username in the PostgreSQL database</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DB_PASSWORD</span></code> - user password in the PostgreSQL database</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_OAUTH_CLIENT_SEC</span></code> - secret key for the RDFM Management Server introspection client with name specified in <code class="docutils literal notranslate"><span class="pre">RDFM_OAUTH_CLIENT_ID</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_JWT_SECRET</span></code> - JWT secret for RDFM Management Server</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_S3_ACCESS_KEY_ID</span></code> - access key for S3 bucket</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_S3_ACCESS_SECRET_KEY</span></code> - secret key for S3 bucket</p></li>
+</ul>
+<p>You also need to remove the <code class="docutils literal notranslate"><span class="pre">test-user-ro</span></code> and <code class="docutils literal notranslate"><span class="pre">test-user-rw</span></code> example users added in Keycloak’s RDFM realm.</p>
+<p>It is also recommended to change:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">DB_NAME</span></code> - name of the RDFM Management Server database</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RDFM_OAUTH_CLIENT_ID</span></code> - name of the introspection client in Keycloak for RDFM Management Server</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">KC_HTTP_RELATIVE_PATH</span></code> - relative path to the Keycloak Administration Console</p></li>
+</ul>
+</div>
+<p>To set up and run this Docker Compose recipe:</p>
+<ul>
+<li><p>Adjust variables in <code class="docutils literal notranslate"><span class="pre">server/deploy/docker-compose.full.env</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For development purposes, changing only <code class="docutils literal notranslate"><span class="pre">PUBLIC_ADDRESS</span></code> to hostname of the given device should suffice.</p>
+</div>
+</li>
+<li><p>Provide certificates for services in <code class="docutils literal notranslate"><span class="pre">./server/deploy/certs</span></code> directory:</p>
+<ul>
+<li><p>The pairs of <code class="docutils literal notranslate"><span class="pre">crt</span></code> and <code class="docutils literal notranslate"><span class="pre">key</span></code> files are required for the services:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">SERVER</span></code> - for RDFM Management Server</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MINIO</span></code> - for MinIO service</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">KEYCLOAK</span></code> - for Keycloak service</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FRONTEND</span></code> - for nginx service</p></li>
+</ul>
+</li>
+<li><p>If custom Certificate Authority was used to generate certificates, the <code class="docutils literal notranslate"><span class="pre">CA.crt</span></code> file(s) needs to be provided</p></li>
+<li><p>The following certificates can be obtained from official Certificate Authority (such as Let’s Encrypt)</p></li>
+<li><p>They can also be generated locally using <code class="docutils literal notranslate"><span class="pre">./server/tests/certgen.sh</span></code> script:</p>
+<ul>
+<li><p>Create certificates for all services (<code class="docutils literal notranslate"><span class="pre">$HOST</span></code> is used here for demo purposes, since some of the services require DNS name instead of localhost or loopback addresses to run in production mode):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code>./server/tests/certgen.sh<span class="w"> </span>./server/deploy/certs/<span class="w"> </span>DNS.1:<span class="nv">$HOST</span><span class="w"> </span>DEVICE<span class="w"> </span>no<span class="w"> </span>MINIO<span class="w"> </span>DNS.1:minio<span class="w"> </span>KEYCLOAK<span class="w"> </span>DNS.1:keycloak<span class="w"> </span>FRONTEND<span class="w"> </span>DNS.1:<span class="nv">$HOST</span>
+</code></pre></div>
+</div>
+</li>
+<li><p>Adjust certificate for <code class="docutils literal notranslate"><span class="pre">minio</span></code> service (direct output from <code class="docutils literal notranslate"><span class="pre">../tests/certgen.sh</span></code> is not loadable by Minio service):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code>openssl<span class="w"> </span>ec<span class="w"> </span>-in<span class="w"> </span>./server/deploy/certs/MINIO.key<span class="w"> </span>-out<span class="w"> </span>./server/deploy/certs/MINIO.key
+</code></pre></div>
+</div>
+</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><code class="docutils literal notranslate"><span class="pre">CA.key</span></code> file generated by the script is confidential and cannot be shared in production use cases.</p>
+</div>
+</li>
+</ul>
+</li>
+<li><p>Build Docker images for all services:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code>docker-compose<span class="w"> </span>--env-file<span class="w"> </span>./server/deploy/docker-compose.full.env<span class="w"> </span>-f<span class="w"> </span>./server/deploy/docker-compose.full.yml<span class="w"> </span>build
+</code></pre></div>
+</div>
+</li>
+<li><p>Start Docker Compose services:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code>docker-compose<span class="w"> </span>--env-file<span class="w"> </span>server/deploy/docker-compose.full.env<span class="w"> </span>-f<span class="w"> </span>server/deploy/docker-compose.full.yml<span class="w"> </span>up
+</code></pre></div>
+</div>
+<p>Optionally, to run services in the background, use the <code class="docutils literal notranslate"><span class="pre">-d</span></code> flag:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code>docker-compose<span class="w"> </span>--env-file<span class="w"> </span>server/deploy/docker-compose.full.env<span class="w"> </span>-f<span class="w"> </span>server/deploy/docker-compose.full.yml<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div>
+</div>
+</li>
+</ul>
+<p>Once all services have started, the following addresses should become available:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">https://${PUBLIC_ADDRESS}</span></code> - main page for the RDFM Management Server (<code class="docutils literal notranslate"><span class="pre">https://rdfm.com</span></code> with default values)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">https://${PUBLIC_ADDRESS}${KC_RELATIVE_PATH}</span></code> - address to Keycloak’s Administration Console, <code class="docutils literal notranslate"><span class="pre">https://rdfm.com/kc</span></code> with default values</p></li>
+</ul>
+<p>To log into the RDFM Management Server, use one of the following test users (password is same as the username):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">test-user-rw</span></code> - a test user with <code class="docutils literal notranslate"><span class="pre">rdfm_admin_rw</span></code> permissions</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test-user-ro</span></code> - a test user with <code class="docutils literal notranslate"><span class="pre">rdfm_admin_ro</span></code> permissions</p></li>
+</ul>
+<p>To stop services, either stop the <code class="docutils literal notranslate"><span class="pre">docker-compose</span></code> application or run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code>docker-compose<span class="w"> </span>--env-file<span class="w"> </span>server/deploy/docker-compose.full.env<span class="w"> </span>-f<span class="w"> </span>server/deploy/docker-compose.full.yml<span class="w"> </span>down
+</code></pre></div>
+</div>
+<p>To remove volumes associated with containers, add the <code class="docutils literal notranslate"><span class="pre">-v</span></code> flag:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code>docker-compose<span class="w"> </span>--env-file<span class="w"> </span>server/deploy/docker-compose.full.env<span class="w"> </span>-f<span class="w"> </span>server/deploy/docker-compose.full.yml<span class="w"> </span>down<span class="w"> </span>-v
+</code></pre></div>
+</div>
+<p>Notes regarding this Docker Compose recipe:</p>
+<ul class="simple">
+<li><p>In this setup, all services run using the HTTPS protocol.
+Depending on which services will be exposed externally, this can be changed.</p></li>
+<li><p>By default, exposing just the port associated with the <code class="docutils literal notranslate"><span class="pre">frontend</span></code> service should suffice - it provides access to the RDFM Management Server, RDFM Management Server API, as well as Keycloak’s Administration Console.</p></li>
+<li><p>Any of the services presented above can be replaced with compatible alternatives, i.e. <code class="docutils literal notranslate"><span class="pre">minio</span></code> can be replaced with Amazon S3, or <code class="docutils literal notranslate"><span class="pre">postgres</span></code> can be replaced with Amazon Aurora.</p></li>
+</ul>
+
+
+  <hr>
+<div class="md-source-file">
+  <small>
+    
+      Last update:
+      2026-01-28
+    
+  </small>
+</div>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+    <nav class="md-footer__inner md-grid" aria-label="Footer" >
+      
+        
+        <a href="rdfm_manager.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: RDFM Manager utility" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              RDFM Manager utility
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="rdfm_ota_manual.html" class="md-footer__link md-footer__link--next" aria-label="Next: RDFM OTA Manual" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              RDFM OTA Manual
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  
+  
+  <div class="md-footer-meta md-typeset">
+    
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-footer-copyright__highlight">
+        Copyright &#169; Antmicro, 2026.
+        
+    </div>
+  
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+      
+      
+    
+    <a href="https://github.com/antmicro" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    </a>
+  
+    
+    
+      
+      
+    
+    <a href="https://twitter.com/antmicro" target="_blank" rel="noopener" title="twitter.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+    
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": ".", "features": ["toc.integrate"], "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+      
+        <script src="_static/sphinx_immaterial_theme.f9d9eeeb247ace16c.min.js?v=8ec58cb5"></script>
+    
+  </body>
+</html>

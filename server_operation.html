@@ -1,0 +1,757 @@
+
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="">
+    
+    
+      
+        <title>Server Integration flows - RDFM Documentation</title>
+      
+    
+    
+      
+        
+        
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+        <link rel="stylesheet" type="text/css" href="_static/sphinx_immaterial_theme.0074f731f8a211b06.min.css?v=a5c09059" />
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="deep-orange">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="index.html" title="RDFM Documentation" class="md-header__button md-logo" aria-label="RDFM Documentation" data-md-component="logo">
+      <img src="_static/white.svg" alt="logo">
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            RDFM Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Server Integration flows
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="deep-orange"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5c-.84 0-1.65.15-2.39.42L12 2M3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29L3.34 7m.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14L3.36 17M20.65 7l-1.77 3.79a7.023 7.023 0 0 0-2.38-4.15l4.15.36m-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29L20.64 17M12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44L12 22Z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3 3.19.09m3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95 2.06.05m-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31Z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <div class="md-header__button">
+        <a href="rdfm-docs.pdf" title="PDF - rdfm-docs.pdf">
+          <div class="md-icon">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M64 0C28.7 0 0 28.7 0 64v384c0 35.3 28.7 64 64 64h256c35.3 0 64-28.7 64-64V160H256c-17.7 0-32-14.3-32-32V0H64zm192 0v128h128L256 0zM64 224h24c30.9 0 56 25.1 56 56s-25.1 56-56 56h-8v32c0 8.8-7.2 16-16 16s-16-7.2-16-16V240c0-8.8 7.2-16 16-16zm24 80c13.3 0 24-10.7 24-24s-10.7-24-24-24h-8v48h8zm72-64c0-8.8 7.2-16 16-16h24c26.5 0 48 21.5 48 48v64c0 26.5-21.5 48-48 48h-24c-8.8 0-16-7.2-16-16V240zm32 112h8c8.8 0 16-7.2 16-16v-64c0-8.8-7.2-16-16-16h-8v96zm96-128h48c8.8 0 16 7.2 16 16s-7.2 16-16 16h-32v32h32c8.8 0 16 7.2 16 16s-7.2 16-16 16h-32v48c0 8.8-7.2 16-16 16s-16-7.2-16-16V240c0-8.8 7.2-16 16-16z"/></svg>
+          </div>
+        </a>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="index.html" title="RDFM Documentation" class="md-nav__button md-logo" aria-label="RDFM Documentation" data-md-component="logo">
+      <img src="_static/white.svg" alt="logo">
+    </a>
+    RDFM Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="introduction.html" class="md-nav__link">
+        <span class="md-ellipsis">Introduction</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="system_overview.html" class="md-nav__link">
+        <span class="md-ellipsis">System Architecture</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="rdfm_linux_device_client.html" class="md-nav__link">
+        <span class="md-ellipsis">RDFM Linux Device Client</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="rdfm_android_device_client.html" class="md-nav__link">
+        <span class="md-ellipsis">RDFM Android Device Client</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="rdfm_mcumgr_device_client.html" class="md-nav__link">
+        <span class="md-ellipsis">RDFM MCUmgr Device Client</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="rdfm_artifact.html" class="md-nav__link">
+        <span class="md-ellipsis">RDFM Artifact utility</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="rdfm_manager.html" class="md-nav__link">
+        <span class="md-ellipsis">RDFM Manager utility</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="rdfm_mgmt_server.html" class="md-nav__link">
+        <span class="md-ellipsis">RDFM Management Server</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="rdfm_ota_manual.html" class="md-nav__link">
+        <span class="md-ellipsis">RDFM OTA Manual</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          <span class="md-ellipsis">Server Integration flows</span>
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="#" class="md-nav__link md-nav__link--active">
+        <span class="md-ellipsis">Server Integration flows</span>
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#device-authentication" class="md-nav__link">
+    <span class="md-ellipsis">Device authentication</span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#device-update-check" class="md-nav__link">
+    <span class="md-ellipsis">Device update check</span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#management-websocket" class="md-nav__link">
+    <span class="md-ellipsis">Management Web<wbr>Socket</span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Management WebSocket">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rdfm-management-protocol" class="md-nav__link">
+    <span class="md-ellipsis">RDFM Management Protocol</span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capabilities" class="md-nav__link">
+    <span class="md-ellipsis">Capabilities</span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Capabilities">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#capability-shell" class="md-nav__link">
+    <span class="md-ellipsis">Capability -<wbr> shell</span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Capability - shell">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#method-shell-attach" class="md-nav__link">
+    <span class="md-ellipsis">Method -<wbr> shell_<wbr>attach</span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capability-action" class="md-nav__link">
+    <span class="md-ellipsis">Capability -<wbr> action</span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Capability - action">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#method-action-list-query" class="md-nav__link">
+    <span class="md-ellipsis">Method -<wbr> action_<wbr>list_<wbr>query</span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#method-action-exec" class="md-nav__link">
+    <span class="md-ellipsis">Method -<wbr> action_<wbr>exec</span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capability-update-progress" class="md-nav__link">
+    <span class="md-ellipsis">Capability -<wbr> update_<wbr>progress</span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="rdfm_frontend.html" class="md-nav__link">
+        <span class="md-ellipsis">RDFM Frontend</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api.html" class="md-nav__link">
+        <span class="md-ellipsis">RDFM Server API Reference</span>
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset" role="main">
+                  
+
+
+<h1 id="server-integration-flows">Server Integration flows<a class="headerlink" href="#server-integration-flows" title="Permalink to this heading">¶</a></h1>
+<p>This chapter describes the various integration flows between device clients and the RDFM Management server.</p>
+<h2 id="device-authentication">Device authentication<a class="headerlink" href="#device-authentication" title="Permalink to this heading">¶</a></h2>
+<p>At the start of their execution, all RDFM-compatible device clients shall authenticate with the server.
+This shall be done by utilizing the <code class="docutils literal notranslate"><span class="pre">/api/v1/auth/device</span></code> endpoint.
+For details on the request schema, refer to the <a class="reference internal" href="api.html"><span class="std std-doc">Server API Reference</span></a> chapter.
+An example request made to this endpoint is shown below:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;metadata&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;rdfm.hardware.devtype&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;device-type&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;rdfm.software.version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;foo&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;rdfm.hardware.macaddr&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;00:11:22:33:44:55&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nt">&quot;public_key&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;RSA public key of the device in PEM format&gt;&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1694681536</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<p>The JSON payload bytes must be signed by the device client with its securely stored RSA private key using PKCS #1 v1.5 signature with SHA-256 digest (function <code class="docutils literal notranslate"><span class="pre">RSASSA-PKCS1-V1_5-SIGN</span></code> defined in <a class="reference external" href="https://datatracker.ietf.org/doc/html/rfc8017#section-8.2.1">RFC 8017</a>)
+The calculated signature must then be attached, encoded as base64, to the authorization request in the header <code class="docutils literal notranslate"><span class="pre">X-RDFM-Device-Signature</span></code>.
+If the server successfully validates the attached signature, the device will be registered in the server’s database, if it wasn’t previously registered already.
+The device-specified MAC address is used as a unique identifier for this specific device.</p>
+<p>Before the device is authorized to access the RDFM API, it must be accepted first by an  administrative entity interacting via a separate API with the RDFM server.
+If the device was not accepted, or its acceptation status was revoked, the above request shall fail with the <code class="docutils literal notranslate"><span class="pre">401</span> <span class="pre">Unauthorized</span></code> HTTP status code. <strong>The device client must handle this status code gracefully</strong>, for example by retrying the attempted request after a certain time has passed.</p>
+<p>Once the device is accepted into the RDFM server, the above request shall return a device-specific app token, that can be used to interact with device-side API endpoints.
+The app token is not permanent, and will expire after a certain time period.
+The device client must not make any assumptions about the length of the usability period, and instead should take a defensive approach to any requests made to the device-side API and reauthenticate when a response with the <code class="docutils literal notranslate"><span class="pre">401</span></code> status code is received.</p>
+<h2 id="device-update-check">Device update check<a class="headerlink" href="#device-update-check" title="Permalink to this heading">¶</a></h2>
+<p>Once authorized, a device client will have access to the device-side API of the RDFM server.
+The device client is expected to regularly poll for updates by utilizing the <code class="docutils literal notranslate"><span class="pre">/api/v1/update/check</span></code> endpoint.</p>
+<p>In the update check request, the device client must provide all of its local metadata.
+The metadata, which consists of simple key/value pairs, uniquely describes the set of software and/or hardware present on the device, but may also represent other transient
+properties not persisted in storage, such as temperature sensor values.</p>
+<p>When making the update check, the device client is advised to provide all of its metadata to the server in the update request.
+At the time of writing, below three metadata properties are mandatory and must be present in all update checks:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">rdfm.software.version</span></code> - version identifier of the currently running software package</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rdfm.hardware.devtype</span></code> - device type, used for limiting package compatibility only to a subset of devices</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rdfm.hardware.macaddr</span></code> - MAC address of the device’s main network interface</p></li>
+</ul>
+<p>For future compatibility, device clients are advised to provide all of their metadata, not only the mandatory keys, in the update check request.
+For more details on the structure of an update check request, consult the <a class="reference internal" href="api.html#post--api-v1-update-check"><span class="std std-ref">Update API Reference</span></a></p>
+<p>When a new package is available, the response shall be as described in the API Reference, and a one-time download URL to the package is generated.
+The device client shall use this URL to download and install, or in the case of clients capable of stream installation, directly install the package.
+The device client <strong>MUST</strong> verify the hash of the package as described in the update check response.</p>
+<p>Additionally, the device client <strong>MUST</strong> verify whether the package contents look sane before attempting to install it.
+The server shall never return a package that is not of the same device type as the one advertised by the client.
+However, the server itself currently imposes <strong>no limitations</strong> on the binary contents of the packages themselves.</p>
+<h2 id="management-websocket">Management WebSocket<a class="headerlink" href="#management-websocket" title="Permalink to this heading">¶</a></h2>
+<p>If supported, the device may also connect to a device management WebSocket.
+This provides additional management functionality of registered devices, such as reverse shell and file transfer.
+To connect to the WebSocket, a device token is required to be provided in the <code class="docutils literal notranslate"><span class="pre">Authorization</span></code> header of the WebSocket handshake.
+The format of the header is exactly the same as in other device routes and is described <a class="reference internal" href="api.html#api-authentication"><span class="std std-ref">in the API Reference chapter</span></a>.</p>
+<p>The general management flow is as follows:</p>
+<ol class="arabic simple">
+<li><p>Device connects to the management WebSocket: <code class="docutils literal notranslate"><span class="pre">/api/v1/devices/ws</span></code></p></li>
+<li><p>Device sends a <code class="docutils literal notranslate"><span class="pre">CapabilityReport</span></code> message indicating the capabilities it supports</p></li>
+<li><p>Device reads incoming management messages from the server and handles them accordingly</p></li>
+<li><p>Device may also send messages to the server to notify of certain situations</p></li>
+</ol>
+<h3 id="rdfm-management-protocol">RDFM Management Protocol<a class="headerlink" href="#rdfm-management-protocol" title="Permalink to this heading">¶</a></h3>
+<p>The management protocol is message-oriented and all messages are expected to be sent in WebSocket text mode.
+Each message is a JSON object in the form:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;method&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;method_name&gt;&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;arg0&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;arg1&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;...&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;...&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<p>The type of message sent is identified by the <code class="docutils literal notranslate"><span class="pre">method</span></code> field.
+The rest of the object fields are unspecified and depend on the specific message type.
+Schema for messages used by the server can be found in <code class="docutils literal notranslate"><span class="pre">common/communication/src/request_models.py</span></code>.
+On error during handling of a request, the server may return a custom WebSocket status code.
+A list of status codes used by the server can be found in <code class="docutils literal notranslate"><span class="pre">common/communication/src/rdfm/ws.py</span></code>.</p>
+<h3 id="capabilities">Capabilities<a class="headerlink" href="#capabilities" title="Permalink to this heading">¶</a></h3>
+<p>A capability indicates what management functionality is supported by a device.
+The device should report its capabilities using the <code class="docutils literal notranslate"><span class="pre">CapabilityReport</span></code> message immediately after connecting to the server.
+By default it is assumed that the device does not provide any capabilities.</p>
+<h4 id="capability-shell">Capability - <code class="docutils literal notranslate"><span class="pre">shell</span></code><a class="headerlink" href="#capability-shell" title="Permalink to this heading">¶</a></h4>
+<p>This capability indicates that a device supports spawning a reverse shell.
+The following methods must be supported by the device:</p>
+<h5 id="method-shell-attach">Method - <code class="docutils literal notranslate"><span class="pre">shell_attach</span></code><a class="headerlink" href="#method-shell-attach" title="Permalink to this heading">¶</a></h5>
+<p>A device with the <code class="docutils literal notranslate"><span class="pre">shell</span></code> capability should react to <code class="docutils literal notranslate"><span class="pre">shell_attach</span></code> messages by connecting to a shell WebSocket at <code class="docutils literal notranslate"><span class="pre">/api/v1/devices/&lt;shell_attach.mac_addr&gt;/shell/attach/&lt;shell_attach.uuid&gt;</span></code>.
+This establishes a connection between the requesting manager and the device.
+This WebSocket can then be used to stream the contents of the shell session and receive user input.
+The format of messages sent over this endpoint is implementation defined.
+However, generally the shell output/input are simply sent as binary WebSocket messages containing the standard output/input as raw bytes.</p>
+<h4 id="capability-action">Capability - <code class="docutils literal notranslate"><span class="pre">action</span></code><a class="headerlink" href="#capability-action" title="Permalink to this heading">¶</a></h4>
+<p>This capability indicates that a device supports execution of predefined actions.
+The following methods must be supported by the device:</p>
+<h5 id="method-action-list-query">Method - <code class="docutils literal notranslate"><span class="pre">action_list_query</span></code><a class="headerlink" href="#method-action-list-query" title="Permalink to this heading">¶</a></h5>
+<p>Return a list of actions supported by the device.</p>
+<h5 id="method-action-exec">Method - <code class="docutils literal notranslate"><span class="pre">action_exec</span></code><a class="headerlink" href="#method-action-exec" title="Permalink to this heading">¶</a></h5>
+<p>Attempt to queue action execution and immediately respond with the <code class="docutils literal notranslate"><span class="pre">action_exec_control</span></code> message indicating success or failure. Action execution result is sent later via <code class="docutils literal notranslate"><span class="pre">action_exec_result</span></code> message.
+Action execution status: pending, sent, or the status code returned by the device is stored in the server database.
+If any action requests were made while the device was not connected to the management WebSocket, they would be sent again after the device reconnects and sends a <code class="docutils literal notranslate"><span class="pre">CapabilityReport</span></code>.</p>
+<h4 id="capability-update-progress">Capability - <code class="docutils literal notranslate"><span class="pre">update_progress</span></code><a class="headerlink" href="#capability-update-progress" title="Permalink to this heading">¶</a></h4>
+<p>This capability indicates that a device supports reporting update progress.
+The device does not have to support any additional methods, but must send <code class="docutils literal notranslate"><span class="pre">update_progress</span></code> messages when installing an update.
+The messages should contain a percentage expressed as a 0-100 integer.</p>
+
+
+  <hr>
+<div class="md-source-file">
+  <small>
+    
+      Last update:
+      2026-01-28
+    
+  </small>
+</div>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+    <nav class="md-footer__inner md-grid" aria-label="Footer" >
+      
+        
+        <a href="rdfm_ota_manual.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: RDFM OTA Manual" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              RDFM OTA Manual
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="rdfm_frontend.html" class="md-footer__link md-footer__link--next" aria-label="Next: RDFM Frontend" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              RDFM Frontend
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  
+  
+  <div class="md-footer-meta md-typeset">
+    
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-footer-copyright__highlight">
+        Copyright &#169; Antmicro, 2026.
+        
+    </div>
+  
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+      
+      
+    
+    <a href="https://github.com/antmicro" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    </a>
+  
+    
+    
+      
+      
+    
+    <a href="https://twitter.com/antmicro" target="_blank" rel="noopener" title="twitter.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+    
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": ".", "features": ["toc.integrate"], "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+      
+        <script src="_static/sphinx_immaterial_theme.f9d9eeeb247ace16c.min.js?v=8ec58cb5"></script>
+    
+  </body>
+</html>
