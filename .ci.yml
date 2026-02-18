@@ -302,6 +302,7 @@ test-server-pubsub-acl-handling:
 test-server-pubsub-acl-side-effects:
   extends: .install-poetry-and-apptainer
   stage: local-tests
+  <<: *common_only
   script:
     - cd server
     - poetry install
