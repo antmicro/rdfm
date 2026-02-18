@@ -1,3 +1,4 @@
+from typing import Optional
 from sqlalchemy import create_engine, event, inspect
 from sqlalchemy.engine import Engine
 from sqlalchemy_utils.functions import database_exists
@@ -5,8 +6,12 @@ from models.base import Base
 from alembic import config, script, command
 from alembic.runtime import migration
 import os.path
+import pathlib
 
 # Import all models below
+
+CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
+ROOT_PATH = pathlib.Path(os.path.join(CURRENT_PATH, '../../')).resolve()
 
 
 def check_current_head(alembic_cfg, connectable):
@@ -39,7 +44,26 @@ def create(connstring: str) -> Engine:
 
             event.listen(db, "connect", _fk_pragma_on_connect)
 
-        if os.path.isfile('alembic.ini'):
+        inipath: Optional[pathlib.Path] = None
+        if os.path.isfile(ROOT_PATH / 'alembic.ini'):
+            inipath = ROOT_PATH / 'alembic.ini'
+        elif os.path.isfile(ROOT_PATH / 'deploy' / 'alembic.ini'):
+            inipath = ROOT_PATH / 'deploy' / 'alembic.ini'
+
+        scriptpath: Optional[pathlib.Path] = None
+        if os.path.isdir(ROOT_PATH / 'alembic'):
+            scriptpath = ROOT_PATH / 'alembic'
+
+        print(f"""Creation of database connection: assuming locations:
+              \t*configuration file: {inipath}
+              \t*alembic scripts directory: {scriptpath}""")
+
+        if inipath is not None:
+            alembic_cfg = config.Config(inipath.resolve())
+            if scriptpath:  # If scriptpath not available it will be pulled from alembic.ini
+                alembic_cfg.set_main_option("script_location", str(scriptpath.resolve()))
+            alembic_cfg.set_main_option("sqlalchemy.url", connstring)
+
             # If the database exists, is not empty,
             # and is not managed by alembic, we assume it is
             # the initial version and stamp it as such.
@@ -48,26 +72,15 @@ def create(connstring: str) -> Engine:
                 len(inspect(db).get_table_names()) > 0 and
                 not inspect(db).has_table("alembic_version")
             ):
-                alembic_args = [
-                    '-x', f'dbPath={connstring}',
-                    '--raiseerr',
-                    'stamp', '1',
-                ]
-                config.main(argv=alembic_args)
+                command.stamp(alembic_cfg, "1")
 
             # Create/migrate the database
             #
             # If the database exists but is out of sync, it will be migrated to
             # latest layout, if it does not exist it will be created and will
             # go through the migrations to the most recent layout.
-            alembic_cfg = config.Config('alembic.ini')
             if not check_current_head(alembic_cfg, db):
-                alembic_args = [
-                    '-x', f'dbPath={connstring}',
-                    '--raiseerr',
-                    'upgrade', 'head',
-                ]
-                config.main(argv=alembic_args)
+                command.upgrade(alembic_cfg, "head")
         else:
             # Fall back to unmanaged DB if alembic.ini is missing
             print("alembic.ini missing, using unmanaged database")
