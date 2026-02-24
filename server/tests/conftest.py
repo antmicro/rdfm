@@ -4,6 +4,7 @@ import re
 import subprocess
 from pathlib import Path
 import pg_temp
+import sqlalchemy
 from common import (
     DBPATH,
     SERVER_WAIT_TIMEOUT,
@@ -26,10 +27,27 @@ def pytest_addoption(parser):
     parser.addoption("--sqlite", action="store_true", help="run tests only with sqlite")
     parser.addoption("--postgres", action="store_true", help="run tests only with postgres")
     parser.addoption("--sifpath", action="store")
+    parser.addoption("--alembic-script-location", action="store")
+    parser.addoption("--alembic-file", action="store")
+
+
+def parametrize_path_option(metafunc, option_name, default_value=None):
+    """
+    Turns a passed option which points to a path into a Path object contained within a fixture.
+    """
+    fixture_name = option_name.replace("-", "_")  # Hyphens not allowed!
+    try:
+        value = getattr(metafunc.config.option, fixture_name)
+    except AttributeError:
+        value = None
+
+    value = value if value else default_value
+    if value and fixture_name in metafunc.fixturenames:
+        metafunc.parametrize(fixture_name, [Path(value)], scope="session")
 
 
 def pytest_generate_tests(metafunc):
-    if "process" in metafunc.fixturenames:
+    if "process" in metafunc.fixturenames or "alembic_engine" in metafunc.fixturenames:
         fixtures = []
         if metafunc.config.getoption("sqlite"):
             fixtures.append("db_sqlite")
@@ -59,6 +77,9 @@ def pytest_generate_tests(metafunc):
     sifpath_value = metafunc.config.option.sifpath
     if "sifpath" in metafunc.fixturenames and sifpath_value is not None:
         metafunc.parametrize("sifpath", [Path(sifpath_value)], scope="session")
+
+    parametrize_path_option(metafunc, "alembic-file", default_value="./deploy/alembic.ini")
+    parametrize_path_option(metafunc, "alembic-script-location", default_value="./alembic")
 
 
 @pytest.fixture()
@@ -333,3 +354,15 @@ def rdfm_kafka_admin(create_topic, mgmt_endpoint) -> RdfmKafkaAdminClient:
                                  security_protocol="PLAINTEXT")
     yield admin
     admin.close()
+
+@pytest.fixture
+def alembic_config(alembic_file, alembic_script_location):
+    return {
+        "file": str(alembic_file),
+        "script_location": str(alembic_script_location),
+    }
+
+
+@pytest.fixture
+def alembic_engine(db, request):
+    return sqlalchemy.create_engine(request.getfixturevalue(db))
