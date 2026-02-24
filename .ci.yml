@@ -13,11 +13,11 @@ variables:
   SCALENODE_RAM: 2048
   SCALENODE_DISK: 20
   SCALENODE_KERNEL: legacy
+  POSTGRES_MAJOR_VERSION: 15
 
 .build-base:
   variables:
     JWT_SECRET: testsecret123123123
-    POSTGRES_MAJOR_VERSION: 15
   before_script:
     - python -V
     - (apt update &&
@@ -139,6 +139,22 @@ python-mypy-check-plotter:
   extends: .mypy-check-base
   variables:
     TARGET: tools/rdfm-plotter
+
+test-alembic-migration-validity:
+  image: python:3.11.4-bookworm
+  stage: local-tests
+  <<: *common_only
+  before_get_sources:
+    - pip3 install poetry
+    - pip3 install --upgrade pip
+    - (apt update && apt-get -y install postgresql-$POSTGRES_MAJOR_VERSION postgresql-contrib &&
+        ln -s /usr/lib/postgresql/$POSTGRES_MAJOR_VERSION/bin/initdb /bin/initdb &&
+        ln -s /usr/lib/postgresql/$POSTGRES_MAJOR_VERSION/bin/postgres /bin/postgres)
+  before_script:
+    - service postgresql start
+    - (cd server && poetry install)
+  script:
+    - (cd server && poetry run pytest tests/test-alembic-migrations.py -v)
 
 test-package-api:
   extends: .build
