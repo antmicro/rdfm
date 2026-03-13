@@ -39,11 +39,12 @@
       <artifactId>junit-jupiter-params</artifactId>
       <scope>test</scope>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/org.apache.kafka/kafka -->
+    <!-- Source: https://mvnrepository.com/artifact/org.apache.kafka/kafka -->
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka_2.13</artifactId>
-      <version>4.0.0</version>
+      <version>4.0.1</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.auth0</groupId>

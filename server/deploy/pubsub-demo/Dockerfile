@@ -4,7 +4,7 @@ COPY ./rdfm-jwt-auth /data/rdfm-jwt-auth
 WORKDIR /data/rdfm-jwt-auth
 RUN mvn package
 
-FROM apache/kafka:4.0.0
+FROM apache/kafka:4.0.1
 
 COPY --from=0 --chown=appuser:appuser /data/rdfm-jwt-auth/target/rdfm-jwt-auth-*.jar /opt/kafka/libs
 
