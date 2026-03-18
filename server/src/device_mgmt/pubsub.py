@@ -286,7 +286,11 @@ class RdfmKafkaAdminClient(KafkaAdminClient):
             acls += self._describe_acls_for_device(device_mac,
                                                    topic_name,
                                                    operation=op)
-        return RdfmDeviceWriteAuthorizationStatus.init_from_acls(acls)
+        if acls:
+            return RdfmDeviceWriteAuthorizationStatus.init_from_acls(acls)
+        else:
+            return RdfmDeviceWriteAuthorizationStatus.init_from_mac_and_topic_name(device_mac,
+                                                                                   topic_name)
 
     def _describe_acls_for_device(self,
                                   device_mac: str,

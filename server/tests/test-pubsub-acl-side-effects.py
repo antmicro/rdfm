@@ -102,6 +102,7 @@ def test_admin_client_usage(create_topic, rdfm_kafka_admin):
 
     # We try leasing a non-existent topic, thus forcing a topic creation
     rdfm_kafka_admin.lease_topic_for_device(create_topic)
+    wait_for_correct_acls(amount=2, timeout_s=10) # 2x ALLOW
     status = rdfm_kafka_admin.device_topic_status(create_topic)
     assert status.can_write(), "device should be able to write"
     assert status.can_idempotent_write(), "device should be able to idempotently write"
@@ -112,7 +113,7 @@ def test_admin_client_usage(create_topic, rdfm_kafka_admin):
     status = rdfm_kafka_admin.device_topic_status(create_topic)
     assert status is None, "device_topic_status method should return None when topic doesn't exist"
 
-    # Now, try creating the topcic that already has the associated ACLs presetn on the broker
+    # Now, try creating the topcic that already has the associated ACLs present on the broker
     rdfm_kafka_admin.lease_topic_for_device(create_topic)
     status = rdfm_kafka_admin.device_topic_status(create_topic)
     assert status.can_write(), "device should be able to write"
