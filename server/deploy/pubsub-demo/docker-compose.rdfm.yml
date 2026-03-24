@@ -2,12 +2,6 @@ services:
   rdfm-server:
     image: antmicro/rdfm-server:latest
     restart: unless-stopped
-    healthcheck:
-      test: [ "CMD-SHELL", "curl --cacert /certs/CA.crt --fail https://rdfm-server:5000/api/v1/packages || exit 1" ]
-      interval: 30s
-      retries: 1
-      start_period: 10s
-      timeout: 5s
     ports:
       - '1234:1234'
       - '5000:5000'
@@ -43,9 +37,6 @@ services:
     restart: unless-stopped
     networks:
       - rdfm
-    depends_on:
-      rdfm-server:
-        condition: service_healthy
     environment:
       RDFM_CLIENT_DEVTYPE: x86_64
       RDFM_CLIENT_SERVER_URL: https://rdfm-server:5000/
