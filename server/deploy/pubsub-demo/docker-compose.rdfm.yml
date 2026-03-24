@@ -19,7 +19,6 @@ services:
       RDFM_HOSTNAME: rdfm-server
       RDFM_API_PORT: 5000
       RDFM_DEVICE_PORT: 1234
-      RDFM_DISABLE_API_AUTH: 1
       RDFM_LOCAL_PACKAGE_DIR: /packages/
       RDFM_WSGI_SERVER: werkzeug
       RDFM_SERVER_CERT: /certs/SERVER.crt
@@ -51,7 +50,6 @@ services:
       RDFM_CLIENT_DEVTYPE: x86_64
       RDFM_CLIENT_SERVER_URL: https://rdfm-server:5000/
       RDFM_CLIENT_SERVER_CERT: /var/lib/rdfm/CA.crt
-      RDFM_TELEMETRY_BOOTSTRAP_SERVERS: broker:9093
       RDFM_TELEMETRY_LOG_LEVEL: "INFO"
       RDFM_TELEMETRY_ENABLE: true
 
