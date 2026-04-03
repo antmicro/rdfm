@@ -87,6 +87,14 @@ def bootstrap_servers(servers: str) -> list[str]:
     return validated
 
 
+def device_mac_to_topic_name(device_mac: str) -> str:
+    """
+    Legal characters for a topic are are: [a-zA-Z0-\._\-]
+    This function replaces all illegal characters with a hyphen.
+    """  # noqa: W291
+    return re.sub("[^a-zA-Z0-9\\._\\-]", "-", device_mac)
+
+
 def parse_args() -> Namespace:
     parser = ArgumentParser(
             prog="rdfm-plotter",
@@ -112,8 +120,6 @@ def parse_args() -> Namespace:
                         required=True,
                         help=("String with a valid MAC address of the"
                               " device of which metrics to consume."))
-
-    parser.add_argument("-t", "--topic")  # device will mean the same thing as --topic in the future
 
     parser.add_argument("-k", "--key",
                         type=str_to_bytes,
@@ -176,5 +182,7 @@ def parse_args() -> Namespace:
         # we just require the bootstrap servers
         if not args.bootstrap_servers and not consumer_config_path.is_file():
             raise FileNotFoundError(consumer_config_path)
+
+    args.topic = device_mac_to_topic_name(args.device)
 
     return args

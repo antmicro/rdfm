@@ -58,7 +58,6 @@ def consumer_seek_hours_delta(consumer: KafkaConsumer):
     For the given consumer, shift the offsets of all partitions to the specified offset in the past.
     """
     millis = get_current_utc_millis_at_offset(ClientConfiguration().args.offset_hours)
-    # CHANGEME: In the future this will be device mac addr
     partitions: set[int] = consumer.partitions_for_topic(ClientConfiguration().args.topic)
     offsets: dict[TopicPartition, OffsetAndTimestamp] = (
             consumer.offsets_for_times(
