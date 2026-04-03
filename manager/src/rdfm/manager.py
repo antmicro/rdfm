@@ -39,6 +39,12 @@ def main():
         dest="disable_api_auth",
         help="disable OAuth2 authentication for API requests",
     )
+    parser.add_argument(
+        "--config",
+        type=str,
+        default=rdfm.config.MANAGER_CONFIG_DEFAULT,
+        help="Custom path to a configuration file",
+    )
 
     subparsers = parser.add_subparsers(
         required=True, title="available commands"
@@ -65,7 +71,7 @@ def main():
     config.disable_api_auth = args.disable_api_auth
 
     try:
-        rdfm.config.load_auth_from_file(config)
+        rdfm.config.load_auth_from_file(config, args.config)
         config.authorizer = rdfm.api.auth.create_authorizer(config)
 
         # Dispatch to the correct handler
