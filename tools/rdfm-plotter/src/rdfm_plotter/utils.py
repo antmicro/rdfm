@@ -47,10 +47,8 @@ def filter_record(record: ConsumerRecord) -> Optional[Log]:
     args = ClientConfiguration().args
     if args.key and record.key != args.key:
         return None
-
-    if record.value.device_mac == args.device:
+    else:
         return record.value
-    return None
 
 
 def consumer_seek_hours_delta(consumer: KafkaConsumer):
@@ -93,7 +91,6 @@ def pretty_print_record(log: Log, record: ConsumerRecord, extracted: Optional[st
               timestamp_type,
               record.timestamp,
               record.offset))
-    print(f"| device_mac:\t\t {log.device_mac}")
     print(f"| device_time(millis):\t {log.device_time.ToMilliseconds()}")
     print(f"| entry:\t\t {log.entry}")
     if extracted:
