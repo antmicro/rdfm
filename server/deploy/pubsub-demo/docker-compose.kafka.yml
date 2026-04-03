@@ -65,8 +65,13 @@ services:
       - "8080:8080"
     command:
       - start-dev
+      - "-Dkeycloak.migration.action=import"
+      - "-Dkeycloak.migration.provider=singleFile"
+      - "-Dkeycloak.migration.file=../import/test-rdfm-keycloak-realm.json"
+      - "-Dkeycloak.migration.strategy=IGNORE_EXISTING"
     volumes:
       - keycloak:/opt/keycloak/data
+      - ../test-rdfm-keycloak-realm.json:/import/test-rdfm-keycloak-realm.json
 
 volumes:
   keycloak:
