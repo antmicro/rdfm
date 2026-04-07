@@ -32,10 +32,10 @@ scripts/storegen.sh --cn broker --san IP:127.0.0.1,DNS:localhost,DNS:broker --pa
 The most imporant argument here is the `--cn`, which stands for Common Name. This demo cluster makes use of certificate Common Names to identify brokers during inter-broker communication. The above is reflected in the way we declare super users inside compose:
 
 ```yml
-KAFKA_SUPER_USERS: User:broker;User:00:00:00:00:00:00
+KAFKA_SUPER_USERS: User:broker;User:ANONYMOUS
 ```
 
-Aside from the mock device that should not be a super user in production, the brokers must have super user access to other brokers for replication of data and such. Without defining this, the cluster will fail to start.
+Aside from the ANONYMOUS principal that should not be a super user in production, the brokers must have super user access to other brokers for replication of data and such. Without defining this, the cluster will fail to start.
 
 #### Build RDFM server and Linux client
 

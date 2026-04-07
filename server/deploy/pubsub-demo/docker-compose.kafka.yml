@@ -10,6 +10,7 @@ services:
     ports:
       - '9093:9093'
       - '9094:9094'
+      - '19092:19092'
     env_file: "secrets.env"
     environment:
       CLUSTER_ID: foobarbaz
@@ -24,14 +25,14 @@ services:
       # Make the timestamps in messages be overridden by the broker
       KAFKA_LOG_MESSAGE_TIMESTAMP_TYPE: LogAppendTime
 
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: DEV:SASL_SSL,MGMT:SASL_SSL,CONTROLLER:SSL,INT_SSL:SSL
-      KAFKA_LISTENERS: DEV://:9093,MGMT://:9094,INT_SSL://:19093,CONTROLLER://:29093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,DEV:SASL_SSL,MGMT:SASL_SSL,CONTROLLER:SSL,INT_SSL:SSL
+      KAFKA_LISTENERS: DEV://:9093,MGMT://:9094,PLAINTEXT://:19092,INT_SSL://:19093,CONTROLLER://:29093
       # At least one of the listeners needs to satisfy this check:
       # [[ $KAFKA_ADVERTISED_LISTENERS == *"SSL://"* ]]
       # since the configure script inside the docker image doesn't expand
       # the listener.security.protocol.map. If this check fails in the config
       # script the keystore/truststore path config entries won't be propagated
-      KAFKA_ADVERTISED_LISTENERS: DEV://broker:9093,MGMT://broker:9094,INT_SSL://broker:19093
+      KAFKA_ADVERTISED_LISTENERS: DEV://broker:9093,MGMT://broker:9094,PLAINTEXT://broker:19092,INT_SSL://broker:19093
 
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:29093
@@ -40,7 +41,11 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: INT_SSL
 
       # broker principal is derived from certificate, the device mac as superuser is for testing(scripts/README.md for JWT generation)
-      KAFKA_SUPER_USERS: User:broker;User:00:00:00:00:00:00
+      #
+      # ANONYMOUS principal is set as a superuser only for testing purposes and should never be superuser on production deployments
+      #   * Every client that hits a PLAINTEXT endpoint gets to be ANONYMOUS, it means that a user wasn't authenticated
+      #   * For testing this deployment, Kafka CLI utilities can be used with --bootstrap-servers argument of broker:19092 (look at KAFKA_ADVERTISED_LISTENERS)
+      KAFKA_SUPER_USERS: User:broker;User:ANONYMOUS
       # Even though we're using listener scoped configuration inside server.properties, the below envar still needs to be
       # here to signal the configure script(/etc/kafka/docker/configure) that we're using SSL so it sets up its trustsore
       KAFKA_SSL_CLIENT_AUTH: required
