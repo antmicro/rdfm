@@ -3,21 +3,21 @@
   "policyEnforcementMode": "ENFORCING",
   "resources": [
     {
-      "name": "Topic:RDFM",
+      "name": "kafka-cluster:foobarbaz,Topic:*",
       "type": "Topic",
       "ownerManagedAccess": false,
-      "displayName": "Topic:RDFM",
+      "displayName": "Every topic",
       "attributes": {},
       "uris": [],
       "scopes": [
-        {
-          "name": "Create"
-        },
         {
           "name": "Describe"
         },
         {
           "name": "Write"
+        },
+        {
+          "name": "Create"
         },
         {
           "name": "Delete"
@@ -41,15 +41,15 @@
       "name": "Cluster:*",
       "type": "Cluster",
       "ownerManagedAccess": false,
-      "displayName": "Cluster:*",
+      "displayName": "Demo cluster",
       "attributes": {},
       "uris": [],
       "scopes": [
         {
-          "name": "Create"
+          "name": "Describe"
         },
         {
-          "name": "Describe"
+          "name": "Create"
         },
         {
           "name": "IdempotentWrite"
@@ -68,38 +68,12 @@
         }
       ],
       "icon_uri": ""
-    },
-    {
-      "name": "Topic:*",
-      "type": "Topic",
-      "ownerManagedAccess": false,
-      "displayName": "Topic:*",
-      "attributes": {},
-      "uris": [],
-      "scopes": [
-        {
-          "name": "Create"
-        },
-        {
-          "name": "Describe"
-        },
-        {
-          "name": "Delete"
-        },
-        {
-          "name": "DescribeConfigs"
-        },
-        {
-          "name": "AlterConfigs"
-        }
-      ],
-      "icon_uri": ""
     }
   ],
   "policies": [
     {
-      "name": "RDFM-rw",
-      "description": "read write",
+      "name": "Topics-ro",
+      "description": "A policy for the that ties test-client to read only access to devices' topics",
       "type": "client",
       "logic": "POSITIVE",
       "decisionStrategy": "UNANIMOUS",
@@ -108,8 +82,8 @@
       }
     },
     {
-      "name": "management-server-admin",
-      "description": "",
+      "name": "Cluster-administration",
+      "description": "A policy allowing for basic administration of a Kafka cluster",
       "type": "client",
       "logic": "POSITIVE",
       "decisionStrategy": "UNANIMOUS",
@@ -118,39 +92,39 @@
       }
     },
     {
-      "name": "test-client-RDFM",
-      "description": "",
+      "name": "ro-every-topic",
+      "description": "Grants read access to every topic",
       "type": "scope",
       "logic": "POSITIVE",
       "decisionStrategy": "UNANIMOUS",
       "config": {
-        "resources": "[\"Topic:RDFM\"]",
-        "scopes": "[\"Create\",\"Describe\",\"Read\",\"Write\"]",
-        "applyPolicies": "[\"RDFM-rw\"]"
+        "resources": "[\"kafka-cluster:foobarbaz,Topic:*\"]",
+        "scopes": "[\"Describe\",\"Read\"]",
+        "applyPolicies": "[\"Topics-ro\"]"
       }
     },
     {
-      "name": "cluster-administration",
-      "description": "",
+      "name": "admin-cluster",
+      "description": "Grants a subset of administrative rights to the cluster",
       "type": "scope",
       "logic": "POSITIVE",
       "decisionStrategy": "UNANIMOUS",
       "config": {
         "resources": "[\"Cluster:*\"]",
-        "scopes": "[\"Create\",\"ClusterAction\",\"Alter\",\"Describe\",\"DescribeConfigs\",\"AlterConfigs\",\"IdempotentWrite\"]",
-        "applyPolicies": "[\"management-server-admin\"]"
+        "scopes": "[\"Alter\",\"Describe\"]",
+        "applyPolicies": "[\"Cluster-administration\"]"
       }
     },
     {
-      "name": "topic-administration",
-      "description": "",
+      "name": "admin-every-topic",
+      "description": "Grants a subset of administrative rights to every topic",
       "type": "scope",
       "logic": "POSITIVE",
       "decisionStrategy": "UNANIMOUS",
       "config": {
-        "resources": "[\"Topic:*\"]",
-        "scopes": "[\"Create\",\"Describe\",\"DescribeConfigs\",\"Delete\",\"AlterConfigs\"]",
-        "applyPolicies": "[\"management-server-admin\"]"
+        "resources": "[\"kafka-cluster:foobarbaz,Topic:*\"]",
+        "scopes": "[\"Describe\",\"Create\"]",
+        "applyPolicies": "[\"Cluster-administration\"]"
       }
     }
   ],
