@@ -160,6 +160,11 @@ def parse_args() -> Namespace:
                         type=bootstrap_servers,
                         help='Comma separated list of "hostname:port"')
 
+    parser.add_argument("-l", "--debug-log",
+                        type=str,
+                        default=None,
+                        help="File to which debug logs should be dumped")
+
     parser.add_argument("-c", "--consumer-config", default=DEFAULT_CONSUMER_CONFIG)
     parser.add_argument("-C", "--keycloak-config", default=DEFAULT_KEYCLOAK_CONFIG)
 

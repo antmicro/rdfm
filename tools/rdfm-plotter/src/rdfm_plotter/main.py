@@ -12,10 +12,19 @@ from servis import render_time_series_plot_with_histogram
 
 
 def main() -> None:
+    if ClientConfiguration().args.debug_log:
+        import logging
+        logger = logging.getLogger("kafka")
+        logger.setLevel(logging.DEBUG)
+        logging.basicConfig(filename=ClientConfiguration().args.debug_log,
+                            encoding='utf-8',
+                            level=logging.DEBUG)
+
     if ClientConfiguration().args.plain:
         consumer = RdfmConsumer.plain_create()
     else:
         consumer = RdfmConsumer.quick_create()
+
     if ClientConfiguration().args.print:
         print_records(consumer)
     elif ClientConfiguration().args.plot:
