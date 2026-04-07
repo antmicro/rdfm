@@ -25,6 +25,16 @@ def main() -> None:
     else:
         consumer = RdfmConsumer.quick_create()
 
+    # Check if we're authorized to view the topic.
+    topics = consumer.topics()
+    if ClientConfiguration().args.topic not in topics:
+        print("Consumer not able to view the topic of assigned"
+              f" to device {ClientConfiguration().args.device}")
+        print("Does the device exist? Is this client authorized to"
+              " view device topics on the cluster?")
+        print("Available topics are:", topics)
+        exit(1)
+
     if ClientConfiguration().args.print:
         print_records(consumer)
     elif ClientConfiguration().args.plot:
