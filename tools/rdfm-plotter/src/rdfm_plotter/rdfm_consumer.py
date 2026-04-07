@@ -35,6 +35,7 @@ class RdfmConsumer(KafkaConsumer):
                        sasl_mechanism="OAUTHBEARER",
                        sasl_oauth_token_provider=try_create_keycloak_token_provider(),
                        value_deserializer=log_deserializer,
+                       allow_auto_create_topics=False,
                        **asdict(ClientConfiguration().config.Consumer))
 
         if ClientConfiguration().args.offset_hours != 0.0:
@@ -52,6 +53,7 @@ class RdfmConsumer(KafkaConsumer):
                            ClientConfiguration().args.bootstrap_servers if
                            ClientConfiguration().args.bootstrap_servers else
                            ClientConfiguration().config.Consumer.bootstrap_servers),
+                       allow_auto_create_topics=False,
                        security_protocol="PLAINTEXT",
                        value_deserializer=log_deserializer)
 
