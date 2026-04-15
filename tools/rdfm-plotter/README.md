@@ -37,30 +37,29 @@ rdfm-plotter --help
 Start printing the currently received records until interrupted:
 
 ```sh
-rdfm-plotter --print --topic RDFM --device 00:00:00:00:00:02 --key CPU
+rdfm-plotter --print --device 02:42:ac:17:00:03 --key CPU
 ```
 
 Print records from the last hour:
 
 ```sh
-rdfm-plotter --print --topic RDFM --offset-hours 1 --device 00:00:00:00:00:02 --key CPU
+rdfm-plotter --print --offset-hours 1 --device 02:42:ac:17:00:03 --key CPU
 ```
 
 It will continue printing new records until interrupted. Example output of the above command:
 
 ```
-| KEY: b'CPU' | TOPIC: RDFM | PARTITION: 0 | TIMESTAMP TYPE: LogAppendTime | TIMESTAMP: 1757422138218 | OFFSET: 66837
-| device_mac:            00:00:00:00:00:02
-| device_time(millis):   1757429412544
-| entry:                 {"sysstat":{"hosts":[{"nodename":"renodeunmatched","sysname":"Linux","release":"6.6.21-00001-g7b43b6e32bba","machine":"riscv64","number-of-cpus":4,"date":"09/09/25","statistics":[{"timestamp":"14:50:12","cpu-load":[{"cpu":"all","usr":99.02,"nice":0.00,"sys":0.98,"iowait":0.00,"irq":0.00,"soft":0.00,"steal":0.00,"guest":0.00,"gnice":0.00,"idle":0.00}]}]}]}}
+| KEY: b'CPU' | TOPIC: 02-42-ac-17-00-03 | PARTITION: 0 | TIMESTAMP TYPE: LogAppendTime | TIMESTAMP: 1775643636020 | OFFSET: 1661
+| device_time(millis):   1775643636017
+| entry:                 {"sysstat":{"hosts":[{"nodename":"cb7375df33ee","sysname":"Linux","release":"6.1.0-43-amd64","machine":"x86_64","number-of-cpus":16,"date":"04/08/26","statistics":[{"timestamp":"10:20:36","cpu-load":[{"cpu":"all","usr":0.56,"nice":0,"sys":0.12,"iowait":0,"irq":0,"soft":0,"steal":0,"guest":0,"gnice":0,"idle":99.31}]}]}]}}
 ```
 
 It's possible to apply a capture group to the `entry` field during printing:
 
 ```sh
 # Extract the string from the "machine" key
-rdfm-plotter --print --topic RDFM --offset-hours 1 \
-    --device 00:00:00:00:00:02 --key CPU \
+rdfm-plotter --print --offset-hours 1 \
+    --device 02:42:ac:17:00:03 --key CPU \
     --pattern '"machine":"([a-zA-z0-9]+)"'
 #                         ^
 #                         |
@@ -70,11 +69,10 @@ rdfm-plotter --print --topic RDFM --offset-hours 1 \
 Example output of the above command:
 
 ```
-| KEY: b'CPU' | TOPIC: RDFM | PARTITION: 0 | TIMESTAMP TYPE: LogAppendTime | TIMESTAMP: 1757421941132 | OFFSET: 66691
-| device_mac:            00:00:00:00:00:02
-| device_time(millis):   1757429214445
-| entry:                 {"sysstat":{"hosts":[{"nodename":"renodeunmatched","sysname":"Linux","release":"6.6.21-00001-g7b43b6e32bba","machine":"riscv64","number-of-cpus":4,"date":"09/09/25","statistics":[{"timestamp":"14:46:54","cpu-load":[{"cpu":"all","usr":8.00,"nice":0.00,"sys":1.00,"iowait":0.00,"irq":0.00,"soft":0.00,"steal":0.00,"guest":0.00,"gnice":0.00,"idle":91.00}]}]}]}}
-| extracted value:       riscv64
+| KEY: b'CPU' | TOPIC: 02-42-ac-17-00-03 | PARTITION: 0 | TIMESTAMP TYPE: LogAppendTime | TIMESTAMP: 1775643726015 | OFFSET: 1724
+| device_time(millis):   1775643726011
+| entry:                 {"sysstat":{"hosts":[{"nodename":"cb7375df33ee","sysname":"Linux","release":"6.1.0-43-amd64","machine":"x86_64","number-of-cpus":16,"date":"04/08/26","statistics":[{"timestamp":"10:22:06","cpu-load":[{"cpu":"all","usr":1.63,"nice":0,"sys":0.25,"iowait":0,"irq":0,"soft":0,"steal":0,"guest":0,"gnice":0,"idle":98.11}]}]}]}}
+| extracted value:       x86_64
 ```
 
 If a regular expression has more than a single capture group, it's possible to set which one should be extracted with the `--group` argument.
@@ -88,8 +86,8 @@ Example:
 Plot CPU `usr` metric from records received the past hour:
 
 ```sh
-rdfm-plotter --plot --topic RDFM --offset-hours 1 \
-    --pattern '"usr":([0-9]+\.[0-9]+)' --key CPU --device 00:00:00:00:00:02
+rdfm-plotter --plot --offset-hours 1 --pattern '"usr":([0-9]+\.[0-9]+)' \
+    --key CPU --device 02:42:ac:17:00:03
 ```
 
 You can plot any number from `entry` provided you can write a regular expression capturing it.
