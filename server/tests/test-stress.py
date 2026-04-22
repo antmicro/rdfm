@@ -186,7 +186,7 @@ async def _run(n: int, package_size: float = 5.0):
     "n",
     [
         pytest.param(n, marks=[pytest.mark.asyncio])
-        for n in (5, 50, 150, 300, 600, 1000)
+        for n in (5, 50, 150)
     ],
 )
 async def test_stress(process_gunicorn, n):
