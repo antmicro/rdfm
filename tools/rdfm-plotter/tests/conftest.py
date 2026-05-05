@@ -7,6 +7,7 @@ from pathlib import Path
 from kafka import KafkaProducer
 from kafka.errors import NoBrokersAvailable
 from rdfm_plotter.log_pb2 import log as Log
+from rdfm_plotter.arguments import device_mac_to_topic_name
 
 
 KAFKA_CLUSTER_ID = "foobarbaz"
@@ -154,7 +155,7 @@ def create_topic(testpath, broker, mgmt_endpoint) -> str:
 
     result = subprocess.run(args, cwd=testpath)
     assert 0 == result.returncode
-    return TOPIC
+    return DEVICE
 
 
 @pytest.fixture
@@ -167,9 +168,9 @@ def mgmt_producer(create_topic, mgmt_endpoint):
 @pytest.fixture
 def simple_produce_50(create_topic, mgmt_producer):
     for i in range(1, 50):
-        log = Log(device_mac=DEVICE, entry=str(i))
+        log = Log(entry=str(i))
         log.device_time.FromSeconds(i)
-        mgmt_producer.send(topic=create_topic, value=log)
+        mgmt_producer.send(topic=device_mac_to_topic_name(create_topic), value=log)
     mgmt_producer.flush()
     return create_topic
 
@@ -177,8 +178,8 @@ def simple_produce_50(create_topic, mgmt_producer):
 @pytest.fixture
 def produce_test_key_50(create_topic, mgmt_producer):
     for i in range(1, 50):
-        log = Log(device_mac=DEVICE, entry=f"test={i}")
+        log = Log(entry=f"test={i}")
         log.device_time.FromSeconds(i)
-        mgmt_producer.send(topic=create_topic, value=log)
+        mgmt_producer.send(topic=device_mac_to_topic_name(create_topic), value=log)
     mgmt_producer.flush()
     return create_topic

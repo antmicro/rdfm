@@ -19,8 +19,7 @@ def test_print(simple_produce_50, mgmt_endpoint):
     args = [
             "poetry", "run", "rdfm-plotter", "--print", "--plain",
             "--bootstrap-servers", mgmt_endpoint,
-            "--device", "00:00:00:00:00:00",
-            "--topic", simple_produce_50,
+            "--device", simple_produce_50,
             "--offset-hours", "0.5"
             ]
 
@@ -38,8 +37,7 @@ def test_plot(simple_produce_50, mgmt_endpoint):
     args = [
             "poetry", "run", "rdfm-plotter", "--plot", "--plain",
             "--bootstrap-servers", mgmt_endpoint,
-            "--device", "00:00:00:00:00:00",
-            "--topic", simple_produce_50,
+            "--device", simple_produce_50,
             "--offset-hours", "0.5",
             "--pattern", "([0-9]+)"
             ]
@@ -59,8 +57,7 @@ def test_incorrect_capture_groups(produce_test_key_50, mgmt_endpoint):
     args = [
             "poetry", "run", "rdfm-plotter", "--plot", "--plain",
             "--bootstrap-servers", mgmt_endpoint,
-            "--device", "00:00:00:00:00:00",
-            "--topic", produce_test_key_50,
+            "--device", produce_test_key_50,
             "--offset-hours", "0.5",
             "--pattern", "wrong_key=([0-9]+)"  # This won't capture anything
             ]
@@ -81,7 +78,6 @@ def test_invalid_capture_group_index(mgmt_endpoint):
             "poetry", "run", "rdfm-plotter", "--print", "--plain",
             "--bootstrap-servers", mgmt_endpoint,
             "--device", "00:00:00:00:00:00",
-            "--topic", "dummy",
             "--pattern", "some_key=([0-9]+)",  # One capture group
             "--group", "2"  # Capture group index 2
             ]
