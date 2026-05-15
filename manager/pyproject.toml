@@ -1,34 +1,43 @@
-[tool.poetry]
+[project]
 name = "rdfm-mgmt"
 version = "0.1.0"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = [
+    { name = "Antmicro Ltd.", email = "contact@antmicro.com" }
+]
 readme = "README.md"
+requires-python = ">=3.11, <4.0"
+dependencies = [
+    "rdfm_mgmt_communication>=0.1.0",
+    "jsonschema (>=4.17.3,<5.0.0)",
+    "pydantic (>=2.0.3,<3.0.0)",
+    "requests (>=2.31.0,<3.0.0)",
+    "types-requests (>=2.31.0.2,<3.0.0.0)",
+    "requests-toolbelt (>=1.0.0,<2.0.0)",
+    "progressbar2 (>=4.2.0,<5.0.0)",
+    "marshmallow (>=3.20.1,<4.0.0)",
+    "marshmallow-dataclass (>=8.5.14,<9.0.0)",
+    "authlib==1.2.1",
+    "python-dateutil (>=2.8.2,<3.0.0)",
+    "simple-websocket (>=1.0.0,<2.0.0)",
+]
+
+[tool.poetry]
+requires-poetry = ">=2.0"
 packages = [
     { include = "rdfm/**/*.py", from = "src" },
 ]
 
 [tool.poetry.dependencies]
-python = "^3.11"
-jsonschema = "^4.17.3"
 rdfm_mgmt_communication = {path = "../common/communication"}
-pydantic = "^2.0.3"
-requests = "^2.31.0"
-types-requests = "^2.31.0.2"
-requests-toolbelt = "^1.0.0"
-progressbar2 = "^4.2.0"
-marshmallow = "^3.20.1"
-marshmallow-dataclass = "^8.5.14"
-authlib = "==1.2.1"
-python-dateutil = "^2.8.2"
-simple-websocket = "^1.0.0"
 
 [tool.poetry.group.test.dependencies]
 types-jsonschema = "^4.17.0.8"
 
 [tool.poetry.group.types.dependencies]
 types-urllib3 = "^1.26.25.13"
-[tool.poetry.scripts]
+
+[project.scripts]
 rdfm-mgmt = 'rdfm.manager:main'
 
 [build-system]
