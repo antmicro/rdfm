@@ -1,4 +1,4 @@
-image: $CI_REGISTRY_IMAGE:rdfm-ci-base-bookworm
+image: $CI_REGISTRY_IMAGE:rdfm-ci-base-trixie
 
 .common_only: &common_only
   only:
@@ -13,24 +13,12 @@ variables:
   SCALENODE_RAM: 2048
   SCALENODE_DISK: 20
   SCALENODE_KERNEL: legacy
-  POSTGRES_MAJOR_VERSION: 15
 
 .build-base:
   variables:
     JWT_SECRET: testsecret123123123
   before_script:
     - python -V
-    - (apt update &&
-        apt-get -y install make netcat-openbsd openssl telnet uuid-runtime xxd redis-server postgresql-$POSTGRES_MAJOR_VERSION postgresql-contrib cmake &&
-        service postgresql start &&
-        ln -s /usr/lib/postgresql/$POSTGRES_MAJOR_VERSION/bin/initdb /bin/initdb &&
-        ln -s /usr/lib/postgresql/$POSTGRES_MAJOR_VERSION/bin/postgres /bin/postgres)
-    - git clone https://github.com/antmicro/go-xdelta xdelta
-    - cd xdelta
-    - cmake -B build/ -DCGO_INTEGRATION=ON -DENCODER=ON
-    - cmake --build build/
-    - cmake --install build/
-    - cd ../
     - (cd server && poetry build && poetry install)
     - (cd manager && poetry build && poetry install)
     - server/tests/certgen.sh certs IP.1:127.0.0.1 DEVICE no
@@ -39,68 +27,17 @@ variables:
   <<: *common_only
   extends: .build-base
 
-.go-pb-release: &go-pb-release
-  variables:
-    GO_REL: https://go.dev/dl/go1.22.3.linux-amd64.tar.gz
-    PB_REL: https://github.com/protocolbuffers/protobuf/releases/download/v31.1/protoc-31.1-linux-x86_64.zip
-    PROTOC_GO_REL: google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.6
-
-.install-xdelta:
-  before_script:
-    - apt-get update
-    - apt-get install -y cmake
-    - git clone https://github.com/antmicro/go-xdelta xdelta
-    - cd xdelta
-    - cmake -B build/ -DENCODER=ON -DCGO_INTEGRATION=ON
-    - cmake --build build/
-    - cmake --install build/
-    - cd ../
-
-.install-poetry-and-lint-tools:
-  # rdfm-ci-base-bookworm has an outdated version of poetry
-  # changes to pyproject.toml spec require a newer version (PEP 621, poetry 2.0+ required)
-  image: python:3.11.4-bookworm
-  before_get_sources:
-    - pip3 install poetry
-    - pip3 install --upgrade pip
-    - apt update && apt-get install -y pipx
-  before_script:
-    - (cd tools/rdfm-lint-scripts && pipx install .)
-
 .mypy-check-base:
-  extends: .install-poetry-and-lint-tools
   variables:
     TARGET: "" # fill this when extending
     ARGS:   "" # additional arguments for mypy, can be left empty
   stage: static-checks
+  before_script:
+    - (cd tools/rdfm-lint-scripts && pipx install .)
   script:
-    - export PATH=$HOME/.local/bin:$PATH
     - cd $TARGET && poetry install
     - rdfm-lint-mypy $ARGS
   allow_failure: true
-
-.install-poetry-and-apptainer:
-  image: python:3.11.4-bookworm
-  variables:
-    APPTAINER_REL: v1.4.3
-    GO_REL: https://go.dev/dl/go1.24.4.linux-amd64.tar.gz
-    SCALENODE_RAM: 5120
-  before_get_sources:
-    - pip3 install poetry
-    - pip3 install --upgrade pip
-    - (apt update &&
-        apt-get -y install build-essential libseccomp-dev uidmap fakeroot cryptsetup tzdata dh-apparmor squashfs-tools curl wget git pipx iptables kcat openjdk-17-jre maven ripgrep)
-    - wget --quiet -O - $GO_REL | tar xz
-    - git clone https://github.com/apptainer/apptainer.git
-    - export PATH=`pwd`/go/bin:$PATH
-    - cd apptainer
-    - git checkout ${APPTAINER_REL}
-    - ./mconfig
-    - cd builddir
-    - mkdir tmp
-    - export GOTMPDIR=$(pwd)/tmp
-    - make
-    - make install
 
 stages:
   - docs-build
@@ -110,10 +47,10 @@ stages:
   - local-tests
 
 python-pycodestyle-check:
-  extends: .install-poetry-and-lint-tools
   stage: static-checks
+  before_script:
+    - (cd tools/rdfm-lint-scripts && pipx install .)
   script:
-    - export PATH=$HOME/.local/bin:$PATH
     - (cd server && rdfm-lint-pycodestyle)
     - (cd manager && rdfm-lint-pycodestyle)
     - (cd common/communication && rdfm-lint-pycodestyle)
@@ -141,18 +78,9 @@ python-mypy-check-plotter:
     TARGET: tools/rdfm-plotter
 
 test-alembic-migration-validity:
-  image: python:3.11.4-bookworm
+  extends: .build
   stage: local-tests
   <<: *common_only
-  before_get_sources:
-    - pip3 install poetry
-    - pip3 install --upgrade pip
-    - (apt update && apt-get -y install postgresql-$POSTGRES_MAJOR_VERSION postgresql-contrib &&
-        ln -s /usr/lib/postgresql/$POSTGRES_MAJOR_VERSION/bin/initdb /bin/initdb &&
-        ln -s /usr/lib/postgresql/$POSTGRES_MAJOR_VERSION/bin/postgres /bin/postgres)
-  before_script:
-    - service postgresql start
-    - (cd server && poetry install)
   script:
     - (cd server && poetry run pytest tests/test-alembic-migrations.py -v)
 
@@ -259,8 +187,8 @@ test-server-stress:
   extends: .build
   stage: local-tests
   variables:
-    SCALENODE_CPU: 8
-    SCALENODE_RAM: 32768
+    SCALENODE_CPU: 4
+    SCALENODE_RAM: 16384
   script:
     - cd server
     - poetry run pytest tests/test-stress.py -vs
@@ -316,12 +244,11 @@ test-server-pubsub-acl-handling:
     - poetry run pytest tests/test-pubsub-acl-handling.py
 
 test-server-pubsub-acl-side-effects:
-  extends: .install-poetry-and-apptainer
+  extends: .build
   stage: local-tests
   <<: *common_only
   script:
-    - cd server
-    - poetry install
+    - cd server/
     - SIF_SECRET=$(apptainer inspect --environment deploy/pubsub-demo/tests/test_kafka.sif | rg '^\s+export RDFM_JWT_SECRET=([\w\W]+)$' -r '$1')
     - export JWT_SECRET=$SIF_SECRET
     - poetry run pytest -v tests/test-pubsub-acl-side-effects.py --sifpath $(pwd)/deploy/pubsub-demo/tests --sqlite
@@ -334,17 +261,8 @@ test-server-pubsub-acl-side-effects:
 
 build-rdfm-client:
   stage: build
-  <<: *go-pb-release
-  extends: .install-xdelta
+  extends: .build
   script:
-    # Currently CI ships Go 1.19, while the client needs 1.20+
-    - wget --quiet -O - $GO_REL | tar xz
-    - wget --quiet $PB_REL
-    - unzip $(basename $PB_REL) -d protoc
-    - export PATH=`pwd`/go/bin:$PATH
-    - export PATH=`pwd`/protoc/bin:$PATH
-    - export GOBIN=`pwd`/go/bin
-    - go install $PROTOC_GO_REL
     - cd devices/linux-client
     - make
 
@@ -357,20 +275,11 @@ build-rdfm-logging-tool:
 test-rdfm-client:
   stage: local-tests
   <<: *common_only
-  <<: *go-pb-release
   dependencies:
     - build-rdfm-artifact
-  extends: .install-xdelta
   script:
     # Install rdfm-artifact, which is required for the tests
     - mv tools/rdfm-artifact/rdfm-artifact /usr/bin/
-    - wget --quiet -O - $GO_REL | tar xz
-    - wget --quiet $PB_REL
-    - unzip $(basename $PB_REL) -d protoc
-    - export PATH=`pwd`/go/bin:$PATH
-    - export PATH=`pwd`/protoc/bin:$PATH
-    - export GOBIN=`pwd`/go/bin
-    - go install $PROTOC_GO_REL
     - cd devices/linux-client
     - make generate
     - make test
@@ -380,19 +289,19 @@ test-rdfm-client-docker:
   <<: *common_only
   dependencies:
     - build-rdfm-artifact
-  extends: .install-xdelta
   script:
-    # Currently CI ships Go 1.19, while the client needs 1.20+
-    - wget --quiet -O - "https://go.dev/dl/go1.22.3.linux-amd64.tar.gz" | tar xz
-    - export PATH=`pwd`/go/bin:$PATH
     # Install rdfm-artifact, which is required for the tests
     - mv tools/rdfm-artifact/rdfm-artifact /usr/bin/
     # The tests are running in a Docker container, install and set up
     # the Docker daemon
     - cd devices/linux-client
     - apt update
-    - apt -qq -y --no-install-recommends install docker.io cgroupfs-mount crun fuse-overlayfs pigz ca-certificates
-    - cgroupfs-mount
+    - apt -qq -y --no-install-recommends install docker-cli docker.io crun fuse-overlayfs pigz ca-certificates
+    - mount -t tmpfs -o uid=0,gid=0,mode=0755 cgroup /sys/fs/cgroup
+    - pushd /sys/fs/cgroup
+    - mkdir {cpu,cpuset,blkio,devices,memory,pids}
+    - for name in cpu cpuset blkio devices memory pids; do mount -n -t cgroup -o $name cgroup $name; done
+    - popd
     - ../../common/docker/start-docker.sh
     # HACK: For CI runs, we have to replace the -it flag in docker run
     #       as this is not a real terminal.
@@ -417,11 +326,7 @@ test-rdfm-client-docker:
 
 build-mcumgr-client:
   stage: build
-  before_script:
-    # Currently CI ships Go 1.19, while the client needs 1.22+
-    - wget --quiet -O - "https://go.dev/dl/go1.22.3.linux-amd64.tar.gz" | tar xz
   script:
-    - export PATH=`pwd`/go/bin:$PATH
     - make -C devices/mcumgr-client
   artifacts:
     expire_in: 1 day
@@ -441,6 +346,8 @@ build-mcumgr-test-samples:
     - apt update
     - apt -qqy --no-install-recommends install cmake device-tree-compiler ninja-build
   script:
+    - python3 -m venv venv
+    - source venv/bin/activate
     - ./devices/mcumgr-client/tests/build/build_samples.sh
     - ls -la ./devices/mcumgr-client/tests/out/
   artifacts:
@@ -449,6 +356,9 @@ build-mcumgr-test-samples:
       - devices/mcumgr-client/tests/out
 
 test-mcumgr-client:
+  # NOTE: Prebuilt renode version used in this job won't resolve dependencies on debian:trixie.
+  #       Bumping this should be done in a separate issue.
+  image: debian:bookworm
   variables:
     SCALENODE_CPU: 4
     SCALENODE_RAM: 6144
@@ -459,9 +369,10 @@ test-mcumgr-client:
     - build-mcumgr-test-samples
     - build-rdfm-artifact
   stage: local-tests
+  before_get_sources:
+    - apt update && apt -qqy --no-install-recommends install build-essential ca-certificates curl git-lfs  iproute2 libpq-dev python3-venv python3-dev >/dev/null
   script:
     - set -eo pipefail
-    - apt update && apt -qqy --no-install-recommends install iproute2 git-lfs >/dev/null
     # NOTE: Currently Renode is tracked using LFS since we're using a custom
     #       build with support for both STM32F764 and NRF52840 flash controllers.
     #       If they get added into main, this can be replaced with official release
@@ -469,8 +380,11 @@ test-mcumgr-client:
     - git lfs pull && apt -qqy --no-install-recommends install ./devices/mcumgr-client/tests/prebuilt/renode*.deb >/dev/null
     - mv tools/rdfm-artifact/rdfm-artifact /usr/bin/
     - mv devices/mcumgr-client/rdfm-mcumgr-client /usr/bin/
-    - pushd server && pip3 install -e . && popd
-    - pushd manager && pip3 install -e . && popd
+    - python3 -m venv venv
+    - source venv/bin/activate
+    - pip3 install -e ./common/communication
+    - pip3 install -e ./server
+    - pip3 install -e ./manager
     - cd devices/mcumgr-client
     # Run the test
     - ./tests/end2end/test.sh
@@ -479,11 +393,7 @@ test-mcumgr-client:
 
 build-rdfm-artifact:
   stage: build
-  extends: .install-xdelta
   script:
-    # Currently CI ships Go 1.19, while the rdfm-artifact needs 1.20+
-    - wget --quiet -O - "https://go.dev/dl/go1.22.3.linux-amd64.tar.gz" | tar xz
-    - export PATH=`pwd`/go/bin:$PATH
     - cd tools/rdfm-artifact
     - make
   artifacts:
@@ -493,11 +403,7 @@ build-rdfm-artifact:
 test-rdfm-artifact:
   <<: *common_only
   stage: local-tests
-  extends: .install-xdelta
   script:
-    # Currently CI ships Go 1.19, while the rdfm-artifact needs 1.20+
-    - wget --quiet -O - "https://go.dev/dl/go1.22.3.linux-amd64.tar.gz" | tar xz
-    - export PATH=`pwd`/go/bin:$PATH
     - cd tools/rdfm-artifact
     - make test
 
@@ -505,7 +411,6 @@ test-rdfm-artifact:
 
 build-rdfm-jwt-auth:
   stage: build
-  extends: .install-poetry-and-apptainer
   script:
     - (cd server/deploy/pubsub-demo/rdfm-jwt-auth && mvn package)
     - cp server/deploy/pubsub-demo/rdfm-jwt-auth/target/rdfm-jwt-auth-*.jar server/deploy/pubsub-demo/tests
@@ -523,7 +428,6 @@ build-rdfm-jwt-auth:
 test-rdfm-plotter:
   <<: *common_only
   stage: local-tests
-  extends: .install-poetry-and-apptainer
   dependencies:
     - build-rdfm-jwt-auth
   script:
