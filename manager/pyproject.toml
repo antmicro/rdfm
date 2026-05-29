@@ -10,14 +10,14 @@ requires-python = ">=3.11, <4.0"
 dependencies = [
     "rdfm_mgmt_communication>=0.1.0",
     "jsonschema (>=4.17.3,<5.0.0)",
-    "pydantic (>=2.0.3,<3.0.0)",
+    "pydantic (>=2.13.4,<3.0.0)",
     "requests (>=2.31.0,<3.0.0)",
     "types-requests (>=2.31.0.2,<3.0.0.0)",
     "requests-toolbelt (>=1.0.0,<2.0.0)",
     "progressbar2 (>=4.2.0,<5.0.0)",
     "marshmallow (>=3.20.1,<4.0.0)",
     "marshmallow-dataclass (>=8.5.14,<9.0.0)",
-    "authlib==1.2.1",
+    "authlib (>=1.7.2,<2.0.0)",
     "python-dateutil (>=2.8.2,<3.0.0)",
     "simple-websocket (>=1.0.0,<2.0.0)",
 ]
