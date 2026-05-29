@@ -25,11 +25,11 @@ dependencies = [
     "pycryptodome (>=3.18.0,<4.0.0)",
     "boto3 (>=1.28.57,<2.0.0)",
     "moto (>=4.2.4,<5.0.0)",
-    "authlib==1.2.1",
+    "authlib (>=1.7.2,<2.0.0)",
     "simple-websocket (>=1.0.0,<2.0.0)",
     "gevent (>=26.5.0)",
     "gunicorn (>=21.2.0,<22.0.0)",
-    "psycopg2 (>=2.9.9,<3.0.0)",
+    "psycopg2 (==2.9.12)",
     "alembic (>=1.13.1,<2.0.0)",
     "SQLAlchemy-Utils (>=0.41.2,<1.0.0)",
     "flask-cors (>=4.0.1,<5.0.0)",
@@ -49,7 +49,7 @@ rdfm_mgmt_communication = {path = "../common/communication"}
 [tool.poetry.group.test.dependencies]
 types-jsonschema = "^4.17.0.8"
 httpx = "^0.27.0"
-cryptography = "^42.0.5"
+cryptography = "^48.0.0"
 pytest-asyncio = "^0.23.5.post1"
 pg-temp = "==0.9.1"
 pytest-alembic = "^0.12.1"
