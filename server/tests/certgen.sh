@@ -31,7 +31,8 @@ openssl ecparam -name prime256v1 -genkey -out CA.key
 # NOTE: CN should include a year or distinctive value to ensure a unique subj line
 # ToDo: Set IsCA field to true
 openssl req -new -x509 -days 3650 -key CA.key -out CA.crt \
-    -subj "/O=$ORGNAME/CN=Root CA"
+    -subj "/O=$ORGNAME/CN=Root CA" \
+    -addext "keyUsage = critical, cRLSign, digitalSignature, keyCertSign"
 
 # Server Key/Cert
 # ---------------
