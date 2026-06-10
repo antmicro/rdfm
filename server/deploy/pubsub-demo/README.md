@@ -115,6 +115,17 @@ And plot them:
  rdfm-plotter --plot -d 02:42:ac:1a:00:02 --key CPU --pattern '"usr":([0-9]+\.[0-9]+)'  -o 0.5
 ```
 
+note: The [example consumer configuration](../../../tools/rdfm-plotter/example_consumer_config.json) has such a line: `"bootstrap_servers": "localhost:9094",`.
+It contains a list of one or more servers to which the clients connects at first to begin a full-fledged connection to the cluster.
+In the case of this demo, the telemetry endpoints are advertised via their docker node names (via ` KAFKA_ADVERTISED_LISTENERS` field in the compose yaml), meaning the begin with `broker:`, followed by some port.
+Therefore, after connecting to `localhost:9094`, a client would start to hit `broker:9093` or `broker:9094` and so on, thus making such an entry in `/etc/hosts` necessary:
+
+```
+127.0.0.1       broker
+```
+
+If the above line isn't present in `/etc/hosts`, rdfm-plotter will fail at gathering any logs.
+
 ![plotter](./images/05_plotter.png)
 
 Userspace CPU time usage in %.
