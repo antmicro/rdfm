@@ -26,7 +26,7 @@ dependencies = [
     "boto3 (>=1.28.57,<2.0.0)",
     "moto (>=4.2.4,<5.0.0)",
     "authlib (>=1.7.2,<2.0.0)",
-    "simple-websocket (>=1.0.0,<2.0.0)",
+    "simple-websocket (>=1.1.0,<2.0.0)",
     "gevent (>=26.5.0)",
     "gunicorn (>=21.2.0,<22.0.0)",
     "psycopg2 (==2.9.12)",
