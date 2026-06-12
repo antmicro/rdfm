@@ -5,8 +5,11 @@ from common import (DEVICES_WS,
                     create_fake_device_token)
 import simple_websocket
 import pytest
-from rdfm.ws import receive_message, send_message
+from rdfm.ws import receive_message, send_message, decode_json, RDFM_WS_DUPLICATE_CONNECTION
 from rdfm_mgmt_communication import CapabilityReport, DeviceAttachToManager
+import subprocess
+import signal
+from api.v1.middleware import WS_PING_INTERVAL
 
 
 FAKE_DEVICE_MAC = "00:00:00:00:00:00"
@@ -70,6 +73,20 @@ def spawn_shell_on_mock_device():
         client.close()
     except (simple_websocket.ConnectionError) as e:
         pytest.fail(f"connecting to the shell WebSocket failed: {e}")
+
+
+def connect_interruptable_mock_device():
+    """ Spawn a mock device that can be paused using SIGSTOP
+
+    To simulate a connection dropout we need a device mock that can be paused,
+    without triggering the usual WebSocket disconnection mechanism. Calling
+    client.close() on the above mocks would just gracefully shutdown the connection.
+    """
+    process = subprocess.Popen(["python", "tests/scripts/device-websocket-loop.py"])
+    # Hacky sleep to ensure the process starts
+    time.sleep(5.0)
+
+    return process
 
 
 def test_ws_connect_device(process, connect_mock_device):
@@ -161,3 +178,46 @@ def test_ws_shell_spawn_on_nonexistent_device(process):
         pytest.fail("shell connection did not close, despite the device not existing")
 
     assert "not connected" in client.close_message, "close message should indicate the device does not exist"
+
+
+def test_ws_stale_connections_are_disconnected(process: subprocess.Popen):
+    """ This tests if devices that have lost connection to the server get properly
+        disconnected from the server.
+
+    This is important, as only one connection is allowed per device, and stale
+    connections would prevent a device from accessing the device WS again.
+    """
+    mock = connect_interruptable_mock_device()
+    assert mock.poll() is None, "the mock device connected successfully"
+
+    # Send SIGSTOP to pause the mock
+    mock.send_signal(signal.SIGSTOP)
+    time.sleep(5.0)
+
+    # Sleep until the ping interval expires, at which point the server should
+    # disconnect the device. The timeout occurs after two intervals (one during
+    # which the Ping is sent, and after the other the connection is closed as
+    # no Pong was received).
+    time.sleep(WS_PING_INTERVAL * 2)
+
+    # Resume the mock
+    mock.send_signal(signal.SIGCONT)
+    time.sleep(5.0)
+
+    # The mock should now be disconnected from the server
+    assert mock.poll() is not None, "the mock device has closed after timing out"
+
+    # Now reconnect to the server
+    # Don't use the mock, as we need to check the closure status
+    # If a stale connection is present, the connection will immediately
+    # close with `4002: duplicate connections not allowed`
+    try:
+        client = simple_websocket.Client.connect(DEVICES_WS, headers={
+            "Authorization": f"Bearer token={create_fake_device_token()}",
+        })
+        _ = client.receive()
+        client.close()
+    except simple_websocket.ConnectionClosed as e:
+        if e.reason == RDFM_WS_DUPLICATE_CONNECTION:
+            pytest.fail("REGRESSION: Device connection was not properly cleaned up")
+        raise
