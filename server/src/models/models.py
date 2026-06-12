@@ -6,3 +6,4 @@ from models.registration import Registration
 from models.log import Log
 from models.permission import Permission
 from models.action_log import ActionLog
+from models.device_update import DeviceUpdate

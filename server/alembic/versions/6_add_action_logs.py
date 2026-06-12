@@ -21,10 +21,10 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.create_table('action_logs',
     sa.Column('id', sa.String(), nullable=False),
-    sa.Column('action_id', sa.String(), nullable=False),
-    sa.Column('mac_address', sa.String(), nullable=False),
+    sa.Column('action_id', sa.Text(), nullable=False),
+    sa.Column('mac_address', sa.Text(), nullable=False),
     sa.Column('created', sa.DateTime(), nullable=False),
-    sa.Column('status', sa.String(), nullable=False),
+    sa.Column('status', sa.Text(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     )
 

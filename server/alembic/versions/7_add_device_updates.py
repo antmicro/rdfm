@@ -21,9 +21,9 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.create_table('device_updates',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('mac_address', sa.String(), nullable=False),
+    sa.Column('mac_address', sa.Text(), nullable=False),
     sa.Column('created', sa.DateTime(), nullable=False),
-    sa.Column('version', sa.String(), nullable=False),
+    sa.Column('version', sa.Text(), nullable=False),
     sa.Column('progress', sa.Integer(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     )

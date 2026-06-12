@@ -4,6 +4,7 @@ from datetime import datetime
 # This tests the whole migration chain down to up.
 # It is parametrized to run on PostgreSQL and SQLite.
 from pytest_alembic.tests import test_upgrade
+from pytest_alembic.tests import test_model_definitions_match_ddl
 
 def test_migration_8(alembic_engine, alembic_runner):
     """

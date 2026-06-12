@@ -19,7 +19,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column('action_logs', sa.Column('download_url', sa.String(), nullable=True))
+    op.add_column('action_logs', sa.Column('download_url', sa.Text(), nullable=True))
 
 
 def downgrade() -> None:
