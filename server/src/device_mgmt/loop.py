@@ -15,24 +15,7 @@ def start_device_event_loop(
     # Save the WS connection
     previous = server.instance.remote_devices.get(device.token.device_id)
     if previous is not None:
-        # This is a workaround for an upstream library issue
-        # When a ping fails, and we don't receive a response
-        # from the device, simple_websocket does not signal
-        # threads that called receive() with no timeout
-        # to close. When this issue is resolved, this can be
-        # removed entirely.
-        # See: https://github.com/miguelgrinberg/simple-websocket/pull/33
-        if not previous.ws.connected:
-            print(
-                "Detected stale device connection, forcing a close", flush=True
-            )
-            previous.ws.event.set()
-            time.sleep(2.0)
-        else:
-            raise WebSocketException(
-                "duplicate connections not allowed",
-                RDFM_WS_DUPLICATE_CONNECTION,
-            )
+        raise WebSocketException("duplicate connections not allowed", RDFM_WS_DUPLICATE_CONNECTION)
 
     server.instance.remote_devices.add(device)
 
