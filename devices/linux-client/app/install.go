@@ -108,6 +108,18 @@ func DoInstallStates(art io.ReadCloser,
 	return nil
 }
 
+func IsRebootNeeded(device *dev.DeviceManager) (bool, error) {
+	rebootNeeded := false
+	_, installers, err := restoreHandlerData(device)
+
+	for _, inst := range installers {
+		reboot, _ := inst.NeedsReboot()
+		rebootNeeded = rebootNeeded || reboot == installer.RebootRequired || reboot == installer.AutomaticReboot
+	}
+
+	return rebootNeeded, err
+}
+
 func DoCommit(device *dev.DeviceManager) error {
 	log.Infof("Committing Artifact...")
 	stateData, installers, err := restoreHandlerData(device)

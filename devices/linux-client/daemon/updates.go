@@ -72,6 +72,7 @@ func (d *Device) checkUpdate(cancelCtx context.Context) error {
 			// TODO: Do something in case of failure
 		} else {
 			d.updateSoftwareVersion(cancelCtx)
+			d.rdfmCtx.RebootSystemIfNeeded()
 		}
 	case 204:
 		log.Println("No updates are available")

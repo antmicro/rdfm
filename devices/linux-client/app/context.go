@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"path"
+	"syscall"
 
 	conf "github.com/antmicro/rdfm/devices/linux-client/conf"
 	"github.com/antmicro/rdfm/devices/linux-client/delta"
@@ -187,6 +188,15 @@ func (ctx *RDFM) InstallArtifact(path string) error {
 	clientConfig := client.Config{}
 
 	return DoInstall(ctx.deviceManager, path, clientConfig, false)
+}
+
+func (ctx *RDFM) RebootSystemIfNeeded() error {
+	rebootNeeded, err := IsRebootNeeded(ctx.deviceManager)
+	if err == nil && rebootNeeded {
+		syscall.Sync()
+		syscall.Reboot(syscall.LINUX_REBOOT_CMD_RESTART)
+	}
+	return err
 }
 
 // Attempt to commit the currently installed update
