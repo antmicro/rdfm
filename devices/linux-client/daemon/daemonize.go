@@ -74,6 +74,10 @@ func Daemonize(c *libcli.Context) error {
 
 	device.actionRunner.RegisterAction(updateAction)
 
+	if ctx.CommitCurrentArtifact() != nil {
+		ctx.RollbackCurrentArtifact()
+	}
+
 	var wg sync.WaitGroup
 
 	wg.Add(1)
