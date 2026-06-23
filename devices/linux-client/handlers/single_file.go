@@ -11,6 +11,8 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/antmicro/rdfm/devices/linux-client/progress"
+
 	"github.com/mendersoftware/mender/installer"
 	"github.com/mendersoftware/mender/store"
 
@@ -88,7 +90,7 @@ func (s *SingleFileUpdater) StoreUpdate(r io.Reader, info os.FileInfo) error {
 		s.RollbackSupport = (temp == "true")
 		log.Infof("Rollback: %v", s.RollbackSupport)
 	case s.Filename:
-		s.updateFile(r)
+		s.updateFile(r, info.Size())
 	}
 
 	return nil
@@ -134,7 +136,7 @@ func readPayloadFile(r io.Reader, size int64) string {
 	return strings.TrimSpace(string(buf[:]))
 }
 
-func (s *SingleFileUpdater) updateFile(r io.Reader) error {
+func (s *SingleFileUpdater) updateFile(r io.Reader, size int64) error {
 	// Rollback file
 	if s.DestDirectory == "" {
 		return errors.New("The destination directory path cannot be empty")
@@ -164,10 +166,15 @@ func (s *SingleFileUpdater) updateFile(r io.Reader) error {
 			origFile.Close()
 		}
 	}
+
+	// Prepare progress
+	progressWriter := progress.NewProgressWriter(size)
+	tr := io.TeeReader(r, progressWriter)
+
 	// Update file
 	origFile, err := os.OpenFile(path.Join(s.DestDirectory, s.Filename), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, s.Permissions)
 	defer origFile.Close()
-	_, err = io.Copy(origFile, r)
+	_, err = io.Copy(origFile, tr)
 	return err
 }
 
