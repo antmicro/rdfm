@@ -31,26 +31,22 @@ func DoInstall(device *dev.DeviceManager, updateURI string,
 	clientConfig client.Config, rebootExitCode bool) error {
 
 	var image io.ReadCloser
-	var imageSize int64
 	var err error
 
 	if strings.HasPrefix(updateURI, "http:") ||
 		strings.HasPrefix(updateURI, "https:") {
 
 		log.Infof("Start updating from URI: [%s]", updateURI)
-		image, imageSize, err = download.FetchAndCacheUpdateFromURI(updateURI, clientConfig)
+		image, _, err = download.FetchAndCacheUpdateFromURI(updateURI, clientConfig)
 	} else {
 		log.Infof("Start updating from local image file: [%s]", updateURI)
-		image, imageSize, err = installer.FetchUpdateFromFile(updateURI)
+		image, _, err = installer.FetchUpdateFromFile(updateURI)
 	}
 	if err != nil {
 		return err
 	}
 
-	p := NewProgressWriter(imageSize)
-	tr := io.TeeReader(image, p)
-
-	err = DoInstallStates(ioutil.NopCloser(tr), device, rebootExitCode)
+	err = DoInstallStates(ioutil.NopCloser(image), device, rebootExitCode)
 
 	if err == nil {
 		download.CleanCache()

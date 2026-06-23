@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github.com/antmicro/rdfm/devices/linux-client/app"
+	"github.com/antmicro/rdfm/devices/linux-client/progress"
 
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
@@ -40,7 +40,7 @@ func (e *ConnClosedError) Error() string {
 }
 
 func (d *DeviceManagementConnection) startRecvLoop(cancelCtx context.Context) error {
-	app.Bus.Subscribe("progress", func(progress int) {
+	progress.Bus.Subscribe("progress", func(progress int) {
 		d.sendUpdateProgress(progress)
 	})
 
@@ -73,7 +73,7 @@ func (d *DeviceManagementConnection) Close() error {
 }
 
 func (d *DeviceManagementConnection) tryClose() error {
-	app.Bus.Unsubscribe("progress", func(progress int) {
+	progress.Bus.Unsubscribe("progress", func(progress int) {
 		d.sendUpdateProgress(progress)
 	})
 

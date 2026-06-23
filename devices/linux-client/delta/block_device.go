@@ -12,6 +12,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/mendersoftware/mender/system"
+
+	"github.com/antmicro/rdfm/devices/linux-client/progress"
 )
 
 const MAXIMUM_CHUNK_SIZE = 1 * 1024 * 1024 // 1MB
@@ -20,6 +22,8 @@ const MAXIMUM_CHUNK_SIZE = 1 * 1024 * 1024 // 1MB
 type BlockDevice struct {
 	Path   string             // Device path, ex. /dev/mmcblk0p1
 	writer *blockDeviceWriter // Implementation of WriteCloser + Sync
+
+	progressWriter *progress.ProgressWriter
 }
 
 type partition string
@@ -83,6 +87,7 @@ func Open(deviceFile string, updateSize int64) (*BlockDevice, error) {
 	blockDevice := &BlockDevice{
 		Path:   deviceFile,
 		writer: writer,
+		progressWriter: progress.NewProgressWriter(updateSize),
 	}
 	return blockDevice, nil
 }
@@ -92,6 +97,7 @@ func (bd *BlockDevice) Write(b []byte) (int, error) {
 	if bd.writer == nil {
 		return 0, errors.New("device not found")
 	}
+	bd.progressWriter.Write(b)
 	return bd.writer.Write(b)
 }
 
