@@ -121,11 +121,11 @@ func IsRebootNeeded(device *dev.DeviceManager) (bool, error) {
 }
 
 func DoCommit(device *dev.DeviceManager) error {
-	log.Infof("Committing Artifact...")
 	stateData, installers, err := restoreHandlerData(device)
 	if err != nil {
 		return err
 	}
+	log.Infof("Committing Artifact...")
 	for _, inst := range installers {
 		inst.CommitUpdate()
 	}
@@ -135,11 +135,11 @@ func DoCommit(device *dev.DeviceManager) error {
 }
 
 func DoRollback(device *dev.DeviceManager) error {
-	log.Infof("Rolling back Artifact...")
 	stateData, installers, err := restoreHandlerData(device)
 	if err != nil {
 		return err
 	}
+	log.Infof("Rolling back Artifact...")
 	for _, inst := range installers {
 		if support, _ := inst.SupportsRollback(); support {
 			inst.Rollback()
