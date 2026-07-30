@@ -17,23 +17,32 @@ services:
     volumes:
       - ${PWD}/server/deploy/certs:/certs
 
-  frontend:
-    image: rdfm:frontend
+  frontend-builder:
+    image: rdfm:frontend-builder
+    env_file: $SETUP_FILE
+    volumes:
+      - static:/static
     build:
       dockerfile: frontend/Dockerfile
       context: ../../
-      args:
-        setup_file: server/deploy/$SETUP_FILE
+
+  frontend:
+    image: nginx:1.27.2-alpine
     restart: unless-stopped
     env_file: $SETUP_FILE
     depends_on:
-      - keycloak
-      - rdfm-server
+      keycloak:
+        condition: service_started
+      rdfm-server:
+        condition: service_started
+      frontend-builder:
+        condition: service_completed_successfully
     ports:
       - "${RDFM_FRONTEND_PORT}:${RDFM_FRONTEND_PORT}"
     volumes:
       - ${PWD}/server/deploy/nginx.conf:/etc/nginx/templates/default.conf.template
       - ${PWD}/server/deploy/certs:/etc/nginx/certs/
+      - static:/etc/nginx/html
     networks:
       - rdfm
 
@@ -117,6 +126,7 @@ volumes:
   storage:
   db:
   redis_data:
+  static:
 
 networks:
   rdfm:
