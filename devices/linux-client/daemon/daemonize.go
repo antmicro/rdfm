@@ -93,10 +93,10 @@ func Daemonize(c *libcli.Context) error {
 	wg.Add(1)
 	go func() {
 		defer func() {
-			log.Infoln("Finished telemtryLoop.")
+			log.Infoln("Finished telemetryLoop.")
 			wg.Done()
 		}()
-		log.Infoln("Starting telemtryLoop...")
+		log.Infoln("Starting telemetryLoop...")
 		device.telemetryLoop(cancelCtx)
 	}()
 
