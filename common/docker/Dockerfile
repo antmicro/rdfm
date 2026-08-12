@@ -51,7 +51,6 @@ RUN apt-get -qq -y update && apt-get -qq -y install --no-install-recommends \
 	telnet \
 	uuid-runtime \
 	xxd \
-	redis-server \
 	cmake \
 	libseccomp-dev \
 	uidmap \

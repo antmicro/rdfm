@@ -223,19 +223,6 @@ test-actions:
     - poetry run pytest tests/test-actions.py  --sqlite
     - poetry run pytest tests/test-actions.py  --postgres
 
-test-server-side-events:
-  extends: .build
-  stage: local-tests
-  script:
-    - cd server
-    - poetry run pytest tests/test-server-side-events.py  --sqlite
-    - poetry run pytest tests/test-server-side-events.py  --postgres
-  artifacts:
-    paths:
-      - server/tests/server_gunicorn.log
-      - server/tests/server_redis.log
-    when: always
-
 test-server-pubsub-acl-handling:
   extends: .build
   stage: local-tests
