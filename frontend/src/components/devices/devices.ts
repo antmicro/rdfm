@@ -24,11 +24,13 @@ import {
     DEVICE_ADD_TAG_ENDPOINT,
     TAGS_ENDPOINT,
     DEVICE_DOWNLOAD_FILE_ENDPOINT,
+    PROGRESS_ALL_ENDPOINT,
     resourcesGetter,
     fetchWrapper,
     type Group,
     type PendingDevice,
     type RegisteredDevice,
+    type DeviceUpdate,
     type RequestOutput,
 } from '../../common/utils';
 
@@ -37,6 +39,7 @@ import { reactive } from 'vue';
 
 export const pendingDevicesResources = resourcesGetter<PendingDevice[]>(PENDING_ENDPOINT);
 export const registeredDevicesResources = resourcesGetter<RegisteredDevice[]>(DEVICES_ENDPOINT);
+export const updatesInProgressResources = resourcesGetter<DeviceUpdate[]>(PROGRESS_ALL_ENDPOINT);
 export const groupResources = resourcesGetter<Group[]>(GROUPS_ENDPOINT);
 
 export const filteredDevicesResources = (tag: string) =>

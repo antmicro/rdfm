@@ -192,7 +192,6 @@ SPDX-License-Identifier: Apache-2.0
 <script lang="ts">
 import { ref, computed, type PropType } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { EventSourcePolyfill } from 'event-source-polyfill';
 import {
     fetchWrapper,
     LOGIN_PATH,
@@ -201,8 +200,8 @@ import {
     PERMISSIONS_ENDPOINT,
     adminRoles,
     type Permission,
-    DEVICE_PROGRESS_ENDPOINT,
     useNotifications,
+    POLL_INTERVAL,
 } from '../common/utils';
 
 import DevicesList from '../components/devices/DevicesList.vue';
@@ -214,8 +213,8 @@ import Device from '@/components/devices/Device.vue';
 import {
     deviceUpdates,
     deviceVersions,
-    deviceConnections,
     registeredDevicesResources,
+    updatesInProgressResources,
 } from '../components/devices/devices';
 
 export enum ActiveTab {
@@ -249,6 +248,7 @@ export default {
         const route = useRoute();
         const loggedIn = ref(false);
         const accMenuOpen = ref(false);
+        const intervalID = ref<number | null>(null);
 
         const parseJWT = (token: string) => {
             const binaryString = atob(token.split('.')[1]);
@@ -308,6 +308,7 @@ export default {
             router,
             route,
             parsedToken,
+            intervalID,
         };
     },
     watch: {
@@ -335,52 +336,36 @@ export default {
 
         const accessToken = localStorage.getItem('access_token');
 
-        const sse = new EventSourcePolyfill(DEVICE_PROGRESS_ENDPOINT, {
-            headers: {
-                Authorization: `Bearer token=${accessToken}`,
-            },
-        });
-
-        sse.addEventListener('update', async (event: MessageEvent) => {
-            const message = JSON.parse(event.data);
-
-            if (!deviceUpdates.has(message.device) && !deviceVersions.has(message.device)) {
-                notif.notifySuccess({
-                    headline: `Device ${message.device}`,
-                    msg: 'Device update started',
-                });
+        this.intervalID = setInterval(() => {
+            updatesInProgressResources.fetchResources();
+            const states = updatesInProgressResources.resources.value ?? [];
+            for (const e of states) {
+                if (!deviceUpdates.has(e.mac_address) && !deviceVersions.has(e.mac_address)) {
+                    notif.notifySuccess({
+                        headline: `Device ${e.mac_address}`,
+                        msg: 'Device update started',
+                    });
+                    deviceVersions.set(e.mac_address, e.version);
+                }
+                deviceUpdates.set(e.mac_address, e.progress);
             }
-            if (message.version && !deviceVersions.has(message.device)) {
-                deviceVersions.set(message.device, message.version);
+            const macSet = new Set(states.map((e) => e.mac_address));
+            for (const mac of deviceUpdates.keys()) {
+                if (!macSet.has(mac)) {
+                    notif.notifySuccess({
+                        headline: `Device ${mac}`,
+                        msg: 'Device update finished',
+                    });
+                    deviceUpdates.delete(mac);
+                    deviceVersions.delete(mac);
+                }
             }
-            if (message.progress) {
-                deviceUpdates.set(message.device, message.progress);
-            }
-            if (deviceUpdates.get(message.device) === 100) {
-                notif.notifySuccess({
-                    headline: `Device ${message.device}`,
-                    msg: 'Device update finished',
-                });
-                deviceUpdates.delete(message.device);
-                deviceVersions.delete(message.device);
-            }
-        });
-
-        sse.addEventListener('connect', async (event: MessageEvent) => {
-            const message = JSON.parse(event.data);
-            deviceConnections.set(message.device, true);
-        });
-
-        sse.addEventListener('disconnect', async (event: MessageEvent) => {
-            const message = JSON.parse(event.data);
-            deviceConnections.set(message.device, false);
-        });
-
-        sse.addEventListener('error', (error: Event) => {
-            console.error(
-                'Connection to event stream failed. Will not be able to show device update progress.',
-            );
-        });
+        }, POLL_INTERVAL);
+    },
+    unmounted() {
+        if (this.intervalID != null) {
+            clearInterval(this.intervalID);
+        }
     },
 };
 </script>

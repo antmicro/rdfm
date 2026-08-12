@@ -835,7 +835,15 @@ export default {
             () => registeredDevicesResources.resources.value,
             async () => {
                 if (!registeredDevicesResources.resources.value) return;
-                if (device.value) return;
+                if (device.value) {
+                    let foundDevice = registeredDevicesResources.resources.value.find(
+                        (d) => d.id == device.value!.id,
+                    );
+                    if (foundDevice) {
+                        device.value.connected = foundDevice.connected;
+                    }
+                    return;
+                }
 
                 let foundDevice: RegisteredDevice | undefined;
                 let foundPattern;
