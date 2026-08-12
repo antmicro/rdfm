@@ -11,4 +11,4 @@ class DeviceUpdate(Base):
     mac_address: Mapped[str] = mapped_column(Text)
     created: Mapped[datetime.datetime] = mapped_column(DateTime)
     version: Mapped[str] = mapped_column(Text)
-    progress: Mapped[str] = mapped_column(Integer)
+    progress: Mapped[int] = mapped_column(Integer)
