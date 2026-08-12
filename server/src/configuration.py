@@ -28,9 +28,6 @@ ENV_API_PORT = "RDFM_API_PORT"
 ENV_FRONTEND_APP_URL = "RDFM_FRONTEND_APP_URL"
 ENV_INCLUDE_FRONTEND_ENDPOINT = "RDFM_INCLUDE_FRONTEND_ENDPOINT"
 
-ENV_REDIS_HOST = "REDIS_HOST"
-ENV_REDIS_PORT = "REDIS_PORT"
-
 ENV_ENABLE_KAFKA_INTEGRATION = "RDFM_ENABLE_KAFKA_INTEGRATION"
 ARG_ENABLE_KAFKA_INTEGRATION = "--enable-pubsub"
 ENV_DEV_BOOTSTRAP_SERVERS = "RDFM_DEV_BOOTSTRAP_SERVERS"
@@ -156,11 +153,6 @@ class ServerConfig:
         request.
     """
     token_introspection_client_secret: str
-
-    """ URL to Redis.
-        This is used for sending server side events.
-    """
-    redis_url: str
 
     """ Determines whether the RDFM management server integration with
         Kafka is enabled.
@@ -357,11 +349,6 @@ def parse_from_environment(config: ServerConfig) -> bool:
             config.token_introspection_url = str(oauth_url)
             config.token_introspection_client_id = str(oauth_client_id)
             config.token_introspection_client_secret = str(oauth_client_secret)
-
-    redis_host = try_get_env(ENV_REDIS_HOST, "REDIS URL")
-    redis_port = try_get_env(ENV_REDIS_PORT, "REDIS PORT")
-    if redis_host and redis_port:
-        config.redis_url = f"redis://{redis_host}:{redis_port}"
 
     if ENV_ENABLE_KAFKA_INTEGRATION in os.environ:
         config.enable_pubsub = True

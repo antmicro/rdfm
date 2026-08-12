@@ -9,7 +9,6 @@ services:
     depends_on:
       - keycloak
       - postgres
-      - redis
     environment:
       REQUESTS_CA_BUNDLE: /certs/CA.crt
     networks:
@@ -112,20 +111,10 @@ services:
     networks:
       - rdfm
 
-  redis:
-    image: redis:7.2-alpine
-    container_name: redis
-    volumes:
-      - redis_data:/data
-    networks:
-      - rdfm
-    command: ["redis-server", "--save", "20", "1", "--loglevel", "warning"]
-
 volumes:
   keycloak:
   storage:
   db:
-  redis_data:
   static:
 
 networks:
