@@ -17,11 +17,7 @@ Component wraps functionality for displaying and working with a single rdfm devi
             :device="device.mac_address"
             smallButtonName="Open action log"
             :buttonCallback="fetchActionLog"
-            :connected="
-                deviceConnections.has(device.mac_address)
-                    ? deviceConnections.get(device.mac_address)
-                    : device.connected
-            "
+            :connected="device.connected"
         />
         <TitleBar
             v-if="!device"
@@ -784,7 +780,6 @@ import {
     downloadDeviceFile,
     execAction,
     type Action,
-    deviceConnections,
     deviceActions,
 } from './devices';
 import { useRoute, useRouter } from 'vue-router';
@@ -1132,7 +1127,6 @@ export default {
             isFullscreen,
             disconnect,
             allowedTo,
-            deviceConnections,
         };
     },
 };

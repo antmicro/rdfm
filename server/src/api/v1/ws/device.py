@@ -33,13 +33,6 @@ def device_management_ws(
     try:
         device_mgmt.loop.start_device_event_loop(ws, device_token)
     except WebSocketException as e:
-        message = {"device": device_token.device_id}
-
-        try:
-            server.instance.sse.publish(json.dumps(message), type='disconnect')
-        except KeyError:
-            print("Redis is not configured. Unable to send device updates.")
-
         print("Terminating device WS connection:", e.message, flush=True)
         raise
 

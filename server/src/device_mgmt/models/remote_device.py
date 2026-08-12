@@ -162,15 +162,6 @@ class RemoteDevice:
                 self.update_version = server.instance._device_updates_db.get_version(
                     self.token.device_id
                 )
-            message = {
-                "device": self.token.device_id,
-                "progress": request.progress,
-                "version": self.update_version,
-            }
-            try:
-                server.instance.sse.publish(json.dumps(message), type='update')
-            except KeyError:
-                print("Redis is not configured. Unable to send device updates.")
             if request.progress == 100:
                 self.update_version = None
                 server.instance._device_updates_db.delete(self.token.device_id)
@@ -217,11 +208,6 @@ class RemoteDevice:
                 }
             )
         )
-        message = {"device": self.token.device_id}
-        try:
-            server.instance.sse.publish(json.dumps(message), type='connect')
-        except KeyError:
-            print("Redis is not configured. Unable to send device updates.")
 
         thread = threading.Thread(
             target=device_mgmt.action.send_action_queue,
