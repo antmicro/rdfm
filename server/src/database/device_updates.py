@@ -22,6 +22,14 @@ class DeviceUpdatesDB:
                 return []
             return [x for x in updates]
 
+    def fetch_one(self, identifier: int) -> models.device_update.DeviceUpdate:
+        """Fetch update progress of the device with a given identifier"""
+        with Session(self.engine) as session:
+            stmt = select(models.device_update.DeviceUpdate).where(
+                models.device_update.DeviceUpdate.id == identifier
+            )
+            return session.scalar(stmt)
+
     def insert(self, update: models.device_update.DeviceUpdate):
         """Add a device update to the database"""
         with Session(self.engine) as session:

@@ -34,6 +34,7 @@ export const DELETE_PACKAGE_ENDPOINT = (id: number) => `${PACKAGES_ENDPOINT}/${i
 export const DOWNLOAD_PACKAGE_ENDPOINT = (id: number) => `${PACKAGES_ENDPOINT}/${id}/download`;
 
 export const DEVICES_ENDPOINT = `${SERVER_URL}/api/v2/devices`;
+export const PROGRESS_ALL_ENDPOINT = `${SERVER_URL}/api/v2/devices/progress`;
 export const PENDING_ENDPOINT = `${SERVER_URL}/api/v1/auth/pending`;
 export const PERMISSIONS_ENDPOINT = `${SERVER_URL}/api/v1/permissions`;
 export const REGISTER_DEVICE_ENDPOINT = `${SERVER_URL}/api/v1/auth/register`;
@@ -50,7 +51,6 @@ export const DEVICE_REMOVE_ACTIONS_ENDPOINT = (mac: string) =>
     `/api/v2/devices/${mac}/action/remove`;
 export const DEVICE_SHELL_ENDPOINT = (mac: string, token: string) =>
     `/api/v1/devices/${mac}/shell?token=${token}`;
-export const DEVICE_PROGRESS_ENDPOINT = `/api/stream`;
 export const DEVICE_DOWNLOAD_FILE_ENDPOINT = (id: number) => `/api/v2/devices/${id}/fs/file`;
 
 export const DEVICE_TAGS_ENDPOINT = (id: number) => `${SERVER_URL}/api/v2/devices/${id}/tags`;
@@ -193,7 +193,18 @@ export interface RegisteredDevice {
     capabilities: Record<string, boolean>;
     public_key: string;
     connected: boolean;
-    progress?: number;
+}
+
+/**
+ * Device update in progress interface specified in
+ * https://antmicro.github.io/rdfm/api.html#get--api-v2-devices-progress-response-json-array-of-objects
+ */
+export interface DeviceUpdate {
+    id: number;
+    mac_address: string;
+    created: string;
+    version: string;
+    progress: number;
 }
 
 /**

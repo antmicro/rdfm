@@ -22,6 +22,7 @@ from rdfm.permissions import (
 )
 from rdfm.schema.v2.devices import Device, ActionLog, ActionRemoveRequest
 from rdfm.schema.v2.fs import FsFile
+from rdfm.schema.v2.device_updates import DeviceUpdate
 from rdfm.ws import WebSocketException
 import device_mgmt.action
 import configuration
@@ -46,7 +47,7 @@ def model_to_schema(device: models.device.Device) -> Device:
     )
 
 
-def action_model_to_schema(task: models.action_log.ActionLog) -> Device:
+def action_model_to_schema(task: models.action_log.ActionLog) -> ActionLog:
     """Convert a database model to the schema model"""
     return ActionLog(
         id=task.id,
@@ -54,6 +55,16 @@ def action_model_to_schema(task: models.action_log.ActionLog) -> Device:
         created=task.created,
         status=task.status,
         download_url=task.download_url,
+    )
+
+
+def update_model_to_schema(update: models.device_update.DeviceUpdate) -> DeviceUpdate:
+    return DeviceUpdate(
+        id=update.id,
+        mac_address=update.mac_address,
+        created=update.created,
+        version=update.version,
+        progress=update.progress,
     )
 
 
@@ -181,6 +192,116 @@ def fetch_one(identifier: int):
         traceback.print_exc()
         print("Exception during device fetch:", repr(e))
         return api_error("device fetching failed", 500)
+
+
+@devices_blueprint.route('/api/v2/devices/progress')
+@check_permission(DEVICE_RESOURCE, READ_PERMISSION)
+def list_all_in_progress():
+    """Fetch a list of devices currently updating
+
+    :status 200: no error
+    :status 401: user did not provide authorization data,
+                 or the authorization has expired
+
+    :>jsonarr integer id: device identifier
+    :>jsonarr string mac_address: device-reported MAC address
+    :>jsonarr string created: UTC datetime of update start (RFC822)
+    :>jsonarr string version: new version being installed
+    :>jsonarr int progress: update progress [0..99]
+
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        GET /api/v1/devices/progress HTTP/1.1
+        Accept: application/json, text/javascript
+
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+
+        [
+          {
+            "created": "Wed, 12 Aug 2026 13:09:35 -0000",
+            "id": 1,
+            "mac_address": "00:00:00:00:00:02",
+            "progress": 2,
+            "version": "release-2"
+          }
+        ]
+    """  # noqa: E501
+    try:
+        progress: List[
+            models.device_update.DeviceUpdate
+        ] = server.instance._device_updates_db.fetch_all()
+        return DeviceUpdate.Schema().dump(
+            [update_model_to_schema(p) for p in progress], many=True
+        ), 200
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception during progress fetch:", repr(e))
+        return api_error("progress fetching failed", 500)
+
+
+@devices_blueprint.route('/api/v2/devices/<int:identifier>/progress')
+@check_permission(DEVICE_RESOURCE, READ_PERMISSION)
+def list_one_in_progress(identifier: int):
+    """Fetch information about a device currently updating
+
+    :status 200: no error
+    :status 401: user did not provide authorization data,
+                 or the authorization has expired
+    :status 404: device with the specified identifier is not currently updating
+
+    :>json integer id: device identifier
+    :>json string mac_address: device-reported MAC address
+    :>json string created: UTC datetime of update start (RFC822)
+    :>json string version: new version being installed
+    :>json int progress: update progress [0..99]
+
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        GET /api/v1/devices/1/progress HTTP/1.1
+        Accept: application/json, text/javascript
+
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+
+        {
+          "created": "Wed, 12 Aug 2026 13:09:35 -0000",
+          "id": 1,
+          "mac_address": "00:00:00:00:00:02",
+          "progress": 2,
+          "version": "release-2"
+        }
+    """  # noqa: E501
+    try:
+        progress: Optional[
+            models.device_update.DeviceUpdate
+        ] = server.instance._device_updates_db.fetch_one(identifier)
+        if progress is None:
+            if server.instance._devices_db.fetch_one(identifier):
+                return {}, 204
+            return api_error("device not found", 404)
+        return DeviceUpdate.Schema().dump(
+            update_model_to_schema(progress)), 200
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception during progress fetch:", repr(e))
+        return api_error("progress fetching failed", 500)
 
 
 @devices_blueprint.route(
