@@ -37,3 +37,10 @@ func (p *ProgressWriter) Write(data []byte) (int, error) {
 
 	return n, nil
 }
+
+func BlockDeviceWriteProgressCallback(size int64) func([]byte) (int, error) {
+	pw := NewProgressWriter(size)
+	return func(data []byte) (int, error) {
+		return pw.Write(data)
+	}
+}

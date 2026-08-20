@@ -12,6 +12,7 @@ import (
 	"github.com/antmicro/rdfm/devices/linux-client/download"
 	"github.com/antmicro/rdfm/devices/linux-client/handlers"
 	"github.com/antmicro/rdfm/devices/linux-client/parser"
+	"github.com/antmicro/rdfm/devices/linux-client/progress"
 
 	"github.com/mendersoftware/mender/client"
 	"github.com/mendersoftware/mender/datastore"
@@ -31,22 +32,26 @@ func DoInstall(device *dev.DeviceManager, updateURI string,
 	clientConfig client.Config, rebootExitCode bool) error {
 
 	var image io.ReadCloser
+	var imageSize int64
 	var err error
 
 	if strings.HasPrefix(updateURI, "http:") ||
 		strings.HasPrefix(updateURI, "https:") {
 
 		log.Infof("Start updating from URI: [%s]", updateURI)
-		image, _, err = download.FetchAndCacheUpdateFromURI(updateURI, clientConfig)
+		image, imageSize, err = download.FetchAndCacheUpdateFromURI(updateURI, clientConfig)
 	} else {
 		log.Infof("Start updating from local image file: [%s]", updateURI)
-		image, _, err = installer.FetchUpdateFromFile(updateURI)
+		image, imageSize, err = installer.FetchUpdateFromFile(updateURI)
 	}
 	if err != nil {
 		return err
 	}
 
+	// allow modified BlockDevice.Write inside Mender to report progress
+	installer.BlockDeviceWriteProgressCallback = progress.BlockDeviceWriteProgressCallback(imageSize)
 	err = DoInstallStates(ioutil.NopCloser(image), device, rebootExitCode)
+	installer.BlockDeviceWriteProgressCallback = nil
 
 	if err == nil {
 		download.CleanCache()

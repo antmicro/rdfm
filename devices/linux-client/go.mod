@@ -4,12 +4,14 @@ go 1.20
 
 require (
 	github.com/antmicro/rdfm/tools/rdfm-artifact v0.0.0-20250805081032-9c3f3147301f
+	github.com/asaskevich/EventBus v0.0.0-20200907212545-49d423059eef
 	github.com/creack/pty v1.1.24
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/mendersoftware/mender v0.0.0-20230726064531-bbe854cef242
 	github.com/mendersoftware/mender-artifact v0.0.0-20230803130415-bb342f921a12
+	github.com/mendersoftware/progressbar v0.0.3
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
@@ -22,7 +24,6 @@ require (
 
 require (
 	github.com/antmicro/go-xdelta/xdelta3/go_api v0.0.0-20250728100644-2e147d195b14 // indirect
-	github.com/asaskevich/EventBus v0.0.0-20200907212545-49d423059eef // indirect
 	github.com/balena-os/circbuf v0.1.3 // indirect
 	github.com/balena-os/librsync-go v0.8.5 // indirect
 	github.com/bmatsuo/lmdb-go v1.8.0 // indirect
@@ -34,7 +35,6 @@ require (
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/mendersoftware/openssl v1.1.1-0.20221101131127-8797d18baf1a // indirect
-	github.com/mendersoftware/progressbar v0.0.3 // indirect
 	github.com/minio/sha256-simd v1.0.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.19 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -49,4 +49,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/mendersoftware/mender v0.0.0-20230726064531-bbe854cef242 => github.com/antmicro/mender v0.0.0-20240724071621-94b3886d04b6
+replace github.com/mendersoftware/mender v0.0.0-20230726064531-bbe854cef242 => github.com/antmicro/mender v0.0.0-20260820141407-a152de751b87
