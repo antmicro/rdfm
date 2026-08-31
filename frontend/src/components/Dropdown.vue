@@ -1,16 +1,16 @@
 <template>
     <div class="dropdown-holder">
-        <div class="dropdown">
+        <div class="dropdown" @click="toggleDropdown">
             <div class="tags">
                 <div v-for="tag in tags" :key="tag.id" class="t">
                     <p>#{{ tag.name }}</p>
-                    <button @click="() => select(tag.id)"><Cross /></button>
+                    <button @click.stop="() => select(tag.id)"><Cross /></button>
                 </div>
             </div>
-            <button @click="toggleDropdown" v-if="!tags.length" class="hint">
+            <button v-if="!tags.length" class="hint">
                 {{ placeholder }}
             </button>
-            <button @click="toggleDropdown" class="dropdown-opener">
+            <button class="dropdown-opener">
                 <CaretUp v-if="dropdownOpen" />
                 <CaretDown v-else />
             </button>
