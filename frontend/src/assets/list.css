@@ -27,7 +27,7 @@
             grid-template-columns: 80px 90px 200px 200px auto 200px 300px;
         }
         #device-list-registered .row {
-            grid-template-columns: 80px 80px repeat(5, var(--default-col-width)) 300px auto 200px;
+            grid-template-columns: 80px 80px repeat(4, var(--default-col-width)) 300px auto 200px;
         }
         #device-list-unregistered .row {
             grid-template-columns: 300px repeat(4, var(--default-col-width)) auto;
@@ -40,7 +40,7 @@
             }
             #device-list-registered .row {
                 grid-template-columns:
-                    80px 80px repeat(5, var(--default-col-width))
+                    80px 80px repeat(4, var(--default-col-width))
                     200px auto 200px;
             }
             #device-list-unregistered .row {
@@ -51,7 +51,7 @@
         }
 
         /* Columns collapsed into rows */
-        @media screen and (max-width: 1250px) {
+        @media screen and (max-width: 1440px) {
             #device-list-registered .row,
             #device-list-unregistered .row,
             #packages-list .row {
@@ -89,6 +89,9 @@
 
             .progress {
                 padding: 0.5em 1em;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
             }
 
             .entry {

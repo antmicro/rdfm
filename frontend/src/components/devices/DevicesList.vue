@@ -71,10 +71,6 @@ Component wraps functionality for displaying and working with rdfm devices.
                                 <div class="value">{{ device.name }}</div>
                             </div>
                             <div class="entry">
-                                <div class="title">Capabilities</div>
-                                <div class="value">{{ device.capabilities }}</div>
-                            </div>
-                            <div class="entry">
                                 <div class="title">MAC Address</div>
                                 <div class="value">
                                     {{ device.mac_address }}

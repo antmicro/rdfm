@@ -61,6 +61,7 @@ with a title, subtitle and an optional action button.
         flex-direction: row;
         justify-content: space-between;
         flex-wrap: wrap;
+        gap: 1em;
         width: 100%;
 
         & > #titlebar {
@@ -103,6 +104,13 @@ with a title, subtitle and an optional action button.
                     }
                 }
             }
+        }
+
+        & > #update {
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         & > #actionbar {

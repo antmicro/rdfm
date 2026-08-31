@@ -25,7 +25,6 @@ Shown when a device is being updated.
 #progress-bar-wrapper {
     display: flex;
     flex-direction: column;
-    width: 300px;
 
     & > #header {
         position: relative;
@@ -44,6 +43,9 @@ Shown when a device is being updated.
         }
         & > #percentage {
             color: var(--accent-900);
+        }
+        * {
+            text-box: trim-both cap text;
         }
     }
 
