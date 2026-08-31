@@ -179,15 +179,22 @@ Component wraps functionality for displaying and working with a single rdfm devi
 
         <template v-if="device?.capabilities.shell && allowedTo('shell', 'device', device?.id)">
             <div :class="['terminal-container', { fullscreen: isFullscreen }]">
-                <button :class="['action-button gray', { 'tab-active': isTerminalOpened }]">
-                    <div @click="toggleTerminal">
+                <div>
+                    <button
+                        :class="['action-button gray', { 'tab-active': isTerminalOpened }]"
+                        @click="toggleTerminal"
+                    >
                         {{ terminalButton }}
-                    </div>
-                    <div @click="terminalFullscreen" v-if="isTerminalOpened">
+                    </button>
+                    <button
+                        class="action-button gray tab-active"
+                        @click="terminalFullscreen"
+                        v-if="isTerminalOpened"
+                    >
                         <Expand v-if="!isFullscreen" />
                         <Collapse v-if="isFullscreen" />
-                    </div>
-                </button>
+                    </button>
+                </div>
                 <div
                     :class="['terminal-wrapper', { fullscreen: isFullscreen }]"
                     v-if="isTerminalOpened"
@@ -650,10 +657,6 @@ Component wraps functionality for displaying and working with a single rdfm devi
     flex-direction: column;
 
     button.tab-active {
-        display: flex;
-        flex-direction: row;
-        column-gap: 10px;
-
         border-top-left-radius: 8px;
         border-top-right-radius: 8px;
         border-bottom-left-radius: 0;
