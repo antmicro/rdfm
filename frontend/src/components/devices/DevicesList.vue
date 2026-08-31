@@ -32,17 +32,17 @@ Component wraps functionality for displaying and working with rdfm devices.
                                     </td>
                                     <td class="entry">
                                         <div class="value">
-                                            {{ registeredDevicesCount }}/{{ devicesCount }}
+                                            {{ registeredDevicesCount }}
                                         </div>
                                     </td>
                                 </tr>
                                 <tr class="resources-table-row">
                                     <td class="entry">
-                                        <div class="value">Unregistered devices</div>
+                                        <div class="value">Pending devices</div>
                                     </td>
                                     <td class="entry">
                                         <div class="value">
-                                            {{ pendingDevicesCount }}/{{ devicesCount }}
+                                            {{ pendingDevicesCount }}
                                         </div>
                                     </td>
                                 </tr>
