@@ -252,7 +252,9 @@ Component wraps functionality for displaying and working with a single rdfm devi
             </div>
             <div class="block">
                 <p class="title">capabilities</p>
-                <pre class="large"><code >{{ device.capabilities }}</code></pre>
+                <template v-for="(enabled, cap) in device.capabilities" :key="cap">
+                    <pre class="small" v-if="enabled"><code>{{ cap }}</code></pre>
+                </template>
             </div>
             <div class="block">
                 <p class="title">Metadata</p>
@@ -710,6 +712,8 @@ Component wraps functionality for displaying and working with a single rdfm devi
             border: 1px solid var(--gray-400);
             border-radius: 5px;
             padding: 10px;
+            display: inline-block;
+            margin: 0 0.2em;
         }
 
         pre.small {
