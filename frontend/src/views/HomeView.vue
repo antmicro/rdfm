@@ -85,6 +85,7 @@ SPDX-License-Identifier: Apache-2.0
         position: absolute;
         right: 0px;
         top: 50px;
+        z-index: 1;
 
         background-color: var(--background-200);
         border: 1px solid var(--gray-400);
