@@ -156,10 +156,6 @@ Component wraps functionality for displaying and working with rdfm devices.
                                 </div>
                             </div>
                             <div class="entry">
-                                <div class="title">Public key</div>
-                                <div class="value">{{ device.public_key.slice(0, 15) }}...</div>
-                            </div>
-                            <div class="entry">
                                 <div class="button-wrapper">
                                     <!-- TODO: Check a specific permission/role for registering devices once it's implemented server-side -->
                                     <button
