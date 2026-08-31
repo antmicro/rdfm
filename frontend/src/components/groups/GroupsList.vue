@@ -221,21 +221,43 @@ Component wraps functionality for displaying and working with rdfm groups.
                             </div>
                             <div class="values">
                                 <div v-for="pckg in group.packages" :key="pckg" class="item">
-                                    <div class="item-layout">
-                                        <p title="Package version">
-                                            {{
-                                                findPackage(pckg)?.metadata[
-                                                    'rdfm.software.version'
-                                                ] || ' - '
-                                            }}
-                                        </p>
-                                        <p title="Device type">
-                                            {{
-                                                findPackage(pckg)?.metadata[
-                                                    'rdfm.hardware.devtype'
-                                                ] || ' - '
-                                            }}
-                                        </p>
+                                    <div
+                                        class="item-layout"
+                                        :class="{ grid: allowedTo('update', 'group', group.id) }"
+                                    >
+                                        <div>
+                                            <p title="Package version">
+                                                {{
+                                                    findPackage(pckg)?.metadata[
+                                                        'rdfm.software.version'
+                                                    ] || ' - '
+                                                }}
+                                            </p>
+                                            <p title="Device type">
+                                                {{
+                                                    findPackage(pckg)?.metadata[
+                                                        'rdfm.hardware.devtype'
+                                                    ] || ' - '
+                                                }}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <button
+                                                style="margin: 10px"
+                                                class="action-button red small-padding"
+                                                v-if="allowedTo('update', 'group', group.id)"
+                                                @click="
+                                                    updatePackagesRequest(
+                                                        group.id,
+                                                        group.packages.filter(
+                                                            (p) => p !== pckg
+                                                        ),
+                                                    )
+                                                "
+                                            >
+                                                <Cross></Cross>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -887,6 +909,7 @@ export default {
             openAddGroupPopup,
             findPackage,
             patchDevicesRequest,
+            updatePackagesRequest,
             findDevice,
             openConfigureGroupPopup,
             closeConfigureGroupPopup,
