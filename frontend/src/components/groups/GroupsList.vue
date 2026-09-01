@@ -16,18 +16,24 @@ Component wraps functionality for displaying and working with rdfm groups.
                     <p class="title">Create a new group</p>
                     <p class="description">Configure new devices group and add packages to it</p>
                 </div>
-                <div class="body">
+                <form class="body" @submit.prevent="addGroup">
                     <div class="entry">
-                        <p>Name</p>
-                        <input type="text" v-model="newGroupData.name" placeholder="New group" />
+                        <label for="grp-name">Name</label>
+                        <input
+                            type="text"
+                            id="grp-name"
+                            v-model="newGroupData.name"
+                            placeholder="New group"
+                        />
                         <div v-if="validationErrors.get('name')" class="errors">
                             <p>{{ validationErrors.get('name') }}</p>
                         </div>
                     </div>
                     <div class="entry">
-                        <p>Description</p>
+                        <label for="grp-description">Description</label>
                         <input
                             type="text"
+                            id="grp-description"
                             v-model="newGroupData.description"
                             placeholder="Group description"
                         />
@@ -36,20 +42,31 @@ Component wraps functionality for displaying and working with rdfm groups.
                         </div>
                     </div>
                     <div class="entry">
-                        <p>Priority</p>
-                        <input type="number" v-model="newGroupData.priority" placeholder="10" />
+                        <label for="grp-priority">Priority</label>
+                        <input
+                            type="number"
+                            id="grp-priority"
+                            v-model="newGroupData.priority"
+                            placeholder="10"
+                        />
                         <div v-if="validationErrors.get('priority')" class="errors">
                             <p>{{ validationErrors.get('priority') }}</p>
                         </div>
                     </div>
 
                     <div class="buttons">
-                        <button class="action-button gray" @click="closeAddGroupPopup">
+                        <button
+                            type="button"
+                            class="action-button gray"
+                            @click="closeAddGroupPopup"
+                        >
                             Cancel
                         </button>
-                        <button class="action-button blue white" @click="addGroup">Create</button>
+                        <button type="submit" class="action-button blue white" @click="addGroup">
+                            Create
+                        </button>
                     </div>
-                </div>
+                </form>
             </div>
         </BlurPanel>
     </Transition>
@@ -58,7 +75,7 @@ Component wraps functionality for displaying and working with rdfm groups.
         @click.self="closeRemoveGroupPopup"
         title="Are you absolutely sure?"
         :enabled="popupOpen == GroupPopupOpen.RemoveGroup"
-        :description="`This action cannot be undone. It will permanently delete #${groupToRemove} group.`"
+        :description="`This action cannot be undone. It will permanently delete group #${groupToRemove}.`"
         :cancelCallback="closeRemoveGroupPopup"
         :removeCallback="removeGroup"
     />
@@ -70,14 +87,15 @@ Component wraps functionality for displaying and working with rdfm groups.
         >
             <div class="popup" @click="closeDropdowns">
                 <div class="header">
-                    <p class="title">Configure the #{{ groupConfiguration.id }} group</p>
+                    <p class="title">Configure group #{{ groupConfiguration.id }}</p>
                     <p class="description">Configure group packages, devices and priority</p>
                 </div>
                 <div class="body">
                     <div class="entry">
-                        <p>Priority</p>
+                        <label for="grp-cfg-priority">Priority</label>
                         <input
                             type="text"
+                            id="grp-cfg-priority"
                             v-model="groupConfiguration.priority"
                             placeholder="Priority"
                         />
@@ -249,9 +267,7 @@ Component wraps functionality for displaying and working with rdfm groups.
                                                 @click="
                                                     updatePackagesRequest(
                                                         group.id,
-                                                        group.packages.filter(
-                                                            (p) => p !== pckg
-                                                        ),
+                                                        group.packages.filter((p) => p !== pckg),
                                                     )
                                                 "
                                             >
@@ -848,6 +864,12 @@ export default {
         onMounted(async () => {
             await fetchResources();
             startPolling();
+            window.addEventListener('keydown', (e) => {
+                if (e.key !== 'Escape') return;
+                closeAddGroupPopup();
+                closeRemoveGroupPopup();
+                closeConfigureGroupPopup();
+            });
         });
 
         onUnmounted(() => {

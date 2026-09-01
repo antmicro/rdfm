@@ -13,7 +13,7 @@ Component wraps functionality for displaying and working with rdfm packages.
         @click.self="closeRemovePackagePopup"
         title="Are you absolutely sure?"
         :enabled="popupOpen == 1"
-        :description="`This action cannot be undone. It will permanently delete #${packageToRemove} package.`"
+        :description="`This action cannot be undone. It will permanently delete package #${packageToRemove}.`"
         :cancelCallback="closeRemovePackagePopup"
         :removeCallback="removePackage"
     />
@@ -28,18 +28,24 @@ Component wraps functionality for displaying and working with rdfm packages.
                         required fields
                     </p>
                 </div>
-                <div class="body">
+                <form class="body" @submit.prevent="uploadPackage">
                     <div class="entry">
-                        <p>Version</p>
-                        <input type="text" v-model="packageUploadData.version" placeholder="1.0" />
+                        <label for="pkg-version">Version</label>
+                        <input
+                            type="text"
+                            id="pkg-version"
+                            v-model="packageUploadData.version"
+                            placeholder="1.0"
+                        />
                         <div v-if="validationErrors.get('version')" class="errors">
                             <p>{{ validationErrors.get('version') }}</p>
                         </div>
                     </div>
                     <div class="entry">
-                        <p>Device type</p>
+                        <label for="pkg-device-type">Device type</label>
                         <input
                             type="text"
+                            id="pkg-device-type"
                             v-model="packageUploadData.deviceType"
                             placeholder="Robot"
                         />
@@ -48,8 +54,8 @@ Component wraps functionality for displaying and working with rdfm packages.
                         </div>
                     </div>
                     <div class="entry">
-                        <p>File</p>
-                        <input type="file" ref="uploadedPackageFile" />
+                        <label for="pkg-file">File</label>
+                        <input type="file" id="pkg-file" ref="uploadedPackageFile" />
                         <div v-if="validationErrors.get('file')" class="errors">
                             <p>{{ validationErrors.get('file') }}</p>
                         </div>
@@ -57,6 +63,7 @@ Component wraps functionality for displaying and working with rdfm packages.
 
                     <div class="buttons">
                         <button
+                            type="button"
                             :disabled="uploadInProgress"
                             class="action-button gray"
                             @click="closeAddPackagePopup"
@@ -64,9 +71,9 @@ Component wraps functionality for displaying and working with rdfm packages.
                             Cancel
                         </button>
                         <button
+                            type="submit"
                             :disabled="uploadInProgress"
                             class="action-button blue white"
-                            @click="uploadPackage"
                         >
                             Upload
                         </button>
@@ -75,7 +82,7 @@ Component wraps functionality for displaying and working with rdfm packages.
                     <div v-if="uploadInProgress" class="progress-bar">
                         <span></span>
                     </div>
-                </div>
+                </form>
             </div>
         </BlurPanel>
     </Transition>
@@ -299,6 +306,12 @@ export default {
             if (intervalID === undefined) {
                 intervalID = setInterval(packageResources.fetchResources, POLL_INTERVAL);
             }
+
+            window.addEventListener('keydown', (e) => {
+                if (e.key !== 'Escape') return;
+                closeAddPackagePopup();
+                closeRemovePackagePopup();
+            });
         });
 
         onUnmounted(() => {
