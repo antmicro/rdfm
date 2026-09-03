@@ -13,7 +13,7 @@ require_variable()
 }
 
 server_args=""
-gunicorn_args="-k gevent"
+gunicorn_args="-k rdfm_gunicorn.QuietGeventWorker"
 encrypted=1
 if [ -n "${RDFM_DISABLE_ENCRYPTION}" ]; then
 	encrypted=0
