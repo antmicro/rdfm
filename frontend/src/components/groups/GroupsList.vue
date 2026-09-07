@@ -62,9 +62,7 @@ Component wraps functionality for displaying and working with rdfm groups.
                         >
                             Cancel
                         </button>
-                        <button type="submit" class="action-button blue white" @click="addGroup">
-                            Create
-                        </button>
+                        <button type="submit" class="action-button blue white">Create</button>
                     </div>
                 </form>
             </div>
