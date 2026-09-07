@@ -24,7 +24,6 @@ def shell_ws_url(server_url: str, device: str) -> str:
 
 def format_ws_error(status: int, message: Optional[str]) -> str:
     """Convert a WS status code and message to an error string"""
-    err: str = ""
     match status:
         # Standard WS error codes
         case CloseReason.NORMAL_CLOSURE:

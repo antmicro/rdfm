@@ -22,7 +22,6 @@ def wrap_api_error(response: requests.Response, prefix: str) -> Optional[str]:
         None, if the operation was successful
         str, if the operation failed in some way
     """
-    msg = ""
     match response.status_code:
         case 200:
             # We must return None here, as this is not an error condition
