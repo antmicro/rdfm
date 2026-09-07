@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/antmicro/rdfm/devices/linux-client/progress"
 	"io"
 	"net/http"
 	"time"
@@ -69,7 +70,7 @@ func (d *Device) checkUpdate(cancelCtx context.Context) error {
 		if err != nil {
 			log.Println("Failed to install package",
 				pkg.Id, err)
-			// TODO: Do something in case of failure
+			progress.Bus.Publish("failure")
 		} else {
 			d.updateSoftwareVersion(cancelCtx)
 			d.rdfmCtx.RebootSystemIfNeeded()

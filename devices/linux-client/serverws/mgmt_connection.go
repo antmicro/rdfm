@@ -43,6 +43,9 @@ func (d *DeviceManagementConnection) startRecvLoop(cancelCtx context.Context) er
 	progress.Bus.Subscribe("progress", func(progress int) {
 		d.sendUpdateProgress(progress)
 	})
+	progress.Bus.Subscribe("failure", func() {
+		d.sendUpdateFailure()
+	})
 
 	for {
 		d.wsMut.RLock()
@@ -75,6 +78,9 @@ func (d *DeviceManagementConnection) Close() error {
 func (d *DeviceManagementConnection) tryClose() error {
 	progress.Bus.Unsubscribe("progress", func(progress int) {
 		d.sendUpdateProgress(progress)
+	})
+	progress.Bus.Unsubscribe("failure", func() {
+		d.sendUpdateFailure()
 	})
 
 	d.wsMut.RLock()
@@ -111,6 +117,19 @@ func (d *DeviceManagementConnection) sendUpdateProgress(progress int) error {
 	res := map[string]interface{}{
 		"method":   "update_progress",
 		"progress": progress,
+	}
+
+	msg, err := json.Marshal(res)
+	if err != nil {
+		return err
+	}
+
+	return d.Send(msg)
+}
+
+func (d *DeviceManagementConnection) sendUpdateFailure() error {
+	res := map[string]interface{}{
+		"method":   "update_failure",
 	}
 
 	msg, err := json.Marshal(res)

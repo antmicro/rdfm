@@ -103,6 +103,10 @@ class UpdateProgress(Request):
     progress: int
 
 
+class UpdateFailure(Request):
+    method: Literal['update_failure'] = 'update_failure'
+
+
 class UpdateVersion(Request):
     method: Literal['update_version'] = 'update_version'
     version: str
@@ -123,5 +127,6 @@ class Container(BaseModel):
         FsFileProbe,
         FsFileProbeReply,
         UpdateProgress,
+        UpdateFailure,
         UpdateVersion,
     ]

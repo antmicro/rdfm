@@ -14,6 +14,7 @@ from request_models import (
     FsFileDownloadReply,
     FsFileProbeReply,
     UpdateProgress,
+    UpdateFailure,
     UpdateVersion,
 )
 
@@ -178,6 +179,13 @@ class RemoteDevice:
                     f"Device {self.token.device_id} update in progress: {request.progress}%",
                     flush=True,
                 )
+        elif isinstance(request, UpdateFailure):
+            self.update_version = None
+            server.instance._device_updates_db.delete(self.token.device_id)
+            print(
+                f"Device {self.token.device_id} update failed",
+                flush=True,
+            )
         elif isinstance(request, UpdateVersion):
             device = server.instance._devices_db.get_device_data(self.token.device_id)
             metadata = json.loads(device.device_metadata)

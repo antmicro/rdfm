@@ -179,7 +179,7 @@ func (bdw *blockDeviceWriter) Sync() error {
 func (bdw *blockDeviceWriter) Close() error {
 	// Flush remaining bytes from buf and sync device before closing it
 	_, err := bdw.writeFrameIfDiff(bdw.buffer.Bytes())
-	if err != nil {
+	if err != nil && !errors.Is(err, io.EOF) {
 		log.Println("Error writing remaining bytes in Close(), ", err)
 	}
 	err = bdw.Sync()
