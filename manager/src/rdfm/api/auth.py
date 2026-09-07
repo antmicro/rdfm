@@ -72,7 +72,7 @@ class OAuth2ClientCredentials(AuthBase):
         return r
 
 
-def create_authorizer(config: Config) -> typing.Type[AuthBase]:
+def create_authorizer(config: Config) -> AuthBase:
     """Create an authorization object to be used with `requests` HTTP methods.
 
     This creates an object that adds authorization to all requests made by the

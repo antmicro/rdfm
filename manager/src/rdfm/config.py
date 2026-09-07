@@ -39,7 +39,7 @@ class Config:
 
     """ Authorization object used to add auth data to the API requests
     """
-    authorizer: typing.Type[AuthBase]
+    authorizer: AuthBase
 
 
 def try_get_config(

@@ -31,7 +31,7 @@ def fetch_registrations(config: rdfm.config.Config) -> List[Registration]:
             f"Server returned unexpected status code {response.status_code}"
         )
 
-    registrations: List[Device] = Registration.Schema(many=True).load(
+    registrations: List[Registration] = Registration.Schema(many=True).load(
         response.json()
     )
     return registrations
