@@ -103,9 +103,9 @@ def load_auth_from_file(config: Config, path: str = MANAGER_CONFIG_DEFAULT):
         if None in [auth_url, client_id, client_secret]:
             raise RuntimeError("Missing authorization configuration variables")
 
-        config.auth_url = auth_url
-        config.client_id = client_id
-        config.client_secret = client_secret
+        config.auth_url = str(auth_url)
+        config.client_id = str(client_id)
+        config.client_secret = str(client_secret)
     except Exception as e:
         raise RuntimeError(
             f"Could not read from config file {expanded_path}: {e}"
