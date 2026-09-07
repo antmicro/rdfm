@@ -18,7 +18,7 @@ class Config:
 
     """ Path to the server CA certificate used to verify the HTTPS connection
     """
-    ca_cert: str
+    ca_cert: typing.Optional[str]
 
     """ Disables authentication for requests made to the RDFM server
     """
