@@ -1,5 +1,6 @@
 import requests
 import rdfm.config
+import rdfm.api
 from typing import List, Any, Optional
 from rdfm.api import wrap_api_error
 from rdfm.schema.v2.groups import Group

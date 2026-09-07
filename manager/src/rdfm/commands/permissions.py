@@ -3,6 +3,8 @@ import rdfm.config
 from typing import List
 import rdfm.api.permissions
 import rdfm.permissions
+import rdfm.api.devices
+import rdfm.api.groups
 import re
 
 MAC_ADDR_REGEX = "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"

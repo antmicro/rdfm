@@ -2,6 +2,7 @@ import os
 import requests
 import requests_toolbelt
 import rdfm.config
+import rdfm.api
 from rdfm.api import wrap_api_error
 from typing import List, Any, Optional, Callable
 from rdfm.schema.v1.packages import Package
