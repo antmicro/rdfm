@@ -3,6 +3,7 @@ from rdfm.config import Config
 from authlib.integrations.requests_client import OAuth2Session
 import requests
 import typing
+from typing import Optional
 
 
 def make_rdfm_auth_header(token: str) -> str:
@@ -44,17 +45,19 @@ class OAuth2ClientCredentials(AuthBase):
 
     client: OAuth2Session
     auth_url: str
+    ca_cert: Optional[str]
 
     def __init__(self, config: Config):
         self.client = OAuth2Session(
             config.client_id, config.client_secret, scope=None
         )
         self.auth_url = config.auth_url
+        self.ca_cert = config.ca_cert
 
     def __call__(self, r: requests.Request):
         try:
             token = self.client.fetch_token(
-                self.auth_url, grant_type="client_credentials"
+                self.auth_url, grant_type="client_credentials", verify=self.ca_cert
             )
         except (requests.ConnectionError, requests.Timeout):
             print(
