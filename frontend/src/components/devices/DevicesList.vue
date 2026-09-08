@@ -192,7 +192,7 @@ Component wraps functionality for displaying and working with rdfm devices.
         @click.self="closeRemoveDevicePopup"
         title="Are you absolutely sure?"
         :enabled="popupOpen == DevicePopupOpen.RemoveDevice"
-        :description="`This action cannot be undone. It will permanently delete the device #${deviceToRemove}.`"
+        :description="`This action cannot be undone. It will permanently delete device #${deviceToRemove}.`"
         :cancelCallback="closeRemoveDevicePopup"
         :removeCallback="removeDevice"
     />

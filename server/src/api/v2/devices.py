@@ -624,6 +624,12 @@ def remove(identifier: int):
             return api_error("device does not exist", 404)
 
         server.instance._devices_db.delete(identifier)
+        server.instance._registrations_db.delete_registration(dev.mac_address, dev.public_key)
+        server.instance._device_updates_db.delete(dev.mac_address)
+
+        # close the websocket too
+        rd = server.instance.remote_devices.get(dev.mac_address)
+        rd.ws.close()
         return {}, 200
     except Exception as e:
         traceback.print_exc()
