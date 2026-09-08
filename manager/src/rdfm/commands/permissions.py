@@ -54,13 +54,13 @@ def resolve_device_identifier(config: rdfm.config.Config, identifier: str):
     devices: List[rdfm.api.devices.Device] = rdfm.api.devices.fetch_all(config)
 
     if re.fullmatch(MAC_ADDR_REGEX, identifier):
-        filtered: rdfm.api.devices.Device = list(
+        filtered: list[rdfm.api.devices.Device] = list(
             filter(lambda device: device.mac_address == identifier, devices))
     elif identifier.isdigit():
-        filtered: rdfm.api.devices.Device = list(
+        filtered: list[rdfm.api.devices.Device] = list(
             filter(lambda device: device.id == int(identifier), devices))
     else:
-        filtered: rdfm.api.devices.Device = list(
+        filtered: list[rdfm.api.devices.Device] = list(
             filter(lambda device: device.name == identifier, devices))
 
     return filtered[0].id if len(filtered) != 0 else None
