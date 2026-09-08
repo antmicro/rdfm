@@ -26,7 +26,10 @@ def list_devices(config: rdfm.config.Config, args):
         print("\tMetadata:")
         for k, v in device.metadata.items():
             print(f"\t\t{k}: {v}")
-        print(f"\tLast accessed: {utc_to_local(device.last_access)}")
+        if device.last_access is not None:
+            print(f"\tLast accessed: {utc_to_local(device.last_access)}")
+        else:
+            print("\tLast access unknown")
         print(
             "\tAssigned to groups: ",
             '<none>' if device.groups is None else device.groups
@@ -101,10 +104,10 @@ def remove_registered_device(config: rdfm.config.Config, args):
     devices: List[rdfm.api.devices.Device] = rdfm.api.devices.fetch_all(config)
 
     if re.fullmatch(MAC_ADDR_REGEX, identifier):
-        filtered: rdfm.api.devices.Device = list(
+        filtered: list[rdfm.api.devices.Device] = list(
             filter(lambda device: device.mac_address == identifier, devices))
     elif identifier.isdigit():
-        filtered: rdfm.api.devices.Device = list(
+        filtered: list[rdfm.api.devices.Device] = list(
             filter(lambda device: device.id == int(identifier), devices))
     else:
         return f"No valid identifier provided"
@@ -121,32 +124,33 @@ def remove_pending_device(config: rdfm.config.Config, args):
     """
     mac_address = args.mac_address
     public_key = args.public_key
-    devices: List[rdfm.api.devices.Device] = (rdfm.api.devices
-                                              .fetch_registrations(config))
+    device_registrations: List[rdfm.api.devices.Registration] = (
+        rdfm.api.devices.fetch_registrations(config)
+    )
 
     if public_key:
-        filtered: rdfm.api.devices.Device = list(filter(
-            lambda device: (device.mac_address ==
-                            mac_address and device.public_key == public_key),
-            devices
+        filtered: list[rdfm.api.devices.Registration] = list(filter(
+            lambda device_registration:
+                (device_registration.mac_address ==
+                 mac_address and device_registration.public_key == public_key), device_registrations
         ))
         if len(filtered) == 0:
             return (f"No pending device with MAC {mac_address} "
                     "and given public key found")
     else:
-        filtered: rdfm.api.devices.Device = list(filter(
-            lambda device: (device.mac_address == mac_address),
-            devices
+        filtered: list[rdfm.api.devices.Registration] = list(filter(
+            lambda device_registration: (device_registration.mac_address == mac_address),
+            device_registrations
         ))
         if len(filtered) == 0:
             return (f"No pending device with MAC {mac_address} "
                     "found")
 
     errs = None
-    for device in filtered:
+    for device_registration in filtered:
         err = rdfm.api.devices.remove_pending(config,
-                                              device.mac_address,
-                                              device.public_key)
+                                              device_registration.mac_address,
+                                              device_registration.public_key)
         if err:
             errs = f"{errs}\n{err}" if errs else err
     return errs
