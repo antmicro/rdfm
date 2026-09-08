@@ -90,9 +90,8 @@ class ReverseShell:
                 ssl_context=ssl_context,
             )
         except simple_websocket.ConnectionError as e:
-            raise RuntimeError(
-                wrap_api_error(e, "WebSocket connection failed")
-            )
+            e.add_note("WebSocket connection failed")
+            raise
 
         self.closed = threading.Event()
         self.reader_thread = threading.Thread(
