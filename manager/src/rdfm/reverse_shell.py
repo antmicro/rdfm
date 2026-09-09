@@ -6,7 +6,6 @@ import select
 from rdfm.helpers import replace_http_schema_with_ws
 from typing import Optional
 from wsproto.frame_protocol import CloseReason
-from rdfm.api import wrap_api_error
 import urllib.parse
 import rdfm.ws
 import tty
