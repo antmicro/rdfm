@@ -30,12 +30,14 @@ import (
 	"github.com/antmicro/rdfm/devices/linux-client/serverws"
 	"github.com/antmicro/rdfm/devices/linux-client/shell"
 	"github.com/antmicro/rdfm/devices/linux-client/telemetry"
+	"github.com/gorilla/websocket"
 
 	netUtils "github.com/antmicro/rdfm/devices/linux-client/daemon/net_utils"
 )
 
 const RSA_DEVICE_KEY_SIZE = 4096
 const TOKEN_EXPIRY_MIN_ALLOWED = 5
+const RDFM_WS_UNAUTHORIZED = 4000
 
 type Device struct {
 	name                string
@@ -474,6 +476,12 @@ func (d *Device) maintainDeviceConnection(cancelCtx context.Context) {
 
 		startTime := time.Now()
 		err = d.conn.CreateConnection(deviceToken, cancelCtx)
+		var closeError *websocket.CloseError
+		if errors.As(err, &closeError) && closeError.Code == RDFM_WS_UNAUTHORIZED {
+			log.Warnln("Device not registered; attempting authorization")
+			d.deviceToken = ""
+			continue
+		}
 		if err != nil {
 			log.Warnln("Restarting device connection due to:", err)
 		}
