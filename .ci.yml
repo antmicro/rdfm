@@ -12,7 +12,6 @@ variables:
   SCALENODE_CPU: 2
   SCALENODE_RAM: 2048
   SCALENODE_DISK: 20
-  SCALENODE_KERNEL: legacy
 
 .build-base:
   variables:
@@ -300,8 +299,8 @@ test-rdfm-client-docker:
     - apt -qq -y --no-install-recommends install docker-cli docker.io crun fuse-overlayfs pigz ca-certificates
     - mount -t tmpfs -o uid=0,gid=0,mode=0755 cgroup /sys/fs/cgroup
     - pushd /sys/fs/cgroup
-    - mkdir {cpu,cpuset,blkio,devices,memory,pids}
-    - for name in cpu cpuset blkio devices memory pids; do mount -n -t cgroup -o $name cgroup $name; done
+    - mkdir {cpu,blkio,devices,memory,pids}
+    - for name in cpu blkio devices memory pids; do mount -n -t cgroup -o $name cgroup $name; done
     - popd
     - ../../common/docker/start-docker.sh
     # HACK: For CI runs, we have to replace the -it flag in docker run
