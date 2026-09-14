@@ -237,7 +237,7 @@ def add_devices_parser(parser: argparse._SubParsersAction):
     remove = sub.add_parser(
         "remove", help="remove device from the server"
     )
-    remove_sub = remove.add_subparsers()
+    remove_sub = remove.add_subparsers(required=True)
 
     remove_registered = remove_sub.add_parser(
         "registered", help="remove a registered device from the server"
