@@ -26,12 +26,40 @@ from device_mgmt.pubsub import RdfmKafkaAdminClient
 
 
 def pytest_addoption(parser):
-    parser.addoption("--sqlite", action="store_true", help="run tests only with sqlite")
-    parser.addoption("--postgres", action="store_true", help="run tests only with postgres")
-    parser.addoption("--sifpath", action="store")
+    process_group = parser.getgroup("process")
+
+    process_group.addoption("--external-docker",
+                            action="store_true",
+                            default=False,
+                            help="Run the test suite without a server subprocess fixture and instead make use of a docker compose file from `server/deploy`")
+
+    process_group.addoption("--internal-werkzeug",
+                            action="store_true",
+                            default=True,
+                            help="Run the test suite against a server subprocess running with werkzeug")
+
+    process_group.addoption("--internal-gunicorn",
+                            action="store_true",
+                            default=False,
+                            help="Run the test suite against a server subprocess running with gunicorn")
+
+    database_backend_group = parser.getgroup("database_backend")
+
+    database_backend_group.addoption("--sqlite",
+                                     action="store_true",
+                                     default=False,
+                                     help="Run test suite with the sqlite database backend, ignored when `--external-docker` is passed")
+
+    database_backend_group.addoption("--postgres",
+                                     action="store_true",
+                                     default=False,
+                                     help="Run test suite with the postgres database backend, ignored when `--external-docker` is passed")
+
     parser.addoption("--alembic-script-location", action="store")
     parser.addoption("--alembic-file", action="store")
     parser.addoption("--create-tmpdir-for-packages", action="store_true")
+
+    parser.addoption("--sifpath", action="store")
 
 
 def parametrize_path_option(metafunc, option_name, default_value=None):
