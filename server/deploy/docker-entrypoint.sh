@@ -20,6 +20,9 @@ fi
 if [ -n "${RDFM_DISABLE_API_AUTH}" ]; then
 	server_args="${server_args} --no-api-auth"
 fi
+if [ -n "${RDFM_INSERT_TEST_MOCKS}" ]; then
+	server_args="${server_args} --test-mocks"
+fi
 
 if [ ${encrypted} == 1 ]; then
 	require_variable RDFM_SERVER_CERT
