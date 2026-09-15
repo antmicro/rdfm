@@ -56,6 +56,7 @@ def pytest_addoption(parser):
                                      help="Run test suite with the postgres database backend, ignored when `--external-docker` is passed")
 
     parser.addoption("--alembic-script-location", action="store")
+
     parser.addoption("--alembic-file", action="store")
     parser.addoption("--create-tmpdir-for-packages", action="store_true")
 
@@ -77,19 +78,16 @@ def parametrize_path_option(metafunc, option_name, default_value=None):
         metafunc.parametrize(fixture_name, [Path(value)], scope="session")
 
 
-def pytest_generate_tests(metafunc):
-    if "local_package_dir" in metafunc.fixturenames:
-        if metafunc.config.getoption("create_tmpdir_for_packages"):
-            metafunc.parametrize("local_package_dir", ["create_tmpdir"], scope="session")
-        else:
-            metafunc.parametrize("local_package_dir", ["default_local_package_dir"], scope="session")
-
-    if "process" in metafunc.fixturenames or "alembic_engine" in metafunc.fixturenames:
+def parametrize_database_choice_for_internal_process(metafunc):
+    # The choice is made based on the presence of `sqlite` and `postgres` flag options
+    # passed to pytest via CLI.
+    if "db" in metafunc.fixturenames:
         fixtures = []
         if metafunc.config.getoption("sqlite"):
             fixtures.append("db_sqlite")
         if metafunc.config.getoption("postgres"):
             fixtures.append("db_postgres")
+        # Defalts to running both backends back to back.
         metafunc.parametrize("db",
                              fixtures if fixtures else
                              [
@@ -98,25 +96,49 @@ def pytest_generate_tests(metafunc):
                              ]
         )
 
-    elif "process_gunicorn" in metafunc.fixturenames:
-        if metafunc.config.getoption("sqlite"):
-            metafunc.parametrize(
-                "db",
-                ["db_sqlite"]
-            )
+
+def parametrize_process_choice(metafunc):
+    def parametrize_process(metafunc, process: str):
+        if "process" in metafunc.fixturenames:
+            metafunc.parametrize("process", [process])
+
+    # Are we supposed to run docker compose?
+    if metafunc.config.getoption("external_docker"):
+        # If yes, parametrize all process fixtures to be a "process_docker_compose" string.
+        # Later the fixtures will have to dynamically request the value of the fixture with that name
+        # for it to evauluate.
+        parametrize_process(metafunc, "process_docker_compose")
+
+    else:
+        # If no, it means we're either running the standard "process_werkzeug" or "process_gunicorn".
+        # In that case there's also a need to determine what database backed should be run and to
+        # ensure that alembic migrations are going to get applied.
+
+        parametrize_process(metafunc, "process_gunicorn" if metafunc.config.getoption("internal_gunicorn") else "process_werkzeug")
+
+        parametrize_database_choice_for_internal_process(metafunc)
+
+
+def pytest_generate_tests(metafunc):
+    if "local_package_dir" in metafunc.fixturenames:
+        if metafunc.config.getoption("create_tmpdir_for_packages"):
+            metafunc.parametrize("local_package_dir", ["create_tmpdir"], scope="session")
         else:
-            # Defaults to postgres
-            metafunc.parametrize(
-                "db",
-                ["db_postgres"]
-            )
-    # Singularity file containing Kafka
-    sifpath_value = metafunc.config.option.sifpath
-    if "sifpath" in metafunc.fixturenames and sifpath_value is not None:
-        metafunc.parametrize("sifpath", [Path(sifpath_value)], scope="session")
+            metafunc.parametrize("local_package_dir", ["default_local_package_dir"], scope="session")
+
+    # Figure out how to run the RDFM server for the test suite.
+    if "setup_server" in metafunc.fixturenames:
+        parametrize_process_choice(metafunc)
+    else:
+        parametrize_database_choice_for_internal_process(metafunc)
 
     parametrize_path_option(metafunc, "alembic-file", default_value="./deploy/alembic.ini")
     parametrize_path_option(metafunc, "alembic-script-location", default_value="./alembic")
+
+    # Singularity file containing Kafka.
+    sifpath_value = metafunc.config.option.sifpath
+    if "sifpath" in metafunc.fixturenames and sifpath_value is not None:
+        metafunc.parametrize("sifpath", [Path(sifpath_value)], scope="session")
 
 
 @pytest.fixture()
@@ -169,8 +191,18 @@ def default_local_package_dir():
     return LOCAL_PACKAGE_DIR
 
 
+@pytest.fixture()
+def db():
+    return None
+
+
+@pytest.fixture()
+def local_package_dir():
+    return None
+
+
 @pytest.fixture(scope="function")
-def process(db, process_config: ProcessConfig, local_package_dir, request):
+def process_werkzeug(db, process_config: ProcessConfig, local_package_dir, request):
     """Fixture to start the RDFM server with Werkzeug"""
 
     log_file = (Path(__file__).parent / "server.log").open("a")
@@ -298,6 +330,12 @@ def process_docker_compose(process_config: ProcessConfig):
         shell=True
     )
 
+
+@pytest.fixture(scope="function")
+def setup_server(process_config: ProcessConfig, db, local_package_dir, process, request):
+    # Request evaluation of fixture with the name contained in the process argument.
+    yield request.getfixturevalue(process)
+    return
 
 
 @pytest.fixture(scope="session")
