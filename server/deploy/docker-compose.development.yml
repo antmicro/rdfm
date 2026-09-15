@@ -12,6 +12,7 @@ services:
       - RDFM_LOCAL_PACKAGE_DIR=/packages/
       - RDFM_WSGI_SERVER=werkzeug
       - RDFM_ENABLE_CORS=1
+      - RDFM_INSERT_TEST_MOCKS=${TEST_MOCKS:-}
     ports:
       - "5000:5000"
     volumes:
