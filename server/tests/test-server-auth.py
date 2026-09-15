@@ -151,7 +151,7 @@ def make_dummy_authenticated_request(submit_authorization):
     assert response.status_code != 401, "the request should have been authenticated"
 
 
-def test_signature_missing(process):
+def test_signature_missing(setup_server):
     """ This tests whether the server requires the device signature header
         to be present in the request.
     """
@@ -163,14 +163,14 @@ def test_signature_missing(process):
     assert response.status_code == 400, "the server should return an error when the signature is missing"
 
 
-def test_valid_signature(process, submit_authorization):
+def test_valid_signature(setup_server, submit_authorization):
     """ This tests whether the server properly validates the signature
         of the registration payload when given a valid signature.
     """
     assert submit_authorization.status_code == 401, "the server should validate the signature and return an unauthorized status"
 
 
-def test_invalid_signature(process):
+def test_invalid_signature(setup_server):
     """ This tests whether the signature is properly rejected when it's
         been corrupted/tampered with.
     """
@@ -184,7 +184,7 @@ def test_invalid_signature(process):
     assert response.status_code == 400, "signature validation should fail after manipulating the signature"
 
 
-def test_invalid_pubkey(process):
+def test_invalid_pubkey(setup_server):
     """ This tests whether the server rejects a request with an invalid
         public key.
     """
@@ -198,7 +198,7 @@ def test_invalid_pubkey(process):
     assert response.status_code == 400, "server should reject a request with an invalid public key"
 
 
-def test_different_pubkey(process):
+def test_different_pubkey(setup_server):
     """ This tests whether the server rejects a request containing a different
         public key than the one that was used to create the signature.
     """
@@ -216,7 +216,7 @@ def test_different_pubkey(process):
 
 
 @pytest.mark.parametrize("process_config", [ProcessConfig(insert_mocks=False)])
-def test_key_change(process, submit_and_approve, change_registered_device_key, list_devices, list_registrations):
+def test_key_change(setup_server, submit_and_approve, change_registered_device_key, list_devices, list_registrations):
     """ This tests the scenario in which a device changes it's key.
     """
     new_device, response = change_registered_device_key
@@ -225,13 +225,13 @@ def test_key_change(process, submit_and_approve, change_registered_device_key, l
     assert list_registrations[0]["public_key"] == new_device.request["public_key"], "a new registration request should appear containing the new public key"
 
 
-def test_registrations_list_empty(process, list_registrations):
+def test_registrations_list_empty(setup_server, list_registrations):
     """ This tests whether fetching registrations works
     """
     assert len(list_registrations) == 0, "registration list should be empty as no requests for authorization have been made"
 
 
-def test_registrations_list_after_auth(process, submit_authorization, list_registrations):
+def test_registrations_list_after_auth(setup_server, submit_authorization, list_registrations):
     """ This tests whether a new device has appeared on the registration list
         after successfully submitting it's authorization payload, but before being approved.
     """
@@ -240,7 +240,7 @@ def test_registrations_list_after_auth(process, submit_authorization, list_regis
     assert list_registrations[0]["public_key"] == test_device.request["public_key"], "registration entry should contain the public key used in the authentication payload"
 
 
-def test_registrations_approve_device(process, submit_and_approve, list_registrations):
+def test_registrations_approve_device(setup_server, submit_and_approve, list_registrations):
     """ This tests whether submitting a request and approving the device afterwards
         properly removes the registration entry from the list.
     """
@@ -248,7 +248,7 @@ def test_registrations_approve_device(process, submit_and_approve, list_registra
 
 
 @pytest.mark.parametrize("process_config", [ProcessConfig(insert_mocks=False)])
-def test_list_devices_without_approval(process, submit_authorization, list_devices):
+def test_list_devices_without_approval(setup_server, submit_authorization, list_devices):
     """ This tests if the device is not added to the devices list when it hasn't
         been approved yet.
     """
@@ -256,14 +256,14 @@ def test_list_devices_without_approval(process, submit_authorization, list_devic
     assert len(list_devices) == 0, "there should be no devices present, as the device wasn't approved"
 
 
-def test_list_devices_with_approval(process, submit_and_approve, list_devices):
+def test_list_devices_with_approval(setup_server, submit_and_approve, list_devices):
     """ This tests if the device is properly added to the devices list after
         being approved.
     """
     assert len(list_devices) > 0, "the device should be present in the devices list, as it has been approved"
 
 
-def test_auth_after_approval(process, submit_and_approve, submit_authorization):
+def test_auth_after_approval(setup_server, submit_and_approve, submit_authorization):
     """ This tests if the device receives an app token after successful authentication
         and authorization.
     """
@@ -272,7 +272,7 @@ def test_auth_after_approval(process, submit_and_approve, submit_authorization):
 
 
 @pytest.mark.parametrize("process_config", [ProcessConfig(insert_mocks=False)])
-def test_device_metadata_change(process,
+def test_device_metadata_change(setup_server,
                                 submit_and_approve,
                                 submit_authorization_with_modified_version,
                                 list_devices):
@@ -283,7 +283,7 @@ def test_device_metadata_change(process,
 
 
 @pytest.mark.parametrize("process_config", [ProcessConfig(insert_mocks=False)])
-def test_device_last_access_tracking(process,
+def test_device_last_access_tracking(setup_server,
                                      submit_and_approve,
                                      list_devices,
                                      make_dummy_authenticated_request):
@@ -297,7 +297,7 @@ def test_device_last_access_tracking(process,
     assert list_devices[0]["last_access"] != devices[0]["last_access"], "last access timestamp should have changed after making a request"
 
 
-def test_device_token_verification_none(process):
+def test_device_token_verification_none(setup_server):
     """ This tests if the server rejects a request to a device API endpoint without
         a device token.
     """
@@ -305,7 +305,7 @@ def test_device_token_verification_none(process):
     assert response.status_code == 401, "the endpoint should not be accessible without presenting a device token"
 
 
-def test_device_token_verification_invalid(process):
+def test_device_token_verification_invalid(setup_server):
     """ This tests if the server rejects a request to a device API endpoint with an
         invalid device token.
     """
@@ -315,7 +315,7 @@ def test_device_token_verification_invalid(process):
     assert response.status_code == 401, "the endpoint should not be accessible with an invalid device token"
 
 
-def test_device_token_verification_valid(process, submit_and_approve, submit_authorization):
+def test_device_token_verification_valid(setup_server, submit_and_approve, submit_authorization):
     """ This tests if the server allows a request to a device API endpoint with a valid
         device token.
 
@@ -332,7 +332,7 @@ def test_device_token_verification_valid(process, submit_and_approve, submit_aut
     })
     assert response.status_code != 401, "the endpoint should now be accessible"
 
-def test_remove_device(process, submit_and_approve):
+def test_remove_device(setup_server, submit_and_approve):
     response = requests.delete(f"{SERVER}/api/v1/devices/{DUMMY_DEVICE_ID}")
     assert response.status_code == 200, "removing the device should return success code"
 
@@ -342,7 +342,7 @@ def test_remove_device(process, submit_and_approve):
     c = len(list(filter(lambda dev: dev["id"] == DUMMY_DEVICE_ID, response.json())))
     assert c == 0, "the device should have been removed"
 
-def test_remove_device_in_group(process, submit_and_approve):
+def test_remove_device_in_group(setup_server, submit_and_approve):
     test_json_group = {
         "metadata": {
             "description": "An example group"
@@ -371,7 +371,7 @@ def test_remove_device_in_group(process, submit_and_approve):
     c = len(list(filter(lambda dev: dev["id"] == DUMMY_DEVICE_ID, response.json())))
     assert c == 0, "the device should have been removed"
 
-def test_auth_after_device_removal(process, submit_and_approve):
+def test_auth_after_device_removal(setup_server, submit_and_approve):
     response = requests.delete(f"{SERVER}/api/v1/devices/{DUMMY_DEVICE_ID}")
     assert response.status_code == 200, "removing the device should return success code"
 

@@ -89,7 +89,7 @@ def connect_interruptable_mock_device():
     return process
 
 
-def test_ws_connect_device(process, connect_mock_device):
+def test_ws_connect_device(setup_server, connect_mock_device):
     """ This tests if the device WebSocket connection works properly
 
     The device connects to this endpoint. This is a simple test to see
@@ -100,7 +100,7 @@ def test_ws_connect_device(process, connect_mock_device):
     pass
 
 
-def test_ws_device_capability_report(process,
+def test_ws_device_capability_report(setup_server,
                                      connect_mock_device):
     """ This tests if device capabilities are considered by the server
 
@@ -117,7 +117,7 @@ def test_ws_device_capability_report(process,
     assert "shell_attach" in client.close_message, "the close message should indicate the missing capability"
 
 
-def test_ws_device_receives_shell_attach_message(process,
+def test_ws_device_receives_shell_attach_message(setup_server,
                                                  connect_mock_device_with_shell_capability,
                                                  spawn_shell_on_mock_device):
     """ This tests if the device receives a shell attach message
@@ -130,7 +130,7 @@ def test_ws_device_receives_shell_attach_message(process,
     assert isinstance(msg, DeviceAttachToManager), "the device should have received a shell_attach message"
 
 
-def test_ws_device_attaching_to_shell_session(process,
+def test_ws_device_attaching_to_shell_session(setup_server,
                                               connect_mock_device_with_shell_capability,
                                               spawn_shell_on_mock_device):
     """ This tests if the device can attach to the shell session
@@ -145,7 +145,7 @@ def test_ws_device_attaching_to_shell_session(process,
         pytest.fail(f"device failed to attach to the shell session: {e}")
 
 
-def test_ws_shell_bidirectional_communication(process,
+def test_ws_shell_bidirectional_communication(setup_server,
                                               connect_mock_device_with_shell_capability,
                                               spawn_shell_on_mock_device):
     """ This tests if data is transferred between the manager and device
@@ -169,7 +169,7 @@ def test_ws_shell_bidirectional_communication(process,
     assert received == TEST_MESSAGE, "manager to device data transfer should work"
 
 
-def test_ws_shell_spawn_on_nonexistent_device(process):
+def test_ws_shell_spawn_on_nonexistent_device(setup_server):
     """ This tests if trying to spawn a shell on a nonexistent device fails properly.
     """
     with pytest.raises(simple_websocket.ConnectionClosed):
@@ -180,7 +180,7 @@ def test_ws_shell_spawn_on_nonexistent_device(process):
     assert "not connected" in client.close_message, "close message should indicate the device does not exist"
 
 
-def test_ws_stale_connections_are_disconnected(process: subprocess.Popen):
+def test_ws_stale_connections_are_disconnected(setup_server: subprocess.Popen):
     """ This tests if devices that have lost connection to the server get properly
         disconnected from the server.
 

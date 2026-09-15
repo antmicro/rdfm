@@ -114,19 +114,19 @@ def delete_logs_from_group(create_group_with_every_device, insert_correct_log_ba
     assert reponse.status_code == 200, "deletion should have succeeded"
 
 
-def test_no_logs(process, list_logs):
+def test_no_logs(setup_server, list_logs):
     assert not any(list_logs), "the log db should be empty"
 
 
-def test_inserted_logs(process, insert_correct_log_batch, list_logs):
+def test_inserted_logs(setup_server, insert_correct_log_batch, list_logs):
     assert any(list_logs), "there should be log entries in the db"
 
 
-def test_delete_logs(process, insert_correct_log_batch, delete_logs_from_devices, list_logs):
+def test_delete_logs(setup_server, insert_correct_log_batch, delete_logs_from_devices, list_logs):
     assert not any(list_logs), "the log db should be empty"
 
 
-def test_find_log_by_name(process, insert_correct_log_batch, list_logs):
+def test_find_log_by_name(setup_server, insert_correct_log_batch, list_logs):
     assert any(list_logs), "there should be log entries in the db"
 
     device_id = list_logs[0]["device_id"]
@@ -136,16 +136,16 @@ def test_find_log_by_name(process, insert_correct_log_batch, list_logs):
     assert response.status_code == 200, "fetch by log name should succeed"
 
 
-def test_insert_malformed_log_date(process, try_insert_malformed_log_date, list_logs):
+def test_insert_malformed_log_date(setup_server, try_insert_malformed_log_date, list_logs):
     assert not any(list_logs), "no log should have been inserted into the db"
 
 
-def test_fetch_no_device(process):
+def test_fetch_no_device(setup_server):
     response = requests.get(f"{LOGS_ENDPOINT}/device/123")
     assert response.status_code == 404, "server should return that the group does not exist"
 
 
-def test_fetch_since_date(process, insert_correct_log_batch, list_logs):
+def test_fetch_since_date(setup_server, insert_correct_log_batch, list_logs):
     assert any(list_logs), "there should be log entries in the db"
 
     device_id = list_logs[0]["device_id"]
@@ -156,7 +156,7 @@ def test_fetch_since_date(process, insert_correct_log_batch, list_logs):
     assert not response.json(), "the returned list should hold no logs since no satisfy the date requirement"
 
 
-def test_fetch_to_date(process, insert_correct_log_batch, list_logs):
+def test_fetch_to_date(setup_server, insert_correct_log_batch, list_logs):
     assert any(list_logs), "there should be log entries in the db"
 
     device_id = list_logs[0]["device_id"]
@@ -167,7 +167,7 @@ def test_fetch_to_date(process, insert_correct_log_batch, list_logs):
     assert response.json(), "the returned list should hold logs that satisfy the requirement"
 
 
-def test_fetch_malfomed_date(process, insert_correct_log_batch, list_logs):
+def test_fetch_malfomed_date(setup_server, insert_correct_log_batch, list_logs):
     assert any(list_logs), "there should be log entries in the db"
 
     device_id = list_logs[0]["device_id"]
@@ -177,26 +177,26 @@ def test_fetch_malfomed_date(process, insert_correct_log_batch, list_logs):
     assert response.status_code == 400, "fetch with malformed date should return an error"
 
 
-def test_fetch_no_group(process):
+def test_fetch_no_group(setup_server):
     response = requests.get(f"{LOGS_ENDPOINT}/group/1")
     assert response.status_code == 404, "server should return that the group does not exist"
 
 
-def test_fetch_group(process, create_group_with_every_device, insert_correct_log_batch, list_logs):
+def test_fetch_group(setup_server, create_group_with_every_device, insert_correct_log_batch, list_logs):
     assert any(list_logs), "there should be log entries in the db"
     response = requests.get(f"{LOGS_ENDPOINT}/group/{create_group_with_every_device['id']}")
     assert response.status_code == 200, "the group log fetch should have succeeded"
     assert any(response.json()), "the response should be populated with json logs"
 
 
-def test_fetch_empty_group(process, create_empty_group, insert_correct_log_batch, list_logs):
+def test_fetch_empty_group(setup_server, create_empty_group, insert_correct_log_batch, list_logs):
     assert any(list_logs), "there should be log entries in the db"
     response = requests.get(f"{LOGS_ENDPOINT}/group/{create_empty_group.json()['id']}")
     assert response.status_code == 200, "the group log fetch should have succeeded"
     assert not any(response.json())
 
 
-def test_fetch_after_removal_from_group(process, create_group_with_every_device, insert_correct_log_batch, list_logs):
+def test_fetch_after_removal_from_group(setup_server, create_group_with_every_device, insert_correct_log_batch, list_logs):
     response = requests.patch(f"{GROUPS_ENDPOINT}/{create_group_with_every_device['id']}/devices", json={
         "add": [],
         "remove": [list_logs[0]["device_id"]]
@@ -206,5 +206,5 @@ def test_fetch_after_removal_from_group(process, create_group_with_every_device,
     assert not any(response.json()), "the response should hold no logs" 
 
 
-def test_delete_logs_group(process, delete_logs_from_group, list_logs):
+def test_delete_logs_group(setup_server, delete_logs_from_group, list_logs):
     assert not any(list_logs), "the log db should be empty"

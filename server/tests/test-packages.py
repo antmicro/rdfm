@@ -14,7 +14,7 @@ TESTING_PACKAGE_SIZE = 1024
 
 
 @pytest.mark.parametrize("process_config", [ProcessConfig(debug=True)])
-def test_packages(process):
+def test_packages(setup_server):
     # Check if package endpoint returns data
     packages = requests.get(PACKAGES_ENDPOINT)
     assert packages.status_code == 200

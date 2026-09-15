@@ -70,7 +70,7 @@ def upload_dummy_package(install_manager_to_venv):
 
 
 @pytest.fixture(scope="function")
-def start_shell_mock(process):
+def start_shell_mock(setup_server):
     """ Starts a mock device providing shell functionality
     """
     process = pexpect.spawn("poetry run python3 tests/scripts/device-websocket-loop.py")
@@ -106,7 +106,7 @@ def device_shell_no_teardown():
     return manager
 
 
-def test_list_devices(process, install_manager_to_venv):
+def test_list_devices(setup_server, install_manager_to_venv):
     """ Test if listing registered devices works
     """
     out, code = run_manager_command(["--no-api-auth", "devices", "list"])
@@ -114,7 +114,7 @@ def test_list_devices(process, install_manager_to_venv):
     assert DEVICE_MAC in out, "the output should contain the registered device"
 
 
-def test_list_packages(process, install_manager_to_venv):
+def test_list_packages(setup_server, install_manager_to_venv):
     """ Test if listing packages works
     """
     out, code = run_manager_command(["--no-api-auth", "packages", "list"])
@@ -122,7 +122,7 @@ def test_list_packages(process, install_manager_to_venv):
     assert 'Available packages:' in out, "the output should contain the uploaded packages"
 
 
-def test_list_groups(process, install_manager_to_venv):
+def test_list_groups(setup_server, install_manager_to_venv):
     """ Test if listing groups works
     """
     out, code = run_manager_command(["--no-api-auth", "groups", "list"])
@@ -130,7 +130,7 @@ def test_list_groups(process, install_manager_to_venv):
     assert 'Device groups:' in out, "the output should contain the created groups"
 
 
-def test_list_registrations(process, install_manager_to_venv):
+def test_list_registrations(setup_server, install_manager_to_venv):
     """ Test if listing pending registrations works
     """
     out, code = run_manager_command(["--no-api-auth", "devices", "pending"])
@@ -138,7 +138,7 @@ def test_list_registrations(process, install_manager_to_venv):
     assert 'Registration requests:' in out, "the output should contain the registrations"
 
 
-def test_create_group(process, create_dummy_group):
+def test_create_group(setup_server, create_dummy_group):
     """ Test if creating groups works
     """
     out, code = create_dummy_group
@@ -146,7 +146,7 @@ def test_create_group(process, create_dummy_group):
     assert "Created group with identifier" in out, "the group identifier should be present"
 
 
-def test_delete_group(process, create_dummy_group):
+def test_delete_group(setup_server, create_dummy_group):
     """ Test if deleting a previously created group works
     """
     out, code = run_manager_command(["--no-api-auth", "groups", "delete",
@@ -158,7 +158,7 @@ def test_delete_group(process, create_dummy_group):
     assert GROUP_NAME not in out, "the group should no longer be present in the list"
 
 
-def test_list_created_group(process, create_dummy_group):
+def test_list_created_group(setup_server, create_dummy_group):
     """ Test if a created group appears in the group listing
     """
     out, code = run_manager_command(["--no-api-auth", "groups", "list"])
@@ -168,7 +168,7 @@ def test_list_created_group(process, create_dummy_group):
     assert GROUP_PRIORITY in out, "the output should contain the newly created group priority"
 
 
-def test_upload_package(process, upload_dummy_package):
+def test_upload_package(setup_server, upload_dummy_package):
     """ Test if uploading packages works
     """
     out, code = upload_dummy_package
@@ -176,7 +176,7 @@ def test_upload_package(process, upload_dummy_package):
     assert "Package uploaded" in out, "uploading a package should succeed"
 
 
-def test_list_uploaded_package(process, upload_dummy_package):
+def test_list_uploaded_package(setup_server, upload_dummy_package):
     """ Test if an uploaded package appears in the packages list
     """
     out, code = run_manager_command(["--no-api-auth", "packages", "list"])
@@ -184,7 +184,7 @@ def test_list_uploaded_package(process, upload_dummy_package):
     assert PACKAGE_VERSION in out, "the uploaded package should be visible after listing"
 
 
-def test_delete_package(process, upload_dummy_package):
+def test_delete_package(setup_server, upload_dummy_package):
     """ Test if deleting a package works
     """
     _, code = run_manager_command(["--no-api-auth", "packages", "delete",
@@ -196,7 +196,7 @@ def test_delete_package(process, upload_dummy_package):
     assert PACKAGE_VERSION not in out, "the package should not be present anymore"
 
 
-def test_group_device_assignment(process, create_dummy_group):
+def test_group_device_assignment(setup_server, create_dummy_group):
     """ Test if assigning a device to a group works
     """
     _, code = run_manager_command(["--no-api-auth", "groups", "modify-devices",
@@ -205,7 +205,7 @@ def test_group_device_assignment(process, create_dummy_group):
     assert code == 0, "assigning the device to a group should succeed"
 
 
-def test_group_package_assignment(process, create_dummy_group, upload_dummy_package):
+def test_group_package_assignment(setup_server, create_dummy_group, upload_dummy_package):
     """ Test if assigning a package to a group works
     """
     _, code = run_manager_command(["--no-api-auth", "groups", "assign-package",
@@ -260,7 +260,7 @@ def test_shell_to_device_eof_stdin(start_shell_mock, device_shell_no_teardown: s
     assert device_shell_no_teardown.wait() == 0, "Ctrl-D should be a clean exit"
 
 
-def test_create_permission(process, create_dummy_group):
+def test_create_permission(setup_server, create_dummy_group):
     """ Test if creating a permission works
     """
     _, code = run_manager_command(["--no-api-auth", "permissions", "create", GROUP_RESOURCE,
@@ -275,7 +275,7 @@ def test_create_permission(process, create_dummy_group):
     assert expected in out, "the permission should be present"
 
 
-def test_create_multiple_permissions(process, create_dummy_group):
+def test_create_multiple_permissions(setup_server, create_dummy_group):
     """ Test if creating multiple permissions works
     """
     _, code = run_manager_command(["--no-api-auth", "permissions", "create", GROUP_RESOURCE,
@@ -296,7 +296,7 @@ def test_create_multiple_permissions(process, create_dummy_group):
         assert e in out, "the permission should be present"
 
 
-def test_create_device_permission_by_mac(process, create_dummy_group):
+def test_create_device_permission_by_mac(setup_server, create_dummy_group):
     """ Test if creating device permissions by MAC address works
     """
     _, code = run_manager_command(["--no-api-auth", "permissions", "create", DEVICE_RESOURCE,
@@ -317,7 +317,7 @@ def test_create_device_permission_by_mac(process, create_dummy_group):
         assert e in out, "the permission should be present"
 
 
-def test_create_named_device_permission(process, create_dummy_group):
+def test_create_named_device_permission(setup_server, create_dummy_group):
     """ Test if creating device permissions by name and tag works
     """
     _, code = run_manager_command(["--no-api-auth", "permissions", "create", DEVICE_NAMED_RESOURCE,
@@ -336,7 +336,7 @@ def test_create_named_device_permission(process, create_dummy_group):
         assert e in out, "the permission should be present"
 
 
-def test_create_duplicate_permission(process, create_dummy_group):
+def test_create_duplicate_permission(setup_server, create_dummy_group):
     """ Test if creating a duplicate permission fails
     """
     _, code = run_manager_command(["--no-api-auth", "permissions", "create", GROUP_RESOURCE,
@@ -352,7 +352,7 @@ def test_create_duplicate_permission(process, create_dummy_group):
     assert code == 1, "creating a duplicate permission should fail"
 
 
-def test_create_duplicate_named_device_permission(process, create_dummy_group):
+def test_create_duplicate_named_device_permission(setup_server, create_dummy_group):
     """ Test if creating duplicate named device permissions fails
     """
     _, code = run_manager_command(["--no-api-auth", "permissions", "create", DEVICE_NAMED_RESOURCE,
@@ -368,7 +368,7 @@ def test_create_duplicate_named_device_permission(process, create_dummy_group):
     assert code == 1, "creating a duplicate permission should fail"
 
 
-def test_delete_permission(process, upload_dummy_package):
+def test_delete_permission(setup_server, upload_dummy_package):
     """ Test if deleting a permission works
     """
     _, code = run_manager_command(["--no-api-auth", "permissions", "create", PACKAGE_RESOURCE,
@@ -389,7 +389,7 @@ def test_delete_permission(process, upload_dummy_package):
     assert not_expected not in out, "the permission should not be present"
 
 
-def test_delete_named_device_permission(process):
+def test_delete_named_device_permission(setup_server):
     """ Test if deleting a named device permission works
     """
     _, code = run_manager_command(["--no-api-auth", "permissions", "create", DEVICE_NAMED_RESOURCE,
@@ -410,7 +410,7 @@ def test_delete_named_device_permission(process):
     assert not_expected not in out, "the permission should not be present"
 
 
-def test_delete_multiple_permissions(process, upload_dummy_package):
+def test_delete_multiple_permissions(setup_server, upload_dummy_package):
     """ Test if deleting multiple permission works
     """
     _, code = run_manager_command(["--no-api-auth", "permissions", "create", PACKAGE_RESOURCE,
@@ -437,7 +437,7 @@ def test_delete_multiple_permissions(process, upload_dummy_package):
         assert e not in out, "the permission not should be present"
 
 
-def test_delete_permissions_all_ids(process, upload_dummy_package):
+def test_delete_permissions_all_ids(setup_server, upload_dummy_package):
     """ Test if deleting permissions with --all-ids works
     """
     for _ in range(0,2):

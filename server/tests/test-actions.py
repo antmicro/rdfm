@@ -131,7 +131,7 @@ def check_action_log():
 
 
 @pytest.mark.asyncio
-async def test_actions(process):
+async def test_actions(setup_server):
     # Request action before device connects
     resp = requests.get(DEVICE_ACTIONS_VALID_EXEC_ENDPOINT)
     assert resp.status_code == 202
@@ -216,7 +216,7 @@ async def test_actions(process):
 
 
 @pytest.mark.asyncio
-async def test_removing_pending_actions(process):
+async def test_removing_pending_actions(setup_server):
     # Request actions
     resp = requests.get(DEVICE_ACTIONS_VALID_EXEC_ENDPOINT)
     assert resp.status_code == 202
@@ -248,7 +248,7 @@ async def test_removing_pending_actions(process):
 
 
 @pytest.mark.asyncio
-async def test_removing_selected_actions(process):
+async def test_removing_selected_actions(setup_server):
     # Request actions
     resp = requests.get(DEVICE_ACTIONS_VALID_EXEC_ENDPOINT)
     assert resp.status_code == 202
@@ -291,7 +291,7 @@ async def test_removing_selected_actions(process):
 
 
 @pytest.mark.asyncio
-async def test_unsupported_actions(process):
+async def test_unsupported_actions(setup_server):
     # Request action before device connects
     resp = requests.get(DEVICE_ACTIONS_VALID_EXEC_ENDPOINT)
     assert resp.status_code == 202

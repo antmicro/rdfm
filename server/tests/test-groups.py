@@ -7,7 +7,7 @@ DUMMY_DEVICE_ID = 1
 GROUP_DEFAULT_PRIORITY = 25
 
 
-def test_groups(process):
+def test_groups(setup_server):
     # Fetching all groups, assumes that no groups were already created
     # i.e empty database
     resp = requests.get(GROUPS_ENDPOINT)

@@ -86,7 +86,7 @@ async def client(dev):
 
 
 @pytest.mark.asyncio
-async def test_file_download(process):
+async def test_file_download(setup_server):
     dev = MockedDevice("00:00:00:00:00:00", "v0", "dummy")
     await client(dev)
 
@@ -111,7 +111,7 @@ async def test_file_download(process):
         assert file.content == content
 
 
-def test_non_existing_device_download(process):
+def test_non_existing_device_download(setup_server):
     resp = requests.post(
         f"{SERVER}/{download_endpoint(0)}",
         headers={
@@ -124,7 +124,7 @@ def test_non_existing_device_download(process):
 
 
 @pytest.mark.asyncio
-async def test_non_existing_file_download(process):
+async def test_non_existing_file_download(setup_server):
     dev = MockedDevice("00:00:00:00:00:00", "v0", "dummy")
     await client(dev)
 

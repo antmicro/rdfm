@@ -23,7 +23,7 @@ META_RSYNC_SUPPORT = "rdfm.software.supports_rsync"
 
 
 @pytest.fixture
-def create_dummy_group(process):
+def create_dummy_group(setup_server):
     # Create the group
     resp = requests.post(GROUPS_ENDPOINT, json={"metadata":{}})
     assert resp.status_code == 200, "group creation should succeed"

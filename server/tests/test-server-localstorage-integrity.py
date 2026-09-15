@@ -74,20 +74,20 @@ def test_upload_token_invalid_audience():
     assert res is None
 
 
-def test_server_localstorage_simple_put(process, mint_upload_token):
+def test_server_localstorage_simple_put(setup_server, mint_upload_token):
     url = f"http://{HOSTNAME}:{PORT}/local_storage_multipart/parts/{TEST_UPLOAD_NAME}?token={mint_upload_token}"
     resp = requests.put(url, b"\x08\x59")
     assert 200 == resp.status_code, "Authenticated PUT to local storage should be allowed"
 
 
-def test_server_localstorage_simple_put_expired(process):
+def test_server_localstorage_simple_put_expired(setup_server):
     token = auth.upload_token.acquire_token(TEST_UPLOAD_NAME, 0)
     url = f"http://{HOSTNAME}:{PORT}/local_storage_multipart/parts/{TEST_UPLOAD_NAME}?token={token}"
     resp = requests.put(url, b"\x08\x59")
     assert 401 == resp.status_code, "Authenticated but expired PUT should be denied with 401"
 
 
-def test_server_localstorage_simple_put_invalid_audience(process):
+def test_server_localstorage_simple_put_invalid_audience(setup_server):
     now = int(time.time())
     token_data = auth.upload_token.UploadToken(TEST_UPLOAD_NAME, now, now + 3600, "urn:WRONG")
     token = jwt.encode(token_data.to_dict(), os.environ["JWT_SECRET"], algorithm=JWT_ALGO)
@@ -96,19 +96,19 @@ def test_server_localstorage_simple_put_invalid_audience(process):
     assert 401 == resp.status_code, "PUT with wrong audience should be denied with 401"
 
 
-def test_server_localstorage_simple_put_name_mismatch(process, mint_upload_token):
+def test_server_localstorage_simple_put_name_mismatch(setup_server, mint_upload_token):
     url = f"http://{HOSTNAME}:{PORT}/local_storage_multipart/parts/WRONG_NAME.dat?token={mint_upload_token}"
     resp = requests.put(url, b"\x08\x59")
     assert 403 == resp.status_code, "Authenticated PUT with mismatched resource should be denied with 403"
 
 
-def test_server_localstorage_unauthenticated_put(process):
+def test_server_localstorage_unauthenticated_put(setup_server):
     url = f"http://{HOSTNAME}:{PORT}/local_storage_multipart/parts/11111111-1111-1111-1111-111111111111_part0"
     resp = requests.put(url, b"\x08\x59")
     assert 401 == resp.status_code, "Unauthenticated PUT to local storage should be denied with 401"
 
 
-def test_server_localstorage_directory_traversal_attempt(process, mint_upload_token):
+def test_server_localstorage_directory_traversal_attempt(setup_server, mint_upload_token):
     url = f"http://{HOSTNAME}:{PORT}/local_storage_multipart/parts/..%2f..%2f{TEST_UPLOAD_NAME}?token={mint_upload_token}"
     resp = requests.put(url, b"\x13\x17")
     assert 404 == resp.status_code, "Directory traversal attempt should fail with 404 on resource"
@@ -126,7 +126,7 @@ def helper_compute_bytes_per_part(generated_urls: tuple[list[str], int]) -> int:
     return int(bytes_per_part)
 
 
-def test_server_localstorage_multipart_integrity_ok(process, create_multipart_downloader, mint_upload_urls, create_artifact_for_upload):
+def test_server_localstorage_multipart_integrity_ok(setup_server, create_multipart_downloader, mint_upload_urls, create_artifact_for_upload):
     mpu = create_multipart_downloader
     urls = mint_upload_urls[0]
     bytes_per_part = helper_compute_bytes_per_part(mint_upload_urls)
@@ -144,7 +144,7 @@ def test_server_localstorage_multipart_integrity_ok(process, create_multipart_do
     mpu.complete_upload(etags)
 
 
-def test_server_localstorage_multipart_integrity_bad(process, create_multipart_downloader, mint_upload_urls, create_artifact_for_upload):
+def test_server_localstorage_multipart_integrity_bad(setup_server, create_multipart_downloader, mint_upload_urls, create_artifact_for_upload):
     mpu = create_multipart_downloader
     urls = mint_upload_urls[0]
     bytes_per_part = helper_compute_bytes_per_part(mint_upload_urls)
@@ -178,7 +178,7 @@ def test_server_localstorage_multipart_integrity_bad(process, create_multipart_d
         pytest.fail("Complete upload shouldn't succeed in the case of en Etag mismatch")
 
 
-def test_server_localstorage_data_over_max_size(process, mint_upload_token):
+def test_server_localstorage_data_over_max_size(setup_server, mint_upload_token):
     url = f"http://{HOSTNAME}:{PORT}/local_storage_multipart/parts/{TEST_UPLOAD_NAME}?token={mint_upload_token}"
     data = (MAX_UPLOAD_PART_SIZE + 1) * b"\xff"
     resp = requests.put(url, data)

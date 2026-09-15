@@ -122,7 +122,7 @@ def test_admin_client_usage(create_topic, rdfm_kafka_admin):
 
 
 @pytest.mark.parametrize("process_config", [ProcessConfig(enable_pubsub=True)])
-def test_admin_client_via_endpoint(process, broker):
+def test_admin_client_via_endpoint(setup_server, broker):
     def wait_for_correct_acls(allowed_write: bool, timeout_s: int):
         deadline = time.time() + timeout_s
 
@@ -160,7 +160,7 @@ def test_admin_client_via_endpoint(process, broker):
 
 
 @pytest.mark.parametrize("process_config", [ProcessConfig(enable_pubsub=True, insert_mocks=False)])
-def test_admin_client_via_endpoint_no_mocks(process, broker):
+def test_admin_client_via_endpoint_no_mocks(setup_server, broker):
     resp = requests.get(f"{DEVICES_ENDPOINT}/1")
     assert 404 == resp.status_code, "Ensure that device mock has not been inserted into the database"
 
