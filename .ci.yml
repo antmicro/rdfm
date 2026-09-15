@@ -26,6 +26,24 @@ variables:
   <<: *common_only
   extends: .build-base
 
+.docker-tests-base:
+  variables:
+    DOCKER_BUILDKIT: 1
+    JWT_SECRET: foobarbaz
+  before_get_sources:
+    - apt -qq update
+    - apt -qq -y --no-install-recommends install docker-cli docker.io docker-buildx docker-compose crun fuse-overlayfs pigz ca-certificates git
+    - rm -rf /var/lib/apt/lists/*
+  before_script:
+    # Some tests need to be run in a Docker container, install and set up
+    # the Docker daemon
+    - mount -t tmpfs -o uid=0,gid=0,mode=0755 cgroup /sys/fs/cgroup
+    - pushd /sys/fs/cgroup
+    - mkdir {cpu,blkio,devices,freezer,memory,pids}
+    - for name in cpu blkio devices freezer memory pids; do mount -n -t cgroup -o $name cgroup $name; done
+    - popd
+    - common/docker/start-docker.sh
+
 .mypy-check-base:
   variables:
     TARGET: "" # fill this when extending
@@ -286,23 +304,14 @@ test-rdfm-client:
 
 test-rdfm-client-docker:
   stage: local-tests
-  <<: *common_only
   dependencies:
     - build-rdfm-artifact
+  extends: .docker-tests-base
+  <<: *common_only
   script:
     # Install rdfm-artifact, which is required for the tests
     - mv tools/rdfm-artifact/rdfm-artifact /usr/bin/
-    # The tests are running in a Docker container, install and set up
-    # the Docker daemon
     - cd devices/linux-client
-    - apt update
-    - apt -qq -y --no-install-recommends install docker-cli docker.io crun fuse-overlayfs pigz ca-certificates
-    - mount -t tmpfs -o uid=0,gid=0,mode=0755 cgroup /sys/fs/cgroup
-    - pushd /sys/fs/cgroup
-    - mkdir {cpu,blkio,devices,memory,pids}
-    - for name in cpu blkio devices memory pids; do mount -n -t cgroup -o $name cgroup $name; done
-    - popd
-    - ../../common/docker/start-docker.sh
     # HACK: For CI runs, we have to replace the -it flag in docker run
     #       as this is not a real terminal.
     # HACK: We also comment out git invocations, as only a subfolder is mounted
