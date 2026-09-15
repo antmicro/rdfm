@@ -303,6 +303,41 @@ test-server-pubsub-acl-side-effects:
       - server/tests/server.log
     when: always
 
+# ===== docker images ===== #
+
+build-server-docker-image:
+  stage: build
+  extends: .docker-tests-base
+  script:
+    - docker build -f server/deploy/Dockerfile -t ${CI_REGISTRY_IMAGE}:rdfm-server-${CI_COMMIT_REF_SLUG} .
+    - docker image save --output ./rdfm-server.tar ${CI_REGISTRY_IMAGE}:rdfm-server-${CI_COMMIT_REF_SLUG}
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - rdfm-server.tar
+
+build-frontend-docker-image:
+  stage: build
+  extends: .docker-tests-base
+  script:
+    - docker build -f frontend/Dockerfile -t ${CI_REGISTRY_IMAGE}:frontend-builder-${CI_COMMIT_REF_SLUG} .
+    - docker image save --output frontend-builder.tar ${CI_REGISTRY_IMAGE}:frontend-builder-${CI_COMMIT_REF_SLUG}
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - frontend-builder.tar
+
+build-mgmt-docker-image:
+  stage: build
+  extends: .docker-tests-base
+  script:
+    - docker build -f manager/Dockerfile -t ${CI_REGISTRY_IMAGE}:mgmt-${CI_COMMIT_REF_SLUG} .
+    - docker image save --output mgmt.tar ${CI_REGISTRY_IMAGE}:mgmt-${CI_COMMIT_REF_SLUG}
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - mgmt.tar
+
 # ===== rdfm-client ===== #
 
 build-rdfm-client:
