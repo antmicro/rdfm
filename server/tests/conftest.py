@@ -260,6 +260,18 @@ def process_gunicorn(db, process_config: ProcessConfig, local_package_dir, reque
         os.remove(DBPATH)
     log_file = (Path(__file__).parent / "server_gunicorn.log").open("a")
 
+    cfg_env = {}
+    if process_config.insert_mocks:
+        cfg_env["RDFM_INSERT_TEST_MOCKS"] = "1"
+    if process_config.no_ssl:
+        cfg_env["RDFM_DISABLE_ENCRYPTION"] = "1"
+    if process_config.no_api_auth:
+        cfg_env["RDFM_DISABLE_API_AUTH"] = "1"
+    if process_config.debug:
+        cfg_env["RDFM_DEBUG_MODE"] = "1"
+    if process_config.enable_pubsub:
+        cfg_env["RDFM_ENABLE_KAFKA_INTEGRATION"] = "1"
+
     print("Starting server..")
     process = subprocess.Popen(
         [
@@ -279,8 +291,7 @@ def process_gunicorn(db, process_config: ProcessConfig, local_package_dir, reque
             "RDFM_API_PORT": "5000",
             "RDFM_DB_CONNSTRING": request.getfixturevalue(db),
             "RDFM_LOCAL_PACKAGE_DIR": request.getfixturevalue(local_package_dir),
-            "RDFM_DISABLE_ENCRYPTION": "1",
-            "RDFM_DISABLE_API_AUTH": "1",
+            **cfg_env,
             **os.environ
         },
         stdout=log_file,
