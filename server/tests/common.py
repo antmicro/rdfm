@@ -49,6 +49,7 @@ LOGS_ENDPOINT = f"{SERVER}/api/v1/logs"
 PUBSUB_ENDPOINT = f"{SERVER}/api/v1/pubsub"
 DEVICES_WS = f"{SERVER}/api/v1/devices/ws"
 
+
 @dataclass
 class ProcessConfig():
     """A class representing RDFM server configuration
@@ -58,6 +59,10 @@ class ProcessConfig():
     no_api_auth: bool = True
     debug: bool = False
     enable_pubsub: bool = False
+
+    # external-docker specific
+    docker_env_file: Optional[str] = None
+    docker_compose_file: str = "deploy/docker-compose.development.yml"
 
 
 def make_signature(key_pair, payload_bytes):
