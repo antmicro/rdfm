@@ -57,7 +57,7 @@ class ProcessConfig():
     insert_mocks: bool = True
     no_ssl: bool = True
     no_api_auth: bool = True
-    debug: bool = False
+    debug: bool = True
     enable_pubsub: bool = False
 
     # external-docker specific
