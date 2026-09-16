@@ -23,6 +23,9 @@ fi
 if [ -n "${RDFM_INSERT_TEST_MOCKS}" ]; then
 	server_args="${server_args} --test-mocks"
 fi
+if [ -n "${RDFM_DEBUG_MODE}" ]; then
+	server_args="${server_args} --debug"
+fi
 
 if [ ${encrypted} == 1 ]; then
 	require_variable RDFM_SERVER_CERT
