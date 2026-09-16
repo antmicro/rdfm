@@ -162,8 +162,7 @@ def db_postgres():
 
 @pytest.fixture()
 def process_config():
-    """A default empty ProcessConfig passed unless
-        test is parameterized like so:
+    """A default ProcessConfig passed unless test is parameterized like so:
 
         **Example usage**
 
