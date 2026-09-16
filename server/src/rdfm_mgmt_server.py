@@ -116,6 +116,7 @@ def setup_with_config_from_env() -> Flask:
     config.encrypted = "RDFM_DISABLE_ENCRYPTION" not in os.environ
     config.include_frontend = "RDFM_INCLUDE_FRONTEND_ENDPOINT" in os.environ
     config.create_mocks = "RDFM_INSERT_TEST_MOCKS" in os.environ
+    config.debug = "RDFM_DEBUG_MODE" in os.environ
     config.enable_pubsub = configuration.ENV_ENABLE_KAFKA_INTEGRATION in os.environ
     if not configuration.parse_from_environment(config):
         raise RuntimeError(
