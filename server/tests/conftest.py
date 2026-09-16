@@ -301,14 +301,14 @@ def process_docker_compose(process_config: ProcessConfig):
 
     log_file = str(Path(__file__).parent / "server_docker_compose.log")
 
-    optional_env_file = ""
+    optional_env_file = f"--env-file {process_config.docker_env_file}" if process_config.docker_env_file else ""
 
     env=""
     if process_config.insert_mocks:
         env += "TEST_MOCKS=1 "
 
     process = subprocess.run(
-            f"{env}docker compose --file deploy/docker-compose.development.yml {optional_env_file} up --detach --wait",  # --wait ensures a service is healthy
+            f"{env}docker compose --file {process_config.docker_compose_file} {optional_env_file} up --detach",
             shell=True
     )
 
@@ -321,12 +321,12 @@ def process_docker_compose(process_config: ProcessConfig):
     print("Shutting down server..")
 
     subprocess.run(
-        f"docker compose --file deploy/docker-compose.development.yml {optional_env_file} logs >> {log_file}",
+        f"docker compose --file {process_config.docker_compose_file} {optional_env_file} logs >> {log_file}",
         shell=True
     )
 
     subprocess.run(
-        f"docker compose --file deploy/docker-compose.development.yml {optional_env_file} down --volumes",
+        f"docker compose --file {process_config.docker_compose_file} {optional_env_file} down --volumes",
         shell=True
     )
 
