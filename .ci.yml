@@ -5,6 +5,12 @@ image: $CI_REGISTRY_IMAGE:rdfm-ci-base-trixie
     - main
     - merge_requests
 
+.artifact_server_logs: &artifact_server_logs
+  artifacts:
+    paths:
+      - server/tests/*.log
+    when: always
+
 variables:
   SSL_CERT_DIR: "certs"
   PIP_CACHE_DIR: $CI_PROJECT_DIR/.cache/pip
@@ -107,6 +113,7 @@ test-package-api:
   script:
     - cd server
     - poetry run pytest tests/test-packages.py
+  <<: *artifact_server_logs
 
 test-group-api:
   extends: .build
@@ -114,6 +121,7 @@ test-group-api:
   script:
     - cd server
     - poetry run pytest tests/test-groups.py
+  <<: *artifact_server_logs
 
 test-server-update-policies:
   extends: .build
@@ -137,6 +145,7 @@ test-server-update-api:
     - cd server
     - poetry run pytest tests/test-update-checker.py --sqlite
     - poetry run pytest tests/test-update-checker.py --postgres
+  <<: *artifact_server_logs
 
 test-server-device-auth-api:
   extends: .build
@@ -147,6 +156,7 @@ test-server-device-auth-api:
     - cd server
     - poetry run pytest tests/test-server-auth.py --sqlite
     - poetry run pytest tests/test-server-auth.py --postgres
+  <<: *artifact_server_logs
 
 test-server-s3-storage:
   extends: .build
@@ -198,10 +208,7 @@ test-server-localstorage-integrity:
     - cd server
     - poetry run pytest tests/test-server-localstorage-integrity.py --sqlite -v
     - poetry run pytest tests/test-server-localstorage-integrity.py --postgres -v
-  artifacts:
-    paths:
-      - server/tests/logs/*
-    when: always
+  <<: *artifact_server_logs
 
 test-server-route-correctness:
   extends: .build
@@ -217,6 +224,7 @@ test-server-websocket:
     - cd server
     - poetry run pytest tests/test-server-ws.py --sqlite
     - poetry run pytest tests/test-server-ws.py --postgres
+  <<: *artifact_server_logs
 
 test-manager:
   extends: .build
@@ -227,6 +235,7 @@ test-manager:
     - cd server
     - poetry run pytest tests/test-manager.py --sqlite
     - poetry run pytest tests/test-manager.py --postgres
+  <<: *artifact_server_logs
 
 test-server-stress:
   extends: .build
@@ -251,6 +260,7 @@ test-server-logs:
     - cd server
     - poetry run pytest tests/test-server-logs.py --sqlite
     - poetry run pytest tests/test-server-logs.py --postgres
+  <<: *artifact_server_logs
 
 test-server-file-download:
   extends: .build
@@ -259,6 +269,7 @@ test-server-file-download:
     - cd server
     - poetry run pytest tests/test-file-download.py  --sqlite
     - poetry run pytest tests/test-file-download.py  --postgres
+  <<: *artifact_server_logs
 
 test-actions:
   extends: .build
@@ -267,20 +278,16 @@ test-actions:
     - cd server
     - poetry run pytest tests/test-actions.py  --sqlite
     - poetry run pytest tests/test-actions.py  --postgres
+  <<: *artifact_server_logs
 
 test-progress-api:
   extends: .build
   stage: local-tests
   script:
     - cd server
-    - poetry run pytest tests/test-progress-api.py  --sqlite
-    - poetry run pytest tests/test-progress-api.py  --postgres
-
-  artifacts:
-    paths:
-      - server/tests/server_gunicorn.log
-      - server/tests/server_redis.log
-    when: always
+    - poetry run pytest tests/test-progress-api.py -v --sqlite
+    - poetry run pytest tests/test-progress-api.py -v --postgres
+  <<: *artifact_server_logs
 
 test-server-pubsub-acl-handling:
   extends: .build
@@ -298,10 +305,7 @@ test-server-pubsub-acl-side-effects:
     - SIF_SECRET=$(apptainer inspect --environment deploy/pubsub-demo/tests/test_kafka.sif | rg '^\s+export RDFM_JWT_SECRET=([\w\W]+)$' -r '$1')
     - export JWT_SECRET=$SIF_SECRET
     - poetry run pytest -v tests/test-pubsub-acl-side-effects.py --sifpath $(pwd)/deploy/pubsub-demo/tests --sqlite
-  artifacts:
-    paths:
-      - server/tests/server.log
-    when: always
+  <<: *artifact_server_logs
 
 # ===== docker images ===== #
 
