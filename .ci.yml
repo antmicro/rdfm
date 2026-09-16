@@ -112,7 +112,7 @@ test-package-api:
   stage: local-tests
   script:
     - cd server
-    - poetry run pytest tests/test-packages.py
+    - poetry run pytest tests/test-packages.py -v
   <<: *artifact_server_logs
 
 test-group-api:
@@ -120,7 +120,7 @@ test-group-api:
   stage: local-tests
   script:
     - cd server
-    - poetry run pytest tests/test-groups.py
+    - poetry run pytest tests/test-groups.py -v
   <<: *artifact_server_logs
 
 test-server-update-policies:
@@ -128,23 +128,23 @@ test-server-update-policies:
   stage: local-tests
   script:
     - cd server
-    - poetry run pytest tests/test-update-policies.py --sqlite
-    - poetry run pytest tests/test-update-policies.py --postgres
+    - poetry run pytest tests/test-update-policies.py -v --sqlite
+    - poetry run pytest tests/test-update-policies.py -v --postgres
 
 test-server-update-resolver:
   extends: .build
   stage: local-tests
   script:
     - cd server
-    - poetry run pytest tests/test-update-resolver.py
+    - poetry run pytest tests/test-update-resolver.py -v
 
 test-server-update-api:
   extends: .build
   stage: local-tests
   script:
     - cd server
-    - poetry run pytest tests/test-update-checker.py --sqlite
-    - poetry run pytest tests/test-update-checker.py --postgres
+    - poetry run pytest tests/test-update-checker.py -v --sqlite
+    - poetry run pytest tests/test-update-checker.py -v --postgres
   <<: *artifact_server_logs
 
 test-server-device-auth-api:
@@ -154,8 +154,8 @@ test-server-device-auth-api:
     SCALENODE_RAM: 4096
   script:
     - cd server
-    - poetry run pytest tests/test-server-auth.py --sqlite
-    - poetry run pytest tests/test-server-auth.py --postgres
+    - poetry run pytest tests/test-server-auth.py -v --sqlite
+    - poetry run pytest tests/test-server-auth.py -v --postgres
   <<: *artifact_server_logs
 
 test-server-s3-storage:
@@ -163,7 +163,7 @@ test-server-s3-storage:
   stage: local-tests
   script:
     - cd server
-    - poetry run pytest tests/test-server-s3-storage.py
+    - poetry run pytest tests/test-server-s3-storage.py -v
 
 test-server-azure-storage:
   extends: .docker-tests-base
@@ -185,8 +185,8 @@ test-server-management-auth:
     SCALENODE_RAM: 4096
   script:
     - cd server
-    - poetry run pytest tests/test-server-management-auth.py --sqlite
-    - poetry run pytest tests/test-server-management-auth.py --postgres
+    - poetry run pytest tests/test-server-management-auth.py -v --sqlite
+    - poetry run pytest tests/test-server-management-auth.py -v --postgres
 
 test-package-upload-auth:
   extends: .build
@@ -195,8 +195,8 @@ test-package-upload-auth:
     SCALENODE_RAM: 4096
   script:
     - cd server
-    - poetry run pytest tests/test-package-upload-auth.py --sqlite
-    - poetry run pytest tests/test-package-upload-auth.py --postgres
+    - poetry run pytest tests/test-package-upload-auth.py -v --sqlite
+    - poetry run pytest tests/test-package-upload-auth.py -v --postgres
 
 test-server-localstorage-integrity:
   variables:
@@ -215,15 +215,15 @@ test-server-route-correctness:
   stage: local-tests
   script:
     - cd server
-    - poetry run pytest tests/test-server-route-correctness.py
+    - poetry run pytest tests/test-server-route-correctness.py -v
 
 test-server-websocket:
   extends: .build
   stage: local-tests
   script:
     - cd server
-    - poetry run pytest tests/test-server-ws.py --sqlite
-    - poetry run pytest tests/test-server-ws.py --postgres
+    - poetry run pytest tests/test-server-ws.py -v --sqlite
+    - poetry run pytest tests/test-server-ws.py -v --postgres
   <<: *artifact_server_logs
 
 test-manager:
@@ -233,8 +233,8 @@ test-manager:
     SCALENODE_RAM: 4096
   script:
     - cd server
-    - poetry run pytest tests/test-manager.py --sqlite
-    - poetry run pytest tests/test-manager.py --postgres
+    - poetry run pytest tests/test-manager.py -v --sqlite
+    - poetry run pytest tests/test-manager.py -v --postgres
   <<: *artifact_server_logs
 
 test-server-stress:
@@ -258,8 +258,8 @@ test-server-logs:
   stage: local-tests
   script:
     - cd server
-    - poetry run pytest tests/test-server-logs.py --sqlite
-    - poetry run pytest tests/test-server-logs.py --postgres
+    - poetry run pytest tests/test-server-logs.py -v --sqlite
+    - poetry run pytest tests/test-server-logs.py -v --postgres
   <<: *artifact_server_logs
 
 test-server-file-download:
@@ -267,8 +267,8 @@ test-server-file-download:
   stage: local-tests
   script:
     - cd server
-    - poetry run pytest tests/test-file-download.py  --sqlite
-    - poetry run pytest tests/test-file-download.py  --postgres
+    - poetry run pytest tests/test-file-download.py -v --sqlite
+    - poetry run pytest tests/test-file-download.py -v --postgres
   <<: *artifact_server_logs
 
 test-actions:
@@ -276,8 +276,8 @@ test-actions:
   stage: local-tests
   script:
     - cd server
-    - poetry run pytest tests/test-actions.py  --sqlite
-    - poetry run pytest tests/test-actions.py  --postgres
+    - poetry run pytest tests/test-actions.py -v --sqlite
+    - poetry run pytest tests/test-actions.py -v --postgres
   <<: *artifact_server_logs
 
 test-progress-api:
@@ -294,7 +294,7 @@ test-server-pubsub-acl-handling:
   stage: local-tests
   script:
     - cd server
-    - poetry run pytest tests/test-pubsub-acl-handling.py
+    - poetry run pytest tests/test-pubsub-acl-handling.py -v
 
 test-server-pubsub-acl-side-effects:
   extends: .build
