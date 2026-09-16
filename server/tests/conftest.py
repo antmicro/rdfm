@@ -253,7 +253,7 @@ def process_werkzeug(db, process_config: ProcessConfig, local_package_dir, reque
 
 
 @pytest.fixture(scope="function")
-def process_gunicorn(db, local_package_dir, request):
+def process_gunicorn(db, process_config: ProcessConfig, local_package_dir, request):
     """Fixture to start the RDFM server with Gunicorn"""
 
     if os.path.isfile(DBPATH):
