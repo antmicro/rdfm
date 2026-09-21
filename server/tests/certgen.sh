@@ -9,8 +9,14 @@ set -x
 
 # Arguments = server IP, certificate dirs
 DIR=$1
-# SERVER_IP can be e.g. DNS.1:rdfm.com or IP.1:127.0.0.1
+if [ -z "$DIR" ]; then
+    DIR=certs
+fi
+# SERVER_IP can be e.g. DNS.1:example.com or IP.1:127.0.0.1
 HOSTNAME=$2
+if [ -z "$HOSTNAME" ]; then
+    HOSTNAME=IP.1:127.0.0.1
+fi
 
 ORGNAME=Test
 
@@ -52,7 +58,6 @@ echo "basicConstraints = critical, CA:FALSE" >> server.ext
 echo "keyUsage = critical, digitalSignature" >> server.ext
 echo "extendedKeyUsage = serverAuth" >> server.ext
 echo "subjectAltName = $HOSTNAME" >> server.ext
-
 # Process the server CSR and extensions
 openssl x509 -req -sha256 \
     -CA CA.crt \
