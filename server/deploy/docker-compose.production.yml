@@ -7,77 +7,118 @@ services:
   rdfm-server:
     image: antmicro/rdfm-server:latest
     restart: unless-stopped
+    env_file: $SETUP_FILE
     depends_on:
-      - keycloak
-      - minio
+      rustfs-bucket-creator:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_started
     environment:
-      - RDFM_JWT_SECRET=d06b0ae464ba115c72b37e02d713a34f58396995b64075181aed795f653fd39b
-      - RDFM_DB_CONNSTRING=sqlite:////database/db.db
-      - RDFM_HOSTNAME=rdfm.example.local
-      - RDFM_API_PORT=5000
+      - REQUESTS_CA_BUNDLE=/certs/CA.crt
       - RDFM_LOCAL_PACKAGE_DIR=/tmp/
-      # HTTPS configuration. Alternatively, a reverse proxy can be used in front of RDFM
-      - RDFM_SERVER_CERT=/certs/SERVER.crt
-      - RDFM_SERVER_KEY=/certs/SERVER.key
-      # OAuth2 configuration for API auth
-      - RDFM_OAUTH_URL=http://keycloak:8080/realms/master/protocol/openid-connect/token/introspect
-      - RDFM_OAUTH_CLIENT_ID=rdfm-server-introspection
-      - RDFM_OAUTH_CLIENT_SEC=qPsZzvAUtDVREjJyuyAEu3SDBQElATgX
-      # S3 configuration
-      - RDFM_STORAGE_DRIVER=s3
-      - RDFM_S3_URL=http://minio:9000/
-      - RDFM_S3_BUCKET=rdfm-packages
-      - RDFM_S3_ACCESS_KEY_ID=admin
-      - RDFM_S3_ACCESS_SECRET_KEY=admin123
+      # Disable encryption, as we're behind a reverse proxy.
+      - RDFM_DISABLE_ENCRYPTION=1
+      # Alternatively, an HTTPS configuration can be provided:
+      # - RDFM_SERVER_CERT=/certs/SERVER.crt
+      # - RDFM_SERVER_KEY=/certs/SERVER.key
     networks:
       - rdfm
-    ports:
-      - "5000:5000"
-    extra_hosts:
-      - "rdfm.example.local:0.0.0.0"
     volumes:
       - db:/database/
-      - ./certs:/certs
+      - ${PWD}/server/deploy/certs:/certs
 
-  minio:
-    image: minio/minio:RELEASE.2021-04-22T15-44-28Z
+  nginx:
+    image: nginx:1.27.2-alpine
     restart: unless-stopped
+    env_file: $SETUP_FILE
+    depends_on:
+      keycloak:
+        condition: service_started
+      rdfm-server:
+        condition: service_started
+      rustfs-bucket-creator:
+        condition: service_completed_successfully
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "${NGINX_PORT}:${NGINX_PORT}"
+    volumes:
+      - ${PWD}/server/deploy/nginx.conf:/etc/nginx/templates/default.conf.template
+      - ${PWD}/server/deploy/certs:/etc/nginx/certs/
+    networks:
+      - rdfm
+
+  rustfs:
+    image: rustfs/rustfs:1.0.0-rc.6
+    restart: unless-stopped
     networks:
       - rdfm
     volumes:
-      - storage:/storage/
+      - rustfs-storage:/data
+      - rustfs-logs:${RUSTFS_OBS_LOG_DIRECTORY}
     environment:
-      - MINIO_ROOT_USER=admin
-      - MINIO_ROOT_PASSWORD=admin123
-    command: server /storage/
+      - RUSTFS_ACCESS_KEY=${RDFM_S3_ACCESS_KEY_ID}
+      - RUSTFS_SECRET_KEY=${RDFM_S3_ACCESS_SECRET_KEY}
+      - RUSTFS_ADDRESS=${RUSTFS_ADDRESS}
+      - RUSTFS_CONSOLE_ADDRESS=${RUSTFS_CONSOLE_ADDRESS}
+      - RUSTFS_CONSOLE_ENABLE=${RUSTFS_CONSOLE_ENABLE}
+      - RUSTFS_OBS_LOGGER_LEVEL=${RUSTFS_OBS_LOGGER_LEVEL}
+      - RUSTFS_OBS_LOG_DIRECTORY=${RUSTFS_OBS_LOG_DIRECTORY}
+      - RUSTFS_OBS_LOG_ROTATION_SIZE_MB=${RUSTFS_OBS_LOG_ROTATION_SIZE_MB}
+      - RUSTFS_OBS_LOG_ROTATION_TIME=${RUSTFS_OBS_LOG_ROTATION_TIME}
+      - RUSTFS_OBS_LOG_KEEP_FILES=${RUSTFS_OBS_LOG_KEEP_FILES}
+
+  rustfs-bucket-creator:
+    image: rustfs/rc:v0.1.35
+    restart: on-failure
+    env_file: $SETUP_FILE
+    depends_on:
+      - rustfs
+    networks:
+      - rdfm
+    entrypoint: >
+      /bin/sh -c "
+        set -e
+        /usr/bin/rc alias set rdfm-rustfs ${RDFM_S3_URL} admin admin123;
+        /usr/bin/rc bucket create rdfm-rustfs/rdfm-packages --ignore-existing;
+      "
 
   keycloak:
-    image: quay.io/keycloak/keycloak:22.0.1
+    image: quay.io/keycloak/keycloak:26.8.1
     restart: unless-stopped
-    environment:
-      - KEYCLOAK_ADMIN=admin
-      - KEYCLOAK_ADMIN_PASSWORD=admin
+    env_file: $SETUP_FILE
     networks:
       - rdfm
-    ports:
-      - "8080:8080"
     command:
-      - start-dev
-      - "-Dkeycloak.migration.action=import"
-      - "-Dkeycloak.migration.provider=singleFile"
-      - "-Dkeycloak.migration.file=/import/test-rdfm-keycloak-realm.json"
-      - "-Dkeycloak.migration.strategy=IGNORE_EXISTING"
+      - start
+      - --import-realm
     volumes:
+      - ${PWD}/server/deploy/certs:/certs
       - keycloak:/opt/keycloak/data/
-      - ./test-rdfm-keycloak-realm.json:/import/test-rdfm-keycloak-realm.json
+      - ${PWD}/server/keycloak-themes/:/opt/keycloak/themes
+      - ${PWD}/frontend/public/assets/:/opt/keycloak/themes/rdfm/login/resources/img/
+      - ${PWD}/server/deploy/rdfm-realm-template.json:/opt/keycloak/data/import/rdfm-realm.json
+
+  postgres:
+    image: postgres:16.2
+    env_file: $SETUP_FILE
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    networks:
+      - rdfm
+    volumes:
+      - db:/var/lib/postgresql/data
+
 
 volumes:
   db:
   keycloak:
-  storage:
+  rustfs-storage:
+  rustfs-logs:
 
 networks:
   rdfm:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.0.0/16
