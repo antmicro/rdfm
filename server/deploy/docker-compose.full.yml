@@ -7,8 +7,12 @@ services:
     restart: unless-stopped
     env_file: $SETUP_FILE
     depends_on:
-      - keycloak
-      - postgres
+      keycloak:
+        condition: service_started
+      postgres:
+        condition: service_started
+      rustfs-bucket-creator:
+        condition: service_completed_successfully
     environment:
       REQUESTS_CA_BUNDLE: /certs/CA.crt
     networks:
@@ -46,7 +50,7 @@ services:
       - rdfm
 
   keycloak:
-    image: quay.io/keycloak/keycloak:22.0.1
+    image: quay.io/keycloak/keycloak:26.8.1
     restart: unless-stopped
     env_file: $SETUP_FILE
     networks:
@@ -73,9 +77,8 @@ services:
     volumes:
       - db:/var/lib/postgresql/data
 
-  minio:
-    image: minio/minio:RELEASE.2021-04-22T15-44-28Z
-    env_file: $SETUP_FILE
+  rustfs:
+    image: rustfs/rustfs:1.0.0-rc.6
     restart: unless-stopped
     ports:
       - "9000:9000"
@@ -83,39 +86,50 @@ services:
     networks:
       - rdfm
     volumes:
-      - storage:/storage/
-      - ${PWD}/server/deploy/certs/MINIO.crt:/root/.minio/certs/public.crt:ro
-      - ${PWD}/server/deploy/certs/MINIO.key:/root/.minio/certs/private.key:ro
-      - ${PWD}/server/deploy/certs/CA.crt:/root/.minio/certs/CAs/CA.crt:ro
+      - rustfs-storage:/data
+      - rustfs-logs:/var/log/rustfs/
+      - ${PWD}/server/deploy/certs/CA.crt:${RUSTFS_TLS_PATH}/CA.crt:ro
+      - ${PWD}/server/deploy/certs/RUSTFS.crt:${RUSTFS_TLS_PATH}/rustfs_cert.pem:ro
+      - ${PWD}/server/deploy/certs/RUSTFS.key:${RUSTFS_TLS_PATH}/rustfs_key.pem:ro
     environment:
-      MINIO_ROOT_USER: ${RDFM_S3_ACCESS_KEY_ID}
-      MINIO_ROOT_PASSWORD: ${RDFM_S3_ACCESS_SECRET_KEY}
-      MINIO_SERVER_URL: ${RDFM_S3_URL}
-    command: server /storage/
+      - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY}
+      - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY}
+      - RUSTFS_TLS_PATH=${RUSTFS_TLS_PATH}
+      - RUSTFS_ADDRESS=${RUSTFS_ADDRESS}
+      - RUSTFS_CONSOLE_ADDRESS=${RUSTFS_CONSOLE_ADDRESS}
+      - RUSTFS_CONSOLE_ENABLE=${RUSTFS_CONSOLE_ENABLE}
+      - RUSTFS_OBS_LOGGER_LEVEL=${RUSTFS_OBS_LOGGER_LEVEL}
+      - RUSTFS_OBS_LOG_DIRECTORY=${RUSTFS_OBS_LOG_DIRECTORY}
+      - RUSTFS_OBS_LOG_ROTATION_SIZE_MB=${RUSTFS_OBS_LOG_ROTATION_SIZE_MB}
+      - RUSTFS_OBS_LOG_ROTATION_TIME=${RUSTFS_OBS_LOG_ROTATION_TIME}
+      - RUSTFS_OBS_LOG_KEEP_FILES=${RUSTFS_OBS_LOG_KEEP_FILES}
 
-  minio-bucket-creator:
-    image: minio/mc:RELEASE.2021-04-22T17-40-00Z
-    env_file: $SETUP_FILE
+  rustfs-bucket-creator:
+    image: rustfs/rc:v0.1.35
     restart: on-failure
     depends_on:
-      - minio
+      - rustfs
+    networks:
+      - rdfm
     entrypoint: >
       /bin/sh -c "
         set -e
-        /usr/bin/mc config host add rdfm-minio ${RDFM_S3_URL} ${RDFM_S3_ACCESS_KEY_ID} ${RDFM_S3_ACCESS_SECRET_KEY};
-        /usr/bin/mc mb rdfm-minio/${RDFM_S3_BUCKET} || true;
-        exit 0;
+        /usr/bin/rc alias set rdfm-rustfs ${RDFM_S3_URL} ${RDFM_S3_ACCESS_KEY_ID} ${RDFM_S3_ACCESS_SECRET_KEY} --ca-bundle /certs/CA.crt;
+        /usr/bin/rc bucket create rdfm-rustfs/${RDFM_S3_BUCKET} --ignore-existing;
       "
     volumes:
-      - ${PWD}/server/deploy/certs/CA.crt:/root/.mc/certs/CAs/CA.crt:ro
-    networks:
-      - rdfm
+      - ${PWD}/server/deploy/certs/CA.crt:/certs/CA.crt:ro
 
 volumes:
   keycloak:
-  storage:
+  rustfs-storage:
+  rustfs-logs:
   db:
   static:
 
 networks:
   rdfm:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.0.0/16
