@@ -494,17 +494,16 @@ For more information, refer to the [Configuring Keycloak for production](https:/
 :::
 
 A reference setup that can be used for customizing production server deployments is provided in `server/deploy/docker-compose.production.yml`.
-Prior to starting the deployment, you need to generate a signed server certificate that will be used for establishing the HTTPS connection to the server.
-You can do it by either providing your own certificate, or by running the provided example certificate generation script:
+Prior to starting the deployment, you need to generate signed server certificates that will be used for establishing the secure connections.
+You can do it by either providing your own set of certificates, or by running the provided example certificate generation script:
 
 ```bash
 cd server/deploy/
-../tests/certgen.sh
-../tests/certgen.sh certs IP.1:127.0.0.1 DEVICE no
+../tests/certgen.sh certs IP.1:127.0.0.1 DEVICE no RUSTFS DNS.1:rustfs
 ```
 
 When using the `certgen.sh` script, the CA certificate found at `server/deploy/certs/CA.crt` can be used for validating the connection made to the server.
-The `server/deploy/certs/SERVER.crt` will be used as a certificate of the Management Server.
+The `server/deploy/certs/SERVER.crt` and `server/deploy/certs/RUSTFS.crt` are going to be used as respective certificates of the Management Server and the object storage.
 
 Similarly to previous example deployments, it can be started by running the following command from the **RDFM monorepository root folder**:
 
