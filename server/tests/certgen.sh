@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/usr/bin/env bash
 
 # Copyright 2023-2025 Antmicro, based on Linaro Ltd's
 # (https://gist.github.com/microbuilder/cf928ea5b751e6ea467cc0cd51d2532f#file-certg)
