@@ -1,0 +1,62 @@
+services:
+  rdfm-server:
+    image: antmicro/rdfm-server:latest
+    restart: unless-stopped
+    depends_on:
+      rustfs-bucket-creator:
+        condition: service_completed_successfully
+    environment:
+      - RDFM_JWT_SECRET=foobarbaz
+      - RDFM_DB_CONNSTRING=sqlite:////database/development.db
+      - RDFM_HOSTNAME=rdfm-server
+      - RDFM_API_PORT=5000
+      - RDFM_DISABLE_ENCRYPTION=1
+      - RDFM_DISABLE_API_AUTH=1
+      - RDFM_LOCAL_PACKAGE_DIR=/packages/
+      - RDFM_STORAGE_DRIVER=s3
+      - RDFM_S3_URL=${RDFM_S3_URL}
+      - RDFM_S3_BUCKET=${RDFM_S3_BUCKET}
+      - RDFM_S3_ACCESS_KEY_ID=${RDFM_S3_ACCESS_KEY_ID}
+      - RDFM_S3_ACCESS_SECRET_KEY=${RDFM_S3_ACCESS_SECRET_KEY}
+      - RDFM_WSGI_SERVER=werkzeug
+    ports:
+      - "5000:5000"
+    volumes:
+      - db:/database/
+      - pkgs:/packages/
+
+  rustfs:
+    image: rustfs/rustfs:1.0.0-rc.6
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - rustfs-storage:/data
+      - rustfs-logs:/var/log/rustfs/
+    environment:
+      - RUSTFS_ACCESS_KEY=${RDFM_S3_ACCESS_KEY_ID}
+      - RUSTFS_SECRET_KEY=${RDFM_S3_ACCESS_SECRET_KEY}
+      - RUSTFS_ADDRESS=${RUSTFS_ADDRESS}
+      - RUSTFS_CONSOLE_ADDRESS=${RUSTFS_CONSOLE_ADDRESS}
+      - RUSTFS_CONSOLE_ENABLE=true
+      - RUSTFS_OBS_LOGGER_LEVEL=error
+      - RUSTFS_OBS_LOG_DIRECTORY=/var/log/rustfs/
+
+  rustfs-bucket-creator:
+    image: rustfs/rc:v0.1.35
+    restart: on-failure
+    depends_on:
+      - rustfs
+    entrypoint: >
+      /bin/sh -c "
+        set -e
+        /usr/bin/rc alias set rdfm-rustfs ${RDFM_S3_URL} ${RDFM_S3_ACCESS_KEY_ID} ${RDFM_S3_ACCESS_SECRET_KEY};
+        /usr/bin/rc bucket create rdfm-rustfs/${RDFM_S3_BUCKET} --ignore-existing;
+      "
+
+volumes:
+  db:
+  pkgs:
+  rustfs-storage:
+  rustfs-logs:
