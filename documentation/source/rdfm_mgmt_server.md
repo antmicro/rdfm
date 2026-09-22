@@ -67,7 +67,7 @@ docker-compose -f server/deploy/docker-compose.development.yml up
 You can change the configuration of the RDFM server by using the following environment variables:
 
 - `RDFM_JWT_SECRET` - secret key used by the server when issuing JWT tokens, this value must be kept secret and not easily guessable (for example, a random hexadecimal string).
-- `RDFM_DB_CONNSTRING` - database connection string, for examples please refer to: [SQLAlchemy - Backend-specific URLs](https://docs.sqlalchemy.org/en/20/core/engines.html#backend-specific-urls). Currently, only the SQLite and PostgreSQL engines were verified to work with RDFM (however, the PostgreSQL engine requires adding additional dependencies which are currently not part of the default server image - this may change in the future).
+- `RDFM_DB_CONNSTRING` - database connection string, for examples please refer to: [SQLAlchemy - Backend-specific URLs](https://docs.sqlalchemy.org/en/20/core/engines.html#backend-specific-urls). Currently, only the SQLite and PostgreSQL engines were verified to work with RDFM.
 
 Development configuration:
 
