@@ -15,6 +15,7 @@ const (
 	RdfmRSAKeysFilename      = "rsa.pem"
 	RdfmCacheDirectory       = "cache"
 	RdfmActionsFilename      = "actions.conf"
+	RdfmActionsDirectory     = "actions.conf.d"
 	RdfmActionDataDirectory  = "action_persist"
 	RdfmTagsFilename         = "tags.conf"
 	// This pattern can only contain one '*', because of the Sprintf use in cached_fetcher
@@ -31,6 +32,7 @@ var (
 	RdfmRSAKeysPath        = path.Join(RdfmDataDirectory, RdfmRSAKeysFilename)
 	RdfmCachePath          = path.Join(RdfmDataDirectory, RdfmCacheDirectory)
 	RdfmDefaultActionsPath = path.Join(RdfmDataDirectory, RdfmActionsFilename)
+	RdfmActionsDirPath     = path.Join(RdfmConfigDirectory, RdfmActionsDirectory)
 	RdfmActionDataPath     = path.Join(RdfmDataDirectory, RdfmActionDataDirectory)
 	RdfmDefaultTagsPath    = path.Join(RdfmDataDirectory, RdfmTagsFilename)
 )

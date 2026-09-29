@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
+	"path"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -17,42 +19,77 @@ type RDFMCommandActionConfiguration struct {
 	Timeout     float32  `json:"timeout,omitempty"`
 }
 
-func checkConfigFilePermissions(path string) error {
+func checkPermissions(path string, perm fs.FileMode) error {
 	fileInfo, err := os.Stat(path)
 	if err != nil {
 		return nil
 	}
 
 	filePerm := fileInfo.Mode().Perm()
-	if filePerm != 0644 {
-		return fmt.Errorf("invalid permission for config file %s (644 required)", path)
+	fmt.Errorf("perms are %v", perm)
+	if filePerm != perm {
+		return fmt.Errorf("invalid permission for %s (%v required)", path, perm)
 	}
 	return nil
 }
 
-func LoadActionsConfig(path string) (*[]RDFMCommandActionConfiguration, error) {
-	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-		log.Warnf("actions: no configured actions were found (missing %s)", path)
-		empty := make([]RDFMCommandActionConfiguration, 0)
+func checkConfigFilePermissions(path string) error {
+	return checkPermissions(path, 0644)
+}
+
+func checkConfigDirPermissions(path string) error {
+	return checkPermissions(path, 0755)
+}
+
+func LoadActionsConfig(defaultActionsPath string, actionsDirPath string) (*[]RDFMCommandActionConfiguration, error) {
+	empty := make([]RDFMCommandActionConfiguration, 0)
+	_, err := os.Stat(defaultActionsPath)
+	defaultActionsMissing := errors.Is(err, os.ErrNotExist)
+	entries, err := os.ReadDir(actionsDirPath)
+	actionsDirMissing := errors.Is(err, os.ErrNotExist)
+	if defaultActionsMissing && actionsDirMissing {
+		log.Debugf("actions: no configured actions were found (missing %s and empty or nonexistent %s)", defaultActionsPath, actionsDirPath)
 		return &empty, nil
 	}
+	if !actionsDirMissing {
+		if err := checkConfigDirPermissions(defaultActionsPath); err != nil {
+			log.Errorf("actions: config directory %s: wrong permissions", actionsDirPath)
+			entries = entries[:0]
+		}
+	}
 
-	if err := checkConfigFilePermissions(path); err != nil {
-		log.Error("actions: config file: wrong permissions")
-		return nil, err
+	var paths []string
+	if !defaultActionsMissing {
+		if err := checkConfigFilePermissions(defaultActionsPath); err != nil {
+			log.Errorf("actions: config file %s: wrong permissions", defaultActionsPath)
+		} else {
+			paths = append(paths, defaultActionsPath)
+		}
+	}
+	for _, entry := range entries {
+		filePath := path.Join(actionsDirPath, entry.Name())
+		if err := checkConfigFilePermissions(filePath); err != nil {
+			log.Errorf("actions: config file %s: wrong permissions", filePath)
+			continue
+		}
+		paths = append(paths, filePath)
 	}
 
 	var config []RDFMCommandActionConfiguration
 
-	configFile, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer configFile.Close()
+	for _, filePath := range paths {
+		configFile, err := os.Open(filePath)
+		var actions []RDFMCommandActionConfiguration
+		if err != nil {
+			return nil, err
+		}
+		defer configFile.Close()
 
-	jsonDecoder := json.NewDecoder(configFile)
-	if err = jsonDecoder.Decode(&config); err != nil {
-		return nil, err
+		jsonDecoder := json.NewDecoder(configFile)
+		if err = jsonDecoder.Decode(&actions); err != nil {
+			return nil, err
+		}
+		config = append(config, actions...)
 	}
 
 	return &config, nil

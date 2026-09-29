@@ -18,7 +18,7 @@ Other than the always-available OTA component, `rdfm-client` implements some add
 ### Actions
 
 Actions allow execution of predefined sets of commands remotely via the RDFM server.
-These commands are defined in an `actions.conf` JSON configuration file found in the daemon's configuration directory.
+These commands are defined in an `actions.conf` JSON configuration file found in the daemon's data directory, and additionally in other JSON files inside `actions.conf.d` in the daemon's config directory.
 For the configuration schema, see the [RDFM actions config](#rdfm-actions-config) section.
 
 The action list is synchronized with the server, and is available for querying via the [Action List API](api.rst#get--api-v2-devices-\(string-mac_address\)-action-list) endpoint.
@@ -257,6 +257,10 @@ Number of milliseconds between each time a logger is ran. In the case of a logge
 ### RDFM actions config
 
 The JSON structured `/var/lib/rdfm/actions.conf` file contains a list of actions that can be executed on the device.
+Additional JSON action files may be placed in the directory `/etc/rdfm/actions.conf.d`.
+All the files will be processed into a single list, starting with `actions.conf` if it exists.
+The files' permissions must be set to 0644.
+The directory's permissions must be 0755.
 Each action contains a command to execute and a timeout.
 Identifiers are used in `action_exec` messages sent from the server to select the action to execute.
 Name and description can be used for user-friendly display.

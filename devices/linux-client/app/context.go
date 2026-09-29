@@ -57,7 +57,7 @@ func NewRdfmContext() (*RDFM, error) {
 		return nil, err
 	}
 
-	rdfmActionsConfig, err := conf.LoadActionsConfig(conf.RdfmDefaultActionsPath)
+	rdfmActionsConfig, err := conf.LoadActionsConfig(conf.RdfmDefaultActionsPath, conf.RdfmActionsDirPath)
 	if err != nil {
 		return nil, err
 	}
