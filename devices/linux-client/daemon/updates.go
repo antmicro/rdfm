@@ -78,7 +78,7 @@ func (d *Device) checkUpdate(cancelCtx context.Context) (*packages.Package, erro
 	return nil, nil
 }
 
-func (d *Device) updateCheckerLoop(cancelCtx context.Context, triggerUpdateCheck chan bool) {
+func (d *Device) updateCheckerLoop(cancelCtx context.Context, triggerUpdateCheck chan bool, rebootChannel chan bool) {
 	var err error
 	var info string
 
@@ -95,14 +95,14 @@ func (d *Device) updateCheckerLoop(cancelCtx context.Context, triggerUpdateCheck
 		default:
 		}
 		log.Println("Updater loop recovery from", info)
-		d.updateCheckerLoop(cancelCtx, triggerUpdateCheck)
+		d.updateCheckerLoop(cancelCtx, triggerUpdateCheck, rebootChannel)
 	}()
 
 	for {
 		pkg, err := d.checkUpdate(cancelCtx)
 		if err != nil {
 			log.Errorln("Update check failed:", err)
-		} else {
+		} else if pkg != nil {
 			log.Printf("Installing package from %s...\n", pkg.Uri)
 			if err = d.rdfmCtx.InstallArtifact(pkg.Uri); err != nil {
 				progress.Bus.Publish("failure")
@@ -110,8 +110,9 @@ func (d *Device) updateCheckerLoop(cancelCtx context.Context, triggerUpdateCheck
 					pkg.Id, err.Error())
 			} else {
 				d.updateSoftwareVersion(cancelCtx)
-				if err = d.rdfmCtx.RebootSystemIfNeeded(); err != nil {
-					log.Errorln("Could not reboot:", err)
+				reboot := d.rdfmCtx.IsRebootNeeded()
+				if reboot {
+					rebootChannel <- true
 				}
 			}
 		}

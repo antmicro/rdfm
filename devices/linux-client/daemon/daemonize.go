@@ -51,8 +51,8 @@ func Daemonize(c *libcli.Context) error {
 		return err
 	}
 
-	channel := make(chan os.Signal)
-	signal.Notify(channel, syscall.SIGINT, syscall.SIGTERM)
+	signalChannel := make(chan os.Signal)
+	signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM)
 
 	cancelCtx, cancelFunc := context.WithCancel(context.Background())
 
@@ -81,13 +81,14 @@ func Daemonize(c *libcli.Context) error {
 	var wg sync.WaitGroup
 
 	wg.Add(1)
+	rebootChannel := make(chan bool)
 	go func() {
 		defer func() {
 			log.Infoln("Finished updateCheckerLoop.")
 			wg.Done()
 		}()
 		log.Infoln("Starting updateCheckerLoop...")
-		device.updateCheckerLoop(cancelCtx, device.triggerUpdateCheck)
+		device.updateCheckerLoop(cancelCtx, device.triggerUpdateCheck, rebootChannel)
 	}()
 
 	wg.Add(1)
@@ -110,8 +111,14 @@ func Daemonize(c *libcli.Context) error {
 		device.managementWsLoop(cancelCtx)
 	}()
 
-	<-channel
-	log.Println("Daemon killed")
+	var reboot bool
+	select {
+	case <-signalChannel:
+		log.Println("Daemon killed")
+	case <-rebootChannel:
+		reboot = true
+		log.Println("Rebooting system")
+	}
 
 	cancelFunc()
 	log.Println("Closing daemon...")
@@ -122,5 +129,10 @@ func Daemonize(c *libcli.Context) error {
 		exitInfo = exitInfo + fmt.Sprintf(" with error: %v", err)
 	}
 	log.Println(exitInfo)
+
+	if reboot {
+		syscall.Sync()
+		return syscall.Reboot(syscall.LINUX_REBOOT_CMD_RESTART)
+	}
 	return err
 }
