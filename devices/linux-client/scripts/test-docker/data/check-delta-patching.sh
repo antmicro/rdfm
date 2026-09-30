@@ -120,10 +120,12 @@ EOF
 	# Both are just no-ops
 	cat >/usr/bin/fw_printenv<< EOF
 #!/bin/sh
+sleep 0.5
 exit 0
 EOF
 	cat >/usr/bin/fw_setenv << EOF
 #!/bin/sh
+sleep 0.5
 exit 0
 EOF
 	chmod +x /usr/bin/fw_setenv
@@ -156,7 +158,7 @@ test_delta_installation()
 	else
 		set +e
 		log_info "Running first update for $delta_algorithm"
-		timeout 5 rdfm install http://127.0.0.1:8000/$artifact_path
+		timeout 10 rdfm install http://127.0.0.1:8000/$artifact_path
 		log_info "Killed first update for $delta_algorithm"
 		set -e
 		log_info "Running second update for $delta_algorithm"
