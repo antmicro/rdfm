@@ -121,3 +121,13 @@ class ActionRemoveRequest():
         "required": True,
     })
     Schema: ClassVar[Type[marshmallow.Schema]] = marshmallow.Schema
+
+
+@marshmallow_dataclass.dataclass
+class DeviceRenameRequest():
+    """ Represents a request to assign a new name to a device.
+    """
+    new_name: str = field(metadata={
+        "required": True,
+    })
+    Schema: ClassVar[Type[marshmallow.Schema]] = marshmallow.Schema

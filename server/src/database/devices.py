@@ -111,6 +111,17 @@ class DevicesDB:
             session.execute(stmt)
             session.commit()
 
+    def rename(self, mac_address: str, new_name: str):
+        """Change name of the given device."""
+        with Session(self.engine) as session:
+            stmt = (
+                update(models.device.Device)
+                .values(name=new_name)
+                .where(models.device.Device.mac_address == mac_address)
+            )
+            session.execute(stmt)
+            session.commit()
+
     def delete(self, identifier: int):
         """Delete the given device."""
         with Session(self.engine) as session:

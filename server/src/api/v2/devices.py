@@ -20,7 +20,7 @@ from rdfm.permissions import (
     DEVICE_RESOURCE,
     DELETE_PERMISSION
 )
-from rdfm.schema.v2.devices import Device, ActionLog, ActionRemoveRequest
+from rdfm.schema.v2.devices import Device, ActionLog, ActionRemoveRequest, DeviceRenameRequest
 from rdfm.schema.v2.fs import FsFile
 from rdfm.schema.v2.device_updates import DeviceUpdate
 from rdfm.ws import WebSocketException
@@ -596,7 +596,7 @@ def remove(identifier: int):
 
     This endpoint allows deleting the device.
     As a result, the device will no longer be able to access the server
-    without making a new registartion.
+    without making a new registration.
 
     :param identifier: device identifier
     :status 200: no error
@@ -635,6 +635,54 @@ def remove(identifier: int):
         traceback.print_exc()
         print("Exception during removal:", repr(e))
         return api_error("removal failed", 500)
+
+
+@devices_blueprint.route("/api/v2/devices/<int:identifier>/name", methods=['PUT'])
+@check_permission(DEVICE_RESOURCE, UPDATE_PERMISSION)
+@deserialize_schema(schema_dataclass=DeviceRenameRequest, key="new_name")
+def rename(identifier: int, new_name: str):
+    """ Rename the device
+
+    This endpoint allows setting or changing the name of the device.
+    Names appear primarily in the frontend.
+
+    :param identifier: device identifier
+    :status 200: no error
+    :status 404: the specified device does not exist
+
+    :<json string new_name: new name for the device
+
+
+    **Example Request**
+
+    .. sourcecode:: http
+
+        PUT /api/v2/devices/1/name HTTP/1.1
+        Content-Type: application/json
+
+        {
+          "new_name": "Sirius"
+        }
+
+
+    **Example Response**
+
+    .. sourcecode:: http
+
+        HTTP/1.1 200 OK
+        Content-Type: application/json
+    """
+    try:
+        dev: Optional[models.device.Device] = server.instance._devices_db.fetch_one(identifier)
+        if dev is None:
+            return api_error("device does not exist", 404)
+
+        server.instance._devices_db.rename(dev.mac_address, new_name)
+        return {}, 200
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception during renaming:", repr(e))
+        return api_error("renaming failed", 500)
 
 
 @devices_blueprint.route("/api/v2/devices/<int:identifier>/fs/file", methods=['POST'])
