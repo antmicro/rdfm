@@ -81,3 +81,14 @@ def download_file(config: rdfm.config.Config,
         )
 
     return response.json()
+
+
+def rename(config: rdfm.config.Config,
+           device: str, new_name: str):
+    response = requests.put(rdfm.api.escape(config,
+                            f"/api/v2/devices/{device}/name"),
+                            json={"new_name": new_name},
+                            verify=config.ca_cert,
+                            auth=config.authorizer)
+    print(response.request.headers, response.headers, response.text)
+    return wrap_api_error(response, "Renaming device failed")

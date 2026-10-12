@@ -200,6 +200,13 @@ def download_file(config: rdfm.config.Config, args):
         return "Failed to read the file on the remote device"
 
 
+def rename_device(config: rdfm.config.Config, args):
+    """CLI entrypoint - rename a device"""
+    device = args.device_id
+    new_name = args.name
+    return rdfm.api.devices.rename(config, device, new_name)
+
+
 def add_devices_parser(parser: argparse._SubParsersAction):
     """Create a parser for the `devices` CLI command tree within
         the given subparser.
@@ -276,3 +283,12 @@ def add_devices_parser(parser: argparse._SubParsersAction):
         "dst", type=str, help="destination file"
     )
     download.set_defaults(func=download_file)
+
+    rename = sub.add_parser("rename", help="rename a device")
+    rename.add_argument(
+        "device_id", type=str, help="device identifier of the device"
+    )
+    rename.add_argument(
+        "name", type=str, help="new name"
+    )
+    rename.set_defaults(func=rename_device)

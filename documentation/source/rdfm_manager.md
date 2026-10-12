@@ -207,6 +207,12 @@ rdfm-mgmt devices auth <mac-address>
 
 You can then select the registration for this device to authorize.
 
+### Renaming a device
+
+```
+rdfm-mgmt devices rename <device> <new-name>
+```
+
 ### Permissions
 
 RDFM Manager utility provides permission commands that allow granting permissions to specific users and resources.
