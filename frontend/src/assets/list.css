@@ -27,7 +27,7 @@
             grid-template-columns: 80px 90px 200px 200px auto 200px 300px;
         }
         #device-list-registered .row {
-            grid-template-columns: 80px 80px repeat(4, var(--default-col-width)) 300px auto 200px;
+            grid-template-columns: repeat(3, 80px) repeat(4, var(--default-col-width)) 300px auto 200px;
         }
         #device-list-unregistered .row {
             grid-template-columns: 300px repeat(4, var(--default-col-width)) auto;
@@ -40,7 +40,7 @@
             }
             #device-list-registered .row {
                 grid-template-columns:
-                    80px 80px repeat(4, var(--default-col-width))
+                    repeat(3, 80px) repeat(4, var(--default-col-width))
                     200px auto 200px;
             }
             #device-list-unregistered .row {
@@ -66,6 +66,9 @@
                     top: 20px;
                     right: 20px;
                 }
+                .icon {
+                    max-width: 6em;
+                }
             }
         }
 
@@ -85,6 +88,11 @@
 
             .status {
                 align-content: center;
+            }
+
+            .icon {
+                display: flex;
+                padding: 1em;
             }
 
             .progress {

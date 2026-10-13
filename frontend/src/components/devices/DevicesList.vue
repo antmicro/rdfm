@@ -62,6 +62,11 @@ Component wraps functionality for displaying and working with rdfm devices.
                             <div class="status">
                                 <Status :connected="device.connected" :detailed="false" />
                             </div>
+                            <div class="icon">
+                                <VendorIcon
+                                    :device-type="device.metadata['rdfm.hardware.devtype']"
+                                />
+                            </div>
                             <div class="entry">
                                 <div class="title">ID</div>
                                 <div class="value">#{{ device.id }}</div>
@@ -231,6 +236,7 @@ import TitleBar from '../TitleBar.vue';
 import RemovePopup from '../RemovePopup.vue';
 import UpdateProgress from '../UpdateProgress.vue';
 import Status from '../Status.vue';
+import VendorIcon from '../VendorIcon.vue';
 import {
     filteredDevicesResources,
     groupResources,
@@ -269,6 +275,7 @@ export default {
         RemovePopup,
         UpdateProgress,
         Status,
+        VendorIcon,
     },
     setup(props) {
         const notifications = useNotifications();
