@@ -64,8 +64,8 @@ func Daemonize(c *libcli.Context) error {
 
 	updateAction := actions.NewBuiltInAction(
 		"rdfm.builtins.trigger_update_check",
-		"Check updates",
-		"Check for updates",
+		"Manual update check",
+		"Force the device to check for available updates now, outside of the regular update poll interval",
 		func() (string, error) {
 			device.requestUpdateCheck()
 			return "Update check queued", nil
