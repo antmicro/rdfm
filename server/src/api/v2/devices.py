@@ -639,8 +639,8 @@ def remove(identifier: int):
 
 @devices_blueprint.route("/api/v2/devices/<int:identifier>/name", methods=['PUT'])
 @check_permission(DEVICE_RESOURCE, UPDATE_PERMISSION)
-@deserialize_schema(schema_dataclass=DeviceRenameRequest, key="new_name")
-def rename(identifier: int, new_name: str):
+@deserialize_schema(schema_dataclass=DeviceRenameRequest, key="device_rename_request")
+def rename(identifier: int, device_rename_request: DeviceRenameRequest):
     """ Rename the device
 
     This endpoint allows setting or changing the name of the device.
@@ -677,7 +677,7 @@ def rename(identifier: int, new_name: str):
         if dev is None:
             return api_error("device does not exist", 404)
 
-        server.instance._devices_db.rename(dev.mac_address, new_name)
+        server.instance._devices_db.rename(dev.mac_address, device_rename_request.new_name)
         return {}, 200
     except Exception as e:
         traceback.print_exc()
