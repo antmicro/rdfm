@@ -39,6 +39,7 @@ export const PENDING_ENDPOINT = `${SERVER_URL}/api/v1/auth/pending`;
 export const PERMISSIONS_ENDPOINT = `${SERVER_URL}/api/v1/permissions`;
 export const REGISTER_DEVICE_ENDPOINT = `${SERVER_URL}/api/v1/auth/register`;
 export const DELETE_DEVICE_ENDPOINT = (id: number) => `${DEVICES_ENDPOINT}/${id}`;
+export const DEVICE_NAME_ENDPOINT = (id: number) => `${DEVICES_ENDPOINT}/${id}/name`;
 
 export const DEVICE_ACTIONS_ENDPOINT = (mac: string) =>
     `${SERVER_URL}/api/v2/devices/${mac}/action/list`;

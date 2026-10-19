@@ -136,6 +136,16 @@ Component wraps functionality for displaying and working with rdfm devices.
                     <div class="device-list">
                         <div v-for="device in pendingDevices" :key="device.mac_address" class="row">
                             <div class="entry">
+                                <div class="title">Name</div>
+                                <div class="value">
+                                    <input
+                                        type="text"
+                                        v-model="pendingDeviceNames[device.mac_address]"
+                                        :placeholder="device.mac_address"
+                                    />
+                                </div>
+                            </div>
+                            <div class="entry">
                                 <div class="title">MAC Address</div>
                                 <div class="value">{{ device.mac_address }}</div>
                             </div>
@@ -208,7 +218,7 @@ Component wraps functionality for displaying and working with rdfm devices.
 </template>
 
 <script lang="ts">
-import { computed, onMounted, onUnmounted, ref, type Ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, type Ref, reactive } from 'vue';
 
 import {
     useNotifications,
@@ -229,6 +239,7 @@ import {
     registeredDevicesResources,
     removePendingDeviceRequest,
     removeDeviceRequest,
+    renameDeviceRequest,
     deviceUpdates,
     deviceVersions,
 } from './devices';
@@ -262,16 +273,46 @@ export default {
     setup(props) {
         const notifications = useNotifications();
         const router = useRouter();
+        const pendingDeviceNames = reactive<Record<string, string>>({});
 
         let intervalID: undefined | number = undefined;
 
         const registerDevice = async (mac_address: string, public_key: string) => {
-            const { success, message } = await registerDeviceRequest(mac_address, public_key);
-            if (!success)
+            {
+                const { success, message } = await registerDeviceRequest(mac_address, public_key);
+                if (!success) {
+                    notifications.notifyError({
+                        headline: 'Error when registering device:',
+                        msg: message || 'Registration of device failed',
+                    });
+                    return;
+                }
+            }
+            const registeredDevice = devices.resources.value?.find(
+                (device) => device.mac_address === mac_address,
+            );
+            if (!registeredDevice) {
                 notifications.notifyError({
-                    headline: 'Error when registering device:',
-                    msg: message || 'Registration of device failed',
+                    headline: 'Error when setting device name:',
+                    msg: 'Could not identify device',
                 });
+                return;
+            }
+            if (!pendingDeviceNames[mac_address]) return;
+            {
+                const { success, message } = await renameDeviceRequest(
+                    registeredDevice?.id,
+                    pendingDeviceNames[mac_address],
+                );
+                if (!success) {
+                    notifications.notifyError({
+                        headline: 'Error when setting device name:',
+                        msg: message || 'Setting device name failed',
+                    });
+                    return;
+                }
+            }
+            delete pendingDeviceNames[mac_address];
         };
 
         const removePendingDevice = async () => {
@@ -284,6 +325,7 @@ export default {
                     headline: 'Error when removing device:',
                     msg: message || 'Removal of device failed',
                 });
+            delete pendingDeviceNames[pendingDeviceToRemove.value!.mac_address];
             closeRemoveDevicePopup();
         };
 
@@ -359,6 +401,7 @@ export default {
             pendingDevicesCount,
             registeredDevicesCount,
             devicesCount,
+            pendingDeviceNames,
             hasAdminRole,
             AdminRole,
             allowedTo,

@@ -20,6 +20,7 @@ import {
     PENDING_ENDPOINT,
     REGISTER_DEVICE_ENDPOINT,
     DELETE_DEVICE_ENDPOINT,
+    DEVICE_NAME_ENDPOINT,
     DEVICE_TAGS_ENDPOINT,
     DEVICE_ADD_TAG_ENDPOINT,
     TAGS_ENDPOINT,
@@ -142,6 +143,30 @@ export const removeDeviceRequest = async (identifier: number): Promise<RequestOu
     headers.set('Accept', 'application/json, text/javascript');
 
     const out = await fetchWrapper(DELETE_DEVICE_ENDPOINT(identifier), 'DELETE', headers, body);
+
+    if (!out.success) {
+        return {
+            success: false,
+            message: 'Failed to execute action. Got a response code of ' + out.code,
+        };
+    }
+
+    await pendingDevicesResources.fetchResources();
+    await registeredDevicesResources.fetchResources();
+    return { success: true };
+};
+
+export const renameDeviceRequest = async (
+    identifier: number,
+    new_name: string,
+): Promise<RequestOutput> => {
+    const body = JSON.stringify({ new_name });
+
+    const headers = new Headers();
+    headers.set('Content-type', 'application/json');
+    headers.set('Accept', 'application/json, text/javascript');
+
+    const out = await fetchWrapper(DEVICE_NAME_ENDPOINT(identifier), 'PUT', headers, body);
 
     if (!out.success) {
         return {
