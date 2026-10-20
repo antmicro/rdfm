@@ -629,7 +629,8 @@ def remove(identifier: int):
 
         # close the websocket too
         rd = server.instance.remote_devices.get(dev.mac_address)
-        rd.ws.close()
+        if rd is not None:
+            rd.ws.close()
         return {}, 200
     except Exception as e:
         traceback.print_exc()
