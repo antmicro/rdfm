@@ -7,7 +7,7 @@ import configuration
 
 def driver_by_name(
     name: str, config: configuration.ServerConfig
-) -> Optional[storage.local.LocalStorage]:
+) -> Optional[storage.local.LocalStorage | storage.s3.S3Storage]:
     """Gets a storage driver given by the name
 
     Storage drivers abstract away the file handling part of artifact storage.
