@@ -22,9 +22,10 @@ class QuietServer(StreamServer):
                 return
             raise
 
-    def __init__(self, listener, spawn, ssl_context, **kwargs):
+    def __init__(self, listener, spawn, **kwargs):
         hfun = functools.partial(__class__.handle, listener)
-        super().__init__(listener, handle=hfun, spawn=spawn, ssl_context=ssl_context)
+        ssl_args = {"ssl_context": kwargs["ssl_context"]} if "ssl_context" in kwargs.keys() else {}
+        super().__init__(listener, handle=hfun, spawn=spawn, **ssl_args)
 
 
 class QuietGeventWorker(GeventWorker):

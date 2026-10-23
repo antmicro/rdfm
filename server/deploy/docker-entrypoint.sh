@@ -13,7 +13,6 @@ require_variable()
 }
 
 server_args=""
-gunicorn_args="-k rdfm_gunicorn.QuietGeventWorker"
 encrypted=1
 if [ -n "${RDFM_DISABLE_ENCRYPTION}" ]; then
 	encrypted=0
@@ -27,8 +26,10 @@ if [ ${encrypted} == 1 ]; then
 	require_variable RDFM_SERVER_KEY
 	server_args="${server_args} --cert ${RDFM_SERVER_CERT}"
 	server_args="${server_args} --key ${RDFM_SERVER_KEY}"
+	gunicorn_args="-k rdfm_gunicorn.QuietGeventWorker"
 else
 	server_args="${server_args} --no-ssl"
+	gunicorn_args="-k gevent"
 fi
 
 require_variable RDFM_JWT_SECRET
