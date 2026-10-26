@@ -34,6 +34,9 @@ from rdfm.ws import WebSocketException
 import device_mgmt.action
 import configuration
 from pathlib import Path
+import logging
+
+log = logging.getLogger(__name__)
 
 
 devices_blueprint: Blueprint = Blueprint("rdfm-server-devices", __name__)
@@ -146,7 +149,7 @@ def fetch_all():
         ), 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during device fetch:", repr(e))
+        log.error("Exception during device fetch: %s", repr(e))
         return api_error("device fetching failed", 500)
 
 
@@ -209,7 +212,7 @@ def fetch_one(identifier: int):
         return Device.Schema().dump(model_to_schema(dev)), 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during device fetch:", repr(e))
+        log.error("Exception during device fetch: %s", repr(e))
         return api_error("device fetching failed", 500)
 
 
@@ -263,7 +266,7 @@ def list_all_in_progress():
         ), 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during progress fetch:", repr(e))
+        log.error("Exception during progress fetch: %s", repr(e))
         return api_error("progress fetching failed", 500)
 
 
@@ -319,7 +322,7 @@ def list_one_in_progress(identifier: int):
             update_model_to_schema(progress)), 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during progress fetch:", repr(e))
+        log.error("Exception during progress fetch: %s", repr(e))
         return api_error("progress fetching failed", 500)
 
 
@@ -435,7 +438,7 @@ def exec_action(
         return {"status_code": status_code, "output": output}, 200
     except WebSocketException as e:
         if "not connected to the management WS" in e.message:
-            print(e.message, flush=True)
+            log.error("Action execution failed: %s", e.message)
             return {}, 202
         else:
             raise
@@ -523,7 +526,7 @@ def get_action_log(mac_address: str):
                                        many=True), 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during action log fetch:", repr(e))
+        log.error("Exception during action log fetch: %s", repr(e))
         return api_error("action log fetching failed", 500)
 
 
@@ -557,7 +560,7 @@ def clear_action_log(mac_address: str):
         return {}, 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during removal:", repr(e))
+        log.error("Exception during removal: %s", repr(e))
         return api_error("removal failed", 500)
 
 
@@ -591,7 +594,7 @@ def remove_pending_actions(mac_address: str):
         return {}, 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during removal:", repr(e))
+        log.error("Exception during removal: %s", repr(e))
         return api_error("removal failed", 500)
 
 
@@ -627,7 +630,7 @@ def remove_selected_actions(mac_address: str, actions: List[ActionLog]):
         return {}, 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during removal:", repr(e))
+        log.error("Exception during removal: %s", repr(e))
         return api_error("removal failed", 500)
 
 
@@ -676,7 +679,7 @@ def remove(identifier: int):
         return {}, 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during removal:", repr(e))
+        log.error("Exception during removal: %s", repr(e))
         return api_error("removal failed", 500)
 
 
@@ -724,7 +727,7 @@ def rename(identifier: int, device_rename_request: DeviceRenameRequest):
         return {}, 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during renaming:", repr(e))
+        log.error("Exception during renaming: %s", repr(e))
         return api_error("renaming failed", 500)
 
 
@@ -771,7 +774,7 @@ def download_file(identifier: int, fs_file: FsFile):
         return {"status": status, "url": download_url}, 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during downloading:", repr(e))
+        log.error("Exception during downloading: %s", repr(e))
         return api_error("download failed", 500)
 
 
@@ -846,7 +849,7 @@ def assign_tag(identifier: int, tag: str):
         return {}, 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during tag assignment:", repr(e))
+        log.error("Exception during tag assignment: %s", repr(e))
         return api_error("assigning tags failed", 500)
 
 
@@ -947,5 +950,5 @@ def fetch_by_tag(tag: str):
         ), 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during device fetch:", repr(e))
+        log.error("Exception during device fetch: %s", repr(e))
         return api_error("device fetching failed", 500)
