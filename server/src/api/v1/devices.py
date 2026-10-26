@@ -7,6 +7,9 @@ import json
 from api.v1.common import api_error
 from api.v1.middleware import management_read_only_api, management_read_write_api
 from rdfm.schema.v1.devices import Device
+import logging
+
+log = logging.getLogger(__name__)
 
 
 devices_blueprint: Blueprint = Blueprint("rdfm-server-devices", __name__)
@@ -84,7 +87,7 @@ def fetch_all():
         ), 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during device fetch:", repr(e))
+        log.error("Exception during device fetch: %s", repr(e))
         return api_error("device fetching failed", 500)
 
 
@@ -146,7 +149,7 @@ def fetch_one(identifier: int):
         return Device.Schema().dump(model_to_schema(dev)), 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during device fetch:", repr(e))
+        log.error("Exception during device fetch: %s", repr(e))
         return api_error("device fetching failed", 500)
 
 
@@ -188,5 +191,5 @@ def remove(identifier: int):
         return {}, 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during removal:", repr(e))
+        log.error("Exception during removal: %s", repr(e))
         return api_error("removal failed", 500)
