@@ -14,6 +14,9 @@ from rdfm.schema.v1.devices import AuthRegisterRequest, RemovePendingRequest
 from auth.device import DeviceToken
 from flask import Blueprint, request
 import server
+import logging
+
+log = logging.getLogger(__name__)
 
 
 auth_blueprint: Blueprint = Blueprint("rdfm-server-auth", __name__)
@@ -111,10 +114,8 @@ def check_in(register_request: AuthRegisterRequest):
                     data.device_id, register_request.metadata
                 )
             except Exception as e:
-                print(
-                    f"Failed to update metadata for device {data.device_id}, "
-                    f"exception: {e}",
-                    flush=True,
+                log.warning(
+                    "Failed to update metadata for device %s: %s", data.device_id, e
                 )
 
             return {"token": token, "expires": data.expires}
@@ -122,7 +123,7 @@ def check_in(register_request: AuthRegisterRequest):
             return api_error("device unauthorized", 401)
     except Exception as e:
         traceback.print_exc()
-        print("Exception during registration:", repr(e))
+        log.error("Exception during registration: %s", repr(e))
         return api_error("registration failed", 500)
 
 
@@ -187,7 +188,7 @@ def fetch_registrations():
         ]
     except Exception as e:
         traceback.print_exc()
-        print("Exception during registrations fetch:", repr(e))
+        log.error("Exception during registrations fetch: %s", repr(e))
         return api_error("fetching registrations failed", 500)
 
 
@@ -251,11 +252,9 @@ def set_registration():
         if dev is not None:
             if dev.public_key != public_key:
                 # Key change
-                print(
-                    "Device with identifier:",
+                log.warning(
+                    "Device with identifier: %s is changing key",
                     mac,
-                    "is changing key",
-                    flush=True,
                 )
                 server.instance._devices_db.update_key(mac, public_key)
                 server.instance._devices_db.update_metadata(
@@ -266,10 +265,9 @@ def set_registration():
                 )
             else:
                 # Shouldn't happen
-                print(
+                log.warning(
                     "Registration for identical public key - should never \
                     happen",
-                    flush=True,
                 )
         else:
             # Create a device and insert it into the database.
@@ -293,7 +291,7 @@ def set_registration():
         return {}, 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during registrations fetch:", repr(e))
+        log.error("Exception during registrations fetch: %s", repr(e))
         return api_error("fetching registrations failed", 500)
 
 
@@ -353,5 +351,5 @@ def remove_pending(remove_pending_request: RemovePendingRequest):
         return {}, 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during removal of pending device:", repr(e))
+        log.error("Exception during removal of pending device: %s", repr(e))
         return api_error("removal failed", 500)
