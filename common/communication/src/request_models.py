@@ -55,6 +55,13 @@ class ActionExecResult(Request):
     output: str
 
 
+class ActionExecGeneratedFile(Request):
+    method: Literal['action_exec_generated_file'] = 'action_exec_generated_file'
+    execution_id: str
+    filename: str
+    content: str
+
+
 class ActionExecControl(Request):
     method: Literal['action_exec_control'] = 'action_exec_control'
     execution_id: str
@@ -119,6 +126,7 @@ class Container(BaseModel):
         CapabilityReport,
         DeviceAttachToManager,
         ActionExecResult,
+        ActionExecGeneratedFile,
         ActionListUpdate,
         ActionExecControl,
         Action,

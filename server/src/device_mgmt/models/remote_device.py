@@ -9,6 +9,7 @@ from request_models import (
     Action,
     ActionExec,
     ActionExecResult,
+    ActionExecGeneratedFile,
     ActionExecControl,
     ActionListUpdate,
     FsFileDownloadReply,
@@ -108,6 +109,20 @@ class RemoteDevice:
                 request.execution_id,
                 request.status_code,
                 request.output,
+            )
+        elif isinstance(request, ActionExecGeneratedFile):
+            print(
+                "Action execution artifact for",
+                self.token.device_id,
+                request.execution_id,
+                request.filename,
+                request.content,
+                flush=True,
+            )
+            device_mgmt.action.execute_action_generated_file(
+                request.execution_id,
+                request.filename,
+                request.content,
             )
         elif isinstance(request, ActionExecControl):
             print(
