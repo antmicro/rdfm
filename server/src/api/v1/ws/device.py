@@ -14,6 +14,9 @@ from rdfm.permissions import (
     SHELL_PERMISSION,
 )
 import server
+import logging
+
+log = logging.getLogger(__name__)
 
 
 device_ws_blueprint: Blueprint = Blueprint("rdfm-server-device-ws", __name__)
@@ -33,7 +36,7 @@ def device_management_ws(
     try:
         device_mgmt.loop.start_device_event_loop(ws, device_token)
     except WebSocketException as e:
-        print("Terminating device WS connection:", e.message, flush=True)
+        log.info("Terminating device WS connection: %s", e.message)
         raise
 
 
@@ -51,7 +54,7 @@ def spawn_shell_for_manager(ws: simple_websocket.Client, mac_address: str):
     try:
         device_mgmt.shell.attach_manager_to_shell(ws, mac_address)
     except WebSocketException as e:
-        print("Terminating management WS connection:", e.message, flush=True)
+        log.info("Terminating management WS connection: %s", e.message)
         raise
 
 
@@ -75,5 +78,5 @@ def attach_device_shell_to_manager(
     try:
         device_mgmt.shell.attach_device_to_manager(ws, mac_address, uuid)
     except WebSocketException as e:
-        print("Terminating device shell WS connection:", e.message, flush=True)
+        log.info("Terminating device shell WS connection: %s", e.message)
         raise
