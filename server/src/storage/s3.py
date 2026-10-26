@@ -8,6 +8,9 @@ from botocore.config import Config
 from typing import Type
 from storage.common import upload_part_count
 import datetime
+import logging
+
+log = logging.getLogger(__name__)
 
 
 META_S3_UUID = "rdfm.storage.s3.uuid"
@@ -68,12 +71,10 @@ class S3Storage:
             # Generate a unique object identifier
             object_id = str(uuid.uuid4())
             # Upload the file
-            print(
-                "Uploading package with metadata:",
+            log.info(
+                "Uploading package with metadata: %s object ID: %s",
                 metadata,
-                "object ID:",
                 object_id,
-                flush=True,
             )
             self.client.upload_file(
                 package_path,
@@ -89,12 +90,10 @@ class S3Storage:
                 metadata[META_S3_DIRECTORY] = ""
             return True
         except ClientError as e:
-            print(
-                "Uploading package to bucket",
+            log.error(
+                "Uploading package to bucket %s failed: %s",
                 self.bucket,
-                "failed:",
-                e,
-                flush=True,
+                e
             )
             return False
 
@@ -121,7 +120,7 @@ class S3Storage:
                 ExpiresIn=expiry,
             )
         except ClientError as e:
-            print("Failed to generate presigned S3 link:", e, flush=True)
+            log.error("Failed to generate presigned S3 link: %s", e)
             raise
 
     def delete(self, metadata: dict[str, str]):
@@ -130,10 +129,9 @@ class S3Storage:
             # This shouldn't happen
             object_id = metadata.get(META_S3_UUID, None)
             if object_id is None:
-                print(
+                log.warning(
                     "WARNING: Deleting a package that does not have S3 object "
-                    "metadata!",
-                    flush=True,
+                    "metadata!"
                 )
                 return
             bucket_directory = metadata.get(META_S3_DIRECTORY, None)
@@ -143,7 +141,7 @@ class S3Storage:
                 Key=S3Storage.get_object_path(bucket_directory, object_id),
             )
         except ClientError as e:
-            print("Failed deleting package object from S3:", e, flush=True)
+            log.error("Failed deleting package object from S3: %s", e)
             raise
 
     class MultipartUploader:
@@ -179,7 +177,7 @@ class S3Storage:
                         ExpiresIn=expiry,
                     ))
                 except ClientError as e:
-                    print("Failed to generate presigned S3 link:", e, flush=True)
+                    log.error("Failed to generate presigned S3 link: %s", e)
                     raise
 
             return urls, part_size
@@ -224,7 +222,7 @@ class S3Storage:
                 ExpiresIn=expiry,
             )
         except ClientError as e:
-            print("Failed to generate presigned S3 link:", e, flush=True)
+            log.error("Failed to generate presigned S3 link: %s", e)
             raise
 
     def upload_action_log(
@@ -242,11 +240,9 @@ class S3Storage:
             )
             return True
         except ClientError as e:
-            print(
-                "Uploading action log to bucket",
+            log.error(
+                "Uploading action log to bucket %s failed: %s",
                 self.bucket,
-                "failed:",
-                e,
-                flush=True,
+                e
             )
             return False
