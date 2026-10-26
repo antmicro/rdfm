@@ -1,6 +1,7 @@
 import datetime
 import inspect
 import functools
+import logging
 from marshmallow import ValidationError
 from flask import request, current_app, Response
 from api.v1.common import api_error
@@ -27,6 +28,8 @@ from rdfm.permissions import (
     DEVICE_NAMED_RESOURCE,
 )
 import models.permission
+
+log = logging.getLogger(__name__)
 
 """ Read-write administrator scope """
 SCOPE_READ_WRITE = "rdfm_admin_rw"
@@ -156,10 +159,9 @@ def __introspect_and_validate_token(
             conf.token_introspection_url, token=token
         )
         if resp.status_code != 200:
-            print(
+            log.error(
                 "Error during token introspection: authorization server "
                 "responded with a non-success status.",
-                flush=True,
             )
             return None
 
@@ -172,10 +174,9 @@ def __introspect_and_validate_token(
         # According to the spec, the authorization server is allowed
         # to only return an `"active": True` response for valid tokens.
         if "scope" not in introspected_token:
-            print(
+            log.error(
                 "Error during token introspection: authorization server "
                 "response did not contain a `scope` field for valid token. ",
-                flush=True,
             )
             return None
 
@@ -192,7 +193,7 @@ def __introspect_and_validate_token(
             )
         return scopes
     except Exception as e:
-        print("Exception during token introspection:", e)
+        log.error("Exception during token introspection: %s", e)
         return None
 
 
@@ -352,10 +353,8 @@ def device_api(f):
                 token.device_id, datetime.datetime.utcnow()
             )
         except Exception as e:
-            print(
-                f"Failed to update timestamp for device {token.device_id}, "
-                f"exception: {e}",
-                flush=True,
+            log.warning(
+                "Failed to update timestamp for device %s: %s ", token.device_id, e
             )
 
         kwargs["device_token"] = token
@@ -433,11 +432,11 @@ def __management_api(
                 return api_error("unauthorized", 401)
 
             if not scope_check_callback(scopes):
-                print(
+                log.warning(
                     "Rejecting request - authenticated user does not "
                     "have the required scopes to access this resource "
-                    f"(user claims: {', '.join(scopes)})",
-                    flush=True,
+                    "(user claims: %s)",
+                    ', '.join(scopes)
                 )
                 return api_error(
                     "accessing this resource requires OAuth2 scopes "
@@ -708,8 +707,10 @@ def add_permissions_for_new_resource(resource_name: str):
 
                 err = server.instance._permissions_db.create(permission)
                 if err is not None:
-                    print(
-                        f"Error while adding permissions for {resource_name}"
+                    log.warning(
+                        "Error while adding permissions for %s: %s",
+                        resource_name,
+                        err
                     )
             return new_resource, status_code
         return __add_permissions_for_new_resource
@@ -753,10 +754,9 @@ def management_user_validation(_func=None, *, allow_token_from_url: bool = False
                 conf.token_introspection_url, token=token
             )
             if resp.status_code != 200:
-                print(
+                log.error(
                     "Error during token introspection: authorization server "
                     "responded with a non-success status.",
-                    flush=True,
                 )
                 return api_error("introspection error", 401)
 
