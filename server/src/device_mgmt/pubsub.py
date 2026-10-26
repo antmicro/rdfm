@@ -28,6 +28,10 @@ from device_mgmt.pubsub_acl import (
     device_mac_to_topic_name,
 )
 
+import logging
+
+log = logging.getLogger(__name__)
+
 
 ADMIN_TIMEOUT_MS = 250
 
@@ -139,16 +143,20 @@ class RdfmKafkaAdminClient(KafkaAdminClient):
         create_topic_response = None
         err = Errors.for_code(topic_info["error_code"])
         match err:
-            case Errors.UnknownTopicOrPartitionError:  # This indicates that no such topic exists
+            case (
+                Errors.UnknownTopicOrPartitionError
+            ):  # This indicates that no such topic exists
                 # Create it then
-                new_topic = NewTopic(topic_name,
-                                     num_partitions=1,
-                                     replication_factor=1)  # TODO: Optimize selecting these parameters # noqa: W291
-                print(f"Trying to create a topic {topic_name}...")
-                create_topic_response = self.create_topics([new_topic], timeout_ms=ADMIN_TIMEOUT_MS)
+                new_topic = NewTopic(
+                    topic_name, num_partitions=1, replication_factor=1
+                )  # TODO: Optimize selecting these parameters # noqa: W291
+                log.debug("Trying to create a topic %s...", topic_name)
+                create_topic_response = self.create_topics(
+                    [new_topic], timeout_ms=ADMIN_TIMEOUT_MS
+                )
 
             case Errors.NoError:  # Topic already exists
-                print("Topic already exists!")
+                log.debug("Topic already exists!")
                 pass
 
             case _:  # Something unexpected happened!
@@ -169,13 +177,16 @@ class RdfmKafkaAdminClient(KafkaAdminClient):
             if 0 != error_code:
                 raise Errors.for_code(error_code)(error_msg)
             else:
-                print(f"Successfully created topic {topic_name}!")
+                log.debug("Successfully created topic %s!", topic_name)
 
         if create_topic_response:
             # If create_topic_response isn't None it means that the topic was just
             # created, apply the neccesary ACLs immediately and skip other checks.
-            print((f"Requesting to set ALLOW {device_mac} ACLs"
-                   f" immediately for the topic {topic_name}..."))
+            log.debug(
+                ("Requesting to set ALLOW %s ACLs immediately for the topic %s..."),
+                device_mac,
+                topic_name,
+            )
 
             # Since the topic has just been created, we only pass the device
             # and topic names to status class
@@ -190,7 +201,7 @@ class RdfmKafkaAdminClient(KafkaAdminClient):
             if exceptions:  # If not None then the request failed
                 raise exceptions
         else:
-            print(f"Checking topic {topic_name} for existing ACLs...")
+            log.debug("Checking topic %s for existing ACLs...", topic_name)
             acls = []
             for op in (ACLOperation.WRITE, ACLOperation.IDEMPOTENT_WRITE):
                 acls += self._describe_acls_for_device(device_mac,
@@ -233,14 +244,16 @@ class RdfmKafkaAdminClient(KafkaAdminClient):
         err = Errors.for_code(topic_info["error_code"])
         match err:
             case Errors.UnknownTopicOrPartitionError:
-                raise err(f"Cannot deauthorize {device_mac}: topic {topic_name} doesn't exist")
+                raise err(
+                    f"Cannot deauthorize {device_mac}: topic {topic_name} doesn't exist"
+                )
             case Errors.NoError:
                 pass
             case _:
                 raise err(("Failed to deauthorize"
                            f" {device_mac}: cannot describe {topic_name}"))
 
-        print(f"Checking topic {topic_name} for existing ACLs...")
+        log.debug("Checking topic %s for existing ACLs...", topic_name)
         acls = []
         for op in (ACLOperation.WRITE, ACLOperation.IDEMPOTENT_WRITE):
             acls += self._describe_acls_for_device(device_mac,
