@@ -1,48 +1,19 @@
+# Note that this module needs to import rdfm_logging to properly configure the
+# global loggers. All other modules only need to import standard Python logging.
+import rdfm_logging
+import logging
 import os
 from pathlib import Path
 import sys
 from flask import Flask, request
+
 import server
 import api.v1
 import api.v2
 import api.static
 import configuration
 
-
-def add_debug_logging(app: Flask):
-    """Configure debug logging for all incoming requests"""
-
-    @app.before_request
-    def before_request_func():
-        if app.debug:
-            print(
-                {
-                    "request": request,
-                    "form": request.form,
-                    "files": request.files,
-                },
-                file=sys.stderr,
-            )
-
-    @app.after_request
-    def after_request_func(response):
-        response.direct_passthrough = True
-        if app.debug:
-            try:
-                print(
-                    {
-                        "response": response.get_data(),
-                        "status code": response.status,
-                    },
-                    file=sys.stderr,
-                )
-            except Exception as e:
-                print(
-                    "Exception printing response"
-                    "this can happen if it contains a file:",
-                    e,
-                )
-        return response
+log = logging.getLogger(__name__)
 
 
 def create_server_instance(
@@ -93,8 +64,6 @@ def create_app(config: configuration.ServerConfig) -> Flask:
 
         CORS(app)
 
-    if config.debug:
-        add_debug_logging(app)
     return app
 
 
@@ -122,6 +91,11 @@ def setup(config: configuration.ServerConfig) -> Flask:
     and creates an app object that can be safely run.
     """
     server.instance = create_server_instance(config)
+    if config.debug:
+        root = logging.getLogger()
+        root.setLevel(logging.DEBUG)
+        for handler in root.handlers:
+            handler.setLevel(logging.DEBUG)
     return create_app(config)
 
 
@@ -279,10 +253,10 @@ if __name__ == "__main__":
     try:
         app = setup(config)
     except Exception as e:
-        print("RDFM server setup failed:", e)
+        log.error("RDFM server setup failed: %s", e)
         exit(1)
 
-    print("Starting the RDFM HTTP API...")
+    log.info("Starting the RDFM HTTP API using Werkzeug")
     if config.encrypted:
         app.run(
             host=config.hostname,
