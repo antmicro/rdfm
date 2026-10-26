@@ -10,6 +10,9 @@ from models.device import Device
 from rdfm.schema.v1.updates import META_MAC_ADDRESS
 import server
 from auth.token import DeviceToken
+import logging
+
+log = logging.getLogger(__name__)
 
 
 """ JWT expiration time (in seconds) """
@@ -38,7 +41,7 @@ def verify_signature(body: bytes, public_key: str, signature: str) -> bool:
         signature_bytes = base64.b64decode(signature)
         key = RSA.import_key(public_key)
     except Exception as e:
-        print("Exception during signature verification:", e)
+        log.error("Exception during signature verification: %s", e)
         return False
 
     # Hash the message body
@@ -49,7 +52,7 @@ def verify_signature(body: bytes, public_key: str, signature: str) -> bool:
     try:
         s.verify(h, signature_bytes)
     except ValueError:
-        print("Exception during signature verification: invalid signature")
+        log.error("Exception during signature verification: invalid signature")
         return False
 
     # Signature is valid
