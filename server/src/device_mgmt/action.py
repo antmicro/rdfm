@@ -2,6 +2,7 @@ import time
 import datetime
 import base64
 from typing import Optional
+import logging
 from device_mgmt.models.action_execution import ActionExecution
 from rdfm.ws import RDFM_WS_INVALID_REQUEST, WebSocketException
 from request_models import Action, ActionExec, ActionListQuery
@@ -14,6 +15,8 @@ import storage
 import configuration
 
 import queue
+
+log = logging.getLogger(__name__)
 
 QUEUE_RETRY_DELAY = 5
 """Delay between attempts at queueing action execution."""
@@ -58,10 +61,10 @@ def execute_action(mac_address: str, action_id: str) -> Optional[tuple[int, str]
     server.instance.action_executions.add(execution)
 
     try:
-        print(
-            f"Attempting to queue execution '{execution.execution_id}' "
-            f"for device '{mac_address}'...",
-            flush=True,
+        log.info(
+            "Attempting to queue execution '%s' for device '%s'...",
+            execution.execution_id,
+            mac_address
         )
         while True:
             remote_device.send_message(
@@ -71,14 +74,14 @@ def execute_action(mac_address: str, action_id: str) -> Optional[tuple[int, str]
             try:
                 control_msg = execution.execution_control.get(timeout=QUEUE_RESPONSE_TIMEOUT)
                 if control_msg == "ok":
-                    print(f"Queued execution '{execution.execution_id}'.", flush=True)
+                    log.info("Queued execution '%s'.", execution.execution_id)
                     server.instance._action_logs_db.update_status(execution.execution_id, "sent")
                     break
                 elif control_msg == "full":
-                    print(
-                        f"Failed to queue execution '{execution.execution_id}'. "
-                        f"Retrying in {QUEUE_RETRY_DELAY}s seconds...",
-                        flush=True,
+                    log.warning(
+                        "Failed to queue execution '%s'. Retrying in %s seconds...",
+                        execution.execution_id,
+                        QUEUE_RETRY_DELAY
                     )
                     time.sleep(QUEUE_RETRY_DELAY)
                 else:
@@ -188,8 +191,10 @@ def send_action_queue(mac_address: str):
     for action in actions:
         if not (action_type := remote_device.actions.get(action.action_id)):
             server.instance._action_logs_db.update_status(action.id, "error")
-            msg = f"Skipping invalid action '{action.action_id}' for device '{mac_address}'."
-            print(msg, flush=True)
+            log.warning("Skipping invalid action '%s' for device '%s'.",
+                        action.action_id,
+                        mac_address
+                        )
             continue
 
         execution = ActionExecution(action_type, action.id)
