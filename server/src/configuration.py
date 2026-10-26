@@ -1,5 +1,8 @@
 from typing import Optional
 import os
+import logging
+
+log = logging.getLogger(__name__)
 
 
 """ Name of the environment variable providing the JWT secret """
@@ -270,7 +273,7 @@ def try_get_env(key: str, help_text: str) -> Optional[str]:
         str,  the environment variable value if it exists
     """
     if key not in os.environ:
-        print("Required environment variable missing:", key, f"({help_text})")
+        log.error("Required environment variable missing: %s (%s)", key, help_text)
         return None
     return os.environ[key]
 
@@ -306,15 +309,14 @@ def parse_from_environment(config: ServerConfig) -> bool:
         try:
             config.http_port = int(http_port)
         except ValueError:
-            print(f"Invalid port specified: {http_port}")
+            log.error("Invalid port specified: %s", http_port)
             return False
 
     config.storage_driver = os.environ.get(ENV_STORAGE_DRIVER, "local")
     if config.storage_driver not in ALLOWED_STORAGE_DRIVERS:
-        print(
-            "Invalid storage driver: got",
+        log.error(
+            "Invalid storage driver: got %s, expected one of: %s",
             config.storage_driver,
-            " expected one of:",
             ALLOWED_STORAGE_DRIVERS,
         )
         return False
@@ -357,14 +359,19 @@ def parse_from_environment(config: ServerConfig) -> bool:
             return False
 
     if config.disable_cors and config.include_frontend:
-        print("Cannot disable CORS and include the frontend application " +
-              "at the same time.")
+        log.error(
+            "Cannot disable CORS and include the frontend application "
+            "at the same time."
+        )
         return False
 
     if not config.include_frontend:
         if ENV_FRONTEND_APP_URL not in os.environ:
-            print(f"Environment variable missing: {ENV_FRONTEND_APP_URL}, " +
-                  "this is required in order to use the frontend application")
+            log.warning(
+                "Environment variable missing: %s, "
+                "this is required in order to use the frontend application",
+                ENV_FRONTEND_APP_URL,
+            )
             config.frontend_app_url = None
         else:
             config.frontend_app_url = os.environ[ENV_FRONTEND_APP_URL]
