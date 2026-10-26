@@ -31,6 +31,10 @@ from rdfm.schema.v1.updates import META_SOFT_VER
 import device_mgmt.action
 import server
 
+import logging
+
+log = logging.getLogger(__name__)
+
 
 class RemoteDevice:
     """Represents a remote management connection to a device
@@ -84,12 +88,10 @@ class RemoteDevice:
     def __handle_device_message(self, request: Request):
         """Handle an incoming device request"""
         if isinstance(request, CapabilityReport):
-            print(
-                "Capability update for",
+            log.info(
+                "Capability update for %s reporting capabilities: %s",
                 self.token.device_id,
-                "reporting capabilities:",
                 request.capabilities,
-                flush=True,
             )
             self.capabilities = request.capabilities
             server.instance._devices_db.update_capabilities(
@@ -97,13 +99,12 @@ class RemoteDevice:
             )
             self.capabilities_updated.set()
         elif isinstance(request, ActionExecResult):
-            print(
-                "Action execution result for",
+            log.info(
+                "Action execution result for %s: execution_id=%s status_code=%s output=%s",
                 self.token.device_id,
                 request.execution_id,
                 request.status_code,
                 request.output,
-                flush=True,
             )
             device_mgmt.action.execute_action_result(
                 request.execution_id,
@@ -111,13 +112,12 @@ class RemoteDevice:
                 request.output,
             )
         elif isinstance(request, ActionExecGeneratedFile):
-            print(
-                "Generated file from action execution for",
+            log.info(
+                "Generated file from action execution for %s: execution_id=%s filename=%s len=%s",
                 self.token.device_id,
                 request.execution_id,
                 request.filename,
-                request.content,
-                flush=True,
+                len(request.content),
             )
             device_mgmt.action.execute_action_generated_file(
                 request.execution_id,
@@ -125,30 +125,26 @@ class RemoteDevice:
                 request.content,
             )
         elif isinstance(request, ActionExecControl):
-            print(
-                "Action execution control for",
+            log.info(
+                "Action execution control for %s: execution_id=%s status=%s",
                 self.token.device_id,
                 request.execution_id,
                 request.status,
-                flush=True,
             )
             device_mgmt.action.execute_action_control(request.execution_id, request.status)
         elif isinstance(request, ActionListUpdate):
-            print(
-                "Actions update for",
+            log.info(
+                "Actions update for %s reporting actions: %s",
                 self.token.device_id,
-                "reporting actions:",
                 request.actions,
-                flush=True,
             )
             self.actions = {x.action_id: x for x in request.actions}
             self.actions_updated.set()
         elif isinstance(request, FsFileDownloadReply):
-            print(
-                "Filesystem download reply for ",
+            log.info(
+                "Filesystem download reply for %s: id=%s",
                 self.token.device_id,
                 request.id,
-                flush=True,
             )
             operation = server.instance.filesystem_operations.get(request.id)
             if operation:
@@ -159,11 +155,10 @@ class RemoteDevice:
                     "invalid filesystem response", RDFM_WS_INVALID_REQUEST
                 )
         elif isinstance(request, FsFileProbeReply):
-            print(
-                "Filesystem probe reply for ",
+            log.info(
+                "Filesystem probe reply for %s: id=%s",
                 self.token.device_id,
                 request.id,
-                flush=True,
             )
             operation = server.instance.filesystem_operations.get(request.id)
             if operation:
@@ -181,25 +176,24 @@ class RemoteDevice:
             if request.progress == 100:
                 self.update_version = None
                 server.instance._device_updates_db.delete(self.token.device_id)
-                print(
-                    f"Device {self.token.device_id} update complete",
-                    flush=True,
+                log.info(
+                    "Device %s update complete", self.token.device_id
                 )
             else:
                 server.instance._device_updates_db.update_progress(
                     self.token.device_id,
                     request.progress
                 )
-                print(
-                    f"Device {self.token.device_id} update in progress: {request.progress}%",
-                    flush=True,
+                log.info(
+                    "Device %s update in progress: %s%%",
+                    self.token.device_id,
+                    request.progress
                 )
         elif isinstance(request, UpdateFailure):
             self.update_version = None
             server.instance._device_updates_db.delete(self.token.device_id)
-            print(
+            log.info(
                 f"Device {self.token.device_id} update failed",
-                flush=True,
             )
         elif isinstance(request, UpdateVersion):
             device = server.instance._devices_db.get_device_data(self.token.device_id)
@@ -208,7 +202,7 @@ class RemoteDevice:
             server.instance._devices_db.update_metadata(self.token.device_id, metadata)
 
         else:
-            print("Unknown request:", request, flush=True)
+            log.warning("Unknown request: %s", request)
             raise WebSocketException(
                 "invalid request", RDFM_WS_INVALID_REQUEST
             )
@@ -218,11 +212,9 @@ class RemoteDevice:
 
         This reads incoming messages from the device
         """
-        print(
-            "Device WS: Device",
+        log.info(
+            "Device WS: Device %s connected to management WS",
             self.token.device_id,
-            "connected to management WS",
-            flush=True,
         )
         self.send_message(
             Alert(
