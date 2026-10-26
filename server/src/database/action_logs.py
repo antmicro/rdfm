@@ -5,6 +5,10 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from rdfm.schema.v2.devices import ActionRemoveRequest
 
+import logging
+
+log = logging.getLogger(__name__)
+
 
 class ActionLogsDB:
     """Wrapper class for managing actions assigned to devices"""
@@ -31,7 +35,7 @@ class ActionLogsDB:
                     return []
                 return [x for x in actions]
         except Exception as e:
-            print("Action queue fetch failed:", repr(e))
+            log.error("Action queue fetch failed: %s", repr(e))
             return []
 
     def fetch_device_log(self, mac_address: str) -> List[models.action_log.ActionLog]:
@@ -50,7 +54,7 @@ class ActionLogsDB:
                     return []
                 return [x for x in actions]
         except Exception as e:
-            print("Action log fetch failed:", repr(e))
+            log.error("Action log fetch failed: %s", repr(e))
             return []
 
     def insert(self, action: models.action_log.ActionLog):
