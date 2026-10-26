@@ -26,6 +26,9 @@ from api.v1.common import api_error
 from rdfm.schema.v1.packages import Package
 from api.v1.middleware import public_api
 from rdfm.schema.v1.packages import META_STORAGE_DIRECTORY
+import logging
+
+log = logging.getLogger(__name__)
 
 
 packages_blueprint: Blueprint = Blueprint("rdfm-server-packages", __name__)
@@ -102,7 +105,7 @@ def fetch_packages():
         ), 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during package fetch:", repr(e))
+        log.error("Exception during package fetch: %s", repr(e))
         return {}, 500
 
 
@@ -220,7 +223,7 @@ def upload_package(scopes: list[str] = []):
 
     except Exception as e:
         traceback.print_exc()
-        print("Exception during package upload:", repr(e))
+        log.error("Exception during package upload: %s", repr(e))
         return {}, 500
 
 
@@ -303,7 +306,7 @@ def download_package(identifier: int):
 
     except Exception as e:
         traceback.print_exc()
-        print("Exception when generating package download link:", repr(e))
+        log.error("Exception when generating package download link: %s", repr(e))
         return {}, 500
 
 
@@ -361,7 +364,7 @@ def fetch_package(identifier: int):
         return Package.Schema().dump(model_to_schema(pkg)), 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during package fetch:", repr(e))
+        log.error("Exception during package fetch: %s", repr(e))
         return {}, 500
 
 
@@ -421,7 +424,7 @@ def delete_package(identifier: int):
         return {}, 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during package fetch:", repr(e))
+        log.error("Exception during package fetch: %s", repr(e))
         return api_error("delete failed", 500)
 
 
