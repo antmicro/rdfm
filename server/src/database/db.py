@@ -36,7 +36,7 @@ def create(connstring: str) -> Engine:
         or None, if database creation/connection failed
     """
     try:
-        db: Engine = create_engine(connstring, echo=True)
+        db: Engine = create_engine(connstring)
 
         if db.url.drivername == "sqlite":
             # SQLite: Automatically enable foreign keys when connecting
