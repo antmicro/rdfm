@@ -18,6 +18,9 @@ import server
 import configuration
 import models.device
 import traceback
+import logging
+
+log = logging.getLogger(__name__)
 
 
 pubsub_blueprint: Blueprint = Blueprint("rdfm-server-pubsub", __name__)
@@ -69,7 +72,7 @@ def lease_topic(device_token: DeviceToken):
         return LeaseTopicResponse.Schema().dump(resp), 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during lease topic", repr(e))
+        log.error("Exception during lease topic: %s", repr(e))
         return api_error("topic leasing failed", 500)
 
 
@@ -130,7 +133,7 @@ def check_topic(identifier: int):
             return {}, 204  # device exists, but doesn't have a topic
     except Exception as e:
         traceback.print_exc()
-        print("Exception during check topic", repr(e))
+        log.error("Exception during check topic: %s", repr(e))
         return api_error("topic checking failed", 500)
 
 
@@ -179,5 +182,5 @@ def confiscate_topic(identifier: int):
         return {}, 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during confiscate topic", repr(e))
+        log.error("Exception during confiscate topic: %s", repr(e))
         return api_error("topic confiscating failed", 500)
