@@ -18,6 +18,10 @@ from update.resolver import PackageResolver
 import update.policy
 from api.v1.middleware import device_api
 from auth.device import DeviceToken
+import logging
+
+log = logging.getLogger(__name__)
+
 
 update_blueprint: Blueprint = Blueprint("rdfm-server-updates", __name__)
 
@@ -102,7 +106,7 @@ def check_for_update(device_token: DeviceToken):
             return api_error(f"schema validation failed: {e.messages}", 400)
 
         device_meta = update_request.metadata
-        print("Device metadata:", device_meta)
+        log.debug("Device metadata: %s", device_meta)
         hwmac = device_meta[META_MAC_ADDRESS]
 
         device: Optional[
@@ -155,16 +159,16 @@ def check_for_update(device_token: DeviceToken):
 
         # A candidate package was found
         package = packages[index]
-        print("Found matching next package:", package.info)
+        log.debug("Found matching next package: %s", package.info)
 
-        print("Found new matching package:", package)
+        log.debug("Found new matching package: %s", package)
         conf: configuration.ServerConfig = current_app.config["RDFM_CONFIG"]
         driver = storage.driver_by_name(package.driver, conf)
         if driver is None:
             return api_error("invalid storage driver", 500)
 
         link = driver.generate_url(package.info, LINK_EXPIRY_TIME)
-        print("Link:", link)
+        log.debug("Link: %s", link)
 
         device_update = models.device_update.DeviceUpdate()
         device_update.mac_address = device.mac_address
@@ -181,5 +185,5 @@ def check_for_update(device_token: DeviceToken):
         }, 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during update check:", repr(e))
+        log.error("Exception during update check: %s", repr(e))
         return api_error("update check failed", 500)
