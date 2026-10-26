@@ -3,6 +3,9 @@
 from rdfm.schema.v1.error import ApiError
 import functools
 import traceback
+import logging
+
+log = logging.getLogger(__name__)
 
 
 def api_error(error_str: str, code: int):
@@ -23,7 +26,7 @@ def wrap_api_exception(message: str):
                 return f(*args, **kwargs)
             except Exception as e:
                 traceback.print_exc()
-                print("Exception:", repr(e), flush=True)
+                log.error("Uncaught exception during API request handling: %s", repr(e))
                 return api_error(message, 500)
         return __wrap_api_exception
     return _wrap_api_exception
