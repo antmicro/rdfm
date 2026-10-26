@@ -15,6 +15,9 @@ from database.permissions import PermissionsDB
 from database.action_logs import ActionLogsDB
 from database.generated_files import GeneratedFilesDB
 from database.device_updates import DeviceUpdatesDB
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class Server:
@@ -41,8 +44,8 @@ class Server:
         This does not check if the data was previously inserted, it is
         assumed that for tests a clean database is always used.
         """
-        print("WARNING: Creating mock data in the database")
-        print("WARNING: Do not use in production!")
+        log.warning("WARNING: Creating mock data in the database")
+        log.warning("WARNING: Do not use in production!")
 
         def make_dummy(mac: str) -> Device:
             return Device(
