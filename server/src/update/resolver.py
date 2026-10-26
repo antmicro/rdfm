@@ -7,6 +7,9 @@ from rdfm.schema.v1.updates import (
     META_RSYNC_SUPPORT,
 )
 from update.policies.base import BasePolicy
+import logging
+
+log = logging.getLogger(__name__)
 
 
 def requirements_satisfied(base: dict[str, str], update: dict[str, str]
@@ -80,10 +83,10 @@ class PackageResolver:
         # Target version, as indicated by the policy applied on the device
         target_version = self.policy.evaluate(self.device)
         if target_version is None:
-            print(
-                "Skipping update check for device with metadata:",
+            log.info(
+                "Skipping update check for device with metadata: %s, "
+                "as policy indicates no target version",
                 self.device,
-                ", as policy indicates no target version",
             )
             return None
 
@@ -108,10 +111,11 @@ class PackageResolver:
         # Sanity check - does the target version exist on the graph?
         # If not, there is nothing we can do.
         if not G.has_node(target_version):
-            print(
-                f"Package graph has no node with version '{target_version}'! \
-                  Most likely no compatible packages were assigned to the \
-                  device's group."
+            log.warning(
+                "Package graph has no node with version '%s'! "
+                "Most likely no compatible packages were assigned to the "
+                "device's group.",
+                target_version,
             )
             return None
 
@@ -180,8 +184,6 @@ class PackageResolver:
 
             return edge_path[0] if len(edge_path) > 0 else None
         except nx.NetworkXNoPath:
-            print(
-                f"No path to the policy-specified target version \
-                '{target_version}' was found!"
-            )
+            log.warning("No path to the policy-specified target "
+                        "version '%s' was found!", target_version)
             return None
