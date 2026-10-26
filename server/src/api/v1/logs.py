@@ -17,6 +17,9 @@ from api.v1.middleware import (
     management_read_write_api
 )
 from email.utils import parsedate_to_datetime
+import logging
+
+log = logging.getLogger(__name__)
 
 
 logs_blueprint: Blueprint = Blueprint("rdfm-server-logs", __name__)
@@ -109,7 +112,7 @@ def create(device_token: DeviceToken, batch: LogBatch):
 
     except Exception as e:
         traceback.print_exc()
-        print("Exception during log creation:", repr(e))
+        log.error("Exception during log creation: %s", repr(e))
         return {}, 500
 
 
@@ -149,7 +152,7 @@ def fetch_by_device_id(identifier: int, params: LogRouteParameters):
         )
     except Exception as e:
         traceback.print_exc()
-        print("Exception during log fetch:", repr(e))
+        log.error("Exception during log fetch: %s", repr(e))
         return api_error("log fetching failed", 500)
 
 
@@ -197,7 +200,7 @@ def fetch_by_group_id(identifier: int, params: LogRouteParameters):
         )
     except Exception as e:
         traceback.print_exc()
-        print("Exception during log fetch:", repr(e))
+        log.error("Exception during log fetch: %s", repr(e))
         return api_error("log fetching failed", 500)
 
 
@@ -221,7 +224,7 @@ def fetch_by_log_id(identifier: int):
         return Log.Schema().dump(model_to_schema(log)), 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during log fetch:", repr(e))
+        log.error("Exception during log fetch: %s", repr(e))
         return api_error("log fetching failed", 500)
 
 
@@ -263,7 +266,7 @@ def delete_by_device_id(identifier: int, params: LogRouteParameters):
         return {}, 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during log delete:", repr(e))
+        log.error("Exception during log delete: %s", repr(e))
         return api_error("log deletion failed", 500)
 
 
@@ -287,7 +290,7 @@ def delete_by_log_id(identifier: int):
         return {}, 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during log delete:", repr(e))
+        log.error("Exception during log delete: %s", repr(e))
         return api_error("log deletion failed", 500)
 
 
@@ -334,5 +337,5 @@ def delete_by_group_id(identifier: int, params: LogRouteParameters):
         return {}, 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during log delete:", repr(e))
+        log.error("Exception during log delete: %s", repr(e))
         return api_error("log deletion failed", 500)
