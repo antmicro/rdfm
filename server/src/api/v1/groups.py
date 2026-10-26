@@ -18,6 +18,9 @@ from rdfm.schema.v1.groups import (
 )
 from api.v1.middleware import deserialize_schema
 import update.policy
+import logging
+
+log = logging.getLogger(__name__)
 
 
 groups_blueprint: Blueprint = Blueprint("rdfm-server-groups", __name__)
@@ -96,7 +99,7 @@ def fetch_all():
         )
     except Exception as e:
         traceback.print_exc()
-        print("Exception during group fetch:", repr(e))
+        log.error("Exception during group fetch: %s", repr(e))
         return api_error("fetching failed", 500)
 
 
@@ -152,7 +155,7 @@ def fetch_one(identifier: int):
         return Group.Schema().dump(model_to_schema(group)), 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during group fetch:", repr(e))
+        log.error("Exception during group fetch: %s", repr(e))
         return api_error("fetching failed", 500)
 
 
@@ -199,7 +202,7 @@ def delete_one(identifier: int):
         return {}, 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during group delete:", repr(e))
+        log.error("Exception during group delete: %s", repr(e))
         return api_error("deleting failed", 500)
 
 
@@ -282,7 +285,7 @@ def change_assigned(identifier: int, instructions: AssignDeviceRequest):
         return {}, 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during group assignment modification:", repr(e))
+        log.error("Exception during group assignment modification: %s", repr(e))
         return api_error("group assignment modification failed", 500)
 
 
@@ -344,7 +347,7 @@ def create():
         return Group.Schema().dump(model_to_schema(group)), 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during group creation:", repr(e))
+        log.error("Exception during group creation: %s", repr(e))
         return api_error("group creation failed", 500)
 
 
@@ -404,7 +407,7 @@ def assign_package(identifier: int, assignment: AssignPackageRequest):
         return {}, 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during group package assignment:", repr(e))
+        log.error("Exception during group package assignment: %s", repr(e))
         return api_error("group package assignment failed", 500)
 
 
@@ -465,5 +468,5 @@ def update_policy(identifier: int, policy_request: AssignPolicyRequest):
         return {}, 200
     except Exception as e:
         traceback.print_exc()
-        print("Exception during group policy assignment:", repr(e))
+        log.error("Exception during group policy assignment: %s", repr(e))
         return api_error("group policy assignment failed", 500)
