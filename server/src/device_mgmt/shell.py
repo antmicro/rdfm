@@ -7,6 +7,10 @@ from rdfm.ws import WebSocketException
 from request_models import DeviceAttachToManager
 import server
 
+import logging
+
+log = logging.getLogger(__name__)
+
 
 def attach_device_to_manager(
     ws: simple_websocket.Client, mac_address: str, uuid: str
@@ -19,13 +23,10 @@ def attach_device_to_manager(
     """
     shell = server.instance.shell_sessions.get(mac_address, UUID(uuid))
     if shell is None:
-        print(
-            "Attaching device shell failed: shell session with UUID",
+        log.warning(
+            "Attaching device shell failed: shell session with UUID %s MAC %s not found",
             uuid,
-            "MAC",
             mac_address,
-            "not found",
-            flush=True,
         )
         raise WebSocketException(
             "invalid shell session identifier", RDFM_WS_INVALID_REQUEST
@@ -62,12 +63,10 @@ def attach_manager_to_shell(ws: simple_websocket.Client, mac_address: str):
     shell = ReverseShell(ws, mac_address)
     server.instance.shell_sessions.add(shell)
 
-    print(
-        "Reverse shell session",
+    log.info(
+        "Reverse shell session %s created for MAC %s",
         shell.uuid,
-        "created for MAC",
-        mac_address,
-        flush=True,
+        mac_address
     )
     try:
         # Send a message to the device indicating which shell it should
@@ -79,12 +78,10 @@ def attach_manager_to_shell(ws: simple_websocket.Client, mac_address: str):
                 )
             )
         except WebSocketException as e:
-            print(
-                "Failed to send shell attach message for session",
+            log.error(
+                "Failed to send shell attach message for session %s to remote device: %s",
                 shell.uuid,
-                "to remote device:",
-                e.message,
-                flush=True,
+                e.message
             )
             raise WebSocketException(
                 f"shell attach request failed: {e.message}", e.status_code
@@ -92,10 +89,8 @@ def attach_manager_to_shell(ws: simple_websocket.Client, mac_address: str):
 
         # Wait for a bit until the device connects to the shell
         if not shell.device_connected.wait(5.0):
-            print(
-                "Connecting to device shell failed: device did not connect "
-                "within 5s",
-                flush=True,
+            log.error(
+                "Connecting to device shell failed: device did not connect within 5s"
             )
             raise WebSocketException(
                 "device did not connect within 5s", RDFM_WS_INVALID_REQUEST
@@ -114,5 +109,5 @@ def attach_manager_to_shell(ws: simple_websocket.Client, mac_address: str):
             if not shell.manager_socket.connected:
                 break
     finally:
-        print("Reverse shell session", shell.uuid, "terminated", flush=True)
+        log.info("Reverse shell session %s terminated", shell.uuid)
         server.instance.shell_sessions.remove(shell)
