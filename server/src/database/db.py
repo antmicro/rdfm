@@ -7,6 +7,9 @@ from alembic import config, script, command
 from alembic.runtime import migration
 import os.path
 import pathlib
+import logging
+
+log = logging.getLogger(__name__)
 
 # Import all models below
 
@@ -54,9 +57,13 @@ def create(connstring: str) -> Engine:
         if os.path.isdir(ROOT_PATH / 'alembic'):
             scriptpath = ROOT_PATH / 'alembic'
 
-        print(f"""Creation of database connection: assuming locations:
-              \t*configuration file: {inipath}
-              \t*alembic scripts directory: {scriptpath}""")
+        log.info(
+            """Creation of database connection: assuming locations:
+              \t*configuration file: %s
+              \t*alembic scripts directory: %s""",
+            inipath,
+            scriptpath,
+        )
 
         if inipath is not None:
             alembic_cfg = config.Config(inipath.resolve())
@@ -83,10 +90,10 @@ def create(connstring: str) -> Engine:
                 command.upgrade(alembic_cfg, "head")
         else:
             # Fall back to unmanaged DB if alembic.ini is missing
-            print("alembic.ini missing, using unmanaged database")
+            log.info("alembic.ini missing, using unmanaged database")
             Base.metadata.create_all(db)
 
         return db
     except Exception as e:
-        print("Database initialization failed:", repr(e))
+        log.error("Database initialization failed: %s", e)
         return None
