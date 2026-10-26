@@ -6,6 +6,10 @@ import urllib.parse
 from pathlib import Path, PosixPath
 from typing import Type
 from storage.common import upload_part_count
+import logging
+
+log = logging.getLogger(__name__)
+
 
 """Local storage driver, used for debugging purposes
 """
@@ -34,7 +38,7 @@ class LocalStorage:
         package_path: str,
         storage_directory: str | None = None,
     ) -> bool:
-        print("Local storage update package:", metadata, "path:", package_path)
+        log.info("Local storage update package: %s path: %s", metadata, package_path)
         if storage_directory is None:
             storage_directory = "."
         store_name = str(uuid.uuid4())
@@ -44,9 +48,11 @@ class LocalStorage:
         destination_path = destination_path.resolve()
         storage_location = Path(self.config.package_dir).resolve()
         if not destination_path.is_relative_to(storage_location):
-            print(
-                f"Destination path {destination_path} is not a subdirectory "
-                f"of the local storage ({self.config.package_dir})"
+            log.error(
+                "Destination path %s is not a subdirectory "
+                "of the local storage (%s)",
+                destination_path,
+                self.config.package_dir
             )
             return False
         # Create the storage directory
