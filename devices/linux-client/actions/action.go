@@ -2,6 +2,9 @@ package actions
 
 import (
 	"context"
+	b64 "encoding/base64"
+	"io/fs"
+	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -18,7 +21,7 @@ const (
 )
 
 type Action interface {
-	Execute(context.Context) (int, []byte)
+	Execute(context.Context, string) ActionResult
 	GetId() string
 	GetName() string
 	GetDescription() string
@@ -41,7 +44,7 @@ type CallbackAction struct {
 	Callback    ActionCallback
 }
 
-func (a CommandAction) Execute(cancelCtx context.Context) (int, []byte) {
+func (a CommandAction) Execute(cancelCtx context.Context, execId string) ActionResult {
 	ctx := context.Background()
 	if a.Timeout > 0 {
 		var cancel context.CancelFunc
@@ -49,14 +52,40 @@ func (a CommandAction) Execute(cancelCtx context.Context) (int, []byte) {
 		ctx, cancel = context.WithTimeout(cancelCtx, duration)
 		defer cancel()
 	}
-	log.Debugf("Executing action command: ['%s']", strings.Join(a.Command, "', '"))
 	cmd := exec.CommandContext(ctx, a.Command[0], a.Command[1:]...)
 	cmd.WaitDelay = time.Duration(ActionCommandWaitDelay)
+	dir, err := os.MkdirTemp("", a.Id)
+	if err != nil {
+		log.Errorf("Failed to create temporary action directory: %s", err.Error())
+		msg := err.Error()
+		return ActionResult{ExecId: execId, StatusCode: 1, Stdout: &msg}
+	}
+	cmd.Env = append(cmd.Env, "RDFM_ACTION_OUTPUT_DIR="+dir)
+	log.Debugf("Executing action command: ['%s'] in directory '%s'", strings.Join(a.Command, "', '"), dir)
 
-	output, _ := cmd.CombinedOutput()
+	outputBytes, _ := cmd.CombinedOutput()
+	output := b64.StdEncoding.EncodeToString(outputBytes)
 	status_code := cmd.ProcessState.ExitCode()
 
-	return status_code, output
+	generatedFiles := []string{}
+	err = fs.WalkDir(os.DirFS(dir), ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		generatedFiles = append(generatedFiles, path)
+		return nil
+	})
+
+	return ActionResult{
+		ExecId:           execId,
+		StatusCode:       status_code,
+		Stdout:           &output,
+		GeneratedFileDir: dir,
+		GeneratedFiles:   generatedFiles,
+	}
 }
 
 func (a CommandAction) GetId() string {
@@ -71,13 +100,14 @@ func (a CommandAction) GetDescription() string {
 	return a.Description
 }
 
-func (a CallbackAction) Execute(cancelCtx context.Context) (int, []byte) {
+func (a CallbackAction) Execute(cancelCtx context.Context, execId string) ActionResult {
 	output, err := a.Callback()
 	status_code := 0
 	if err != nil {
 		status_code = 1
 	}
-	return status_code, []byte(output)
+	output_b64 := b64.StdEncoding.EncodeToString([]byte(output))
+	return ActionResult{ExecId: execId, StatusCode: status_code, Stdout: &output_b64}
 }
 
 func (a CallbackAction) GetId() string {

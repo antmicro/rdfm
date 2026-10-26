@@ -2,7 +2,8 @@ package actions
 
 import (
 	"context"
-	b64 "encoding/base64"
+	"io"
+	"os"
 	"path"
 	"sync"
 	"time"
@@ -13,26 +14,26 @@ import (
 )
 
 type ActionResultCallback func(ActionResult, context.Context) bool
+type GeneratedFileCallback func(string, string, []byte, context.Context) bool
 
 type ActionRunner struct {
-	rdfmCtx   *app.RDFM
-	reqStore  *FileStore
-	resStore  *FileStore
-	actionMap map[string]Action
-	resultCb  ActionResultCallback
+	rdfmCtx         *app.RDFM
+	reqStore        *FileStore
+	resStore        *FileStore
+	actionMap       map[string]Action
+	resultCb        ActionResultCallback
+	generatedFileCb GeneratedFileCallback
 }
 
 func (r *ActionRunner) runCommand(req ActionRequest, cancelCtx context.Context) ActionResult {
 	action := r.actionMap[req.ActionId]
 	log.Infof("Running action %s with execution id %s", action.GetName(), req.ExecId)
 
-	status_code, outputBytes := action.Execute(cancelCtx)
+	ret := action.Execute(cancelCtx, req.ExecId)
 
-	output := b64.StdEncoding.EncodeToString(outputBytes)
+	log.Infoln("Action finished with status code:", ret.StatusCode)
 
-	log.Infoln("Action finished with status code:", status_code)
-
-	return ActionResult{req.ExecId, status_code, &output}
+	return ret
 }
 
 func (r *ActionRunner) startCommandLoop(cancelCtx context.Context) error {
@@ -88,6 +89,29 @@ func (r *ActionRunner) startResponderLoop(cancelCtx context.Context) error {
 			log.Warnln("Failed to deserialize result:", err)
 			continue
 		}
+
+		root := os.DirFS(result.GeneratedFileDir)
+		for _, path := range result.GeneratedFiles {
+			file, err := root.Open(path)
+			if err != nil {
+				log.Warnln("Failed to open generated file for reading:", err)
+				continue
+			}
+			data, err := io.ReadAll(file)
+			if err != nil {
+				log.Warnln("Failed to read generated file:", err)
+				continue
+			}
+			file.Close()
+			for {
+				ok := r.generatedFileCb(result.ExecId, path, data, cancelCtx)
+				if ok {
+					break
+				}
+				time.Sleep(1 * time.Second)
+			}
+		}
+
 		// NOTE: The error retry mechanism here is minimal on purpose and only
 		// aims to prevent us from busy-spinning when resultCb does not
 		// implement any retry mechanism on its own.
@@ -101,6 +125,10 @@ func (r *ActionRunner) startResponderLoop(cancelCtx context.Context) error {
 		err = r.resStore.Pop()
 		if err != nil {
 			log.Warnln("Failed to pop response:", err)
+		}
+
+		if err := os.RemoveAll(result.GeneratedFileDir); err != nil {
+			log.Errorf("Failed to remove temporary action directory: %s", err.Error())
 		}
 	}
 }
@@ -158,10 +186,11 @@ func (r *ActionRunner) List() []Action {
 	return actions
 }
 
-func NewActionRunner(rdfmCtx *app.RDFM, queueSize int, resultCb ActionResultCallback, dataDirectory string) (*ActionRunner, error) {
+func NewActionRunner(rdfmCtx *app.RDFM, queueSize int, resultCb ActionResultCallback, generatedFileCb GeneratedFileCallback, dataDirectory string) (*ActionRunner, error) {
 	r := new(ActionRunner)
 	r.rdfmCtx = rdfmCtx
 	r.resultCb = resultCb
+	r.generatedFileCb = generatedFileCb
 	r.RebuildActionMap()
 
 	reqStore, err := NewFileStore(path.Join(dataDirectory, "req"), queueSize)

@@ -74,6 +74,17 @@ func (r ActionExecResult) method() string {
 	return r.Method
 }
 
+type ActionExecGeneratedFile struct {
+	Method      string `json:"method"`
+	ExecutionId string `json:"execution_id"`
+	Filename    string `json:"filename"`
+	Content     string `json:"content"`
+}
+
+func (r ActionExecGeneratedFile) method() string {
+	return r.Method
+}
+
 type ActionExecControl struct {
 	Method      string `json:"method"`
 	ExecutionId string `json:"execution_id"`

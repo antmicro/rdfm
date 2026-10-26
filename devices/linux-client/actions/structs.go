@@ -38,9 +38,11 @@ func NewActionRequest(raw []byte) (*ActionRequest, error) {
 }
 
 type ActionResult struct {
-	ExecId     string
-	StatusCode int
-	Output     *string
+	ExecId           string
+	StatusCode       int
+	Stdout           *string
+	GeneratedFileDir string
+	GeneratedFiles   []string
 }
 
 func (ar *ActionResult) Serialize() ([]byte, error) {
@@ -67,8 +69,8 @@ func NewActionResult(raw []byte) (*ActionResult, error) {
 	}
 
 	// https://github.com/golang/go/issues/10905
-	if ret.Output == nil {
-		ret.Output = new(string)
+	if ret.Stdout == nil {
+		ret.Stdout = new(string)
 	}
 
 	return &ret, nil

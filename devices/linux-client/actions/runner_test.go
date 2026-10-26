@@ -25,11 +25,11 @@ func createTestRdfmContext() *app.RDFM {
 	return testContext
 }
 
-func prepareRunner(queueSize int, callback ActionResultCallback, datadir string, actions []conf.RDFMCommandActionConfiguration) (*ActionRunner, context.CancelFunc) {
+func prepareRunner(queueSize int, resultCallback ActionResultCallback, generatedFileCallback GeneratedFileCallback, datadir string, actions []conf.RDFMCommandActionConfiguration) (*ActionRunner, context.CancelFunc) {
 	rdfmContext := createTestRdfmContext()
 	rdfmContext.RdfmActionsConfig = &actions
 	context, cancel := context.WithCancel(context.Background())
-	runner, _ := NewActionRunner(rdfmContext, queueSize, callback, datadir)
+	runner, _ := NewActionRunner(rdfmContext, queueSize, resultCallback, generatedFileCallback, datadir)
 	go runner.StartWorker(context)
 	return runner, cancel
 }
@@ -37,6 +37,8 @@ func prepareRunner(queueSize int, callback ActionResultCallback, datadir string,
 func TestActionRunnerSimpleSetup(t *testing.T) {
 	ctx := createTestRdfmContext()
 	_, err := NewActionRunner(ctx, 32, func(ActionResult, context.Context) bool {
+		return true
+	}, func(string, string, []byte, context.Context) bool {
 		return true
 	}, t.TempDir())
 	assert.Nil(t, err)
@@ -53,10 +55,13 @@ func TestActionRunnerExecuteSimple(t *testing.T) {
 			Timeout:     float32(TestActionTimeout),
 		},
 	}
-	callback := func(ActionResult, context.Context) bool {
+	resultCallback := func(ActionResult, context.Context) bool {
 		return true
 	}
-	runner, _ := prepareRunner(32, callback, t.TempDir(), actions)
+	generatedFileCallback := func(string, string, []byte, context.Context) bool {
+		return true
+	}
+	runner, _ := prepareRunner(32, resultCallback, generatedFileCallback, t.TempDir(), actions)
 
 	ok := runner.Execute(uuid.NewString(), "test_action")
 	assert.True(t, ok)
@@ -78,13 +83,15 @@ func TestActionRunnerResultCallback(t *testing.T) {
 		},
 	}
 	ch := make(chan ActionResult)
-	callback := func(result ActionResult, ctx context.Context) bool {
+	resultCallback := func(result ActionResult, ctx context.Context) bool {
 		ch <- result
 		return true
 	}
-
+	generatedFileCallback := func(string, string, []byte, context.Context) bool {
+		return true
+	}
+	runner, _ := prepareRunner(32, resultCallback, generatedFileCallback, t.TempDir(), actions)
 	actionId := uuid.NewString()
-	runner, _ := prepareRunner(32, callback, t.TempDir(), actions)
 	ok := runner.Execute(actionId, "test_action")
 	assert.True(t, ok)
 	timeoutCtx, _ := context.WithTimeout(context.Background(), TestActionTimeout)
@@ -94,7 +101,7 @@ func TestActionRunnerResultCallback(t *testing.T) {
 		{
 			assert.Equal(t, result.ExecId, actionId)
 			assert.Equal(t, result.StatusCode, 0)
-			assert.NotEmpty(t, result.Output)
+			assert.NotEmpty(t, result.Stdout)
 		}
 	case <-timeoutCtx.Done():
 		{
@@ -113,11 +120,14 @@ func TestActionRunnerConcurrentActionLimit(t *testing.T) {
 			Timeout:     float32(TestActionTimeout),
 		},
 	}
-	callback := func(ActionResult, context.Context) bool {
+	resultCallback := func(ActionResult, context.Context) bool {
+		return true
+	}
+	generatedFileCallback := func(string, string, []byte, context.Context) bool {
 		return true
 	}
 	queueSize := 2
-	runner, cancel := prepareRunner(queueSize, callback, t.TempDir(), actions)
+	runner, cancel := prepareRunner(queueSize, resultCallback, generatedFileCallback, t.TempDir(), actions)
 	defer cancel()
 
 	for i := 0; i < queueSize; i++ {

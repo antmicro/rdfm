@@ -10,6 +10,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
+	b64 "encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
@@ -338,7 +339,7 @@ func (d *Device) setupConnection() error {
 }
 
 func (d *Device) setupActionRunner() error {
-	actionRunner, err := actions.NewActionRunner(d.rdfmCtx, d.rdfmCtx.RdfmConfig.ActionQueueSize, d.actionResultCallback, conf.RdfmActionDataPath)
+	actionRunner, err := actions.NewActionRunner(d.rdfmCtx, d.rdfmCtx.RdfmConfig.ActionQueueSize, d.actionResultCallback, d.generatedFileCallback, conf.RdfmActionDataPath)
 	if err != nil {
 		return err
 	}
@@ -428,12 +429,28 @@ func (d *Device) actionResultCallback(result actions.ActionResult, cancelCtx con
 		Method:      "action_exec_result",
 		ExecutionId: result.ExecId,
 		StatusCode:  result.StatusCode,
-		Output:      *result.Output,
+		Output:      *result.Stdout,
 	}
 
 	err := d.marshalSendRetry(res, cancelCtx)
 	if err != nil {
 		log.Warnln("Sending action result failed:", err)
+		return false
+	}
+	return true
+}
+
+func (d *Device) generatedFileCallback(execId string, path string, data []byte, cancelCtx context.Context) bool {
+	res := serverws.ActionExecGeneratedFile{
+		Method:      "action_exec_generated_file",
+		ExecutionId: execId,
+		Filename:    path,
+		Content:     b64.StdEncoding.EncodeToString(data),
+	}
+
+	err := d.marshalSendRetry(res, cancelCtx)
+	if err != nil {
+		log.Warnln("Sending generated file failed:", err)
 		return false
 	}
 	return true
