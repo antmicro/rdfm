@@ -8,6 +8,9 @@ from sqlalchemy.exc import IntegrityError
 from rdfm.schema.v1.updates import META_DEVICE_TYPE
 import models.permission
 from rdfm.permissions import PACKAGE_RESOURCE
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class PackagesDB:
@@ -28,7 +31,7 @@ class PackagesDB:
                     return []
                 return [x for x in packages]
         except Exception as e:
-            print("Package fetch failed:", repr(e))
+            log.error("Package fetch failed: %s", repr(e))
             return []
 
     def create(self, package: models.package.Package) -> bool:
@@ -47,7 +50,7 @@ class PackagesDB:
                 session.refresh(package)
                 return True
         except Exception as e:
-            print("Package creation failed:", repr(e))
+            log.error("Package creation failed: %s", repr(e))
             return False
 
     def fetch_one(self, identifier: int) -> Optional[models.package.Package]:
@@ -63,7 +66,7 @@ class PackagesDB:
                 )
                 return session.scalar(stmt)
         except Exception as e:
-            print("Package fetch failed:", repr(e))
+            log.error("Package fetch failed: %s", repr(e))
             return None
 
     def fetch_compatible(self, devtype: str) -> List[models.package.Package]:
@@ -89,12 +92,11 @@ class PackagesDB:
                     .order_by(desc(models.package.Package.created))
                 )
                 packages = session.scalars(stmt)
-                print(packages)
                 if packages is None:
                     return []
                 return [x for x in packages]
         except Exception as e:
-            print("Package fetch failed:", repr(e))
+            log.error("Package fetch failed: %s", repr(e))
             return []
 
     def fetch_groups(self, identifier: int) -> List[int]:
