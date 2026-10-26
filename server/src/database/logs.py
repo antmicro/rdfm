@@ -7,6 +7,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 import server
 
+import logging
+
+log = logging.getLogger(__name__)
+
 
 class LogsDB:
     engine: Engine
@@ -77,7 +81,7 @@ class LogsDB:
                     return []
                 return [x for x in logs]
         except Exception as e:
-            print("Logs fetch failed:", repr(e))
+            log.error("Logs fetch failed: %s", repr(e))
             return []
 
     def fetch_one(self, identifier: int) -> Optional[models.log.Log]:
@@ -110,7 +114,7 @@ class LogsDB:
                 session.commit()
                 return True
         except Exception as e:
-            print("Log entries creation failed:", repr(e))
+            log.error("Log entries creation failed: %s", repr(e))
             return False
 
     def delete(self, device_identifiers: Optional[List[int]],
@@ -161,7 +165,7 @@ class LogsDB:
                 session.commit()
                 return True
         except IntegrityError as e:
-            print("Log deletion failed:", repr(e))
+            log.error("Log deletion failed: %s", repr(e))
             return False
 
     def delete_one(self, identifier: int) -> bool:
@@ -183,5 +187,5 @@ class LogsDB:
                 session.commit()
                 return True
         except IntegrityError as e:
-            print("Log deletion failed:", repr(e))
+            log.error("Log deletion failed: %s", repr(e))
             return False
