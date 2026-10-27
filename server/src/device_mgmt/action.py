@@ -7,6 +7,7 @@ from rdfm.ws import RDFM_WS_INVALID_REQUEST, WebSocketException
 from request_models import Action, ActionExec, ActionListQuery
 import server
 import models.action_log
+import models.generated_file
 import uuid
 from flask import current_app
 import storage
@@ -124,8 +125,23 @@ def execute_action_result(execution_id: str, status_code: int, output: str):
 
     download_url = None
     if output:
-        download_url = add_output_to_storage(execution_id, output)
+        download_url = add_output_to_storage(execution_id + ".log", output)
     server.instance._action_logs_db.update_status(execution_id, status_code, download_url)
+
+
+def execute_action_generated_file(execution_id: str, filename: str, content: str):
+    if not server.instance.action_executions.get(execution_id):
+        msg = f"Invalid execution {execution_id}"
+        raise WebSocketException(msg, RDFM_WS_INVALID_REQUEST)
+
+    download_url = add_output_to_storage(filename, content)
+    if not download_url:
+        return
+    generated_file = models.generated_file.GeneratedFile()
+    generated_file.exec_id = execution_id
+    generated_file.filename = filename
+    generated_file.download_url = download_url
+    server.instance._generated_files_db.insert(generated_file)
 
 
 def execute_action_control(execution_id: str, status: str):
@@ -184,7 +200,7 @@ def send_action_queue(mac_address: str):
         )
 
 
-def add_output_to_storage(execution_id: str, output: str) -> Optional[str]:
+def add_output_to_storage(filename: str, output: str) -> Optional[str]:
     conf: configuration.ServerConfig = current_app.config["RDFM_CONFIG"]
     driver = storage.driver_by_name(conf.storage_driver, conf)
 
@@ -198,5 +214,5 @@ def add_output_to_storage(execution_id: str, output: str) -> Optional[str]:
     return driver.generate_fs_download_url(
         f"{ACTION_BUCKET_SUBDIR}/{object_name}",
         LINK_EXPIRY,
-        execution_id,
+        filename,
     )

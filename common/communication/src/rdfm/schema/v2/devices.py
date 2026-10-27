@@ -89,6 +89,19 @@ class AuthRegisterRequest():
 
 
 @marshmallow_dataclass.dataclass
+class GeneratedFile():
+    exec_id: str = field(metadata={
+        "required": True
+    })
+    filename: str = field(metadata={
+        "required": True
+    })
+    download_url: str = field(metadata={
+        "required": True
+    })
+
+
+@marshmallow_dataclass.dataclass
 class ActionLog():
     """ Represents an action assigned to device.
     """
@@ -110,6 +123,8 @@ class ActionLog():
         "required": True,
         "allow_none": True
     })
+    generated_files: list[GeneratedFile] = field(default_factory=list,
+                                                 metadata={"required": True})
     Schema: ClassVar[Type[marshmallow.Schema]] = marshmallow.Schema
 
 

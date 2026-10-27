@@ -5,6 +5,7 @@ import server
 import traceback
 import models.device
 import models.action_log
+import models.generated_file
 import json
 from api.v1.common import api_error
 from api.v1.middleware import (
@@ -20,7 +21,13 @@ from rdfm.permissions import (
     DEVICE_RESOURCE,
     DELETE_PERMISSION
 )
-from rdfm.schema.v2.devices import Device, ActionLog, ActionRemoveRequest, DeviceRenameRequest
+from rdfm.schema.v2.devices import (
+    Device,
+    ActionLog,
+    GeneratedFile,
+    ActionRemoveRequest,
+    DeviceRenameRequest
+)
 from rdfm.schema.v2.fs import FsFile
 from rdfm.schema.v2.device_updates import DeviceUpdate
 from rdfm.ws import WebSocketException
@@ -47,7 +54,18 @@ def model_to_schema(device: models.device.Device) -> Device:
     )
 
 
-def action_model_to_schema(task: models.action_log.ActionLog) -> ActionLog:
+def generated_file_model_to_schema(
+        generated_file: models.generated_file.GeneratedFile) -> GeneratedFile:
+    """Convert a database model to the schema model"""
+    return GeneratedFile(
+        exec_id=generated_file.exec_id,
+        filename=generated_file.filename,
+        download_url=generated_file.download_url,
+    )
+
+
+def action_model_to_schema(task: models.action_log.ActionLog,
+                           generated_files: list[GeneratedFile]) -> ActionLog:
     """Convert a database model to the schema model"""
     return ActionLog(
         id=task.id,
@@ -55,6 +73,7 @@ def action_model_to_schema(task: models.action_log.ActionLog) -> ActionLog:
         created=task.created,
         status=task.status,
         download_url=task.download_url,
+        generated_files=[generated_file_model_to_schema(f) for f in generated_files]
     )
 
 
@@ -476,9 +495,16 @@ def get_action_log(mac_address: str):
         actions: List[
             models.action_log.ActionLog
         ] = server.instance._action_logs_db.fetch_device_log(mac_address)
-        return ActionLog.Schema().dump(
-            [action_model_to_schema(action) for action in actions], many=True
-        ), 200
+        generated_files: dict[str, list[models.generated_file.GeneratedFile]] = {
+            action.id:
+            server.instance._generated_files_db.fetch_execution_files(action.id) or []
+            for action in actions
+        }
+        return ActionLog.Schema().dump([
+            action_model_to_schema(action, generated_files[action.id])
+            for action in actions
+        ],
+                                        many=True), 200
     except Exception as e:
         traceback.print_exc()
         print("Exception during action log fetch:", repr(e))

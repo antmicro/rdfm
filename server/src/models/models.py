@@ -7,3 +7,4 @@ from models.log import Log
 from models.permission import Permission
 from models.action_log import ActionLog
 from models.device_update import DeviceUpdate
+from models.generated_file import GeneratedFile

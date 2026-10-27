@@ -112,7 +112,7 @@ class RemoteDevice:
             )
         elif isinstance(request, ActionExecGeneratedFile):
             print(
-                "Action execution artifact for",
+                "Generated file from action execution for",
                 self.token.device_id,
                 request.execution_id,
                 request.filename,
