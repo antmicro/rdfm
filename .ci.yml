@@ -137,6 +137,19 @@ test-server-s3-storage:
     - cd server
     - poetry run pytest tests/test-server-s3-storage.py
 
+test-server-azure-storage:
+  extends: .build
+  stage: local-tests
+  services:
+    - name: mcr.microsoft.com/azure-storage/azurite
+      alias: azurite
+      command: ["azurite-blob", "--blobHost", "0.0.0.0", "--skipApiVersionCheck"]
+  variables:
+    RDFM_TEST_AZURITE_URL: http://azurite:10000/devstoreaccount1
+  script:
+    - cd server
+    - poetry run pytest tests/test-server-azure-storage.py
+
 test-server-management-auth:
   extends: .build
   stage: local-tests
