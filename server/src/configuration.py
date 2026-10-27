@@ -13,10 +13,15 @@ ENV_S3_SECRET_ACCESS_KEY = "RDFM_S3_ACCESS_SECRET_KEY"
 ENV_S3_USE_V4_SIGNATURE = "RDFM_S3_USE_V4_SIGNATURE"
 ENV_S3_REGION_NAME = "RDFM_S3_REGION_NAME"
 ENV_S3_BUCKET = "RDFM_S3_BUCKET"
+""" Azure Blob Storage-specific environment variables """
+ENV_AZURE_STORAGE_ACCOUNT = "RDFM_AZURE_STORAGE_ACCOUNT"
+ENV_AZURE_CONTAINER = "RDFM_AZURE_CONTAINER"
+ENV_AZURE_ACCOUNT_KEY = "RDFM_AZURE_ACCOUNT_KEY"
+ENV_AZURE_BLOB_URL = "RDFM_AZURE_BLOB_URL"
 """ List of valid storage types for packages that the server supports.
     These values should match the ones found in`storage.driver_by_name`.
 """
-ALLOWED_STORAGE_DRIVERS = ["local", "s3"]
+ALLOWED_STORAGE_DRIVERS = ["local", "s3", "azure"]
 
 ENV_OAUTH_URL = "RDFM_OAUTH_URL"
 ENV_OAUTH_CLIENT_ID = "RDFM_OAUTH_CLIENT_ID"
@@ -109,6 +114,29 @@ class ServerConfig:
     """ Name of the region in which the S3 bucket is located
     """
     s3_region_name: Optional[str]
+
+    """ Name of the Azure storage account for storing packages
+    """
+    azure_storage_account: Optional[str]
+
+    """ Name of the blob container for storing packages on Azure
+    """
+    azure_container: Optional[str]
+
+    """ Shared key of the Azure storage account
+
+    When not set, the server authenticates with Microsoft Entra ID instead
+    (`DefaultAzureCredential`: a managed identity, workload identity or
+    environment credentials) and signs links with user delegation keys.
+    """
+    azure_account_key: Optional[str]
+
+    """ Override the default Azure Blob Storage endpoint URL
+
+    This allows to use an emulator such as Azurite, for example
+    `http://127.0.0.1:10000/devstoreaccount1`.
+    """
+    azure_blob_url: Optional[str]
 
     """ Should API auth be disabled?
         WARNING: This disables ALL authentication on the exposed API.
@@ -309,6 +337,22 @@ def parse_from_environment(config: ServerConfig) -> bool:
             config.s3_access_key_id,
             config.s3_secret_access_key,
             config.s3_bucket_name,
+        ]:
+            return False
+
+    if config.storage_driver == "azure":
+        config.azure_account_key = os.environ.get(ENV_AZURE_ACCOUNT_KEY, None)
+        config.azure_blob_url = os.environ.get(ENV_AZURE_BLOB_URL, None)
+
+        config.azure_storage_account = try_get_env(
+            ENV_AZURE_STORAGE_ACCOUNT, "Azure storage account name"
+        )
+        config.azure_container = try_get_env(
+            ENV_AZURE_CONTAINER, "Azure blob container name"
+        )
+        if None in [
+            config.azure_storage_account,
+            config.azure_container,
         ]:
             return False
 
