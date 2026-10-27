@@ -1,6 +1,7 @@
 from typing import Optional
 import storage.local
 import storage.s3
+import storage.azure_blob
 import configuration
 
 
@@ -18,5 +19,7 @@ def driver_by_name(
             return storage.local.LocalStorage(config)
         case "s3":
             return storage.s3.S3Storage(config)
+        case "azure":
+            return storage.azure_blob.AzureBlobStorage(config)
         case _:
             return None
