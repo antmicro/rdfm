@@ -1,0 +1,5 @@
+{
+	"auth_url": "https://rdfm.antmicro.com/kc/realms/rdfm/protocol/openid-connect/token",
+	"client_id": "rdfm-mgmt",
+	"client_secret": "9AlxiuSoMaIJiegBN9KQjchd8FRZ4qBW"
+}
