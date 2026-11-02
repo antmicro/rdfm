@@ -120,6 +120,7 @@ Component wraps functionality for displaying and working with a single rdfm devi
                                     <th>Created date</th>
                                     <th>Status</th>
                                     <th></th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -136,13 +137,59 @@ Component wraps functionality for displaying and working with a single rdfm devi
                                             {{ task.status }}
                                         </div>
                                     </td>
-                                    <td>
-                                        <div v-if="task.download_url" class="dots">
-                                            <DownloadButton
-                                                :url="task.download_url"
-                                                :smallButton="true"
-                                            />
-                                        </div>
+                                    <td class="download-button">
+                                        <button
+                                            v-if="task.generated_files?.length"
+                                            class="action-button gray"
+                                            @click="openGeneratedFilesPopup(task.generated_files)"
+                                        >
+                                            Generated files
+                                        </button>
+                                    </td>
+                                    <td class="download-button">
+                                        <DownloadButton
+                                            v-if="task.download_url"
+                                            label="Log"
+                                            :url="task.download_url"
+                                        />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </BlurPanel>
+        </Transition>
+
+        <Transition>
+            <BlurPanel v-if="showingGeneratedFiles" @click.self="closeGeneratedFilesPopup">
+                <div class="popup">
+                    <div class="header-with-buttons">
+                        <div class="title-container">
+                            <div class="header">
+                                <p class="title">Generated files</p>
+                                <p class="description">
+                                    Files produced by action {{ generatedFiles[0].exec_id }}
+                                </p>
+                            </div>
+                            <button class="action-button" @click="closeGeneratedFilesPopup">
+                                <Cross />
+                            </button>
+                        </div>
+                    </div>
+                    <div class="body action-generated-files">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>File</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="file in generatedFiles">
+                                    <td>{{ file.filename }}</td>
+                                    <td class="download-button">
+                                        <DownloadButton :url="file.download_url" />
                                     </td>
                                 </tr>
                             </tbody>
@@ -353,7 +400,8 @@ Component wraps functionality for displaying and working with a single rdfm devi
     gap: 2em;
 }
 
-.action-log {
+.action-log,
+.action-generated-files {
     overflow-y: auto;
     overflow-x: hidden;
     max-height: 70vh;
@@ -387,7 +435,6 @@ Component wraps functionality for displaying and working with a single rdfm devi
         }
         td:last-child {
             border-right: 1px solid var(--gray-400);
-            text-align: center;
         }
 
         tr:first-child td:first-child {
@@ -429,6 +476,8 @@ Component wraps functionality for displaying and working with a single rdfm devi
 
             text-align: center;
             vertical-align: middle;
+            text-box: trim-both ex alphabetic;
+            padding: 0.25em;
         }
 
         .success {
@@ -443,16 +492,19 @@ Component wraps functionality for displaying and working with a single rdfm devi
             border: 1px solid var(--destructive-400);
         }
 
-        .dots {
-            padding-left: 1em;
-            padding-right: 1em;
+        .download-button {
+            text-align: center;
         }
 
-        @media screen and (max-width: 1650px) {
-            td:nth-child(2) {
-                word-break: break-all;
-            }
+        td:nth-child(2) {
+            word-break: break-all;
         }
+    }
+}
+
+.action-generated-files {
+    .download-button {
+        text-align: right !important;
     }
 }
 
@@ -984,6 +1036,8 @@ export default {
 
         const tasks = ref<any[]>([]);
         const showingActionLog = ref<boolean>(false);
+        const showingGeneratedFiles = ref<boolean>(false);
+        const generatedFiles = ref<any[]>([]);
         const selectedCount = computed(() => {
             const selectedTasks = tasks.value
                 .filter((task: any) => task.selected)
@@ -1063,13 +1117,22 @@ export default {
         const selectTask = (task: any, e: MouseEvent) => {
             const target = e!.target as HTMLElement;
 
-            if (!target.closest('.dots')) {
+            if (!(target.matches('button') || target.closest('.drdn-wrapper'))) {
                 task.selected = !task.selected;
             }
         };
 
         const closeActionLogPopup = () => {
             showingActionLog.value = false;
+        };
+
+        const openGeneratedFilesPopup = (generatedFilesList: any[]) => {
+            showingGeneratedFiles.value = true;
+            generatedFiles.value = generatedFilesList;
+        };
+
+        const closeGeneratedFilesPopup = () => {
+            showingGeneratedFiles.value = false;
         };
 
         const fileToDownload = ref<HTMLInputElement | null>(null);
@@ -1123,6 +1186,7 @@ export default {
             groups,
             actions,
             tasks,
+            generatedFiles,
             runAction,
             fetchActionLog,
             clearActionLog,
@@ -1131,7 +1195,10 @@ export default {
             selectTask,
             selectedCount,
             showingActionLog,
+            showingGeneratedFiles,
             closeActionLogPopup,
+            openGeneratedFilesPopup,
+            closeGeneratedFilesPopup,
             downloadFile,
             fileToDownload,
             emptyPathError,

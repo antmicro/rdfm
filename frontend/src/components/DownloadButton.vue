@@ -12,7 +12,7 @@
                 <Dots />
             </template>
             <template v-else>
-                Download
+                {{ label }}
                 <span class="caret-down"> <CaretDown /> </span>
                 <span class="caret-up"> <CaretUp /> </span>
             </template>
@@ -68,9 +68,6 @@
         border: 2px solid var(--gray-400);
         border-radius: 5px;
 
-        position: absolute;
-        top: 100%;
-        right: 5px;
         width: max-content;
         z-index: 100;
 
@@ -109,6 +106,7 @@
 
     #main-button {
         cursor: pointer;
+        white-space: nowrap;
     }
 
     .small {
@@ -150,6 +148,7 @@
 
     .drdn {
         display: block;
+        position: fixed;
     }
 }
 </style>
@@ -178,6 +177,10 @@ export default defineComponent({
         smallButton: {
             type: Boolean,
             default: false,
+        },
+        label: {
+            type: String,
+            default: 'Download',
         },
     },
     setup(props) {
