@@ -2,6 +2,7 @@ import pytest
 import time
 import os
 import re
+import tempfile
 import subprocess
 from pathlib import Path
 import pg_temp
@@ -145,10 +146,17 @@ def pytest_generate_tests(metafunc):
 def db_sqlite():
     """Fixture that returns an sqlite connstring
     """
-    if os.path.isfile(DBPATH):
-        os.remove(DBPATH)
-    return f"sqlite:///{DBPATH}"
+    db_fd, temp_db_path = tempfile.mkstemp(suffix=".db", prefix="pytest_sqlite_")
+    os.close(db_fd)
 
+    yield f"sqlite:///{temp_db_path}"
+
+    try:
+        for companion in [temp_db_path, f"{temp_db_path}-wal", f"{temp_db_path}-shm"]:
+            if os.path.exists(companion):
+                os.remove(companion)
+    except OSError:
+        pass
 
 @pytest.fixture()
 def db_postgres():
