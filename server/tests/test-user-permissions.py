@@ -16,7 +16,6 @@ from rdfm.permissions import (
 )
 
 SERVER = "http://127.0.0.1:5000/"
-DBPATH = "test-db.db"
 
 PERMISSIONS_ENDPOINT = f"{SERVER}/api/v1/permissions"
 GROUPS_ENDPOINT = f"{SERVER}/api/v2/groups"

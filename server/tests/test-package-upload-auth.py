@@ -16,7 +16,6 @@ from common import SERVER_WAIT_TIMEOUT, wait_for_api
 from pathlib import Path
 
 SERVER = "http://127.0.0.1:5000/"
-DBPATH = "test-db.db"
 
 """ Upload packages endpoint to use for testing different scopes
 """

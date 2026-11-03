@@ -15,7 +15,6 @@ from common import UPDATES_ENDPOINT, SimpleDevice, ProcessConfig, GROUPS_ENDPOIN
 SERVER = "http://127.0.0.1:5000/"
 AUTH = f"{SERVER}/api/v1/auth/device"
 DUMMY_DEVICE_ID = 1
-DBPATH = "test-db.db"
 
 METADATA = {
     "rdfm.software.version": "v0",

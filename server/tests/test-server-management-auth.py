@@ -12,7 +12,6 @@ from common import SERVER_WAIT_TIMEOUT, wait_for_api
 
 
 SERVER = "http://127.0.0.1:5000/"
-DBPATH = "test-db.db"
 
 """ Read-only endpoint to use for testing RO scopes """
 TEST_RO_ENDPOINT = "/api/v1/groups"
