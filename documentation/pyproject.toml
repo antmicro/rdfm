@@ -13,7 +13,9 @@ dependencies = [
     "rdfm-mgmt-server>=0.1.0",
     "sphinx (==7.1.2)",
     "sphinxcontrib-httpdomain (>=1.8.1,<2.0.0)",
-    "antmicro-sphinx-utils @ https://github.com/antmicro/antmicro-sphinx-utils/archive/8907a689189de91ec2fcedd1ab8088f123bcf0ab.zip"
+    "antmicro-sphinx-utils @ https://github.com/antmicro/antmicro-sphinx-utils/archive/8907a689189de91ec2fcedd1ab8088f123bcf0ab.zip",
+    "azure-storage-blob (>=12.31.0,<13.0.0)",
+    "azure-identity (>=1.26.0,<2.0.0)"
 ]
 
 [tool.poetry]
