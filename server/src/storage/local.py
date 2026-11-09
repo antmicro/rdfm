@@ -2,6 +2,7 @@ import uuid
 import os
 import shutil
 import configuration
+import hashlib
 import urllib.parse
 from pathlib import Path, PosixPath
 from typing import Type
@@ -140,11 +141,12 @@ class LocalStorage:
         def complete_upload(self, etags: list[str]):
             """Finalizes the upload - etags param must contain etags returned by each upload"""
             if len(etags) != len(self.part_files):
-                return
+                raise RuntimeError("multipart upload part count mismatch")
 
-            for etag, expected_etag in zip(etags, self.part_files):
-                if etag != expected_etag.name:
-                    return
+            for etag, part_file in zip(etags, self.part_files):
+                digest = hashlib.sha256(part_file.read_bytes()).hexdigest()
+                if etag != f"sha256:{digest}":
+                    raise RuntimeError("multipart upload integrity check failed")
 
             self.final_file.parent.mkdir(exist_ok=True, parents=True)
             with open(self.final_file, "wb") as ofile:
