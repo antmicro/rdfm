@@ -6,6 +6,7 @@ from mocks.device import MockedDevice
 import httpx
 import simple_websocket
 import threading
+import base64
 
 SERVER = "http://127.0.0.1:5000/"
 DEVICE_ACTIONS_ENDPOINT = f"{SERVER}/api/v2/devices/00:00:00:00:00:00/action/list"
@@ -34,6 +35,9 @@ ACTIONS = [
     }
 ]
 DEVICE_CONNECTED = threading.Event()
+
+GENERATED_FILE_NAME = "produced_file"
+GENERATED_FILE_CONTENT = b"hello world"
 
 def client_ws(dev, DEVICE_CONNECTED):
     ws = simple_websocket.Client.connect(f"{SERVER}/api/v1/devices/ws", headers={"Authorization": f"Bearer token={dev.token}"})
@@ -66,6 +70,15 @@ def client_ws(dev, DEVICE_CONNECTED):
                     "execution_id": data["execution_id"],
                 }
                 ws.send(json.dumps(control))
+                if data["action_id"] == "valid":
+                    generated_file = {
+                        "method": "action_exec_generated_file",
+                        "execution_id": data["execution_id"],
+                        "filename": GENERATED_FILE_NAME,
+                        "content": base64.b64encode(GENERATED_FILE_CONTENT).decode(),
+                    }
+                    ws.send(json.dumps(generated_file))
+                # Result must be sent after generated files
                 result = {
                     "method": "action_exec_result",
                     "status_code": 0 if data["action_id"] == "valid" else -1,
@@ -178,9 +191,19 @@ async def test_actions(process):
     assert actions[1]["action"] == "valid"
     assert actions[1]["status"] == "0"
     assert actions[1]["download_url"].startswith(DOWNLOAD_URL_PREFIX)
+    assert len(actions[1]["generated_files"]) == 1
+    generated_file = actions[1]["generated_files"][0]
+    assert generated_file["exec_id"] == actions[1]["id"]
+    assert generated_file["filename"] == GENERATED_FILE_NAME
+    assert generated_file["download_url"].startswith(DOWNLOAD_URL_PREFIX)
     assert actions[2]["action"] == "valid"
     assert actions[2]["status"] == "0"
     assert actions[2]["download_url"].startswith(DOWNLOAD_URL_PREFIX)
+    assert len(actions[2]["generated_files"]) == 1
+    generated_file = actions[2]["generated_files"][0]
+    assert generated_file["exec_id"] == actions[2]["id"]
+    assert generated_file["filename"] == GENERATED_FILE_NAME
+    assert generated_file["download_url"].startswith(DOWNLOAD_URL_PREFIX)
 
     # Clear action log
     resp = requests.delete(DEVICE_ACTION_LOG_ENDPOINT)
