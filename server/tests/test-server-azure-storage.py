@@ -104,7 +104,7 @@ def list_blobs(container_client) -> list[str]:
     return [b.name for b in container_client.list_blobs()]
 
 
-def test_package_uploaded_successfully(upload_dummy, container_client):
+def test_package_uploaded_successfully(azurite_blob, upload_dummy, container_client):
     """ Uploading a package stores it under <directory>/<uuid> and records
         the object in the package metadata.
     """
@@ -127,7 +127,7 @@ def test_package_uploaded_successfully(upload_dummy, container_client):
     ("test//a", "test/a"),
     ("test\\test", "test/test"),
 ])
-def test_directory_is_normalized(create_driver, create_dummy_temp_file, metadata,
+def test_directory_is_normalized(azurite_blob, create_driver, create_dummy_temp_file, metadata,
                                  directory, expected):
     """ The stored directory matches the blob name Azure actually uses
     """
@@ -137,7 +137,7 @@ def test_directory_is_normalized(create_driver, create_dummy_temp_file, metadata
 
 
 @pytest.mark.parametrize("directory", ["test/../c", "../../../test", "./test"])
-def test_directory_with_dot_segments_is_rejected(create_driver, create_dummy_temp_file,
+def test_directory_with_dot_segments_is_rejected(azurite_blob, create_driver, create_dummy_temp_file,
                                                  metadata, container_client, directory):
     """ Dot segments would be collapsed by Azure, so the upload is refused
     """
@@ -145,7 +145,7 @@ def test_directory_with_dot_segments_is_rejected(create_driver, create_dummy_tem
     assert list_blobs(container_client) == []
 
 
-def test_generate_package_link(upload_dummy, create_driver):
+def test_generate_package_link(azurite_blob, upload_dummy, create_driver):
     """ The generated link downloads the package without any credentials
     """
     link = create_driver.generate_url(upload_dummy, TEST_EXPIRY_TIME)
@@ -155,7 +155,7 @@ def test_generate_package_link(upload_dummy, create_driver):
     assert response.content == TEST_PACKAGE_CONTENT
 
 
-def test_package_link_is_read_only(upload_dummy, create_driver):
+def test_package_link_is_read_only(azurite_blob, upload_dummy, create_driver):
     """ A package link can't be used to overwrite the package
     """
     link = create_driver.generate_url(upload_dummy, TEST_EXPIRY_TIME)
@@ -164,7 +164,7 @@ def test_package_link_is_read_only(upload_dummy, create_driver):
     assert response.status_code == 403
 
 
-def test_delete_package(upload_dummy, create_driver, container_client):
+def test_delete_package(azurite_blob, upload_dummy, create_driver, container_client):
     """ Deleting a package removes its object; deleting it again is harmless
     """
     create_driver.delete(upload_dummy)
@@ -186,7 +186,7 @@ def upload_parts_like_a_device(urls: list[str], part_size: int, content: bytes) 
     return etags
 
 
-def test_multipart_upload(create_driver, container_client):
+def test_multipart_upload(azurite_blob, create_driver, container_client):
     """ A device-style multipart upload produces the original file, and the
         download link saves it under the requested file name.
     """
@@ -209,7 +209,7 @@ def test_multipart_upload(create_driver, container_client):
     assert 'filename="syslog.1"' in response.headers["Content-Disposition"]
 
 
-def test_multipart_upload_missing_part_fails(create_driver, container_client):
+def test_multipart_upload_missing_part_fails(azurite_blob, create_driver, container_client):
     """ If a part upload fails silently on the device, committing the upload
         fails instead of producing a truncated file.
     """
@@ -226,7 +226,7 @@ def test_multipart_upload_missing_part_fails(create_driver, container_client):
     assert list_blobs(container_client) == []
 
 
-def test_aborted_multipart_upload_leaves_nothing(create_driver, container_client):
+def test_aborted_multipart_upload_leaves_nothing(azurite_blob, create_driver, container_client):
     """ Aborting an upload leaves no committed blob behind
     """
     key = "rdfm.downloads/" + str(uuid.uuid4())
@@ -238,7 +238,7 @@ def test_aborted_multipart_upload_leaves_nothing(create_driver, container_client
     assert list_blobs(container_client) == []
 
 
-def test_upload_action_log(create_driver):
+def test_upload_action_log(azurite_blob, create_driver):
     """ Action logs are stored and downloadable under the execution ID
     """
     object_id = str(uuid.uuid4())
@@ -253,7 +253,7 @@ def test_upload_action_log(create_driver):
     assert 'filename="execution-42"' in response.headers["Content-Disposition"]
 
 
-def test_attachment_header_escapes_filename():
+def test_attachment_header_escapes_filename(azurite_blob, ):
     """ Quotes and non-ASCII characters can't break the header
     """
     from storage.azure_blob import _attachment
@@ -275,7 +275,7 @@ class FakeBlobServiceClient:
         return f"key-{len(self.requests)}"
 
 
-def test_user_delegation_key_is_cached_and_refreshed():
+def test_user_delegation_key_is_cached_and_refreshed(azurite_blob, ):
     """ Without an account key, links are signed with a user delegation key
         that is reused until it would expire before a new link does.
     """
