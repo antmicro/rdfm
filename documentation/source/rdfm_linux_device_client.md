@@ -24,6 +24,12 @@ For the configuration schema, see the [RDFM actions config](#rdfm-actions-config
 The action list is synchronized with the server, and is available for querying via the [Action List API](api.rst#get--api-v2-devices-\(string-mac_address\)-action-list) endpoint.
 Actions can be executed using the [Action Execute API](api.rst#get--api-v2-devices-(string-mac_address)-action-exec-(string-action_id)) endpoint.
 
+Actions may generate logs and output files.
+The RDFM Linux Device Client creates a special temporary directory for each execution, whose path it then sets in the `RDFM_ACTION_OUTPUT_DIR` environment variable.
+Actions should leave their generated files in this directory.
+These files along with output from `stdout` will be available via the [Action Log API](api.rst#get--api-v2-devices-\(string-mac_address\)-action-log).
+The temporary directory is removed after the execution finishes.
+
 All action execution requests are stored in a persistent queue on a disk and fulfilled in a First-In, First-Out order.
 By default, there can be a maximum of **32 action requests** in the queue, and any further action execution requests are rejected by the client.
 This limit can be configured via the [ActionQueueSize](#actionqueuesize-int) configuration key.
