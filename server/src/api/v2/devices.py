@@ -814,7 +814,7 @@ def upload_local_file_part(part: str):
     with open(package, "wb") as part_file:
         part_file.write(request.data)
     resp = make_response()
-    resp.status = 200
+    resp.status = str(200)
     resp.headers.set("Etag", part)
     return resp
 
