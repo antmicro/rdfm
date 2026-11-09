@@ -155,6 +155,19 @@ test-server-s3-storage:
     - cd server
     - poetry run pytest tests/test-server-s3-storage.py
 
+test-server-azure-storage:
+  extends: .docker-tests-base
+  <<: *common_only
+  stage: local-tests
+  script:
+    - cd server
+    - poetry install
+    - poetry run pytest tests/test-server-azure-storage.py -v
+  artifacts:
+    paths:
+      - server/tests/*.log
+    when: always
+
 test-server-management-auth:
   extends: .build
   stage: local-tests
