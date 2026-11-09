@@ -790,7 +790,7 @@ def fetch_local_file(key: str):
     conf: configuration.ServerConfig = current_app.config["RDFM_CONFIG"]
     storage_location = Path(conf.package_dir).resolve()
     package = (storage_location / "multipart" / key).resolve()
-    if not package.is_relative_to(storage_location):
+    if not package.is_relative_to((storage_location / "multipart").resolve()):
         abort(404)
     return send_from_directory(str(package.parent), str(package.name))
 
@@ -808,7 +808,7 @@ def upload_local_file_part(part: str):
     conf: configuration.ServerConfig = current_app.config["RDFM_CONFIG"]
     storage_location = Path(conf.package_dir).resolve()
     package = (storage_location / "multipart" / "parts" / part).resolve()
-    if not package.is_relative_to(storage_location):
+    if not package.is_relative_to((storage_location / "multipart" / "parts").resolve()):
         abort(404)
     package.parent.mkdir(exist_ok=True, parents=True)
     with open(package, "wb") as part_file:
