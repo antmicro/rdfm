@@ -7,6 +7,7 @@ import models.device
 import models.action_log
 import models.generated_file
 import json
+import hashlib
 from api.v1.common import api_error
 from api.v1.middleware import (
     check_permission,
@@ -38,6 +39,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
+MAX_UPLOAD_PART_SIZE = 128 * 1024 * 1024
 
 devices_blueprint: Blueprint = Blueprint("rdfm-server-devices", __name__)
 
@@ -805,6 +807,8 @@ def upload_local_file_part(part: str):
     :status 404: wrong upload part name
     :status 500: failure during upload
     """
+    if len(request.data) > MAX_UPLOAD_PART_SIZE:
+        abort(413)
     conf: configuration.ServerConfig = current_app.config["RDFM_CONFIG"]
     storage_location = Path(conf.package_dir).resolve()
     package = (storage_location / "multipart" / "parts" / part).resolve()
@@ -813,9 +817,10 @@ def upload_local_file_part(part: str):
     package.parent.mkdir(exist_ok=True, parents=True)
     with open(package, "wb") as part_file:
         part_file.write(request.data)
+    etag = hashlib.sha256(request.data).hexdigest()
     resp = make_response()
-    resp.status = str(200)
-    resp.headers.set("Etag", part)
+    resp.status_code = 200
+    resp.headers.set("Etag", "sha256:" + etag)
     return resp
 
 
