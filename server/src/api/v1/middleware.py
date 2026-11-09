@@ -761,6 +761,8 @@ def management_user_validation(_func=None, *, allow_token_from_url: bool = False
                 return api_error("introspection error", 401)
 
             introspected_token = resp.json()
+            if not introspected_token.get("active", False):
+                return api_error("inactive token", 401)
             if "sub" not in introspected_token:
                 return api_error("invalid token", 401)
             scopes = []
