@@ -1,4 +1,5 @@
 import pytest
+import time
 import os
 import re
 import subprocess
@@ -206,6 +207,55 @@ def process_gunicorn(db, request):
     print("Shutting down server..")
     process.kill()
     log_file.close()
+
+
+@pytest.fixture(scope="session")
+def azurite_blob():
+    name = "azurite_blob"
+
+    log_file = (Path(__file__).parent / "azurite_blob.log").open("a")
+
+    process = subprocess.Popen([
+        "docker", "run", "--rm",
+        "--quiet", "--name", name,
+        "-a", "stdout",
+        "-a", "stderr",
+        "-p", "10000:10000",
+        "--health-cmd", "nc 127.0.0.1 10000 -z",
+        "--health-interval=1s",
+        "--health-retries=30",
+        "mcr.microsoft.com/azure-storage/azurite",
+        "azurite-blob", "--blobHost", "0.0.0.0", "--skipApiVersionCheck"
+    ],
+        stdout=log_file,
+        stderr=log_file
+    )
+
+    while True:
+        assert process.poll() is None, "Azurite blob should not terminate unexpectedly"
+
+        try:
+            result = subprocess.run(
+                        ["docker", "inspect", "--format={{json .State.Health.Status}}", name],
+                        capture_output=True,
+                        text=True,
+                        check=True
+                    )
+
+            status = result.stdout.strip().replace('"', '')
+
+            if status == "healthy":
+                break
+            elif status == "unhealthy":
+                raise RuntimeError("Azurite blob isn't healthy")
+
+            time.sleep(1)
+        except subprocess.CalledProcessError:
+            pass
+
+    yield process
+
+    process.kill()
 
 
 @pytest.fixture(scope="session")
