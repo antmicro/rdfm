@@ -6,7 +6,7 @@ set -e
 
 # Environment variable overrides
 SERVER_URL="${RDFM_CLIENT_SERVER_URL:-http://127.0.0.1:5000/}"
-SERVER_CERT="${RDFM_CLIENT_SERVER_CERT:-/dev/zero}"
+SERVER_CERT="${RDFM_CLIENT_SERVER_CERT}"
 PART_A="${RDFM_CLIENT_PART_A:-/dev/zero}"
 PART_B="${RDFM_CLIENT_PART_B:-/dev/zero}"
 DEVICE_TYPE="${RDFM_CLIENT_DEVTYPE:-x86_64}"
