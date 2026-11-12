@@ -202,7 +202,7 @@ func (d *Device) handleRequest(msg []byte) (serverws.Request, error) {
 			if err != nil {
 				return nil, err
 			}
-			client := &http.Client{}
+			client := &http.Client{Transport: d.httpTransport}
 			ret, err := client.Do(req)
 			if err != nil {
 				return nil, err
