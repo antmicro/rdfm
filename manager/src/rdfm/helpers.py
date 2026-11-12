@@ -55,7 +55,7 @@ def make_ssl_context_from_cert_file(ca_cert: str) -> ssl.SSLContext:
     This is used when a custom validation certificate is passed to
     validate the connection to the server.
     """
-    context = ssl.SSLContext()
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
     try:
         context.load_verify_locations(cafile=ca_cert)
     except Exception as e:
