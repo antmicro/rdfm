@@ -78,8 +78,8 @@ class RemoteDevice:
         """
         if not rdfm.ws.can_handle_request(self.capabilities, request.method):
             raise WebSocketException(
-                f"device does not support the required method: \
-                {request.method}",
+                "device does not support the required method: "
+                f"{request.method}",
                 RDFM_WS_MISSING_CAPABILITIES,
             )
 
