@@ -4,6 +4,7 @@ import shutil
 import configuration
 import hashlib
 import urllib.parse
+import auth.upload_token
 from pathlib import Path, PosixPath
 from typing import Type
 from storage.common import upload_part_count
@@ -129,11 +130,14 @@ class LocalStorage:
                 self.local_storage.config.package_dir) / "multipart" / f"{self.key}"
 
             for i in range(part_count):
+                upload_name_with_part = f"{upload_name}_part{i}"
+                token = auth.upload_token.acquire_token(upload_name_with_part, expiry)
                 self.part_files.append(Path(
                     self.local_storage.config.package_dir) / "multipart" / "parts"
-                    / f"{upload_name}_part{i}"
+                    / f"{upload_name_with_part}"
                 )
-                path = f"/local_storage_multipart/parts/{upload_name}_part{i}"
+                params = urllib.parse.urlencode({"token": token})
+                path = f"/local_storage_multipart/parts/{upload_name}_part{i}?{params}"
                 urls.append(urllib.parse.urljoin(f"http://{hostname}:{port}", path))
 
             return urls, part_size
