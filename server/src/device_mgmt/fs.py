@@ -66,7 +66,11 @@ def prepare_download(mac_address: str, file: str) -> tuple[int, str]:
         # generate download url if the upload succeeded or terminate the upload
         # in case it failed
         if operation.response.status == 0:
-            mpu.complete_upload(operation.response.etags)
+            try:
+                mpu.complete_upload(operation.response.etags)
+            except RuntimeError:
+                mpu.abort_upload()
+                return 1, ""
             filename = str(Path(file).name)
             download_url = driver.generate_fs_download_url(
                 f"{DOWNLOAD_BUCKET_SUBDIR}/{object_name}",
