@@ -8,6 +8,8 @@ import models.action_log
 import models.generated_file
 import json
 import hashlib
+import auth.upload_token
+import jwt
 from api.v1.common import api_error
 from api.v1.middleware import (
     check_permission,
@@ -804,11 +806,18 @@ def upload_local_file_part(part: str):
 
     :param part: identifier of the multipart file object in local storage
     :status 200: no error
+    :status 401: user did not provide authorization data or the authorization has expired
+    :status 403: provided authorization does not allow access to resource
     :status 404: wrong upload part name
     :status 500: failure during upload
     """
-    if len(request.data) > MAX_UPLOAD_PART_SIZE:
-        abort(413)
+    request.max_content_length = MAX_UPLOAD_PART_SIZE
+    token = auth.upload_token.decode_and_verify_token(request.args.get("token", ""))
+    if token is None:
+        abort(401)
+    elif token.upload_name != part:
+        abort(403)
+
     conf: configuration.ServerConfig = current_app.config["RDFM_CONFIG"]
     storage_location = Path(conf.package_dir).resolve()
     package = (storage_location / "multipart" / "parts" / part).resolve()
