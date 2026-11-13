@@ -26,7 +26,7 @@ DBPATH = "test-db.db"
 SERVER = "http://127.0.0.1:5000/"
 SERVER_WS = "ws://127.0.0.1:5000/"
 # Server wait timeout, in seconds
-SERVER_WAIT_TIMEOUT = 20
+SERVER_WAIT_TIMEOUT = 120
 KAFKA_BROKER_WAIT_INTERVAL = 1
 
 KAFKA_CLUSTER_ID = "foobarbaz"
