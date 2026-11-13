@@ -56,10 +56,12 @@ func Daemonize(c *libcli.Context) error {
 
 	cancelCtx, cancelFunc := context.WithCancel(context.Background())
 
-	err = device.setupKafkaRunner(cancelCtx)
-	if err != nil {
-		log.Errorln("Failed to setup kafka runner:", err)
-		return err
+	if device.rdfmCtx.RdfmConfig.TelemetryEnable {
+		err = device.setupKafkaRunner(cancelCtx)
+		if err != nil {
+			log.Errorln("Failed to setup kafka runner:", err)
+			return err
+		}
 	}
 
 	updateAction := actions.NewBuiltInAction(
