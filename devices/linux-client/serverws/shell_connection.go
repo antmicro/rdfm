@@ -67,12 +67,16 @@ func (sc *ShellConnection) Copy(pts *os.File, command *exec.Cmd) error {
 				// messages are used for control messages (e.g terminal resize).
 				message := string(b[:])
 				parts := strings.Split(message, " ")
-				if parts == nil {
-					continue
-				}
-				if parts[0] == "resize" {
-					rows, _ := strconv.Atoi(parts[1])
-					cols, _ := strconv.Atoi(parts[2])
+
+				if len(parts) >= 3 && parts[0] == "resize" {
+					rows, err := strconv.Atoi(parts[1])
+					if err != nil {
+						continue
+					}
+					cols, err := strconv.Atoi(parts[2])
+					if err != nil {
+						continue
+					}
 					pty.Setsize(pts, &pty.Winsize{
 						Rows: uint16(rows),
 						Cols: uint16(cols),
