@@ -5,6 +5,7 @@ import threading
 import urllib.parse
 import uuid
 import configuration
+import logging
 from azure.core.exceptions import AzureError, ResourceNotFoundError
 from azure.storage.blob import (
     BlobBlock,
@@ -15,6 +16,8 @@ from azure.storage.blob import (
 )
 from typing import Any, Optional
 from storage.common import upload_part_count
+
+log = logging.getLogger(__name__)
 
 
 META_AZURE_UUID = "rdfm.storage.azure.uuid"
@@ -183,18 +186,16 @@ class AzureBlobStorage:
         try:
             directory = _normalize_directory(directory)
         except ValueError as e:
-            print("Uploading package failed:", e, flush=True)
+            log.error("Uploading package failed: %s", e)
             return False
 
         try:
             # Generate a unique object identifier
             object_id = str(uuid.uuid4())
-            print(
-                "Uploading package with metadata:",
+            log.info(
+                "Uploading package with metadata: %s object ID: %s",
                 metadata,
-                "object ID:",
                 object_id,
-                flush=True,
             )
             with open(package_path, "rb") as f:
                 self.container_client.upload_blob(
@@ -209,12 +210,10 @@ class AzureBlobStorage:
             metadata[META_AZURE_DIRECTORY] = directory
             return True
         except AzureError as e:
-            print(
-                "Uploading package to container",
+            log.error(
+                "Uploading package to container %s failed: %s",
                 self.container,
-                "failed:",
                 e,
-                flush=True,
             )
             return False
 
@@ -236,7 +235,7 @@ class AzureBlobStorage:
                 expiry,
             )
         except AzureError as e:
-            print("Failed to generate signed Azure link:", e, flush=True)
+            log.error("Failed to generate signed Azure link: %s", e)
             raise
 
     def delete(self, metadata: dict[str, str]) -> None:
@@ -245,10 +244,9 @@ class AzureBlobStorage:
             # This shouldn't happen
             object_id = metadata.get(META_AZURE_UUID, None)
             if object_id is None:
-                print(
+                log.warning(
                     "WARNING: Deleting a package that does not have Azure object "
                     "metadata!",
-                    flush=True,
                 )
                 return
             directory = metadata.get(META_AZURE_DIRECTORY, None)
@@ -257,9 +255,9 @@ class AzureBlobStorage:
                 AzureBlobStorage.get_object_path(directory, object_id)
             )
         except ResourceNotFoundError:
-            print("WARNING: Deleted package object was already gone", flush=True)
+            log.warning("WARNING: Deleted package object was already gone")
         except AzureError as e:
-            print("Failed deleting package object from Azure:", e, flush=True)
+            log.error("Failed deleting package object from Azure: %s", e)
             raise
 
     class MultipartUploader:
@@ -298,7 +296,7 @@ class AzureBlobStorage:
                     self.key, BlobSasPermissions(write=True), expiry
                 )
             except AzureError as e:
-                print("Failed to generate signed Azure link:", e, flush=True)
+                log.error("Failed to generate signed Azure link: %s", e)
                 raise
 
             self.part_count = part_count
@@ -317,12 +315,10 @@ class AzureBlobStorage:
             are only used to check that every part was attempted.
             """
             if len(etags) != self.part_count:
-                print(
-                    "WARNING: Device reported",
+                log.warning(
+                    "WARNING: Device reported %s uploaded parts, expected %s",
                     len(etags),
-                    "uploaded parts, expected",
                     self.part_count,
-                    flush=True,
                 )
             try:
                 self.storage.container_client.get_blob_client(self.key).commit_block_list(
@@ -331,12 +327,11 @@ class AzureBlobStorage:
             except AzureError as e:
                 # Devices don't check the status of their part uploads, so a
                 # failed part only shows up here as a missing block.
-                print(
-                    "Failed to commit multipart upload of",
+                log.warning(
+                    "Failed to commit multipart upload of %s "
+                    "- a part upload from the device probably failed: %s",
                     self.key,
-                    "- a part upload from the device probably failed:",
                     e,
-                    flush=True,
                 )
                 raise
 
@@ -359,7 +354,7 @@ class AzureBlobStorage:
                 kwargs["content_disposition"] = _attachment(filename)
             return self._signed_url(key, BlobSasPermissions(read=True), expiry, **kwargs)
         except AzureError as e:
-            print("Failed to generate signed Azure link:", e, flush=True)
+            log.error("Failed to generate signed Azure link: %s", e)
             raise
 
     def upload_action_log(
@@ -377,11 +372,9 @@ class AzureBlobStorage:
             )
             return True
         except AzureError as e:
-            print(
-                "Uploading action log to container",
+            log.error(
+                "Uploading action log to container %s failed: %s",
                 self.container,
-                "failed:",
                 e,
-                flush=True,
             )
             return False
