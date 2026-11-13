@@ -21,6 +21,7 @@ cat >/etc/rdfm/artifact_info << EOF
 artifact_name=unknown
 EOF
 
+mkdir -p /var/lib/rdfm
 cat >/var/lib/rdfm/device_type << EOF
 device_type=${DEVICE_TYPE}
 EOF
