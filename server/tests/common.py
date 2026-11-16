@@ -23,8 +23,10 @@ PROBE_SUCCESS_STATUS = 200
 # Path to the DB file to use for tests
 DBPATH = "test-db.db"
 # Server URL
-SERVER = "http://127.0.0.1:5000/"
-SERVER_WS = "ws://127.0.0.1:5000/"
+HOSTNAME = "127.0.0.1"
+PORT = 5000
+SERVER = f"http://{HOSTNAME}:{PORT}/"
+SERVER_WS = f"ws://{HOSTNAME}:{PORT}/"
 # Default place to store local packages
 LOCAL_PACKAGE_DIR = "/tmp/.rdfm-local-storage"
 # Server wait timeout, in seconds
