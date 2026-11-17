@@ -188,6 +188,21 @@ test-package-upload-auth:
     - poetry run pytest tests/test-package-upload-auth.py --sqlite
     - poetry run pytest tests/test-package-upload-auth.py --postgres
 
+test-server-localstorage-integrity:
+  variables:
+    JWT_SECRET: testsecret123123123
+    SCALENODE_RAM: 4096
+  extends: .build
+  stage: local-tests
+  script:
+    - cd server
+    - poetry run pytest tests/test-server-localstorage-integrity.py --sqlite -v
+    - poetry run pytest tests/test-server-localstorage-integrity.py --postgres -v
+  artifacts:
+    paths:
+      - server/tests/logs/*
+    when: always
+
 test-server-route-correctness:
   extends: .build
   stage: local-tests
