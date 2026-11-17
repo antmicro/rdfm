@@ -20,6 +20,7 @@ from common import (
     KAFKA_CONFIG_REL_PATH,
     KAFKA_SINGULARITY_IMAGE,
     KAFKA_TOPIC,
+    LOCAL_PACKAGE_DIR,
 )
 from device_mgmt.pubsub import RdfmKafkaAdminClient
 
@@ -30,6 +31,7 @@ def pytest_addoption(parser):
     parser.addoption("--sifpath", action="store")
     parser.addoption("--alembic-script-location", action="store")
     parser.addoption("--alembic-file", action="store")
+    parser.addoption("--create-tmpdir-for-packages", action="store_true")
 
 
 def parametrize_path_option(metafunc, option_name, default_value=None):
@@ -48,6 +50,12 @@ def parametrize_path_option(metafunc, option_name, default_value=None):
 
 
 def pytest_generate_tests(metafunc):
+    if "local_package_dir" in metafunc.fixturenames:
+        if metafunc.config.getoption("create_tmpdir_for_packages"):
+            metafunc.parametrize("local_package_dir", ["create_tmpdir"], scope="session")
+        else:
+            metafunc.parametrize("local_package_dir", ["default_local_package_dir"], scope="session")
+
     if "process" in metafunc.fixturenames or "alembic_engine" in metafunc.fixturenames:
         fixtures = []
         if metafunc.config.getoption("sqlite"):
@@ -117,8 +125,24 @@ def process_config():
     return ProcessConfig()
 
 
+@pytest.fixture(scope="session")
+def create_tmpdir():
+    """ A wrapper fixture for creating a tempfile that
+        will be cleaned at the end of a testing stession
+    """
+    import tempfile
+    tmp_dir = tempfile.TemporaryDirectory()
+    yield str(tmp_dir.name)
+    tmp_dir.cleanup()
+
+
+@pytest.fixture(scope="session")
+def default_local_package_dir():
+    return LOCAL_PACKAGE_DIR
+
+
 @pytest.fixture(scope="function")
-def process(db, process_config: ProcessConfig, request):
+def process(db, process_config: ProcessConfig, local_package_dir, request):
     """Fixture to start the RDFM server with Werkzeug"""
 
     log_file = (Path(__file__).parent / "server.log").open("a")
@@ -131,6 +155,8 @@ def process(db, process_config: ProcessConfig, request):
             "rdfm_mgmt_server",
             "--database",
             request.getfixturevalue(db),
+            "--local-package-dir",
+            request.getfixturevalue(local_package_dir)
         ]
 
     additional_env = {}
@@ -167,7 +193,7 @@ def process(db, process_config: ProcessConfig, request):
 
 
 @pytest.fixture(scope="function")
-def process_gunicorn(db, request):
+def process_gunicorn(db, local_package_dir, request):
     """Fixture to start the RDFM server with Gunicorn"""
 
     if os.path.isfile(DBPATH):
@@ -192,7 +218,7 @@ def process_gunicorn(db, request):
             "RDFM_HOSTNAME": "localhost",
             "RDFM_API_PORT": "5000",
             "RDFM_DB_CONNSTRING": request.getfixturevalue(db),
-            "RDFM_LOCAL_PACKAGE_DIR": "/tmp/.rdfm-local-storage",
+            "RDFM_LOCAL_PACKAGE_DIR": request.getfixturevalue(local_package_dir),
             "RDFM_DISABLE_ENCRYPTION": "1",
             "RDFM_DISABLE_API_AUTH": "1",
             **os.environ

@@ -25,6 +25,8 @@ DBPATH = "test-db.db"
 # Server URL
 SERVER = "http://127.0.0.1:5000/"
 SERVER_WS = "ws://127.0.0.1:5000/"
+# Default place to store local packages
+LOCAL_PACKAGE_DIR = "/tmp/.rdfm-local-storage"
 # Server wait timeout, in seconds
 SERVER_WAIT_TIMEOUT = 120
 KAFKA_BROKER_WAIT_INTERVAL = 1
