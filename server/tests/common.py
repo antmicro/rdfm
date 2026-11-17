@@ -150,13 +150,14 @@ def create_fake_device_token():
     """ Creates a fake device token to use for mocking device authentication
         during API tests
     """
-    from auth.device import DeviceToken, DEVICE_JWT_ALGO
+    from auth.device import DeviceToken
+    from auth import JWT_ALGO
     token = DeviceToken()
     token.created_at = int(time.time())
     token.expires = 600
     token.device_id = "00:00:00:00:00:00"
     secret = os.environ['JWT_SECRET']
-    return jwt.encode(token.to_dict(), secret, algorithm=DEVICE_JWT_ALGO)
+    return jwt.encode(token.to_dict(), secret, algorithm=JWT_ALGO)
 
 def device_fetch_all() -> list[dict]:
     """ Fetches all authorized devices.

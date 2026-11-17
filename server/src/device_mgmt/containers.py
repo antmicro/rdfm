@@ -1,5 +1,9 @@
-from typing import Optional
-from device_mgmt.models.remote_device import RemoteDevice
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from device_mgmt.models.remote_device import RemoteDevice
+
 from device_mgmt.models.reverse_shell import ReverseShell
 from device_mgmt.models.action_execution import ActionExecution
 from device_mgmt.models.filesystem_operation import FilesystemOperation

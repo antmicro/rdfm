@@ -7,7 +7,8 @@ import threading
 from rdfm_mgmt_communication import decode_json
 from request_models import CapabilityReport, DeviceAttachToManager, Alert
 from rdfm.ws import send_message, receive_message, WebSocketException
-from auth.device import DeviceToken, DEVICE_JWT_ALGO
+from auth import JWT_ALGO
+from auth.device import DeviceToken
 
 
 # This is an example implementation of a device client WebSocket loop.
@@ -35,7 +36,7 @@ def create_dummy_token():
     token_data.device_id = DEVICE_ID
     token_data.created_at = int(time.time())
     token_data.expires = 999999999
-    return jwt.encode(token_data.to_dict(), JWT_SECRET, algorithm=DEVICE_JWT_ALGO)
+    return jwt.encode(token_data.to_dict(), JWT_SECRET, algorithm=JWT_ALGO)
 
 
 DEVICE_TOKEN = create_dummy_token()

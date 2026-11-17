@@ -8,6 +8,7 @@ from Crypto.PublicKey import RSA
 from Crypto.Signature.pkcs1_15 import PKCS115_SigScheme
 from models.device import Device
 from rdfm.schema.v1.updates import META_MAC_ADDRESS
+from auth import JWT_ALGO
 import server
 from auth.token import DeviceToken
 import logging
@@ -17,8 +18,6 @@ log = logging.getLogger(__name__)
 
 """ JWT expiration time (in seconds) """
 DEVICE_JWT_EXPIRY = 300
-""" Algorithm in call to jwt.{encode,decode} to use. """
-DEVICE_JWT_ALGO = "HS256"
 
 
 def verify_signature(body: bytes, public_key: str, signature: str) -> bool:
@@ -141,7 +140,7 @@ def try_acquire_token(
     token_data.expires = DEVICE_JWT_EXPIRY
 
     secret = os.environ["JWT_SECRET"]
-    token = jwt.encode(token_data.to_dict(), secret, algorithm=DEVICE_JWT_ALGO)
+    token = jwt.encode(token_data.to_dict(), secret, algorithm=JWT_ALGO)
     return token, token_data
 
 
@@ -160,7 +159,7 @@ def decode_and_verify_token(token: str) -> Optional[DeviceToken]:
     """
     try:
         secret = os.environ["JWT_SECRET"]
-        token_data = jwt.decode(token, secret, algorithms=DEVICE_JWT_ALGO)
+        token_data = jwt.decode(token, secret, algorithms=JWT_ALGO)
         device_token = DeviceToken.from_dict(token_data)
 
         # Check token expiration
