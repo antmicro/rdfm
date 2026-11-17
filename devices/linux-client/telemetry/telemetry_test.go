@@ -172,7 +172,7 @@ func TestFireLogs(t *testing.T) {
 	time.Sleep(time.Millisecond) // Sleep for a millisecond to let the buffered channel receive a log entry
 
 	if l := len(logs); l != want {
-		t.Fatalf(`1: len(logs) = %v, want match for %#q`, l, want)
+		t.Fatalf(`1: len(logs) = %v, want %v`, l, want)
 	}
 
 	entry := <-logs
@@ -187,7 +187,7 @@ func TestFireLogs(t *testing.T) {
 	time.Sleep(time.Millisecond)
 
 	if l := len(logs); l != want {
-		t.Fatalf(`2: len(logs) = %v, want match for %#q`, l, want)
+		t.Fatalf(`2: len(logs) = %v, want %v`, l, want)
 	}
 
 	want = 1
@@ -196,6 +196,6 @@ func TestFireLogs(t *testing.T) {
 	time.Sleep(time.Millisecond)
 
 	if l := len(logs); l != want {
-		t.Fatalf(`3: len(logs) = %v, want match for %#q`, l, want)
+		t.Fatalf(`3: len(logs) = %v, want %v`, l, want)
 	}
 }

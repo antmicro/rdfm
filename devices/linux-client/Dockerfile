@@ -15,7 +15,7 @@ RUN apt-get update \
     libprotobuf-dev \
     && apt-get autoremove && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-ARG GOVERSION="go1.22.3"
+ARG GOVERSION="go1.26.11"
 WORKDIR /opt/${GOVERSION}/
 ADD https://go.dev/dl/${GOVERSION}.linux-amd64.tar.gz /opt/${GOVERSION}/
 RUN tar xzf /opt/${GOVERSION}/${GOVERSION}.linux-amd64.tar.gz

@@ -11,13 +11,13 @@ requires-python = ">=3.11, <4.0"
 dependencies = [
     "rdfm_mgmt_communication>=0.1.0",
     "pydantic (>=2.0.3,<3.0.0)",
-    "flask (>=2.3.2,<3.0.0)",
+    "flask (>=3.1.3,<4.0.0)",
     "types-jwt (>=0.1.3,<1.0.0)",
     "pyjwt (>=2.8.0,<3.0.0)",
     "sqlalchemy (==2.0.54)",
     "types-flask (>=1.1.6,<2.0.0)",
     "types-pyjwt (>=1.7.1,<2.0.0)",
-    "pytest (>=7.4.0,<8.0.0)",
+    "pytest (>=9.0.3,<10.0.0)",
     "pexpect (>=4.8.0,<5.0.0)",
     "requests (>=2.31.0,<3.0.0)",
     "marshmallow (>=3.20.1,<4.0.0)",
@@ -28,12 +28,12 @@ dependencies = [
     "authlib (>=1.7.2,<2.0.0)",
     "simple-websocket (>=1.1.0,<2.0.0)",
     "gevent (>=26.5.0)",
-    "gunicorn (>=21.2.0,<22.0.0)",
+    "gunicorn (>=27.0.1,<28.0.0)",
     "psycopg2 (==2.9.12)",
     "alembic (>=1.13.1,<2.0.0)",
     "SQLAlchemy-Utils (>=0.41.2,<1.0.0)",
-    "flask-cors (>=4.0.1,<5.0.0)",
-    "kafka-python==2.2.15",
+    "flask-cors (>=6.0.5,<7.0.0)",
+    "kafka-python==2.3.3",
     "azure-storage-blob (>=12.24.0,<13.0.0)",
     "azure-identity (>=1.19.0,<2.0.0)",
 ]
@@ -50,10 +50,10 @@ rdfm_mgmt_communication = {path = "../common/communication"}
 [tool.poetry.group.test.dependencies]
 types-jsonschema = "^4.17.0.8"
 httpx = "^0.27.0"
-cryptography = "^48.0.0"
-pytest-asyncio = "^0.23.5.post1"
+cryptography = "^50.0.2"
+pytest-asyncio = "^1.5.0"
 pg-temp = "==0.9.1"
-pytest-alembic = "^0.12.1"
+pytest-alembic = "^0.13.2"
 
 [tool.poetry.group.types.dependencies]
 types-flask = "^1.1.6"

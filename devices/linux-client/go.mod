@@ -1,14 +1,14 @@
 module github.com/antmicro/rdfm/devices/linux-client
 
-go 1.20
+go 1.26.0
 
 require (
 	github.com/antmicro/rdfm/tools/rdfm-artifact v0.0.0-20250805081032-9c3f3147301f
 	github.com/asaskevich/EventBus v0.0.0-20200907212545-49d423059eef
 	github.com/creack/pty v1.1.24
-	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
-	github.com/gorilla/websocket v1.5.0
+	github.com/gorilla/websocket v1.5.3
 	github.com/mendersoftware/mender v0.0.0-20230726064531-bbe854cef242
 	github.com/mendersoftware/mender-artifact v0.0.0-20230803130415-bb342f921a12
 	github.com/mendersoftware/progressbar v0.0.3
@@ -29,7 +29,7 @@ require (
 	github.com/bmatsuo/lmdb-go v1.8.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/klauspost/compress v1.17.4 // indirect
+	github.com/klauspost/compress v1.20.4 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
 	github.com/klauspost/pgzip v1.2.6 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
@@ -44,8 +44,8 @@ require (
 	github.com/twmb/franz-go/pkg/kmsg v1.7.0 // indirect
 	github.com/ungerik/go-sysfs v0.0.0-20210209091351-68e6f4d6bff9 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
-	golang.org/x/crypto v0.17.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/crypto v0.59.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 

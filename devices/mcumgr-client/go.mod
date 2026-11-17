@@ -1,6 +1,6 @@
 module rdfm-mcumgr-client
 
-go 1.22
+go 1.26.0
 
 require (
 	github.com/mendersoftware/mender-artifact v0.0.0-20240108122953-c1dab739372d
@@ -18,7 +18,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/joaojeronimo/go-crc16 v0.0.0-20140729130949-59bd0194935e // indirect
-	github.com/klauspost/compress v1.17.0 // indirect
+	github.com/klauspost/compress v1.20.4 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.3 // indirect
 	github.com/klauspost/pgzip v1.2.6 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
@@ -52,9 +52,9 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
-	golang.org/x/net v0.19.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/net v0.62.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
+	golang.org/x/text v0.44.0 // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.28 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

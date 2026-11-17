@@ -8,7 +8,10 @@ SPDX-License-Identifier: Apache-2.0
     <div
         v-if="loggedIn"
         id="main"
-        @click="(e: MouseEvent) => (accMenuOpen = $refs.menu.contains(e.target as HTMLElement))"
+        @click="
+            (e: MouseEvent) =>
+                (accMenuOpen = ($refs.menu as HTMLElement).contains(e.target as HTMLElement))
+        "
     >
         <div id="logobar">
             <Logo id="logo" />
