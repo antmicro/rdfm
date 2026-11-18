@@ -1,6 +1,6 @@
 services:
   rdfm-server:
-    image: rdfm:server
+    image: antmicro/rdfm-server:latest
     build:
       dockerfile: server/deploy/Dockerfile
       context: ../../
@@ -21,7 +21,7 @@ services:
       - ${PWD}/server/deploy/certs:/certs
 
   frontend-builder:
-    image: rdfm:frontend-builder
+    image: antmicro/rdfm-frontend-builder:latest
     env_file: $SETUP_FILE
     volumes:
       - static:/static
