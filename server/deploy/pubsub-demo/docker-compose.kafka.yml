@@ -61,7 +61,7 @@ services:
       - ./server.properties:/mnt/shared/config/server.properties
 
   keycloak:
-    image: quay.io/keycloak/keycloak:26.2.1
+    image: quay.io/keycloak/keycloak:26.8.2
     restart: unless-stopped
     env_file: "secrets.env"
     networks:
