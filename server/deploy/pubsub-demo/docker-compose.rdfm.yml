@@ -46,7 +46,6 @@ services:
 volumes:
   db:
   pkgs:
-  keycloak:
 
 networks:
   rdfm:
