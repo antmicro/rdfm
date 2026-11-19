@@ -12,6 +12,7 @@ class QuietServer(StreamServer):
             # Ignore SSL errors instead of printing tracebacks
             message = str(e)
             ignored = (
+                'ssl/tls alert bad certificate',
                 'sslv3 alert bad certificate',
                 'sslv3 alert certificate unknown',
                 'tlsv1 alert unknown ca',
