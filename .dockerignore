@@ -3,6 +3,11 @@
 **/.pytest_cache
 **/.venv
 **/.vscode
-
+**/node_modules
+**/dist
+**/build
+**/.git
+devices/linux-client/rdfm
+images/
 server/deploy/pubsub-demo/server
 server/deploy/pubsub-demo/broker
