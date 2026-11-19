@@ -1,12 +1,18 @@
-FROM python:3.11.4-bookworm
+FROM python:3.15-slim
 # This Dockerfile assumes that the build starts with the current
 # directory set to the monorepository root
 
 # Install dependencies
-RUN apt -qq -y update && apt -qq -y install --no-install-recommends curl openssl pipx
-RUN export PATH="/root/.local/bin:${PATH}"
-RUN pip3 install --upgrade pip
-RUN pip3 install poetry
+RUN apt -qq -y update && \
+    apt -qq -y install --no-install-recommends curl openssl pipx && \
+    apt-get autoclean && \
+    apt-get clean && \
+    apt-get -y autoremove && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install --upgrade pip && \
+    pip3 install poetry && \
+    pip3 cache purge
 
 # Copy all sources
 # We do this after installing the main dependencies to avoid
@@ -14,7 +20,6 @@ RUN pip3 install poetry
 COPY . /rdfm/
 WORKDIR /rdfm/
 
-# Build and install rdfm-mgmt, this also pulls in any
-# required Python dependencies
-RUN pip3 install -e ./common/communication
-RUN pip3 install -e ./manager
+RUN pip3 install -e ./common/communication && \
+    pip3 install -e ./manager && \
+    pip3 cache purge
