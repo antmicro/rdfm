@@ -197,6 +197,48 @@ def __introspect_and_validate_token(
         return None
 
 
+def request_unwrap_token(allow_from_url: bool = False) -> str:
+    """ Unwrap the raw authorization token from the current request context.
+
+    This handles the following supported headers and unwraps the raw token
+    provided to the current request:
+
+      * `Authorization`
+      * `X-RDFM-Token`
+
+    If the header is malformed, this method will throw an Exception with a
+    message indicating the condition. This function does not check token
+    validity or whether the token itself is malformed.
+
+    Optionally, the token can also come from an URL query parameter named
+    `token`.
+    """
+    if allow_from_url and "token" in request.args:
+        return request.args["token"]
+
+    auth = request.headers.get("X-RDFM-Token", None)
+    if auth is not None:
+        return auth
+
+    auth = request.authorization
+    if auth is None:
+        raise Exception("no Authorization header was provided")
+
+    if auth.type != "bearer":
+        raise Exception(
+            "invalid authorization - expected authorization type"
+            "Bearer",
+        )
+
+    if "token" not in auth:
+        raise Exception(
+            "invalid authorization - missing field: token"
+        )
+
+    token: str = auth["token"]
+    return token
+
+
 def deserialize_schema_from_params(schema_dataclass: type,
                                    key: str = "parameters"):
     """
@@ -332,18 +374,12 @@ def device_api(f):
 
     @functools.wraps(f)
     def _device_api(*args, **kwargs):
-        auth = request.authorization
-        if auth is None:
-            return api_error("no Authorization header was provided", 401)
-        if auth.type != "bearer":
-            return api_error(
-                "invalid authorization - expected authorization type Bearer",
-                401,
-            )
-        if "token" not in auth:
-            return api_error("invalid authorization - missing field: token")
+        try:
+            token = request_unwrap_token(allow_from_url=False)
+        except Exception as e:
+            return api_error(str(e), 401)
 
-        token = decode_and_verify_token(auth["token"])
+        token = decode_and_verify_token(token)
         if token is None:
             return api_error("invalid token was provided", 401)
 
@@ -406,24 +442,10 @@ def __management_api(
             if conf.disable_api_auth:
                 return f(*args, **kwargs)
 
-            if allow_token_from_url and "token" in request.args:
-                token: str = request.args["token"]
-            else:
-                # Extract token from the Authorization header
-                auth = request.authorization
-                if auth is None:
-                    return api_error("no Authorization header was provided", 401)
-                if auth.type != "bearer":
-                    return api_error(
-                        "invalid authorization - expected authorization type"
-                        "Bearer",
-                        401,
-                    )
-                if "token" not in auth:
-                    return api_error(
-                        "invalid authorization - missing field: token", 401
-                    )
-                token: str = auth["token"]
+            try:
+                token = request_unwrap_token(allow_token_from_url)
+            except Exception as e:
+                return api_error(str(e), 401)
 
             scopes: Optional[list[str]] = __introspect_and_validate_token(
                 conf, token
@@ -727,24 +749,10 @@ def management_user_validation(_func=None, *, allow_token_from_url: bool = False
             if conf.disable_api_auth:
                 return f(auth_enabled=False, user_id=None, user_roles=[], *args, **kwargs)
 
-            if allow_token_from_url and "token" in request.args:
-                token: str = request.args["token"]
-            else:
-                # Extract token from the Authorization header
-                auth = request.authorization
-                if auth is None:
-                    return api_error("no Authorization header was provided", 401)
-                if auth.type != "bearer":
-                    return api_error(
-                        "invalid authorization - expected authorization type"
-                        "Bearer",
-                        401,
-                    )
-                if "token" not in auth:
-                    return api_error(
-                        "invalid authorization - missing field: token", 401
-                    )
-                token: str = auth["token"]
+            try:
+                token = request_unwrap_token(allow_token_from_url)
+            except Exception as e:
+                return api_error(str(e), 401)
 
             client = OAuth2Session(
                 conf.token_introspection_client_id,
