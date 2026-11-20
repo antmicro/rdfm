@@ -257,7 +257,7 @@ export const fetchWrapper = async (
         const accessToken = localStorage.getItem('access_token');
 
         if (accessToken) {
-            headers.set('Authorization', `Bearer token=${accessToken}`);
+            headers.set('X-RDFM-Token', accessToken);
         }
         response = await fetch(url, { method, body, headers: headers });
         if (!response.ok) {
