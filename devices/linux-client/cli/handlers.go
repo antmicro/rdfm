@@ -134,7 +134,7 @@ func dispatchArtifactCommand(c *libcli.Context) error {
 		if c.NArg() != 1 {
 			return fmt.Errorf(cliToolMissingArgumentFormat, "path to artifact")
 		}
-		return ctx.InstallArtifact(c.Args().Get(0))
+		return ctx.InstallArtifact(c.Args().Get(0), "")
 
 	case "commit":
 		return ctx.CommitCurrentArtifact()

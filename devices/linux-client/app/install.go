@@ -29,7 +29,7 @@ const (
 )
 
 func DoInstall(device *dev.DeviceManager, updateURI string,
-	clientConfig client.Config, rebootExitCode bool) error {
+	clientConfig client.Config, rebootExitCode bool, packageHash string) error {
 
 	var image io.ReadCloser
 	var imageSize int64
@@ -50,7 +50,9 @@ func DoInstall(device *dev.DeviceManager, updateURI string,
 
 	// allow modified BlockDevice.Write inside Mender to report progress
 	installer.BlockDeviceWriteProgressCallback = progress.BlockDeviceWriteProgressCallback(imageSize)
-	err = DoInstallStates(ioutil.NopCloser(image), device, rebootExitCode)
+	artifactHashChecker := newArtifactHashChecker(imageSize, packageHash)
+	tr := io.TeeReader(image, artifactHashChecker)
+	err = DoInstallStates(ioutil.NopCloser(tr), device, rebootExitCode)
 	installer.BlockDeviceWriteProgressCallback = nil
 
 	if err == nil {

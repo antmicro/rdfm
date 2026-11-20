@@ -183,10 +183,9 @@ func createDeviceManager(config *mconf.MenderConfig, store *store.DBStore) (*dev
 
 // Install an artifact at the given path
 // This can be either an artifact on the local filesystem, or an HTTP URL
-func (ctx *RDFM) InstallArtifact(path string) error {
+func (ctx *RDFM) InstallArtifact(path string, hash string) error {
 	clientConfig := client.Config{}
-
-	return DoInstall(ctx.deviceManager, path, clientConfig, false)
+	return DoInstall(ctx.deviceManager, path, clientConfig, false, hash)
 }
 
 func (ctx *RDFM) IsRebootNeeded() bool {

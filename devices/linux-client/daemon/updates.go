@@ -104,7 +104,7 @@ func (d *Device) updateCheckerLoop(cancelCtx context.Context, triggerUpdateCheck
 			log.Errorln("Update check failed:", err)
 		} else if pkg != nil {
 			log.Printf("Installing package from %s...\n", pkg.Uri)
-			if err = d.rdfmCtx.InstallArtifact(pkg.Uri); err != nil {
+			if err = d.rdfmCtx.InstallArtifact(pkg.Uri, pkg.Sha256); err != nil {
 				progress.Bus.Publish("failure")
 				log.Errorf("Failed to install package %v: %s",
 					pkg.Id, err.Error())
