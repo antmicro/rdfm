@@ -56,12 +56,21 @@ def test_management_no_authorization_header(process):
 
 
 @pytest.mark.parametrize('token_mock_config', [MockConfig(valid=False)])
-def test_management_invalid_authorization_header(process):
+@pytest.mark.parametrize(
+    "headers",
+    [
+        {
+            "Authorization": "Bearer XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        },
+        {
+            "X-RDFM-Token": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        },
+    ],
+)
+def test_management_invalid_authorization_header(process, headers: dict[str, str]):
     """ This tests whether a request with an invalid authorization header is rejected.
     """
-    resp = requests.get(f"{SERVER}/{TEST_RO_ENDPOINT}", headers={
-        "Authorization": "Bearer XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-    })
+    resp = requests.get(f"{SERVER}/{TEST_RO_ENDPOINT}", headers=headers)
     assert resp.status_code == 401, "the server should reject requests with an invalid auth header"
 
 
@@ -100,43 +109,75 @@ SCOPE_RW_ACCESS_TEST_DATA = [
 
 
 @pytest.mark.parametrize('token_mock_config,expected_status,error_message', SCOPE_RO_ACCESS_TEST_DATA)
+@pytest.mark.parametrize(
+    "headers",
+    [
+        {
+            "Authorization": "Bearer token=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        },
+        {
+            "X-RDFM-Token": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        },
+    ],
+)
 def test_management_token_access_scopes_readonly(process,
                                                  expected_status: int,
-                                                 error_message: str):
+                                                 error_message: str,
+                                                 headers: dict[str, str]):
     """ This tests access to a read-only endpoint using different tokens.
 
     For each token, a GET request is made to the predefined endpoint and the
     response is checked against an expected value.
     This should be an endpoint that always succeeds, for example listing groups.
     """
-    resp = requests.get(f"{SERVER}/{TEST_RO_ENDPOINT}", headers={
-        "Authorization": "Bearer token=AAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-    })
+    resp = requests.get(f"{SERVER}/{TEST_RO_ENDPOINT}", headers=headers)
     assert resp.status_code == expected_status, error_message
 
 
 @pytest.mark.parametrize('token_mock_config,expected_status,error_message', SCOPE_RW_ACCESS_TEST_DATA)
+@pytest.mark.parametrize(
+    "headers",
+    [
+        {
+            "Authorization": "Bearer token=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        },
+        {
+            "X-RDFM-Token": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        },
+    ],
+)
 def test_management_token_access_scopes_readwrite(process,
                                                   expected_status: int,
-                                                  error_message: str):
+                                                  error_message: str,
+                                                  headers: dict[str, str]):
     """ This tests access to a read-write endpoint using different tokens.
 
     For each token, a POST request is made to the predefined endpoint with a
     generic payload and the response is checked against an expected value.
     The endpoint/payload combination must always succeed.
     """
-    resp = requests.post(f"{SERVER}/{TEST_RW_ENDPOINT}", headers={
-        "Authorization": "Bearer token=AAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-    }, json=TEST_RW_DATA)
+    resp = requests.post(f"{SERVER}/{TEST_RW_ENDPOINT}", headers=headers, json=TEST_RW_DATA)
     assert resp.status_code == expected_status, error_message
 
 
 @pytest.mark.parametrize('token_mock_config,expected_status,error_message', SCOPE_RO_ACCESS_TEST_DATA)
 @pytest.mark.parametrize('configure_token_mock', ["http://127.0.0.1:65535/"])
+@pytest.mark.parametrize(
+    "headers",
+    [
+        {
+            "Authorization": "Bearer token=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        },
+        {
+            "X-RDFM-Token": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        },
+    ],
+)
 def test_inaccessible_auth_server_readonly(process,
                                            expected_status: int,
                                            error_message: str,
-                                           token_mock_config: MockConfig):
+                                           token_mock_config: MockConfig,
+                                           headers: dict[str, str]):
     """ Test server behavior when the authentication server is inaccessible,
         read-only endpoint variant.
 
@@ -151,27 +192,35 @@ def test_inaccessible_auth_server_readonly(process,
     the test must also take `token_mock_config` as the argument would
     be unused otherwise.
     """
-    resp = requests.get(f"{SERVER}/{TEST_RO_ENDPOINT}", headers={
-        "Authorization": "Bearer token=AAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-    })
+    resp = requests.get(f"{SERVER}/{TEST_RO_ENDPOINT}", headers=headers)
     assert resp.status_code == 401, ("the server should reject any request to read-only endpoints "
                                      "when the authentication server is unavailable")
 
 
 @pytest.mark.parametrize('token_mock_config,expected_status,error_message', SCOPE_RW_ACCESS_TEST_DATA)
 @pytest.mark.parametrize('configure_token_mock', ["http://127.0.0.1:65535/"])
+@pytest.mark.parametrize(
+    "headers",
+    [
+        {
+            "Authorization": "Bearer token=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        },
+        {
+            "X-RDFM-Token": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        },
+    ],
+)
 def test_inaccessible_auth_server_readwrite(process,
                                             expected_status: int,
                                             error_message: str,
-                                            token_mock_config: MockConfig):
+                                            token_mock_config: MockConfig,
+                                            headers: dict[str, str]):
     """ Test server behavior when the authentication server is inaccessible,
         read-write endpoint variant.
 
     Analogous to the above test method, but testing is done
     on an RW endpoint instead.
     """
-    resp = requests.post(f"{SERVER}/{TEST_RW_ENDPOINT}", headers={
-        "Authorization": "Bearer token=AAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-    }, json=TEST_RW_DATA)
+    resp = requests.post(f"{SERVER}/{TEST_RW_ENDPOINT}", headers=headers, json=TEST_RW_DATA)
     assert resp.status_code == 401, ("the server should reject any request to read-write endpoints "
                                      "when the authentication server is unavailable")

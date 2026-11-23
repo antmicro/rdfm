@@ -56,6 +56,29 @@ def submit_authorization():
                              })
     return response
 
+@pytest.fixture
+def auth_headers_fmt():
+    """ Fixture returning the authorization headers to be used for authenticating
+        device requests. The values of the dict will be formatted using the `token`
+        kwarg with token received from the device auth process.
+    """
+    return {
+        "Authorization": "Bearer token={token}",
+    }
+
+@pytest.fixture
+def device_token_auth_header(submit_authorization, auth_headers_fmt):
+    """ Submits authorization and returns an authorization header for the device.
+    """
+    assert submit_authorization.status_code == 200, "the device should receive a successful authentication response"
+    token = submit_authorization.json()["token"]
+
+    headers = auth_headers_fmt.copy()
+    for k in headers.keys():
+        headers[k] = headers[k].format(token=token)
+
+    return headers
+
 
 @pytest.fixture
 def submit_authorization_with_modified_version():
@@ -129,14 +152,11 @@ def change_registered_device_key(submit_and_approve):
 
 
 @pytest.fixture
-def make_dummy_authenticated_request(submit_authorization):
+def make_dummy_authenticated_request(device_token_auth_header):
     """ Make a dummy authenticated request to a device API endpoint.
 
     Used for testing the "Last accessed" timestamp available in the device API.
     """
-    assert submit_authorization.status_code == 200, "the device should receive a successful authentication response"
-    token = submit_authorization.json()["token"]
-
     # Intentionally sleep for a second
     # This is to make sure the timestamp actually changes
     time.sleep(1)
@@ -144,9 +164,7 @@ def make_dummy_authenticated_request(submit_authorization):
     # We don't care about the result, the timestamp should be updated
     # on any usage of the token.
     response = requests.post(UPDATES_ENDPOINT, json=test_device.metadata,
-                             headers={
-                                 "Authorization": f"Bearer token={token}"
-                             })
+                             headers=device_token_auth_header)
     assert response.status_code != 401, "the request should have been authenticated"
 
 
@@ -304,31 +322,46 @@ def test_device_token_verification_none(setup_server):
     assert response.status_code == 401, "the endpoint should not be accessible without presenting a device token"
 
 
-def test_device_token_verification_invalid(setup_server):
+@pytest.mark.parametrize(
+    "headers",
+    [
+        {
+            "Authorization": "Bearer token=AAAAAAAAAAAAAAAAAAAAAAA",
+        },
+        {
+            "X-RDFM-Token": "AAAAAAAAAAAAAAAAAAAAAAA",
+        },
+    ],
+)
+def test_device_token_verification_invalid(setup_server, headers: dict[str, str]):
     """ This tests if the server rejects a request to a device API endpoint with an
         invalid device token.
     """
-    response = requests.post(f"{SERVER}/api/v1/update/check", json=METADATA, headers={
-        "Authorization": f"Bearer token=AAAAAAAAAAAAAAAAAAAAAAA"
-    })
+    response = requests.post(f"{SERVER}/api/v1/update/check", json=METADATA, headers=headers)
     assert response.status_code == 401, "the endpoint should not be accessible with an invalid device token"
 
 
-def test_device_token_verification_valid(setup_server, submit_and_approve, submit_authorization):
+@pytest.mark.parametrize(
+    "auth_headers_fmt",
+    [
+        {
+            "Authorization": "Bearer token={token}",
+        },
+        {
+            "X-RDFM-Token": "{token}",
+        },
+    ],
+)
+def test_device_token_verification_valid(setup_server, submit_and_approve, device_token_auth_header):
     """ This tests if the server allows a request to a device API endpoint with a valid
         device token.
 
     For this, the update check endpoint is used, as the behavior should be identical
     in all cases when using the `device_api` decorator.
     """
-    assert submit_authorization.status_code == 200, "the device should receive a successful authentication response"
-    assert "token" in submit_authorization.json(), "the authentication response should contain an app token"
-    token = submit_authorization.json()["token"]
-
     # Now, add the token to the request
-    response = requests.post(f"{SERVER}/api/v1/update/check", json=METADATA, headers={
-        "Authorization": f"Bearer token={token}"
-    })
+    response = requests.post(f"{SERVER}/api/v1/update/check", json=METADATA,
+                             headers=device_token_auth_header)
     assert response.status_code != 401, "the endpoint should now be accessible"
 
 def test_remove_device(setup_server, submit_and_approve):
