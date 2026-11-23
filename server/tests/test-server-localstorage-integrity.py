@@ -13,8 +13,11 @@ from auth import JWT_ALGO
 from configuration import ServerConfig
 from storage.local import LocalStorage
 from api.v2.devices import MAX_UPLOAD_PART_SIZE
-from common import HOSTNAME, PORT
+from common import HOSTNAME, PORT, TEST_JWT_SECRET
 
+# FIXME: UploadToken uses os.environ instead of server configuration, drop this
+# once it no longer does.
+os.environ["JWT_SECRET"] = TEST_JWT_SECRET
 
 DOWNLOAD_BUCKET_SUBDIR = "test_bucket"
 MULTIPART_UPLOAD_FULL_SIZE = int(2.56e+8)
@@ -69,7 +72,7 @@ def test_upload_token_decode_expired():
 def test_upload_token_invalid_audience():
     now = int(time.time())
     token_dict = auth.upload_token.UploadToken("test", now, now + 3600, "urn:WRONG").to_dict()
-    token = jwt.encode(token_dict, os.environ["JWT_SECRET"], algorithm=JWT_ALGO)
+    token = jwt.encode(token_dict, TEST_JWT_SECRET, algorithm=JWT_ALGO)
     res = auth.upload_token.decode_and_verify_token(token)
     assert res is None
 
@@ -90,7 +93,7 @@ def test_server_localstorage_simple_put_expired(setup_server):
 def test_server_localstorage_simple_put_invalid_audience(setup_server):
     now = int(time.time())
     token_data = auth.upload_token.UploadToken(TEST_UPLOAD_NAME, now, now + 3600, "urn:WRONG")
-    token = jwt.encode(token_data.to_dict(), os.environ["JWT_SECRET"], algorithm=JWT_ALGO)
+    token = jwt.encode(token_data.to_dict(), TEST_JWT_SECRET, algorithm=JWT_ALGO)
     url = f"http://{HOSTNAME}:{PORT}/local_storage_multipart/parts/{TEST_UPLOAD_NAME}?token={token}"
     resp = requests.put(url, b"\x08\x59")
     assert 401 == resp.status_code, "PUT with wrong audience should be denied with 401"

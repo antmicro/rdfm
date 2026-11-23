@@ -7,7 +7,7 @@ import json
 from typing import Optional
 from mocks.oauth2_token_introspection import start_token_mock, configure_token_mock, MockConfig
 from api.v1.middleware import SCOPE_READ_ONLY, SCOPE_READ_WRITE, SCOPE_SINGLE_FILE, SCOPE_ROOTFS_IMAGE
-from common import GROUPS_ENDPOINT, SERVER_WAIT_TIMEOUT, wait_for_api
+from common import GROUPS_ENDPOINT, SERVER_WAIT_TIMEOUT, wait_for_api, TEST_JWT_SECRET
 
 from rdfm.permissions import (
     READ_PERMISSION,
@@ -31,7 +31,7 @@ AUTH_AS_USER = {
 @pytest.fixture()
 def process(db, configure_token_mock, request):
     new_env = os.environ.copy()
-    new_env["JWT_SECRET"] = "TESTDEVELOPMENTSECRET123"
+    new_env["JWT_SECRET"] = TEST_JWT_SECRET
     new_env["RDFM_OAUTH_URL"] = configure_token_mock
     new_env["RDFM_OAUTH_CLIENT_ID"] = "rdfm-server-introspection"
     new_env["RDFM_OAUTH_CLIENT_SEC"] = "qPsZzvAUtDVREjJyuyAEu3SDBQElATgX"

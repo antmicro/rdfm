@@ -8,7 +8,7 @@ from mocks.oauth2_token_introspection import (start_token_mock,
                                               configure_token_mock,
                                               MockConfig)
 from api.v1.middleware import SCOPE_READ_ONLY, SCOPE_READ_WRITE, SCOPE_SINGLE_FILE, SCOPE_ROOTFS_IMAGE
-from common import SERVER_WAIT_TIMEOUT, wait_for_api
+from common import SERVER_WAIT_TIMEOUT, wait_for_api, TEST_JWT_SECRET
 
 
 SERVER = "http://127.0.0.1:5000/"
@@ -28,7 +28,7 @@ TEST_RW_DATA = { "metadata": { "testing": 123 }}
 @pytest.fixture()
 def process(db, configure_token_mock, request):
     new_env = os.environ.copy()
-    new_env["JWT_SECRET"] = "TESTDEVELOPMENTSECRET123"
+    new_env["JWT_SECRET"] = TEST_JWT_SECRET
     new_env["RDFM_OAUTH_URL"] = configure_token_mock
     new_env["RDFM_OAUTH_CLIENT_ID"] = "rdfm-server-introspection"
     new_env["RDFM_OAUTH_CLIENT_SEC"] = "qPsZzvAUtDVREjJyuyAEu3SDBQElATgX"

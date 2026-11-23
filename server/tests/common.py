@@ -32,6 +32,9 @@ LOCAL_PACKAGE_DIR = "/tmp/.rdfm-local-storage"
 # Server wait timeout, in seconds
 SERVER_WAIT_TIMEOUT = 120
 KAFKA_BROKER_WAIT_INTERVAL = 1
+# Shared JWT secret for test purposes. We rely on this to sythesize fake JWT
+# tokens for testing endpoints without hitting the server auth.
+TEST_JWT_SECRET = "RDFM_DEV_JWT_81fc94f99507481390b944688493afbc8fa165ec227c34127c45bb5a1d31149c"
 
 KAFKA_CLUSTER_ID = "foobarbaz"
 KAFKA_CONFIG_REL_PATH = Path("server.properties")
@@ -59,6 +62,8 @@ class ProcessConfig():
     no_api_auth: bool = True
     debug: bool = True
     enable_pubsub: bool = False
+    # Environment variables to set when starting the server process.
+    env: dict[str, str] = field(default_factory=lambda: {})
 
     # external-docker specific
     docker_env_file: Optional[str] = None
@@ -165,8 +170,7 @@ def create_fake_device_token():
     token.created_at = int(time.time())
     token.expires = 600
     token.device_id = "00:00:00:00:00:00"
-    secret = os.environ['JWT_SECRET']
-    return jwt.encode(token.to_dict(), secret, algorithm=JWT_ALGO)
+    return jwt.encode(token.to_dict(), TEST_JWT_SECRET, algorithm=JWT_ALGO)
 
 def device_fetch_all() -> list[dict]:
     """ Fetches all authorized devices.

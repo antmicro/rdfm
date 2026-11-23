@@ -13,6 +13,7 @@ from common import (
     SERVER,
     wait_for_api,
     ProcessConfig,
+    TEST_JWT_SECRET
 )
 # Imports for Kafka integration
 from common import (
@@ -226,7 +227,8 @@ def process_werkzeug(db, process_config: ProcessConfig, local_package_dir, reque
             request.getfixturevalue(local_package_dir)
         ]
 
-    additional_env = {}
+    env = process_config.env.copy()
+    env["JWT_SECRET"] = TEST_JWT_SECRET
 
     if process_config.insert_mocks:
         args.append("--test-mocks")
@@ -238,15 +240,14 @@ def process_werkzeug(db, process_config: ProcessConfig, local_package_dir, reque
         args.append("--debug")
     if process_config.enable_pubsub:
         args.append("--enable-pubsub")
-        additional_env.update({"JWT_SECRET": request.getfixturevalue("get_rdfm_jwt_secret"),  # Make it the same as in the .sif file
-                               "RDFM_DEV_BOOTSTRAP_SERVERS": request.getfixturevalue("dev_endpoint"),
-                               "RDFM_MGMT_BOOTSTRAP_SERVERS": request.getfixturevalue("mgmt_endpoint")})
-
+        env.update({"JWT_SECRET": request.getfixturevalue("get_rdfm_jwt_secret"),  # Make it the same as in the .sif file
+                    "RDFM_DEV_BOOTSTRAP_SERVERS": request.getfixturevalue("dev_endpoint"),
+                    "RDFM_MGMT_BOOTSTRAP_SERVERS": request.getfixturevalue("mgmt_endpoint")})
 
     print("Starting server..")
     process = subprocess.Popen(
         args,
-        env={**os.environ, **additional_env},
+        env=env,
         stdout=log_file,
         stderr=log_file,
     )
@@ -265,7 +266,12 @@ def process_gunicorn(db, process_config: ProcessConfig, local_package_dir, reque
 
     log_file = (Path(__file__).parent / "server_gunicorn.log").open("a")
 
-    cfg_env = {}
+    cfg_env = process_config.env.copy()
+    cfg_env["JWT_SECRET"] = TEST_JWT_SECRET
+    cfg_env["RDFM_HOSTNAME"] = "localhost"
+    cfg_env["RDFM_API_PORT"] = "5000"
+    cfg_env["RDFM_DB_CONNSTRING"] = request.getfixturevalue(db)
+    cfg_env["RDFM_LOCAL_PACKAGE_DIR"] = request.getfixturevalue(local_package_dir)
     if process_config.insert_mocks:
         cfg_env["RDFM_INSERT_TEST_MOCKS"] = "1"
     if process_config.no_ssl:
@@ -280,6 +286,8 @@ def process_gunicorn(db, process_config: ProcessConfig, local_package_dir, reque
     print("Starting server..")
     process = subprocess.Popen(
         [
+            "poetry",
+            "run",
             "python3",
             "-m",
             "gunicorn",
@@ -291,14 +299,7 @@ def process_gunicorn(db, process_config: ProcessConfig, local_package_dir, reque
             "localhost:5000",
             "rdfm_mgmt_server:setup_with_config_from_env()",
         ],
-        env={
-            "RDFM_HOSTNAME": "localhost",
-            "RDFM_API_PORT": "5000",
-            "RDFM_DB_CONNSTRING": request.getfixturevalue(db),
-            "RDFM_LOCAL_PACKAGE_DIR": request.getfixturevalue(local_package_dir),
-            **cfg_env,
-            **os.environ
-        },
+        env=cfg_env,
         stdout=log_file,
         stderr=log_file,
     )

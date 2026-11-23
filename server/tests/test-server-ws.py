@@ -2,7 +2,8 @@ import time
 from typing import Any
 from common import (DEVICES_WS,
                     manager_shell_ws, device_attach_shell_ws,
-                    create_fake_device_token)
+                    create_fake_device_token,
+                    TEST_JWT_SECRET)
 import simple_websocket
 import pytest
 from rdfm.ws import receive_message, send_message, decode_json, RDFM_WS_DUPLICATE_CONNECTION
@@ -90,7 +91,10 @@ def connect_interruptable_mock_device():
             "run",
             "python",
             ws_loop_script,
-        ]
+        ],
+        env={
+            "JWT_SECRET": TEST_JWT_SECRET,
+        },
     )
     # Hacky sleep to ensure the process starts
     time.sleep(5.0)

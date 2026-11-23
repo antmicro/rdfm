@@ -12,7 +12,7 @@ import io
 import tarfile
 import tempfile
 from api.v1.middleware import SCOPE_READ_ONLY, SCOPE_READ_WRITE, SCOPE_SINGLE_FILE, SCOPE_ROOTFS_IMAGE
-from common import SERVER_WAIT_TIMEOUT, wait_for_api
+from common import SERVER_WAIT_TIMEOUT, wait_for_api, TEST_JWT_SECRET
 from pathlib import Path
 
 SERVER = "http://127.0.0.1:5000/"
@@ -54,7 +54,7 @@ def rdfm_artifact(request):
 @pytest.fixture()
 def process(db, configure_token_mock, request):
     new_env = os.environ.copy()
-    new_env["JWT_SECRET"] = "TESTDEVELOPMENTSECRET123"
+    new_env["JWT_SECRET"] = TEST_JWT_SECRET
     new_env["RDFM_OAUTH_URL"] = configure_token_mock
     new_env["RDFM_LOGIN_URL"] = "http://test.url"
     new_env["RDFM_LOGOUT_URL"] = "http://test.url"

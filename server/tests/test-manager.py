@@ -17,6 +17,8 @@ from rdfm.permissions import (
     DEVICE_NAMED_RESOURCE,
 )
 
+from common import TEST_JWT_SECRET
+
 GROUP_NAME = "dummy_group"
 GROUP_DESCRIPTION = "dummy_group_description"
 GROUP_PRIORITY = "25"
@@ -77,7 +79,10 @@ def start_shell_mock(setup_server):
     """
     import os
     ws_loop_script = os.path.join(os.path.dirname(__file__), "scripts/device-websocket-loop.py")
-    process = pexpect.spawn(f"poetry run python3 {ws_loop_script}")
+    process = pexpect.spawn(f"poetry run python3 {ws_loop_script}",
+                            env={
+                                "JWT_SECRET": TEST_JWT_SECRET,
+                            })
     try:
         process.expect("connected", timeout=10.0)
     except pexpect.EOF:

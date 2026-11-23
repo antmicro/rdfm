@@ -17,7 +17,7 @@ From: eclipse-temurin:17
 	wget https://repo1.maven.org/maven2/com/auth0/java-jwt/4.5.0/java-jwt-4.5.0.jar
 
 %environment
-	export RDFM_JWT_SECRET=secretsecret123123
+	export RDFM_JWT_SECRET=RDFM_DEV_JWT_81fc94f99507481390b944688493afbc8fa165ec227c34127c45bb5a1d31149c
 	export KAFKA_CLUSTER_ID=foobarbaz
 
 %startscript
