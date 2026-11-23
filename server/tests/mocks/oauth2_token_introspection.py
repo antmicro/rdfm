@@ -94,7 +94,7 @@ if __name__ == "__main__":
     main()
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def start_token_mock():
     """ Creates a mock of the bare minimum OAuth2 API functionality
         required to test the RDFM server.
