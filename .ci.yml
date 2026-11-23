@@ -115,12 +115,44 @@ test-package-api:
     - poetry run pytest tests/test-packages.py -v
   <<: *artifact_server_logs
 
+test-packages-api-docker:
+  extends: .docker-tests-base
+  stage: local-tests
+  dependencies:
+    - build-server-docker-image
+  only:
+    - schedules
+    - web
+  script:
+    - cd server
+    - poetry install
+    - docker load -i ../rdfm-server.tar
+    - docker image tag ${CI_REGISTRY_IMAGE}:rdfm-server-${CI_COMMIT_REF_SLUG} antmicro/rdfm-server:latest
+    - poetry run pytest tests/test-packages.py -v --external-docker
+  <<: *artifact_server_logs
+
 test-group-api:
   extends: .build
   stage: local-tests
   script:
     - cd server
     - poetry run pytest tests/test-groups.py -v
+  <<: *artifact_server_logs
+
+test-group-api-docker:
+  extends: .docker-tests-base
+  stage: local-tests
+  dependencies:
+    - build-server-docker-image
+  only:
+    - schedules
+    - web
+  script:
+    - cd server
+    - poetry install
+    - docker load -i ../rdfm-server.tar
+    - docker image tag ${CI_REGISTRY_IMAGE}:rdfm-server-${CI_COMMIT_REF_SLUG} antmicro/rdfm-server:latest
+    - poetry run pytest tests/test-groups.py -v --external-docker
   <<: *artifact_server_logs
 
 test-server-update-policies:
@@ -147,6 +179,23 @@ test-server-update-api:
     - poetry run pytest tests/test-update-checker.py -v --postgres
   <<: *artifact_server_logs
 
+test-server-update-api-docker:
+  extends: .docker-tests-base
+  stage: local-tests
+  dependencies:
+    - build-server-docker-image
+  only:
+    - schedules
+    - web
+  script:
+    - cd server
+    - poetry install
+    - docker load -i ../rdfm-server.tar
+    - docker image tag ${CI_REGISTRY_IMAGE}:rdfm-server-${CI_COMMIT_REF_SLUG} antmicro/rdfm-server:latest
+    - printf '127.0.0.1 rdfm-server' >> /etc/hosts
+    - poetry run pytest tests/test-update-checker.py -v --external-docker
+  <<: *artifact_server_logs
+
 test-server-device-auth-api:
   extends: .build
   stage: local-tests
@@ -156,6 +205,22 @@ test-server-device-auth-api:
     - cd server
     - poetry run pytest tests/test-server-auth.py -v --sqlite
     - poetry run pytest tests/test-server-auth.py -v --postgres
+  <<: *artifact_server_logs
+
+test-server-device-auth-api-docker:
+  extends: .docker-tests-base
+  stage: local-tests
+  dependencies:
+    - build-server-docker-image
+  only:
+    - schedules
+    - web
+  script:
+    - cd server
+    - poetry install
+    - docker load -i ../rdfm-server.tar
+    - docker image tag ${CI_REGISTRY_IMAGE}:rdfm-server-${CI_COMMIT_REF_SLUG} antmicro/rdfm-server:latest
+    - poetry run pytest tests/test-server-auth.py -v --external-docker
   <<: *artifact_server_logs
 
 test-server-s3-storage:
@@ -198,6 +263,10 @@ test-package-upload-auth:
     - poetry run pytest tests/test-package-upload-auth.py -v --sqlite
     - poetry run pytest tests/test-package-upload-auth.py -v --postgres
 
+# This test is incompatible with docker container server because mpu.complete_upload
+# tries to touch the filesystem, in the case of --external-docker packages would be store
+# inside a volume. To make it compatible the docker packages volume should be mounted
+# where local_package_dir fixture points to.
 test-server-localstorage-integrity:
   variables:
     JWT_SECRET: testsecret123123123
@@ -224,6 +293,22 @@ test-server-websocket:
     - cd server
     - poetry run pytest tests/test-server-ws.py -v --sqlite
     - poetry run pytest tests/test-server-ws.py -v --postgres
+  <<: *artifact_server_logs
+
+test-server-websocket-docker:
+  extends: .docker-tests-base
+  stage: local-tests
+  dependencies:
+    - build-server-docker-image
+  only:
+    - schedules
+    - web
+  script:
+    - cd server
+    - poetry install
+    - docker load -i ../rdfm-server.tar
+    - docker image tag ${CI_REGISTRY_IMAGE}:rdfm-server-${CI_COMMIT_REF_SLUG} antmicro/rdfm-server:latest
+    - poetry run pytest tests/test-server-ws.py -v --external-docker
   <<: *artifact_server_logs
 
 test-manager:
@@ -262,6 +347,22 @@ test-server-logs:
     - poetry run pytest tests/test-server-logs.py -v --postgres
   <<: *artifact_server_logs
 
+test-server-logs-docker:
+  extends: .docker-tests-base
+  stage: local-tests
+  dependencies:
+    - build-server-docker-image
+  only:
+    - schedules
+    - web
+  script:
+    - cd server
+    - poetry install
+    - docker load -i ../rdfm-server.tar
+    - docker image tag ${CI_REGISTRY_IMAGE}:rdfm-server-${CI_COMMIT_REF_SLUG} antmicro/rdfm-server:latest
+    - poetry run pytest tests/test-server-logs.py -v --external-docker
+  <<: *artifact_server_logs
+
 test-server-file-download:
   extends: .build
   stage: local-tests
@@ -271,6 +372,27 @@ test-server-file-download:
     - poetry run pytest tests/test-file-download.py -v --postgres
   <<: *artifact_server_logs
 
+test-server-file-download-docker:
+  extends: .docker-tests-base
+  stage: local-tests
+  dependencies:
+    - build-server-docker-image
+  only:
+    - schedules
+    - web
+  script:
+    - cd server
+    - poetry install
+    - docker load -i ../rdfm-server.tar
+    - docker image tag ${CI_REGISTRY_IMAGE}:rdfm-server-${CI_COMMIT_REF_SLUG} antmicro/rdfm-server:latest
+    - poetry run pytest tests/test-file-download.py -v --external-docker
+  <<: *artifact_server_logs
+
+# This test is incompatible with docker container server because t checks the download URL
+# provided by the server and fails if it starts with something different than 'http://127.0.0.1'.
+# The server inside the docker container mints download URLs with its hostname, in this case its rdfm-server.
+# To make it compatible the backed should be run from a compose that has the RDFM_HOSTNAME parameter set to
+# '127.0.0.1'
 test-actions:
   extends: .build
   stage: local-tests
@@ -289,6 +411,22 @@ test-progress-api:
     - poetry run pytest tests/test-progress-api.py -v --postgres
   <<: *artifact_server_logs
 
+test-progress-api-docker:
+  extends: .docker-tests-base
+  stage: local-tests
+  dependencies:
+    - build-server-docker-image
+  only:
+    - schedules
+    - web
+  script:
+    - cd server
+    - poetry install
+    - docker load -i ../rdfm-server.tar
+    - docker image tag ${CI_REGISTRY_IMAGE}:rdfm-server-${CI_COMMIT_REF_SLUG} antmicro/rdfm-server:latest
+    - poetry run pytest tests/test-progress-api.py -v --external-docker
+  <<: *artifact_server_logs
+
 test-server-pubsub-acl-handling:
   extends: .build
   stage: local-tests
@@ -305,6 +443,22 @@ test-server-pubsub-acl-side-effects:
     - SIF_SECRET=$(apptainer inspect --environment deploy/pubsub-demo/tests/test_kafka.sif | rg '^\s+export RDFM_JWT_SECRET=([\w\W]+)$' -r '$1')
     - export JWT_SECRET=$SIF_SECRET
     - poetry run pytest -v tests/test-pubsub-acl-side-effects.py --sifpath $(pwd)/deploy/pubsub-demo/tests --sqlite
+  <<: *artifact_server_logs
+
+test-server-pubsub-acl-side-effects-docker:
+  extends: .docker-tests-base
+  stage: local-tests
+  <<: *common_only
+  only:
+    - schedules
+    - web
+  script:
+    - poetry install
+    - docker load -i ../rdfm-server.tar
+    - docker image tag ${CI_REGISTRY_IMAGE}:rdfm-server-${CI_COMMIT_REF_SLUG} antmicro/rdfm-server:latest
+    - SIF_SECRET=$(apptainer inspect --environment deploy/pubsub-demo/tests/test_kafka.sif | rg '^\s+export RDFM_JWT_SECRET=([\w\W]+)$' -r '$1')
+    - export JWT_SECRET=$SIF_SECRET
+    - poetry run pytest -v tests/test-pubsub-acl-side-effects.py --sifpath $(pwd)/deploy/pubsub-demo/tests --external-docker
   <<: *artifact_server_logs
 
 # ===== docker images ===== #
@@ -374,7 +528,9 @@ test-rdfm-client-docker:
   dependencies:
     - build-rdfm-artifact
   extends: .docker-tests-base
-  <<: *common_only
+  only:
+    - schedules
+    - web
   script:
     # Install rdfm-artifact, which is required for the tests
     - mv tools/rdfm-artifact/rdfm-artifact /usr/bin/
