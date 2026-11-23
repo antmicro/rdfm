@@ -11,7 +11,13 @@ Depending on the type of the API, this can be either:
 * Device Token
 * Management Token
 
-In either case, the server expects the token to be passed as part of the request, in the HTTP Authorization header.
+In either case, the server expects the token to be passed as part of the request headers.
+
+The API accepts tokens provided in the following headers:
+
+* Standard HTTP `Authorization` header - `auth-scheme` is expected to be `Bearer`, and `authorization-parameters` are: `token=<token-value>`. An example header value is provided below.
+* `X-RDFM-Token` - for deployments that already use the `Authorization` header for different purposes, the token can be provided in a non-standard header. This header takes precedence over the `Authorization` header.
+
 An example authenticated request is shown below:
 
 .. sourcecode:: http
