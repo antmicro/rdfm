@@ -20,8 +20,6 @@ variables:
   SCALENODE_DISK: 20
 
 .build-base:
-  variables:
-    JWT_SECRET: testsecret123123123
   before_script:
     - python -V
     - (cd server && poetry build && poetry install)
@@ -35,7 +33,6 @@ variables:
 .docker-tests-base:
   variables:
     DOCKER_BUILDKIT: 1
-    JWT_SECRET: foobarbaz
   before_get_sources:
     - apt -qq update
     - apt -qq -y --no-install-recommends install docker-cli docker.io docker-buildx docker-compose crun fuse-overlayfs pigz ca-certificates git
@@ -269,7 +266,6 @@ test-package-upload-auth:
 # where local_package_dir fixture points to.
 test-server-localstorage-integrity:
   variables:
-    JWT_SECRET: testsecret123123123
     SCALENODE_RAM: 4096
   extends: .build
   stage: local-tests
@@ -440,8 +436,6 @@ test-server-pubsub-acl-side-effects:
   <<: *common_only
   script:
     - cd server/
-    - SIF_SECRET=$(apptainer inspect --environment deploy/pubsub-demo/tests/test_kafka.sif | rg '^\s+export RDFM_JWT_SECRET=([\w\W]+)$' -r '$1')
-    - export JWT_SECRET=$SIF_SECRET
     - poetry run pytest -v tests/test-pubsub-acl-side-effects.py --sifpath $(pwd)/deploy/pubsub-demo/tests --sqlite
   <<: *artifact_server_logs
 
