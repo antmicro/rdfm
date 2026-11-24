@@ -29,34 +29,9 @@ To do this, run the following from the **cloned RDFM repository root** folder:
 docker build -f server/deploy/Dockerfile -t antmicro/rdfm-server:latest .
 ```
 
-A simple `docker-compose` file that can be used to run the server is provided below and in the `server/deploy/docker-compose.development.yml` file.
+A simple `docker-compose` file that can be used to run the server is provided in the [`server/deploy/docker-compose.development.yml`](https://github.com/antmicro/rdfm/blob/main/server/deploy/docker-compose.development.yml) file.
 
-```yaml
-services:
-  rdfm-server:
-    image: antmicro/rdfm-server:latest
-    restart: unless-stopped
-    environment:
-      - RDFM_JWT_SECRET=<REPLACE_WITH_CUSTOM_JWT_SECRET>
-      - RDFM_DB_CONNSTRING=sqlite:////database/development.db
-      - RDFM_HOSTNAME=rdfm-server
-      - RDFM_API_PORT=5000
-      - RDFM_DISABLE_ENCRYPTION=1
-      - RDFM_DISABLE_API_AUTH=1
-      - RDFM_LOCAL_PACKAGE_DIR=/packages/
-      - RDFM_WSGI_SERVER=werkzeug
-    ports:
-      - "5000:5000"
-    volumes:
-      - db:/database/
-      - pkgs:/packages/
-
-volumes:
-  db:
-  pkgs:
-```
-
-You can then start the server using the following command:
+You can start the server using the following command:
 
 ```bash
 docker-compose -f server/deploy/docker-compose.development.yml up
@@ -241,55 +216,7 @@ For an example of such request, see [this endpoint's documentation](api.rst#post
 
 #### Running the services
 
-An example `docker-compose` file that can be used to run the RDFM server using [Keycloak Identity and Access Management server](https://www.keycloak.org/) as an authorization server is provided below, and in the `server/deploy/docker-compose.keycloak.development.yml` file.
-
-```yaml
-services:
-  rdfm-server:
-    image: antmicro/rdfm-server:latest
-    restart: unless-stopped
-    environment:
-      - RDFM_JWT_SECRET=<REPLACE_WITH_CUSTOM_JWT_SECRET>
-      - RDFM_DB_CONNSTRING=sqlite:////database/development.db
-      - RDFM_HOSTNAME=rdfm-server
-      - RDFM_API_PORT=5000
-      - RDFM_DISABLE_ENCRYPTION=1
-      - RDFM_LOCAL_PACKAGE_DIR=/packages/
-      - RDFM_OAUTH_URL=http://keycloak:8080/realms/master/protocol/openid-connect/token/introspect
-      - RDFM_OAUTH_CLIENT_ID=rdfm-server-introspection
-      - RDFM_OAUTH_CLIENT_SEC=<REPLACE_WITH_RDFM_INTROSPECTION_SECRET>
-    networks:
-      - rdfm
-    ports:
-      - "5000:5000"
-    volumes:
-      - db:/database/
-      - pkgs:/packages/
-
-  keycloak:
-    image: quay.io/keycloak/keycloak:22.0.1
-    restart: unless-stopped
-    environment:
-      - KEYCLOAK_ADMIN=admin
-      - KEYCLOAK_ADMIN_PASSWORD=admin
-    networks:
-      - rdfm
-    ports:
-      - "8080:8080"
-    command:
-      - start-dev
-    volumes:
-      - keycloak:/opt/keycloak/data/
-      - ../keycloak-themes:/opt/keycloak/themes
-
-volumes:
-  db:
-  pkgs:
-  keycloak:
-
-networks:
-  rdfm:
-```
+An example `docker-compose` file that can be used to run the RDFM server using [Keycloak Identity and Access Management server](https://www.keycloak.org/) as an authorization server is provided in the [`server/deploy/docker-compose.keycloak.development.yml`](https://github.com/antmicro/rdfm/blob/main/server/deploy/docker-compose.keycloak.development.yml) file.
 
 Before running the services above, you must first build the RDFM server container by running the following from the RDFM repository root folder:
 
