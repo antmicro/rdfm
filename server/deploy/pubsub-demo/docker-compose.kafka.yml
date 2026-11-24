@@ -55,6 +55,8 @@ services:
       KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: false
 
       KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      # CVE-2026-114938 mitigation.
+      KAFKA_OPTS: "-XX:-UseBASE64Intrinsics"
 
     volumes:
       - ./broker:/etc/kafka/secrets
