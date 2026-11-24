@@ -28,7 +28,7 @@ SERVER = "127.0.0.1:5000"
 # This is the MAC that can be used to connect to the shell of this script
 DEVICE_ID = "00:00:00:00:00:00"
 # JWT secret, must match the one used for running the server
-JWT_SECRET = os.environ.get("JWT_SECRET", "foobarbaz")
+JWT_SECRET = os.environ.get("JWT_SECRET")
 
 
 def create_dummy_token():
