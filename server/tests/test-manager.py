@@ -26,7 +26,9 @@ DEVICE_MAC = "00:00:00:00:00:00"
 
 
 def format_manager_args(rdfm_mgmt_args: List[str]) -> List[str]:
-    return ["poetry",  "run", "-C", "../manager/", "rdfm-mgmt"] + rdfm_mgmt_args
+    import os
+    manager_dir = os.path.join(os.path.dirname(__file__), "../../manager")
+    return ["poetry",  "run", "-C", manager_dir, "rdfm-mgmt"] + rdfm_mgmt_args
 
 
 def run_manager_command(rdfm_mgmt_args: List[str]) -> Tuple[str, int]:
@@ -73,7 +75,9 @@ def upload_dummy_package(install_manager_to_venv):
 def start_shell_mock(setup_server):
     """ Starts a mock device providing shell functionality
     """
-    process = pexpect.spawn("poetry run python3 tests/scripts/device-websocket-loop.py")
+    import os
+    ws_loop_script = os.path.join(os.path.dirname(__file__), "scripts/device-websocket-loop.py")
+    process = pexpect.spawn(f"poetry run python3 {ws_loop_script}")
     try:
         process.expect("connected", timeout=10.0)
     except pexpect.EOF:

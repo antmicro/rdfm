@@ -82,7 +82,16 @@ def connect_interruptable_mock_device():
     without triggering the usual WebSocket disconnection mechanism. Calling
     client.close() on the above mocks would just gracefully shutdown the connection.
     """
-    process = subprocess.Popen(["python", "tests/scripts/device-websocket-loop.py"])
+    import os
+    ws_loop_script = os.path.join(os.path.dirname(__file__), "scripts/device-websocket-loop.py")
+    process = subprocess.Popen(
+        [
+            "poetry",
+            "run",
+            "python",
+            ws_loop_script,
+        ]
+    )
     # Hacky sleep to ensure the process starts
     time.sleep(5.0)
 

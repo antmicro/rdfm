@@ -406,7 +406,8 @@ def azurite_blob():
 @pytest.fixture(scope="session")
 def install_manager_to_venv():
     """Required for running rdfm-mgmt within it's own venv"""
-    process = subprocess.Popen(["poetry", "-C", "../manager/", "install"])
+    manager_dir = os.path.join(os.path.dirname(__file__), "../../manager")
+    process = subprocess.Popen(["poetry", "-C", manager_dir, "install"])
     code: int = process.wait()
     assert code == 0, "manager should be installed in the .venv"
 
