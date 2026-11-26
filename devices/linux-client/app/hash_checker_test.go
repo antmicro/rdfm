@@ -1,0 +1,16 @@
+package app
+
+import (
+	"github.com/stretchr/testify/assert"
+	"testing"
+)
+
+var TestData = []byte{0xfc, 0x66, 0xe3, 0xcc, 0x35, 0x24, 0xcb, 0x32, 0x83, 0xec, 0xe5, 0x22, 0xb8, 0x8d, 0x9c, 0xeb, 0x8a, 0x8c, 0x37, 0xe1, 0x7f, 0xa6, 0xc, 0x31, 0xd8, 0x23, 0xd5, 0xb3, 0x9c, 0xd3}
+var DataHash = "d968f4a4b77326cf5511be7577f5b698721c7fa2f5331aec5feb141d0b8764c8"
+
+func TestArtifactHashChecker(t *testing.T) {
+	artifactChecker := newArtifactHashChecker(int64(len(TestData)), DataHash)
+	artifactChecker.Write(TestData)
+	
+	assert.Equal(t, DataHash, artifactChecker.finalHash)
+}
