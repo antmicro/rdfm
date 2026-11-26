@@ -90,7 +90,7 @@
           <version>3.3.0</version>
           <configuration>
             <environmentVariables>
-              <RDFM_JWT_SECRET>foobarbaz</RDFM_JWT_SECRET>
+              <RDFM_JWT_SECRET>RDFM_DEV_JWT_81fc94f99507481390b944688493afbc8fa165ec227c34127c45bb5a1d31149c</RDFM_JWT_SECRET>
             </environmentVariables>
           </configuration>
         </plugin>

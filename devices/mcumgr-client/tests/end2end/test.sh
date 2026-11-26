@@ -58,8 +58,8 @@ start_renode() {
 start_rdfm_server() {
     _log_info "Starting RDFM server"
 
-    JWT_SECRET=foobarbaz python \
-        -m rdfm_mgmt_server \
+    JWT_SECRET=RDFM_DEV_JWT_81fc94f99507481390b944688493afbc8fa165ec227c34127c45bb5a1d31149c\
+        python -m rdfm_mgmt_server \
             --no-api-auth \
             --no-ssl \
             --hostname localhost \

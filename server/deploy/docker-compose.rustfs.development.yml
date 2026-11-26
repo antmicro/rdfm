@@ -6,7 +6,7 @@ services:
       rustfs-bucket-creator:
         condition: service_completed_successfully
     environment:
-      - RDFM_JWT_SECRET=foobarbaz
+      - RDFM_JWT_SECRET=RDFM_DEV_JWT_81fc94f99507481390b944688493afbc8fa165ec227c34127c45bb5a1d31149c
       - RDFM_DB_CONNSTRING=sqlite:////database/development.db
       - RDFM_HOSTNAME=rdfm-server
       - RDFM_API_PORT=5000
